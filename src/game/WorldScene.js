@@ -60,6 +60,7 @@ export class WorldScene extends Phaser.Scene {
     this.rollEndsAt = 0;
     this.lastRollAt = -Infinity;
     this.lastAttackAt = -Infinity;
+    this.weaponCooldowns = {};
     this.lastCameraZoom = 0;
     this.lastHudUpdate = 0;
     this.debugMode = false;
@@ -124,13 +125,14 @@ export class WorldScene extends Phaser.Scene {
     // Tile only the visible canvas, not the 3600×3600 world. Phaser's docs
     // explicitly recommend scrolling TileSprite.tilePosition instead of
     // creating huge TileSprites, which waste memory and hurt performance.
-    this.ground = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'grass')
+    this.ground = this.add.tileSprite(0, 0, this.scale.width * 2.5, this.scale.height * 2.5, 'grass')
       .setOrigin(0, 0)
       .setScrollFactor(0)
       .setDepth(0);
 
     this.scale.on(Phaser.Scale.Events.RESIZE, gameSize => {
-      this.ground.setSize(gameSize.width, gameSize.height);
+      // Slightly oversize the fixed layer so even the widest debug zoom has no empty edges.
+      this.ground.setSize(gameSize.width * 2.5, gameSize.height * 2.5);
     });
 
     // Extra tiny pixel clusters break up the repeated tile without importing
@@ -571,7 +573,8 @@ export class WorldScene extends Phaser.Scene {
       };
     }
 
-    if (now - this.lastAttackAt < profile.cooldownMs) return;
+    const cooldownKey = `${itemId}:${attackKind}`;
+    if (now < (this.weaponCooldowns[cooldownKey] || 0)) return;
     if (this.stats.stamina < profile.staminaCost) {
       this.ui.showToast('Недостаточно выносливости.', 'warning');
       this.ui.addLog('combat', 'Атака отменена: не хватает выносливости.');
@@ -584,6 +587,7 @@ export class WorldScene extends Phaser.Scene {
     }
 
     this.lastAttackAt = now;
+    this.weaponCooldowns[cooldownKey] = now + profile.cooldownMs;
     this.stats.stamina -= profile.staminaCost;
     const angle = this.lastAimAngle;
     const origin = { x: this.playerSprite.x, y: this.playerSprite.y - 13 };
