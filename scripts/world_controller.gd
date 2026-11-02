@@ -150,6 +150,7 @@ func _create_ui() -> void:
 
 func _process(delta: float) -> void:
 	_handle_hotkeys()
+	_update_attack_cooldowns(delta)
 	_update_projectiles(delta)
 	_update_camera(delta)
 	_update_z_order()
@@ -167,8 +168,11 @@ func _process(delta: float) -> void:
 func _handle_hotkeys() -> void:
 	if Input.is_action_just_pressed("inventory"):
 		ui.toggle_panel("inventory")
-	elif Input.is_action_just_pressed("settings"):
-		ui.toggle_panel("settings")
+	if Input.is_action_just_pressed("settings"):
+		if ui.has_modal_open():
+			ui.close_panels()
+		else:
+			ui.toggle_panel("settings")
 	if Input.is_action_just_pressed("debug"):
 		ui.toggle_panel("debug")
 		debug_selected = player
@@ -201,6 +205,10 @@ func _on_slot_selected(index: int) -> void:
 		_log("Пустой слот.")
 	else:
 		_log("Выбрано: " + label)
+
+func _update_attack_cooldowns(delta: float) -> void:
+	for key in attack_cooldowns.keys():
+		attack_cooldowns[key] = maxf(0.0, float(attack_cooldowns[key]) - delta)
 
 func _expand_backpack() -> void:
 	var maximum := int(config.inventory.max_backpack_slots)
