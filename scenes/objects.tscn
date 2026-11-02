@@ -1,0 +1,1662 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/resource_node.gd" id="1_resource"]
+
+[sub_resource type="CircleShape2D" id="TreeCollision"]
+radius = 12.0
+
+[sub_resource type="CircleShape2D" id="RockCollision"]
+radius = 16.0
+
+[node name="Objects" type="Node2D"]
+
+[node name="Tree_001" type="StaticBody2D" parent="."]
+position = Vector2(-1348.8, -48.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_001"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_002" type="StaticBody2D" parent="."]
+position = Vector2(-933.4, -337.3)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_002"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_003" type="StaticBody2D" parent="."]
+position = Vector2(-857.6, 421.2)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_003"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_004" type="StaticBody2D" parent="."]
+position = Vector2(-730.4, 15.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_004"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_005" type="StaticBody2D" parent="."]
+position = Vector2(-1227.0, -320.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_005"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_006" type="StaticBody2D" parent="."]
+position = Vector2(-1026.8, -1268.3)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_006"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_007" type="StaticBody2D" parent="."]
+position = Vector2(-858.8, -479.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_007"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_008" type="StaticBody2D" parent="."]
+position = Vector2(-316.4, -1509.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_008"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_009" type="StaticBody2D" parent="."]
+position = Vector2(-1369.5, 1226.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_009"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_010" type="StaticBody2D" parent="."]
+position = Vector2(1580.5, -192.2)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_010"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_011" type="StaticBody2D" parent="."]
+position = Vector2(709.3, -1492.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_011"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_012" type="StaticBody2D" parent="."]
+position = Vector2(-307.0, 1111.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_012"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_013" type="StaticBody2D" parent="."]
+position = Vector2(-1264.4, 51.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_013"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_014" type="StaticBody2D" parent="."]
+position = Vector2(-333.1, -350.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_014"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_015" type="StaticBody2D" parent="."]
+position = Vector2(-1455.6, 747.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_015"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_016" type="StaticBody2D" parent="."]
+position = Vector2(1325.0, -427.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_016"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_017" type="StaticBody2D" parent="."]
+position = Vector2(433.7, -1413.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_017"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_018" type="StaticBody2D" parent="."]
+position = Vector2(128.6, -1145.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_018"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_019" type="StaticBody2D" parent="."]
+position = Vector2(-265.0, -919.2)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_019"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_020" type="StaticBody2D" parent="."]
+position = Vector2(207.7, 941.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_020"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_021" type="StaticBody2D" parent="."]
+position = Vector2(-529.6, -1422.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_021"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_022" type="StaticBody2D" parent="."]
+position = Vector2(-1391.8, -1277.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_022"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_023" type="StaticBody2D" parent="."]
+position = Vector2(-1299.7, 782.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_023"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_024" type="StaticBody2D" parent="."]
+position = Vector2(-146.4, -1495.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_024"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_025" type="StaticBody2D" parent="."]
+position = Vector2(-422.4, -1449.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_025"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_026" type="StaticBody2D" parent="."]
+position = Vector2(318.3, 379.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_026"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_027" type="StaticBody2D" parent="."]
+position = Vector2(-411.9, -900.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_027"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_028" type="StaticBody2D" parent="."]
+position = Vector2(712.6, -1028.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_028"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_029" type="StaticBody2D" parent="."]
+position = Vector2(201.7, 1048.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_029"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_030" type="StaticBody2D" parent="."]
+position = Vector2(-1116.2, -555.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_030"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_031" type="StaticBody2D" parent="."]
+position = Vector2(-777.5, -812.3)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_031"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_032" type="StaticBody2D" parent="."]
+position = Vector2(-994.4, 710.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_032"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_033" type="StaticBody2D" parent="."]
+position = Vector2(-472.9, 1122.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_033"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_034" type="StaticBody2D" parent="."]
+position = Vector2(394.0, -749.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_034"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_035" type="StaticBody2D" parent="."]
+position = Vector2(724.2, -120.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_035"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_036" type="StaticBody2D" parent="."]
+position = Vector2(1151.3, 425.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_036"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_037" type="StaticBody2D" parent="."]
+position = Vector2(-532.6, -373.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_037"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_038" type="StaticBody2D" parent="."]
+position = Vector2(1028.0, -608.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_038"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_039" type="StaticBody2D" parent="."]
+position = Vector2(-485.4, 928.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_039"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_040" type="StaticBody2D" parent="."]
+position = Vector2(338.8, -451.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_040"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_041" type="StaticBody2D" parent="."]
+position = Vector2(-692.2, -1150.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_041"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_042" type="StaticBody2D" parent="."]
+position = Vector2(1347.2, -43.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_042"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_043" type="StaticBody2D" parent="."]
+position = Vector2(-1471.9, -1478.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_043"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_044" type="StaticBody2D" parent="."]
+position = Vector2(1338.3, -227.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_044"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_045" type="StaticBody2D" parent="."]
+position = Vector2(1256.2, 583.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_045"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_046" type="StaticBody2D" parent="."]
+position = Vector2(-417.6, -681.2)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_046"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_047" type="StaticBody2D" parent="."]
+position = Vector2(-1415.1, -1001.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_047"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_048" type="StaticBody2D" parent="."]
+position = Vector2(1446.3, -542.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_048"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_049" type="StaticBody2D" parent="."]
+position = Vector2(-1545.1, 570.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_049"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_050" type="StaticBody2D" parent="."]
+position = Vector2(586.4, -1427.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_050"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_051" type="StaticBody2D" parent="."]
+position = Vector2(-21.9, 692.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_051"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_052" type="StaticBody2D" parent="."]
+position = Vector2(-263.9, 592.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_052"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_053" type="StaticBody2D" parent="."]
+position = Vector2(-1141.3, -15.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_053"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_054" type="StaticBody2D" parent="."]
+position = Vector2(-421.4, 1304.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_054"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_055" type="StaticBody2D" parent="."]
+position = Vector2(-1109.6, -1591.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_055"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_056" type="StaticBody2D" parent="."]
+position = Vector2(340.0, 232.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_056"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_057" type="StaticBody2D" parent="."]
+position = Vector2(-1063.9, -703.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_057"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_058" type="StaticBody2D" parent="."]
+position = Vector2(125.6, 1514.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_058"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_059" type="StaticBody2D" parent="."]
+position = Vector2(33.4, -1229.3)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_059"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_060" type="StaticBody2D" parent="."]
+position = Vector2(-719.5, -285.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_060"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_061" type="StaticBody2D" parent="."]
+position = Vector2(1072.8, -805.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_061"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_062" type="StaticBody2D" parent="."]
+position = Vector2(1092.1, -271.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_062"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_063" type="StaticBody2D" parent="."]
+position = Vector2(-383.2, 580.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_063"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_064" type="StaticBody2D" parent="."]
+position = Vector2(-873.5, 896.3)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_064"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_065" type="StaticBody2D" parent="."]
+position = Vector2(667.8, 129.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_065"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_066" type="StaticBody2D" parent="."]
+position = Vector2(550.8, -331.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_066"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_067" type="StaticBody2D" parent="."]
+position = Vector2(402.8, 1251.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_067"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_068" type="StaticBody2D" parent="."]
+position = Vector2(963.0, 1216.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_068"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_069" type="StaticBody2D" parent="."]
+position = Vector2(-114.9, 1548.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_069"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_070" type="StaticBody2D" parent="."]
+position = Vector2(-425.6, -1351.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_070"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_071" type="StaticBody2D" parent="."]
+position = Vector2(590.4, -1293.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_071"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_072" type="StaticBody2D" parent="."]
+position = Vector2(-1004.7, 912.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_072"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_073" type="StaticBody2D" parent="."]
+position = Vector2(823.3, -258.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_073"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_074" type="StaticBody2D" parent="."]
+position = Vector2(-1433.6, -530.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_074"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_075" type="StaticBody2D" parent="."]
+position = Vector2(-1215.3, -1049.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_075"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_076" type="StaticBody2D" parent="."]
+position = Vector2(-812.7, -603.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_076"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_077" type="StaticBody2D" parent="."]
+position = Vector2(-1375.3, -352.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_077"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_078" type="StaticBody2D" parent="."]
+position = Vector2(966.6, 1011.6)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_078"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_079" type="StaticBody2D" parent="."]
+position = Vector2(-1479.3, -61.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_079"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_080" type="StaticBody2D" parent="."]
+position = Vector2(-202.4, 957.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_080"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_081" type="StaticBody2D" parent="."]
+position = Vector2(1469.1, -260.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_081"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_082" type="StaticBody2D" parent="."]
+position = Vector2(-1041.4, 16.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_082"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_083" type="StaticBody2D" parent="."]
+position = Vector2(913.3, -1332.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_083"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_084" type="StaticBody2D" parent="."]
+position = Vector2(259.2, 1317.2)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_084"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_085" type="StaticBody2D" parent="."]
+position = Vector2(-1089.0, -1404.3)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_085"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_086" type="StaticBody2D" parent="."]
+position = Vector2(1168.6, -429.8)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_086"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_087" type="StaticBody2D" parent="."]
+position = Vector2(-163.2, 197.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_087"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_088" type="StaticBody2D" parent="."]
+position = Vector2(-194.9, -1199.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_088"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_089" type="StaticBody2D" parent="."]
+position = Vector2(-1531.3, 1345.2)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_089"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_090" type="StaticBody2D" parent="."]
+position = Vector2(-1524.2, -1027.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_090"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_091" type="StaticBody2D" parent="."]
+position = Vector2(489.9, -107.5)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_091"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_092" type="StaticBody2D" parent="."]
+position = Vector2(365.1, 846.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_092"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_093" type="StaticBody2D" parent="."]
+position = Vector2(-381.9, 748.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_093"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_094" type="StaticBody2D" parent="."]
+position = Vector2(530.2, -685.1)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_094"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_095" type="StaticBody2D" parent="."]
+position = Vector2(43.8, 366.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_095"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_096" type="StaticBody2D" parent="."]
+position = Vector2(1370.5, 1362.7)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_096"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_097" type="StaticBody2D" parent="."]
+position = Vector2(-12.5, 1223.3)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_097"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_098" type="StaticBody2D" parent="."]
+position = Vector2(1156.3, -1467.4)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_098"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_099" type="StaticBody2D" parent="."]
+position = Vector2(1303.7, -1430.9)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_099"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Tree_100" type="StaticBody2D" parent="."]
+position = Vector2(-781.5, 719.0)
+script = ExtResource("1_resource")
+resource_type = "tree"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree_100"]
+position = Vector2(0, 8)
+shape = SubResource("TreeCollision")
+
+[node name="Rock_001" type="StaticBody2D" parent="."]
+position = Vector2(-1577.1, -1458.2)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_001"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_002" type="StaticBody2D" parent="."]
+position = Vector2(-889.2, -849.8)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_002"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_003" type="StaticBody2D" parent="."]
+position = Vector2(1264.4, -1099.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_003"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_004" type="StaticBody2D" parent="."]
+position = Vector2(1379.1, 303.2)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_004"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_005" type="StaticBody2D" parent="."]
+position = Vector2(-41.6, -998.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_005"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_006" type="StaticBody2D" parent="."]
+position = Vector2(816.4, -864.6)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_006"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_007" type="StaticBody2D" parent="."]
+position = Vector2(1290.1, 39.7)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_007"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_008" type="StaticBody2D" parent="."]
+position = Vector2(108.2, -580.0)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_008"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_009" type="StaticBody2D" parent="."]
+position = Vector2(-325.7, 1313.3)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_009"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_010" type="StaticBody2D" parent="."]
+position = Vector2(891.4, -374.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_010"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_011" type="StaticBody2D" parent="."]
+position = Vector2(915.0, -763.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_011"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_012" type="StaticBody2D" parent="."]
+position = Vector2(890.2, -1144.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_012"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_013" type="StaticBody2D" parent="."]
+position = Vector2(389.7, -1035.2)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_013"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_014" type="StaticBody2D" parent="."]
+position = Vector2(1019.4, 440.0)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_014"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_015" type="StaticBody2D" parent="."]
+position = Vector2(110.0, -708.1)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_015"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_016" type="StaticBody2D" parent="."]
+position = Vector2(1132.1, 1115.9)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_016"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_017" type="StaticBody2D" parent="."]
+position = Vector2(-851.4, 261.3)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_017"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_018" type="StaticBody2D" parent="."]
+position = Vector2(137.6, 1297.1)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_018"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_019" type="StaticBody2D" parent="."]
+position = Vector2(646.2, 1123.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_019"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_020" type="StaticBody2D" parent="."]
+position = Vector2(-724.8, -1294.9)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_020"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_021" type="StaticBody2D" parent="."]
+position = Vector2(266.8, -1167.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_021"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_022" type="StaticBody2D" parent="."]
+position = Vector2(459.0, 868.1)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_022"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_023" type="StaticBody2D" parent="."]
+position = Vector2(1202.4, -1582.6)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_023"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_024" type="StaticBody2D" parent="."]
+position = Vector2(-248.8, -107.1)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_024"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_025" type="StaticBody2D" parent="."]
+position = Vector2(-1332.3, 685.9)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_025"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_026" type="StaticBody2D" parent="."]
+position = Vector2(-1165.8, 266.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_026"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_027" type="StaticBody2D" parent="."]
+position = Vector2(-587.4, -538.0)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_027"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_028" type="StaticBody2D" parent="."]
+position = Vector2(103.0, 468.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_028"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_029" type="StaticBody2D" parent="."]
+position = Vector2(-92.7, 1343.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_029"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_030" type="StaticBody2D" parent="."]
+position = Vector2(1307.8, 1121.7)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_030"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_031" type="StaticBody2D" parent="."]
+position = Vector2(-634.9, 269.7)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_031"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_032" type="StaticBody2D" parent="."]
+position = Vector2(-484.0, 490.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_032"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_033" type="StaticBody2D" parent="."]
+position = Vector2(-1161.6, 983.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_033"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_034" type="StaticBody2D" parent="."]
+position = Vector2(-136.6, -813.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_034"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_035" type="StaticBody2D" parent="."]
+position = Vector2(-940.4, 6.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_035"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_036" type="StaticBody2D" parent="."]
+position = Vector2(-578.5, 1384.9)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_036"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_037" type="StaticBody2D" parent="."]
+position = Vector2(-1586.8, -840.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_037"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_038" type="StaticBody2D" parent="."]
+position = Vector2(379.0, -1175.6)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_038"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_039" type="StaticBody2D" parent="."]
+position = Vector2(228.7, 582.3)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_039"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_040" type="StaticBody2D" parent="."]
+position = Vector2(-539.8, 271.9)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_040"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_041" type="StaticBody2D" parent="."]
+position = Vector2(-540.3, 1007.6)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_041"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_042" type="StaticBody2D" parent="."]
+position = Vector2(41.9, -437.3)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_042"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_043" type="StaticBody2D" parent="."]
+position = Vector2(533.4, 1048.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_043"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_044" type="StaticBody2D" parent="."]
+position = Vector2(1223.5, 785.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_044"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_045" type="StaticBody2D" parent="."]
+position = Vector2(1502.1, 1082.3)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_045"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_046" type="StaticBody2D" parent="."]
+position = Vector2(331.9, 1467.2)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_046"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_047" type="StaticBody2D" parent="."]
+position = Vector2(-1477.9, -319.1)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_047"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_048" type="StaticBody2D" parent="."]
+position = Vector2(925.2, 225.0)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_048"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_049" type="StaticBody2D" parent="."]
+position = Vector2(-819.2, -1073.7)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_049"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_050" type="StaticBody2D" parent="."]
+position = Vector2(-1550.5, 1197.6)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_050"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_051" type="StaticBody2D" parent="."]
+position = Vector2(887.1, 1065.0)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_051"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_052" type="StaticBody2D" parent="."]
+position = Vector2(1316.8, 1238.8)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_052"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_053" type="StaticBody2D" parent="."]
+position = Vector2(-361.9, 67.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_053"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_054" type="StaticBody2D" parent="."]
+position = Vector2(-999.6, 1160.0)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_054"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_055" type="StaticBody2D" parent="."]
+position = Vector2(1250.5, 1395.1)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_055"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_056" type="StaticBody2D" parent="."]
+position = Vector2(-1163.6, 1180.7)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_056"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_057" type="StaticBody2D" parent="."]
+position = Vector2(342.7, -1525.7)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_057"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_058" type="StaticBody2D" parent="."]
+position = Vector2(568.5, 469.5)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_058"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_059" type="StaticBody2D" parent="."]
+position = Vector2(1095.0, 1284.2)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_059"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_060" type="StaticBody2D" parent="."]
+position = Vector2(-912.8, -1539.6)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_060"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_061" type="StaticBody2D" parent="."]
+position = Vector2(-855.6, -1425.6)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_061"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_062" type="StaticBody2D" parent="."]
+position = Vector2(1150.6, -157.6)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_062"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_063" type="StaticBody2D" parent="."]
+position = Vector2(1498.9, 486.0)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_063"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_064" type="StaticBody2D" parent="."]
+position = Vector2(764.4, 282.3)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_064"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_065" type="StaticBody2D" parent="."]
+position = Vector2(-628.2, 1273.9)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_065"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_066" type="StaticBody2D" parent="."]
+position = Vector2(397.8, 957.1)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_066"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_067" type="StaticBody2D" parent="."]
+position = Vector2(-712.7, -495.8)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_067"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_068" type="StaticBody2D" parent="."]
+position = Vector2(742.2, -1143.2)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_068"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_069" type="StaticBody2D" parent="."]
+position = Vector2(749.0, 1309.3)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_069"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_070" type="StaticBody2D" parent="."]
+position = Vector2(436.2, 1118.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_070"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_071" type="StaticBody2D" parent="."]
+position = Vector2(649.0, 619.2)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_071"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_072" type="StaticBody2D" parent="."]
+position = Vector2(-278.9, -1121.1)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_072"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_073" type="StaticBody2D" parent="."]
+position = Vector2(-229.7, 686.3)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_073"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_074" type="StaticBody2D" parent="."]
+position = Vector2(-562.8, -1211.4)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_074"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
+
+[node name="Rock_075" type="StaticBody2D" parent="."]
+position = Vector2(-1248.1, 1249.8)
+script = ExtResource("1_resource")
+resource_type = "rock"
+max_health = 110.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock_075"]
+position = Vector2(0, 8)
+shape = SubResource("RockCollision")
