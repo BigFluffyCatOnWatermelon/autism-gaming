@@ -92,7 +92,7 @@ func _create_world_drop_zone() -> void:
 	var zone := InventoryDropZoneScript.new() as Control
 	zone.name = "WorldDropZone"
 	zone.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	zone.mouse_filter = Control.MOUSE_FILTER_PASS
+	zone.mouse_filter = Control.MOUSE_FILTER_STOP
 	zone.z_index = -10
 	zone.drop_requested.connect(_on_world_drop_requested)
 	root.add_child(zone)
@@ -148,9 +148,16 @@ func _bind_existing_ui() -> void:
 	hotbar_buttons.clear()
 	var row := _find_node("HotbarRow") as HBoxContainer
 	if row != null:
-		for child in row.get_children():
+		for index in range(row.get_child_count()):
+			var child := row.get_child(index)
 			if child is Button:
-				hotbar_buttons.append(child as Button)
+				var button := child as Button
+				if button.get_script() != InventorySlotScript:
+					button.set_script(InventorySlotScript)
+				button.set_meta("slot_index", index)
+				if not button.has_meta("item_id"):
+					button.set_meta("item_id", "")
+				hotbar_buttons.append(button)
 
 func _find_node(node_name: String) -> Node:
 	return root.find_child(node_name, true, false) if root != null else null
@@ -165,14 +172,21 @@ func _wire_controls() -> void:
 		var callback := Callable(self, "_on_hotbar_pressed").bind(index)
 		if not hotbar_buttons[index].pressed.is_connected(callback):
 			hotbar_buttons[index].pressed.connect(callback)
-		var hotbar_slot := hotbar_buttons[index] as InventorySlot
-		if hotbar_slot != null and not hotbar_slot.drop_requested.is_connected(_on_inventory_slot_dropped):
-			hotbar_slot.drop_requested.connect(_on_inventory_slot_dropped)
+		var hotbar_slot := hotbar_buttons[index]
+		if hotbar_slot.has_signal("drop_requested") and not hotbar_slot.is_connected("drop_requested", _on_inventory_slot_dropped):
+			hotbar_slot.connect("drop_requested", _on_inventory_slot_dropped)
 	if inventory_grid != null:
-		for child in inventory_grid.get_children():
-			var backpack_slot := child as InventorySlot
-			if backpack_slot != null and not backpack_slot.drop_requested.is_connected(_on_inventory_slot_dropped):
-				backpack_slot.drop_requested.connect(_on_inventory_slot_dropped)
+		for index in range(inventory_grid.get_child_count()):
+			var child := inventory_grid.get_child(index)
+			if child is Button:
+				var backpack_slot := child as Button
+				if backpack_slot.get_script() != InventorySlotScript:
+					backpack_slot.set_script(InventorySlotScript)
+				backpack_slot.set_meta("slot_index", 9 + index)
+				if not backpack_slot.has_meta("item_id"):
+					backpack_slot.set_meta("item_id", "")
+				if backpack_slot.has_signal("drop_requested") and not backpack_slot.is_connected("drop_requested", _on_inventory_slot_dropped):
+					backpack_slot.connect("drop_requested", _on_inventory_slot_dropped)
 
 	var expand_button := _find_node("ExpandBackpack") as Button
 	if expand_button != null and not expand_button.pressed.is_connected(_on_expand_pressed):
@@ -822,9 +836,7 @@ func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String
 			icon_rect.texture = null
 			icon_rect.visible = false
 			button.text = ""
-	var slot := button as InventorySlot
-	if slot != null:
-		slot.item_id = item_id
+	button.set_meta("item_id", item_id)
 	if count_label != null:
 		count_label.text = str(count) if count > 1 else ""
 	if tooltip != "":

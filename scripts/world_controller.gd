@@ -117,6 +117,23 @@ func _create_resources() -> void:
 		_register_resource(resource)
 
 
+func _create_player() -> void:
+	player = get_node_or_null("Player")
+	if player == null:
+		player = PlayerControllerScript.new()
+		player.name = "Player"
+		add_child(player)
+	player.configure(config)
+	var camera: Camera2D = player.camera
+	var half_width := int(config.world.width / 2)
+	var half_height := int(config.world.height / 2)
+	camera.limit_left = -half_width
+	camera.limit_right = half_width
+	camera.limit_top = -half_height
+	camera.limit_bottom = half_height
+	camera.limit_smoothed = true
+
+
 func _register_resource(resource: ResourceNode) -> void:
 	if not is_instance_valid(resource):
 		return
