@@ -936,10 +936,14 @@ func toggle_panel(panel_name: String) -> void:
 		current_panel = panel_name
 
 func close_panels() -> void:
+	var closing_debug := current_panel == "debug"
 	for panel in panels.values():
 		if panel is Control:
 			(panel as Control).visible = false
 	current_panel = ""
+	if closing_debug:
+		set_debug_mode_enabled(false)
+		debug_mode_requested.emit(false)
 
 func has_modal_open() -> bool:
 	return current_panel != ""
