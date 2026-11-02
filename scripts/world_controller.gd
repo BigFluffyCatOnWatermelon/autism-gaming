@@ -200,7 +200,7 @@ func _on_slot_selected(index: int) -> void:
 		return
 	selected_slot = index
 	ui.set_hotbar_selection(selected_slot)
-	var label := HOTBAR_ITEMS[index]
+	var label: String = str(HOTBAR_ITEMS[index])
 	if label == "":
 		_log("Пустой слот.")
 	else:
@@ -277,11 +277,11 @@ func _attack(secondary: bool) -> void:
 		weapon_id = "bow"
 	if weapon_id == "":
 		return
-	var aim_vector := get_global_mouse_position() - player.global_position
+	var aim_vector: Vector2 = get_global_mouse_position() - player.global_position
 	if aim_vector.length_squared() < 0.001:
 		return
-	var aim_direction := aim_vector.normalized()
-	var aim_angle := aim_vector.angle()
+	var aim_direction: Vector2 = aim_vector.normalized()
+	var aim_angle: float = aim_vector.angle()
 	var weapon: Dictionary = config.weapons.get(weapon_id, {})
 	if weapon.is_empty():
 		return
@@ -321,8 +321,8 @@ func _attack(secondary: bool) -> void:
 		if mode == "slash":
 			is_hit = CombatSystemScript.point_in_arc(player.global_position, target.global_position, aim_angle, reach + target.hit_radius, float(attack.get("arc_degrees", 118.0)))
 		elif mode == "thrust":
-			var start := player.global_position + aim_direction * 12.0
-			var finish := player.global_position + aim_direction * reach
+			var start: Vector2 = player.global_position + aim_direction * 12.0
+			var finish: Vector2 = player.global_position + aim_direction * reach
 			is_hit = CombatSystemScript.distance_to_segment(target.global_position, start, finish) <= float(attack.get("width", 24.0)) + target.hit_radius * 0.35
 		else:
 			is_hit = distance <= reach + target.hit_radius and absf(CombatSystemScript.angle_difference(offset.angle(), aim_angle)) <= deg_to_rad(38.0)
