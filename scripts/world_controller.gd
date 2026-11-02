@@ -243,7 +243,7 @@ func _handle_hotkeys() -> void:
 		ui.toggle_panel("inventory")
 	if Input.is_action_just_pressed("settings"):
 		if ui.has_modal_open():
-			var was_debug_open := ui.current_panel == "debug"
+			var was_debug_open: bool = ui.current_panel == "debug"
 			ui.close_panels()
 			ui.set_debug_mode_enabled(false)
 			if was_debug_open:
