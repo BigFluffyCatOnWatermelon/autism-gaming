@@ -24,6 +24,7 @@ var world_objects: Node2D
 var resources: Array = []
 var drops: Array = []
 var projectiles: Array[Dictionary] = []
+var embedded_arrows: Array[Node2D] = []
 var attack_cooldowns: Dictionary = {}
 var selected_slot := 0
 var backpack_slots := 12
@@ -139,11 +140,63 @@ func _create_resources() -> void:
 		world_objects = ObjectsScene.instantiate() as Node2D
 		world_objects.name = "Objects"
 		add_child(world_objects)
+
 	resources.clear()
+	var occupied_positions: Array[Vector2] = []
+	var existing_trees := 0
+	var existing_rocks := 0
 	for child in world_objects.get_children():
 		var resource := child as ResourceNode
-		if resource != null and resource.resource_type != "stump":
-			_register_resource(resource)
+		if resource == null or resource.resource_type == "stump":
+			continue
+		_register_resource(resource)
+		occupied_positions.append(resource.global_position)
+		if resource.resource_type == "tree":
+			existing_trees += 1
+		elif resource.resource_type == "rock":
+			existing_rocks += 1
+
+	var target_trees := maxi(1, int(config.world.get("tree_count", 100)))
+	var target_rocks := maxi(1, int(config.world.get("rock_count", 75)))
+	while existing_trees < target_trees:
+		_spawn_world_resource("tree", existing_trees + 1, occupied_positions)
+		existing_trees += 1
+	while existing_rocks < target_rocks:
+		_spawn_world_resource("rock", existing_rocks + 1, occupied_positions)
+		existing_rocks += 1
+
+func _spawn_world_resource(kind: String, index: int, occupied_positions: Array[Vector2]) -> void:
+	var resource := ResourceNodeScript.new() as ResourceNode
+	var max_health := float(config.resources.tree_health) if kind == "tree" else float(config.resources.rock_health)
+	resource.configure(kind, max_health)
+	resource.name = "%s_%03d" % [kind.capitalize(), index]
+	resource.position = _find_resource_spawn_position(occupied_positions)
+	world_objects.add_child(resource)
+	_register_resource(resource)
+	occupied_positions.append(resource.global_position)
+
+func _find_resource_spawn_position(occupied_positions: Array[Vector2]) -> Vector2:
+	var half_width := float(config.world.width) * 0.5
+	var half_height := float(config.world.height) * 0.5
+	var edge_margin := 96.0
+	var clear_radius := float(config.world.get("keep_spawn_clear_radius", 230.0))
+	var minimum_spacing := 88.0
+	var candidate := Vector2.ZERO
+	for _attempt in range(300):
+		candidate = Vector2(
+			rng.randf_range(-half_width + edge_margin, half_width - edge_margin),
+			rng.randf_range(-half_height + edge_margin, half_height - edge_margin)
+		)
+		if candidate.length() < clear_radius:
+			continue
+		var overlaps := false
+		for other_position in occupied_positions:
+			if candidate.distance_to(other_position) < minimum_spacing:
+				overlaps = true
+				break
+		if not overlaps:
+			return candidate
+	return candidate
 
 func _register_resource(resource: ResourceNode) -> void:
 	if not is_instance_valid(resource):
@@ -179,7 +232,7 @@ func _create_ui() -> void:
 func _process(delta: float) -> void:
 	_handle_hotkeys()
 	_update_attack_cooldowns(delta)
-	_handle_held_bow()
+	_handle_held_combat()
 	_update_projectiles(delta)
 	_update_drops()
 	_update_camera(delta)
@@ -220,14 +273,22 @@ func _process(delta: float) -> void:
 				]
 			)
 
-func _handle_held_bow() -> void:
+func _handle_held_combat() -> void:
 	if player == null or ui == null or ui.has_modal_open():
 		return
-	var selected_item := _get_selected_item_id()
-	if selected_item != "bow" and selected_item != "arrows":
+	var primary_pressed := Input.is_action_pressed("attack_primary")
+	var secondary_pressed := Input.is_action_pressed("attack_secondary")
+	if not primary_pressed and not secondary_pressed:
 		return
-	if Input.is_action_pressed("attack_primary") or Input.is_action_pressed("attack_secondary"):
+
+	var selected_item := _get_selected_item_id()
+	if selected_item == "bow" or selected_item == "arrows":
 		_fire_arrow(config.weapons.get("bow", {}))
+		return
+	if selected_item.is_empty():
+		return
+	# Melee weapons and tools repeat while held, respecting their individual cooldown.
+	_attack(secondary_pressed and not primary_pressed)
 
 func _update_held_item() -> void:
 	if player == null or not player.has_method("set_held_item"):
@@ -497,6 +558,7 @@ func _attack(secondary: bool) -> void:
 		return
 	var stamina_cost := float(attack.get("stamina_cost", config.combat.attack_stamina_cost))
 	if player.current_stamina < stamina_cost and not player.debug_infinite_stamina:
+		attack_cooldowns[cooldown_key] = 0.25
 		_log("Недостаточно выносливости для атаки.")
 		return
 	if not player.debug_infinite_stamina:
@@ -565,6 +627,7 @@ func _fire_arrow(weapon: Dictionary) -> void:
 	if weapon.is_empty() or float(attack_cooldowns.get("bow", 0.0)) > 0.0:
 		return
 	if arrow_count <= 0:
+		attack_cooldowns["bow"] = 0.4
 		_log("Стрелы закончились.")
 		return
 	var aim_vector: Vector2 = get_global_mouse_position() - player.global_position
@@ -572,9 +635,11 @@ func _fire_arrow(weapon: Dictionary) -> void:
 		return
 	var stamina_cost := float(weapon.get("stamina_cost", 0.0))
 	if player.current_stamina < stamina_cost and not player.debug_infinite_stamina:
+		attack_cooldowns["bow"] = 0.25
 		_log("Недостаточно выносливости для выстрела.")
 		return
 	if not _consume_item("arrows", 1):
+		attack_cooldowns["bow"] = 0.4
 		_log("Нет стрел в инвентаре.")
 		return
 	if not player.debug_infinite_stamina:
@@ -591,9 +656,6 @@ func _fire_arrow(weapon: Dictionary) -> void:
 		"node": arrow,
 		"velocity": direction * float(weapon.get("projectile_speed", config.combat.arrow_speed)),
 		"remaining": float(weapon.get("projectile_range", config.combat.arrow_range)),
-		"damage": float(weapon.get("damage", 18.0)),
-		"damage_type": str(weapon.get("damage_type", "piercing")),
-		"weapon_id": "bow",
 	})
 	_update_resource_counts()
 	inventory_dirty = true
@@ -606,44 +668,32 @@ func _update_projectiles(delta: float) -> void:
 		if not is_instance_valid(arrow):
 			projectiles.remove_at(index)
 			continue
-		var previous := arrow.global_position
-		var movement: Vector2 = shot["velocity"] * delta
-		var next_position := previous + movement
-		arrow.global_position = next_position
-		shot["remaining"] = float(shot["remaining"]) - movement.length()
 
-		var hit_target: ResourceNode
-		for target in resources:
-			if not is_instance_valid(target) or target.destroying or target.resource_type == "stump":
-				continue
-			var collision_points: Array[Vector2] = []
-			var collision_radius := 16.0
-			if target.resource_type == "tree":
-				collision_points = [target.global_position + Vector2(0, -30), target.global_position + Vector2(0, -10), target.global_position + Vector2(0, 12)]
-				collision_radius = 18.0
-			else:
-				collision_points = [target.global_position + Vector2(0, -5)]
-				collision_radius = maxf(16.0, target.hit_radius * 0.78)
-			var hit_visible_area := false
-			for collision_point in collision_points:
-				if CombatSystemScript.distance_to_segment(collision_point, previous, next_position) <= collision_radius:
-					hit_visible_area = true
-					break
-			if hit_visible_area:
-				hit_target = target
-				break
-		if hit_target != null:
-			var attack := {
-				"damage": shot["damage"],
-				"damage_type": shot["damage_type"],
-				"weapon_id": "bow",
-			}
-			_damage_target(hit_target, attack)
-			arrow.queue_free()
+		var previous := arrow.global_position
+		var remaining_distance := maxf(0.0, float(shot.get("remaining", 0.0)))
+		var movement: Vector2 = shot["velocity"] * delta
+		var movement_length := movement.length()
+		if movement_length > remaining_distance and movement_length > 0.0:
+			movement = movement.normalized() * remaining_distance
+		arrow.global_position = previous + movement
+		remaining_distance = maxf(0.0, remaining_distance - movement.length())
+		shot["remaining"] = remaining_distance
+		projectiles[index] = shot
+
+		# Ordinary resources are ignored by arrows and never take projectile damage.
+		if remaining_distance <= 0.001:
+			_embed_arrow(arrow)
 			projectiles.remove_at(index)
-		elif float(shot["remaining"]) <= 0.0:
-			arrow.queue_free()
-			projectiles.remove_at(index)
+
+func _embed_arrow(arrow: Node2D) -> void:
+	if arrow.has_method("embed"):
+		arrow.call("embed")
+	arrow.z_index = int(arrow.global_position.y / 16.0)
+	embedded_arrows.append(arrow)
+	while embedded_arrows.size() > 100:
+		var oldest: Node2D = embedded_arrows.pop_front()
+		if is_instance_valid(oldest):
+			oldest.queue_free()
 
 func _damage_target(target: ResourceNode, attack: Dictionary) -> void:
 	if not is_instance_valid(target) or target.destroying:
