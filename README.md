@@ -68,7 +68,8 @@ F3 включает отладочный режим: выбор игрока/р�
 | scripts/inventory_slot.gd | Перетаскиваемый слот инвентаря |
 | scripts/combat_system.gd | Расчёт урона и совместимость оружия |
 | scripts/game_ui.gd | HUD, инвентарь, подсказки и Debug Inspector |
-| public/assets/ | Изображения проекта, разложенные по типам: objects/trees, objects/rocks, objects/stumps, projectiles/arrows |
+| Assets/ | Каталог ассетов по 17 категориям; актуальные пути Godot находятся здесь |
+| public/assets/ | Совместимые копии файлов старого Phaser-прототипа |
 
 ## Получение обновлений без потери локальных правок
 
@@ -90,5 +91,14 @@ F3 включает отладочный режим: выбор игрока/р�
 ## Проверки
 GitHub Actions выполняет импорт ресурсов, проверку GDScript и краткий headless-запуск главной сцены при push в main и при pull request. Headless CI не заменяет визуальную проверку UI, управления и работы мышью в настольном Godot 4.7.2.
 
-## Графика
-Начальные изображения в public/assets/ созданы специально для проекта. Сторонние наборы не добавлялись; информация об исходниках — в public/assets/ASSET_SOURCES.md.
+## Каталог ассетов
+
+Все актуальные ассеты Godot находятся в `Assets/` и распределены по категориям:
+`Environment`, `Resources`, `Buildings`, `Furniture`, `Items`,
+`Weapons`, `Tools`, `Creatures`, `NPC`, `Interactive`, `Transport`,
+`Decorations`, `Effects`, `Projectiles`, `Traps`, `World_Zones`, `System`.
+
+Каждый инструмент/предмет экипировки имеет отдельный файл изображения. Старый
+`public/assets/items.png` оставлен только для совместимости с архивным Phaser-кодом;
+Godot использует отдельные изображения из `Assets/Weapons`, `Assets/Tools` и `Assets/Items`.
+Подробности и назначение папок описаны в README внутри категорий.

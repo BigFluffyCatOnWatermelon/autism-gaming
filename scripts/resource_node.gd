@@ -73,16 +73,16 @@ func _ready() -> void:
 func _update_visual() -> void:
 	if visual == null:
 		return
-	var texture_path := "res://public/assets/objects/trees/tree.svg"
+	var texture_path := "res://Assets/Resources/Trees/tree.svg"
 	match resource_type:
 		"rock":
-			texture_path = "res://public/assets/objects/rocks/rock.svg"
+			texture_path = "res://Assets/Resources/Rocks/rock.svg"
 			visual.position = Vector2(0, -28)
 		"stump":
-			texture_path = "res://public/assets/objects/stumps/stump.svg"
+			texture_path = "res://Assets/Resources/Stumps/stump.svg"
 			visual.position = Vector2(0, -20)
 		_:
-			texture_path = "res://public/assets/objects/trees/tree.svg"
+			texture_path = "res://Assets/Resources/Trees/tree.svg"
 			visual.position = Vector2(0, -48)
 	visual.texture = load(texture_path) as Texture2D
 	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
