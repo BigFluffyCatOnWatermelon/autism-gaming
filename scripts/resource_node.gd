@@ -8,6 +8,7 @@ signal resource_broken(kind: String, drop_position: Vector2, amount: int)
 	set(value):
 		resource_type = value
 		if is_inside_tree():
+			_update_visual()
 			queue_redraw()
 
 @export var max_health := 90.0
@@ -24,6 +25,7 @@ signal resource_broken(kind: String, drop_position: Vector2, amount: int)
 	"crushing": 1.0,
 }
 
+var visual: Sprite2D
 var flash_timer := 0.0
 var sway_velocity := 0.0
 var destroying := false
@@ -36,6 +38,7 @@ func configure(kind: String, starting_health: float) -> void:
 	hit_radius = 29.0 if kind == "tree" else 23.0
 	wood_drop_amount = 5
 	stone_drop_amount = 4
+	_update_visual()
 	queue_redraw()
 
 func _ready() -> void:
@@ -46,6 +49,14 @@ func _ready() -> void:
 		hit_radius = maxf(hit_radius, 29.0)
 	else:
 		hit_radius = maxf(hit_radius, 23.0)
+
+	visual = get_node_or_null("Visual") as Sprite2D
+	if visual == null:
+		visual = Sprite2D.new()
+		visual.name = "Visual"
+		add_child(visual)
+	_update_visual()
+
 	if get_node_or_null("CollisionShape2D") == null:
 		var collision := CollisionShape2D.new()
 		collision.name = "CollisionShape2D"
@@ -59,6 +70,24 @@ func _ready() -> void:
 		collision_mask = 0
 	queue_redraw()
 
+func _update_visual() -> void:
+	if visual == null:
+		return
+	var texture_path := "res://public/assets/objects/trees/tree.svg"
+	match resource_type:
+		"rock":
+			texture_path = "res://public/assets/objects/rocks/rock.svg"
+			visual.position = Vector2(0, -28)
+		"stump":
+			texture_path = "res://public/assets/objects/stumps/stump.svg"
+			visual.position = Vector2(0, -20)
+		_:
+			texture_path = "res://public/assets/objects/trees/tree.svg"
+			visual.position = Vector2(0, -48)
+	visual.texture = load(texture_path) as Texture2D
+	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	visual.z_index = -1
+
 func apply_damage(amount: float, damage_type: String = "crushing") -> bool:
 	if amount <= 0.0 or destroying or resource_type == "stump":
 		return false
@@ -69,6 +98,8 @@ func apply_damage(amount: float, damage_type: String = "crushing") -> bool:
 	var direction := -1.0 if randf() < 0.5 else 1.0
 	rotation += direction * deg_to_rad(4.0) * swing_strength
 	sway_velocity += direction * deg_to_rad(38.0) * swing_strength
+	if visual != null:
+		visual.modulate = Color(1.55, 1.55, 1.55, 1.0)
 	queue_redraw()
 	return health <= 0.0
 
@@ -102,7 +133,10 @@ func _finish_tree_fall() -> void:
 	health = 0.0
 	rotation = 0.0
 	modulate = Color.WHITE
+	if visual != null:
+		visual.modulate = Color.WHITE
 	destroying = false
+	_update_visual()
 	queue_redraw()
 
 func _finish_rock_break() -> void:
@@ -114,10 +148,9 @@ func _process(delta: float) -> void:
 		return
 	if flash_timer > 0.0:
 		flash_timer = maxf(0.0, flash_timer - delta)
-		if flash_timer == 0.0:
-			queue_redraw()
+		if flash_timer == 0.0 and visual != null:
+			visual.modulate = Color.WHITE
 	if not destroying and resource_type == "tree":
-		# Damped spring: impact adds angular velocity, while the trunk eases back to rest.
 		sway_velocity -= rotation * 26.0 * delta
 		sway_velocity *= exp(-7.5 * delta)
 		rotation += sway_velocity * delta
@@ -125,48 +158,9 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	if debug_selected:
-		draw_arc(Vector2(0, -12), 34.0 if resource_type == "tree" else 27.0, 0.0, TAU, 40, Color("#8ee6ff"), 2.0, true)
-
-	if resource_type == "tree":
-		draw_rect(Rect2(-5, 5, 10, 28), Color("#76502e"))
-		draw_rect(Rect2(-8, 17, 4, 12), Color("#51371f"))
-		draw_rect(Rect2(-25, -28, 50, 34), Color("#245d32"))
-		draw_rect(Rect2(-20, -40, 40, 20), Color("#347c3d"))
-		draw_rect(Rect2(-15, -48, 27, 14), Color("#4b9144"))
-		draw_rect(Rect2(-29, -15, 13, 16), Color("#1d4c2c"))
-		draw_rect(Rect2(14, -20, 13, 18), Color("#1d4c2c"))
-		draw_rect(Rect2(-13, -33, 8, 7), Color("#69a84d"))
-		draw_rect(Rect2(6, -22, 8, 7), Color("#69a84d"))
-	elif resource_type == "stump":
-		draw_rect(Rect2(-7, -2, 14, 18), Color("#76502e"))
-		draw_set_transform(Vector2(0, -4), 0.0, Vector2(1.0, 0.5))
-		draw_circle(Vector2.ZERO, 9.0, Color("#ad8750"))
-		draw_circle(Vector2.ZERO, 5.0, Color("#775536"))
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-		draw_line(Vector2(-4, -5), Vector2(3, -2), Color("#d4b47a"), 1.0)
-	else:
-		var points := PackedVector2Array([
-			Vector2(-20, 5), Vector2(-15, -12), Vector2(-5, -22),
-			Vector2(12, -18), Vector2(22, -3), Vector2(16, 12),
-			Vector2(-10, 14)
-		])
-		draw_colored_polygon(points, Color("#727e7d"))
-		draw_line(Vector2(-15, -8), Vector2(-4, -18), Color("#aab5a7"), 3.0)
-		draw_line(Vector2(-4, -18), Vector2(9, -15), Color("#aab5a7"), 2.0)
-		draw_rect(Rect2(-7, -6, 7, 5), Color("#596563"))
-		var damage_ratio := 1.0 - clampf(health / maxf(max_health, 1.0), 0.0, 1.0)
-		if damage_ratio > 0.18:
-			draw_line(Vector2(-8, -14), Vector2(-2, -5), Color("#343d3a"), 1.5)
-		if damage_ratio > 0.42:
-			draw_line(Vector2(-2, -5), Vector2(-10, 4), Color("#343d3a"), 1.5)
-		if damage_ratio > 0.66:
-			draw_line(Vector2(7, -15), Vector2(3, -7), Color("#343d3a"), 1.5)
-			draw_line(Vector2(3, -7), Vector2(14, 0), Color("#343d3a"), 1.5)
-
-	if flash_timer > 0.0:
-		draw_rect(Rect2(-8, -3, 16, 12), Color(1, 1, 1, 0.32))
+		draw_arc(Vector2(0, -30), 48.0 if resource_type == "tree" else 34.0, 0.0, TAU, 40, Color("#8ee6ff"), 2.0, true)
 	if resource_type != "stump" and health < max_health:
-		var width := 42.0
-		var top := -58.0 if resource_type == "tree" else -34.0
+		var width := 46.0
+		var top := -100.0 if resource_type == "tree" else -58.0
 		draw_rect(Rect2(-width * 0.5, top, width, 5), Color("#252525"))
-		draw_rect(Rect2(-width * 0.5, top, width * (health / max_health), 5), Color("#d85a4f"))
+		draw_rect(Rect2(-width * 0.5, top, width * clampf(health / maxf(max_health, 1.0), 0.0, 1.0), 5), Color("#d85a4f"))
