@@ -38,8 +38,8 @@ export class WorldScene extends Phaser.Scene {
     this.ui = null;
 
     this.stats = {
-      health: GAME_CONFIG.player.maxHealth,
-      stamina: GAME_CONFIG.player.maxStamina,
+      health: GAME_CONFIG.player.health,
+      stamina: GAME_CONFIG.player.stamina,
       strength: GAME_CONFIG.player.strength,
       agility: GAME_CONFIG.player.agility,
     };
@@ -299,6 +299,8 @@ export class WorldScene extends Phaser.Scene {
       - Number(keys.a.isDown || keys.left.isDown);
     let dy = Number(keys.s.isDown || keys.down.isDown)
       - Number(keys.w.isDown || keys.up.isDown);
+    const overlayPaused = this.ui?.isOverlayOpen();
+    if (overlayPaused) { dx = 0; dy = 0; }
     let moving = dx !== 0 || dy !== 0;
 
     if (moving) {
@@ -308,10 +310,10 @@ export class WorldScene extends Phaser.Scene {
       this.lastMoveAngle = Math.atan2(dy, dx);
     }
 
-    if (Phaser.Input.Keyboard.JustDown(keys.roll)) this.tryRoll(dx, dy);
+    if (!overlayPaused && Phaser.Input.Keyboard.JustDown(keys.roll)) this.tryRoll(dx, dy);
 
-    this.isCrouching = keys.crouch.isDown && !this.isRolling;
-    this.isSprinting = keys.shift.isDown && moving && !this.isCrouching && !this.isRolling
+    this.isCrouching = !overlayPaused && keys.crouch.isDown && !this.isRolling;
+    this.isSprinting = !overlayPaused && keys.shift.isDown && moving && !this.isCrouching && !this.isRolling
       && this.stats.stamina > 0;
 
     let speed = player.walkSpeed;
@@ -458,7 +460,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   handlePointerDown(pointer) {
-    if (this.ui.isOverlayOpen()) return;
+    // The debug inspector can remain open while selecting objects on the
+    // uncovered canvas. Inventory, settings and logs pause world clicks.
+    if (this.ui.inventoryOpen || this.ui.settingsOpen || this.ui.logsOpen) return;
 
     if (this.debugMode) {
       const distance = Phaser.Math.Distance.Between(
@@ -812,6 +816,9 @@ export class WorldScene extends Phaser.Scene {
   onConfigChanged(path, value) {
     if (path === 'player.maxHealth') this.stats.health = Math.min(this.stats.health, value);
     if (path === 'player.maxStamina') this.stats.stamina = Math.min(this.stats.stamina, value);
+    if (path === 'player.health') this.stats.health = Math.min(value, GAME_CONFIG.player.maxHealth);
+    if (path === 'player.stamina') this.stats.stamina = Math.min(value, GAME_CONFIG.player.maxStamina);
+    if (path === 'inventory.startingArrows') this.arrowCount = value;
 
     if (path === 'player.strength') this.stats.strength = value;
     if (path === 'player.agility') this.stats.agility = value;
