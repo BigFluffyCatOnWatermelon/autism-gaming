@@ -314,6 +314,8 @@ export class GameUI {
   toggleDebug() { this.setDebugOpen(!this.debugOpen); }
   setDebugOpen(open) {
     this.debugOpen = open;
+    this.scene.debugMode = open;
+    this.scene.debugHighlight?.setVisible(open);
     this.root.querySelector('#debug-panel').hidden = !open;
     this.root.querySelector('.debug-toggle').classList.toggle('active', open);
     this.root.querySelector('#debug-crosshair').hidden = !open;
@@ -399,7 +401,7 @@ export class GameUI {
 
     this.root.querySelector('#armor-summary').textContent = `Защита: ${this.scene.getArmorDefense()} · Слотов занято: ${this.scene.equippedArmorCount}`;
     this.root.querySelector('#bag-capacity').textContent =
-      `${Math.min(this.scene.backpack.filter(Boolean).length, GAME_CONFIG.inventory.baseBackpackSlots)} / ${GAME_CONFIG.inventory.maxBackpackSlots}`;
+      `${GAME_CONFIG.inventory.baseBackpackSlots} / ${GAME_CONFIG.inventory.maxBackpackSlots} открыто`;
 
     const activeSlots = GAME_CONFIG.inventory.baseBackpackSlots;
     const maxSlots = GAME_CONFIG.inventory.maxBackpackSlots;
