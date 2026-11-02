@@ -22,5 +22,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Run gameplay logic tests
+        run: npm test
+
       - name: Build production bundle
         run: npm run build
