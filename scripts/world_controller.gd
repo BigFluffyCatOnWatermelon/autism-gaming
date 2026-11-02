@@ -108,7 +108,7 @@ func _create_ground() -> void:
 	var tile_set := TileSet.new()
 	tile_set.tile_size = Vector2i(32, 32)
 	var atlas := TileSetAtlasSource.new()
-	atlas.texture = load("res://public/assets/grass.png")
+	atlas.texture = load("res://Assets/Environment/grass.png")
 	atlas.texture_region_size = Vector2i(32, 32)
 	atlas.create_tile(Vector2i.ZERO)
 	tile_set.add_source(atlas, 0)
@@ -282,8 +282,11 @@ func _handle_held_combat() -> void:
 		return
 
 	var selected_item := _get_selected_item_id()
-	if selected_item == "bow" or selected_item == "arrows":
+	if selected_item == "bow":
 		_fire_arrow(config.weapons.get("bow", {}))
+		return
+	if selected_item == "arrows":
+		# Ammunition is not a weapon; selecting arrows never fires.
 		return
 	if selected_item.is_empty():
 		return
@@ -526,8 +529,11 @@ func _attack(secondary: bool) -> void:
 	if player == null:
 		return
 	var weapon_id := _get_selected_item_id()
-	if weapon_id == "arrows" or weapon_id == "bow":
+	if weapon_id == "bow":
 		_fire_arrow(config.weapons.get("bow", {}))
+		return
+	if weapon_id == "arrows":
+		# Ammunition cannot trigger an attack; select the bow.
 		return
 	if weapon_id.is_empty():
 		return
