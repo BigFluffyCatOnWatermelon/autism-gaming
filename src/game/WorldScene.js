@@ -125,14 +125,16 @@ export class WorldScene extends Phaser.Scene {
     // Tile only the visible canvas, not the 3600×3600 world. Phaser's docs
     // explicitly recommend scrolling TileSprite.tilePosition instead of
     // creating huge TileSprites, which waste memory and hurt performance.
-    this.ground = this.add.tileSprite(0, 0, this.scale.width * 2.5, this.scale.height * 2.5, 'grass')
-      .setOrigin(0, 0)
+    this.ground = this.add.tileSprite(this.scale.width / 2, this.scale.height / 2, this.scale.width * 2.5, this.scale.height * 2.5, 'grass')
+      .setOrigin(0.5, 0.5)
       .setScrollFactor(0)
       .setDepth(0);
 
     this.scale.on(Phaser.Scale.Events.RESIZE, gameSize => {
       // Slightly oversize the fixed layer so even the widest debug zoom has no empty edges.
-      this.ground.setSize(gameSize.width * 2.5, gameSize.height * 2.5);
+      this.ground
+        .setPosition(gameSize.width / 2, gameSize.height / 2)
+        .setSize(gameSize.width * 2.5, gameSize.height * 2.5);
     });
 
     // Extra tiny pixel clusters break up the repeated tile without importing
