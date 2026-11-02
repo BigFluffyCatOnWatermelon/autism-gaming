@@ -57,8 +57,8 @@ func _ready() -> void:
 	camera.position_smoothing_enabled = true
 	camera.position_smoothing_speed = float(game_config.camera.follow_speed)
 	camera.zoom = Vector2.ONE * float(game_config.camera.base_zoom)
-	camera.make_current()
 	add_child(camera)
+	camera.make_current()
 
 func _physics_process(delta: float) -> void:
 	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
