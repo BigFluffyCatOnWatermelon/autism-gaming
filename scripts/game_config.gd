@@ -80,7 +80,7 @@ static func make_default() -> Dictionary:
 		"inventory": {
 			"hotbar_slots": 9,
 			"base_backpack_slots": 12,
-			"max_backpack_slots": 24,
+			"max_backpack_slots": 27,
 			"expansion_step": 3,
 			"starting_arrows": 30,
 		},

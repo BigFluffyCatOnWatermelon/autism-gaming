@@ -174,7 +174,7 @@ func _process(delta: float) -> void:
 	_update_z_order()
 	if player != null and player.has_method("set_held_item"):
 		var selected_item := str(HOTBAR_ITEMS[selected_slot])
-		var aim_direction := (get_global_mouse_position() - player.global_position).normalized()
+		var aim_direction: Vector2 = (get_global_mouse_position() - player.global_position).normalized()
 		player.set_held_item(selected_item, aim_direction)
 	if ui != null and player != null:
 		ui.set_player_data(
@@ -224,7 +224,7 @@ func _on_slot_selected(index: int) -> void:
 	ui.set_hotbar_selection(selected_slot)
 	var label: String = str(HOTBAR_ITEMS[index])
 	if player != null and player.has_method("set_held_item"):
-		var aim_direction := (get_global_mouse_position() - player.global_position).normalized()
+		var aim_direction: Vector2 = (get_global_mouse_position() - player.global_position).normalized()
 		player.set_held_item(label, aim_direction)
 	if label == "":
 		_log("Пустой слот.")
