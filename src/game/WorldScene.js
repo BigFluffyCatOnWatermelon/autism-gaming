@@ -528,7 +528,7 @@ export class WorldScene extends Phaser.Scene {
     this.hoveredDebugTarget = target;
     this.debugHighlight.clear();
 
-    if (target?.object) {
+    if (target?.object && target.id !== 'world') {
       const bounds = target.object.getBounds?.();
       this.debugHighlight.lineStyle(2, 0x65e6c4, 0.95);
       if (bounds) {
@@ -537,6 +537,8 @@ export class WorldScene extends Phaser.Scene {
         this.debugHighlight.strokeCircle(target.object.x, target.object.y, target.hitRadius || 30);
       }
     } else {
+      // The ground is the fallback target, so show the cursor rather than a
+      // rectangle around the screen-fixed repeating grass layer.
       this.debugHighlight.lineStyle(1, 0x65e6c4, 0.55);
       this.debugHighlight.strokeCircle(pointer.worldX, pointer.worldY, 14);
     }
@@ -608,7 +610,8 @@ export class WorldScene extends Phaser.Scene {
         damageType: weapon.damageType,
         cooldownMs: weapon.cooldownMs,
         staminaCost: weapon.staminaCost,
-        reach: GAME_CONFIG.combat.arrowRange,
+        projectileSpeed: weapon.projectileSpeed || GAME_CONFIG.combat.arrowSpeed,
+        reach: weapon.reach || GAME_CONFIG.combat.arrowRange,
       };
     } else {
       attackKind = 'tool';
@@ -825,7 +828,7 @@ export class WorldScene extends Phaser.Scene {
       targets: arrow,
       x: endX,
       y: endY,
-      duration: Math.max(120, (distance / GAME_CONFIG.combat.arrowSpeed) * 1000),
+      duration: Math.max(120, (distance / (profile.projectileSpeed || GAME_CONFIG.combat.arrowSpeed)) * 1000),
       ease: 'Linear',
       onUpdate: () => {
         // A faint trail makes the arrow readable against the grass.
