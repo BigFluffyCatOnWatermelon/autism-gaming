@@ -170,7 +170,7 @@ export class GameUI {
         type: 'debug-property',
         id: target.dataset.entityId,
         key: target.dataset.debugKey,
-        value: target.value,
+        value: target.type === 'checkbox' ? target.checked : target.value,
       });
     }
   }
@@ -267,9 +267,12 @@ export class GameUI {
     }
 
     target.textContent = `${data.label} · ${data.type} · ID: ${data.id}`;
-    fields.innerHTML = Object.entries(data.properties).map(([key, value]) =>
-      `<label class="debug-field"><span>${key}</span><input type="number" step="any" data-debug-key="${key}" data-entity-id="${data.id}" value="${Number(value).toFixed(2).replace(/\.00$/, '')}"></label>`,
-    ).join('');
+    fields.innerHTML = Object.entries(data.properties).map(([key, value]) => {
+      const control = typeof value === 'boolean'
+        ? `<input type="checkbox" data-debug-key="${key}" data-entity-id="${data.id}" ${value ? 'checked' : ''}>`
+        : `<input type="number" step="any" data-debug-key="${key}" data-entity-id="${data.id}" value="${Number(value).toFixed(2).replace(/\.00$/, '')}">`;
+      return `<label class="debug-field"><span>${key}</span>${control}</label>`;
+    }).join('');
   }
 
   appendLog(entry) {
