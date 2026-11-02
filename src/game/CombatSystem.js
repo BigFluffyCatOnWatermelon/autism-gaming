@@ -3,6 +3,8 @@
  * and other world objects can use the same damage rules.
  */
 
+import { GAME_CONFIG } from '../config/gameConfig.js';
+
 export const DAMAGE_TYPES = {
   cutting: 'Режущий',
   piercing: 'Колющий',
@@ -33,7 +35,7 @@ export function calculateDamage(attack, target = {}, playerStats = {}) {
 
   // Strength 10 is the neutral baseline. This keeps early characters readable.
   const strength = Number(playerStats.strength ?? 10);
-  const attributeMultiplier = Math.max(0.25, 1 + ((strength - 10) * 0.025));
+  const attributeMultiplier = Math.max(0.25, 1 + ((strength - 10) * GAME_CONFIG.combat.damageAttributeScale));
 
   // Weapon specialisation is separate from natural material resistance.
   // This is what makes an axe useful against an Ent-like nature target while
