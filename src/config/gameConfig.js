@@ -160,6 +160,7 @@ export const DEBUG_FIELDS = [
   { scope: 'camera', path: 'camera.shakeIntensity', label: 'Сила тряски', min: 0, max: 0.05, step: 0.001, description: 'Интенсивность тряски при попадании.' },
 
   // Melee and ranged combat.
+  { scope: 'combat', path: 'combat.damageAttributeScale', label: 'Масштаб силы', min: 0, max: 0.2, step: 0.005, description: 'Прибавка урона за единицу силы после базового значения.' },
   { scope: 'combat', path: 'combat.attackStaminaCost', label: 'Цена обычной атаки', min: 0, max: 50, step: 1, description: 'Базовая стоимость атаки.' },
   { scope: 'combat', path: 'combat.slashRadius', label: 'Радиус размашистого удара', min: 20, max: 200, step: 2, description: 'Дистанция удара по области.' },
   { scope: 'combat', path: 'combat.slashArcDegrees', label: 'Угол размашистого удара', min: 20, max: 240, step: 2, description: 'Ширина сектора перед персонажем.' },
