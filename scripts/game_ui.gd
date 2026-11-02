@@ -57,7 +57,7 @@ const ITEM_LABELS := {
 	"arrows": "Стрелы · боеприпас",
 }
 const ITEM_TEXTURE_PATHS := {
-	"sword": "res://Assets/Weapons/sword.png",
+	"sword": "res://Assets/Weapons/sword.svg",
 	"pickaxe": "res://Assets/Tools/pickaxe.png",
 	"axe": "res://Assets/Tools/axe.png",
 	"bow": "res://Assets/Weapons/bow.png",

@@ -2,7 +2,7 @@ extends Node2D
 class_name ResourceDrop
 
 const ITEM_TEXTURES := {
-	"sword": preload("res://Assets/Weapons/sword.png"),
+	"sword": preload("res://Assets/Weapons/sword.svg"),
 	"pickaxe": preload("res://Assets/Tools/pickaxe.png"),
 	"axe": preload("res://Assets/Tools/axe.png"),
 	"bow": preload("res://Assets/Weapons/bow.png"),
@@ -120,7 +120,7 @@ func _draw() -> void:
 		draw_line(Vector2(-3, -3), Vector2(3, -5), Color("#c1c9bd"), 1.0)
 	elif ITEM_TEXTURES.has(item_id):
 		draw_set_transform(lift, 0.0, Vector2.ONE * 0.72)
-		draw_texture_rect(ITEM_TEXTURES[item_id], Rect2(-16, -16, 32, 32))
+		draw_texture_rect(ITEM_TEXTURES[item_id], Rect2(-16, -16, 32, 32), false)
 	if amount > 1:
 		draw_set_transform(lift, 0.0, Vector2.ONE)
 		draw_string(ThemeDB.fallback_font, Vector2(8, -4), str(amount), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 9, Color.WHITE)
