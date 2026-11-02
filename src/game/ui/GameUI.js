@@ -101,6 +101,19 @@ export class GameUI {
         </header>
         <div class="debug-status"><span class="debug-pulse"></span><span id="debug-hover">Наведи на объект</span></div>
         <div class="debug-section">
+          <h3>Быстрый выбор параметров</h3>
+          <div class="debug-presets">
+            <button data-debug-target="player">Игрок</button>
+            <button data-debug-target="weapon:sword">Меч</button>
+            <button data-debug-target="weapon:axe">Топор</button>
+            <button data-debug-target="weapon:pickaxe">Кирка</button>
+            <button data-debug-target="weapon:bow">Лук</button>
+            <button data-debug-target="config:camera">Камера</button>
+            <button data-debug-target="config:world">Мир</button>
+            <button data-debug-target="config:dodge">Перекат</button>
+          </div>
+        </div>
+        <div class="debug-section">
           <h3>Инспектор объекта</h3>
           <div id="debug-target" class="debug-target">Включи DEBUG и нажми на персонажа или объект мира.</div>
           <div id="debug-fields" class="debug-fields"></div>
@@ -119,6 +132,10 @@ export class GameUI {
     const button = event.target.closest('[data-action], [data-slot]');
     if (!button) return;
 
+    if (button.dataset.debugTarget) {
+      this.game.events.emit('ui-action', { type: 'debug-target', target: button.dataset.debugTarget });
+      return;
+    }
     if (button.dataset.slot !== undefined) {
       this.game.events.emit('ui-action', { type: 'select-slot', index: Number(button.dataset.slot) });
       return;
