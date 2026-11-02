@@ -1,10 +1,18 @@
 @tool
 extends CanvasLayer
 
+const InventorySlotScript = preload("res://scripts/inventory_slot.gd")
+
 signal slot_selected(index: int)
 signal backpack_expand_requested
 signal settings_changed(screen_shake: bool, camera_zoom: float)
 signal debug_value_changed(path: String, value: float)
+signal inventory_slot_dropped(from_index: int, to_index: int)
+signal debug_object_selected(object_id: String)
+signal debug_clone_requested
+signal debug_delete_requested
+signal debug_reset_requested
+signal debug_cheats_changed(infinite_stamina: bool, invulnerable: bool)
 
 var root: Control
 var panels: Dictionary = {}
@@ -25,6 +33,14 @@ var debug_walk_speed: SpinBox
 var debug_strength: SpinBox
 var logs_text: TextEdit
 var log_lines: Array[String] = []
+var debug_filter: OptionButton
+var debug_object_list: ItemList
+var debug_properties: VBoxContainer
+var debug_stats: Label
+var debug_infinite_stamina: CheckBox
+var debug_invulnerable: CheckBox
+var debug_delete_dialog: ConfirmationDialog
+var debug_objects: Array[Dictionary] = []
 var backpack_slots := 12
 var max_backpack_slots := 24
 
@@ -91,6 +107,13 @@ func _bind_existing_ui() -> void:
 	settings_shake = _find_node("ScreenShake") as CheckBox
 	settings_zoom = _find_node("CameraZoom") as HSlider
 	debug_target_text = _find_node("DebugTarget") as Label
+	debug_stats = _find_node("DebugStats") as Label
+	debug_filter = _find_node("DebugFilter") as OptionButton
+	debug_object_list = _find_node("DebugObjectList") as ItemList
+	debug_properties = _find_node("DebugProperties") as VBoxContainer
+	debug_infinite_stamina = _find_node("InfiniteStamina") as CheckBox
+	debug_invulnerable = _find_node("Invulnerable") as CheckBox
+	debug_delete_dialog = _find_node("DebugDeleteDialog") as ConfirmationDialog
 	debug_walk_speed = _find_node("WalkSpeed") as SpinBox
 	debug_strength = _find_node("Strength") as SpinBox
 	logs_text = _find_node("LogText") as TextEdit
@@ -121,6 +144,14 @@ func _wire_controls() -> void:
 		var callback := Callable(self, "_on_hotbar_pressed").bind(index)
 		if not hotbar_buttons[index].pressed.is_connected(callback):
 			hotbar_buttons[index].pressed.connect(callback)
+		var hotbar_slot := hotbar_buttons[index] as InventorySlot
+		if hotbar_slot != null and not hotbar_slot.drop_requested.is_connected(_on_inventory_slot_dropped):
+			hotbar_slot.drop_requested.connect(_on_inventory_slot_dropped)
+	if inventory_grid != null:
+		for child in inventory_grid.get_children():
+			var backpack_slot := child as InventorySlot
+			if backpack_slot != null and not backpack_slot.drop_requested.is_connected(_on_inventory_slot_dropped):
+				backpack_slot.drop_requested.connect(_on_inventory_slot_dropped)
 
 	var expand_button := _find_node("ExpandBackpack") as Button
 	if expand_button != null and not expand_button.pressed.is_connected(_on_expand_pressed):
@@ -134,6 +165,25 @@ func _wire_controls() -> void:
 		debug_walk_speed.value_changed.connect(_on_walk_speed_changed)
 	if debug_strength != null and not debug_strength.value_changed.is_connected(_on_strength_changed):
 		debug_strength.value_changed.connect(_on_strength_changed)
+	if debug_filter != null and not debug_filter.item_selected.is_connected(_on_debug_filter_changed):
+		debug_filter.item_selected.connect(_on_debug_filter_changed)
+	if debug_object_list != null and not debug_object_list.item_selected.is_connected(_on_debug_object_selected):
+		debug_object_list.item_selected.connect(_on_debug_object_selected)
+	if debug_infinite_stamina != null and not debug_infinite_stamina.toggled.is_connected(_on_debug_cheat_toggled):
+		debug_infinite_stamina.toggled.connect(_on_debug_cheat_toggled)
+	if debug_invulnerable != null and not debug_invulnerable.toggled.is_connected(_on_debug_cheat_toggled):
+		debug_invulnerable.toggled.connect(_on_debug_cheat_toggled)
+	if debug_delete_dialog != null and not debug_delete_dialog.confirmed.is_connected(_on_debug_delete_confirmed):
+		debug_delete_dialog.confirmed.connect(_on_debug_delete_confirmed)
+	var clone_button := _find_node("DebugClone") as Button
+	if clone_button != null and not clone_button.pressed.is_connected(_on_debug_clone_pressed):
+		clone_button.pressed.connect(_on_debug_clone_pressed)
+	var reset_button := _find_node("DebugReset") as Button
+	if reset_button != null and not reset_button.pressed.is_connected(_on_debug_reset_pressed):
+		reset_button.pressed.connect(_on_debug_reset_pressed)
+	var delete_button := _find_node("DebugDelete") as Button
+	if delete_button != null and not delete_button.pressed.is_connected(_ask_debug_delete):
+		delete_button.pressed.connect(_ask_debug_delete)
 
 	var clear_button := _find_node("ClearLogs") as Button
 	if clear_button != null and not clear_button.pressed.is_connected(_on_clear_logs):
@@ -244,10 +294,12 @@ func _create_hud() -> void:
 	var panel := PanelContainer.new()
 	panel.name = "HUD"
 	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel.anchor_top = 1.0
+	panel.anchor_bottom = 1.0
 	panel.offset_left = 16
-	panel.offset_top = 16
-	panel.offset_right = 250
-	panel.offset_bottom = 142
+	panel.offset_top = -152
+	panel.offset_right = 200
+	panel.offset_bottom = -12
 	_style_panel(panel)
 	root.add_child(panel)
 
@@ -269,7 +321,7 @@ func _create_hud() -> void:
 
 	health_bar = ProgressBar.new()
 	health_bar.name = "HealthBar"
-	health_bar.custom_minimum_size = Vector2(200, 14)
+	health_bar.custom_minimum_size = Vector2(150, 14)
 	health_bar.max_value = 100
 	health_bar.show_percentage = false
 	box.add_child(health_bar)
@@ -284,7 +336,7 @@ func _create_hud() -> void:
 
 	stamina_bar = ProgressBar.new()
 	stamina_bar.name = "StaminaBar"
-	stamina_bar.custom_minimum_size = Vector2(200, 14)
+	stamina_bar.custom_minimum_size = Vector2(150, 14)
 	stamina_bar.max_value = 100
 	stamina_bar.show_percentage = false
 	box.add_child(stamina_bar)
@@ -310,8 +362,8 @@ func _create_hotbar() -> void:
 	panel.anchor_right = 0.5
 	panel.anchor_top = 1.0
 	panel.anchor_bottom = 1.0
-	panel.offset_left = -276
-	panel.offset_right = 276
+	panel.offset_left = -260
+	panel.offset_right = 260
 	panel.offset_top = -78
 	panel.offset_bottom = -10
 	_style_panel(panel)
@@ -323,9 +375,10 @@ func _create_hotbar() -> void:
 	row.add_theme_constant_override("separation", 5)
 	panel.add_child(row)
 	for index in range(9):
-		var button := Button.new()
+		var button := InventorySlotScript.new() as InventorySlot
+		button.slot_index = index
 		button.name = "Slot%d" % (index + 1)
-		button.custom_minimum_size = Vector2(54, 54)
+		button.custom_minimum_size = Vector2(50, 50)
 		button.toggle_mode = true
 		button.text = ""
 		button.tooltip_text = ITEM_LABELS.get(HOTBAR_ITEMS[index], "Пустой слот")
@@ -412,7 +465,8 @@ func _create_inventory() -> void:
 	inventory_grid.add_theme_constant_override("v_separation", 4)
 	backpack_column.add_child(inventory_grid)
 	for index in range(27):
-		var slot := Button.new()
+		var slot := InventorySlotScript.new() as InventorySlot
+		slot.slot_index = 9 + index
 		slot.name = "BackpackSlot%02d" % index
 		slot.custom_minimum_size = Vector2(48, 48)
 		slot.text = ""
@@ -446,28 +500,197 @@ func _create_settings() -> void:
 	box.add_child(_make_label("Настройки сохраняются в локальном файле Godot.", 11, Color("#9eaa93")))
 
 func _create_debug() -> void:
-	var box := _create_center_panel("debug", "Отладчик · F3", Rect2(-250, -190, 500, 380))
-	debug_target_text = _make_label("Выбран объект: Игрок", 13, Color("#e5d6a6"))
+	var box := _create_center_panel("debug", "Отладчик и Debug Inspector · F3", Rect2(-390, -255, 780, 510))
+	debug_stats = _make_label("FPS: — · Позиция: — · Бег: —", 11, Color("#b8d49f"))
+	debug_stats.name = "DebugStats"
+	box.add_child(debug_stats)
+	debug_target_text = _make_label("Выбран объект: Игрок", 12, Color("#e5d6a6"))
 	debug_target_text.name = "DebugTarget"
 	box.add_child(debug_target_text)
-	box.add_child(_make_label("Скорость ходьбы", 12))
-	debug_walk_speed = SpinBox.new()
-	debug_walk_speed.name = "WalkSpeed"
-	debug_walk_speed.min_value = 20
-	debug_walk_speed.max_value = 600
-	debug_walk_speed.step = 5
-	debug_walk_speed.value = 155
-	box.add_child(debug_walk_speed)
-	box.add_child(_make_label("Сила персонажа", 12))
-	debug_strength = SpinBox.new()
-	debug_strength.name = "Strength"
-	debug_strength.min_value = 0
-	debug_strength.max_value = 100
-	debug_strength.step = 1
-	debug_strength.value = 10
-	box.add_child(debug_strength)
-	box.add_child(_make_label("Клик по игроку, дереву или камню в мире выбирает объект.", 11, Color("#9eaa93")))
-	box.add_child(_make_label("Изменения чисел применяются сразу.", 11, Color("#9eaa93")))
+
+	var filter_row := HBoxContainer.new()
+	filter_row.add_child(_make_label("Фильтр объектов:", 12))
+	debug_filter = OptionButton.new()
+	debug_filter.name = "DebugFilter"
+	debug_filter.add_item("Все объекты")
+	debug_filter.select(0)
+	debug_filter.set_item_metadata(0, "all")
+	debug_filter.add_item("Игрок")
+	debug_filter.set_item_metadata(1, "player")
+	debug_filter.add_item("Деревья")
+	debug_filter.set_item_metadata(2, "tree")
+	debug_filter.add_item("Камни")
+	debug_filter.set_item_metadata(3, "rock")
+	debug_filter.add_item("Ресурсы")
+	debug_filter.set_item_metadata(4, "drop")
+	debug_filter.add_item("Оружие")
+	debug_filter.set_item_metadata(5, "weapon")
+	filter_row.add_child(debug_filter)
+	box.add_child(filter_row)
+
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 10)
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(body)
+
+	debug_object_list = ItemList.new()
+	debug_object_list.name = "DebugObjectList"
+	debug_object_list.custom_minimum_size = Vector2(215, 300)
+	debug_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	debug_object_list.allow_reselect = true
+	body.add_child(debug_object_list)
+
+	var inspector_scroll := ScrollContainer.new()
+	inspector_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inspector_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(inspector_scroll)
+	debug_properties = VBoxContainer.new()
+	debug_properties.name = "DebugProperties"
+	debug_properties.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inspector_scroll.add_child(debug_properties)
+	debug_properties.add_child(_make_label("Выбери объект в списке или кликни по нему в мире.", 12, Color("#d4dec8")))
+
+	var cheat_row := HBoxContainer.new()
+	debug_infinite_stamina = CheckBox.new()
+	debug_infinite_stamina.name = "InfiniteStamina"
+	debug_infinite_stamina.text = "Бесконечная выносливость"
+	cheat_row.add_child(debug_infinite_stamina)
+	debug_invulnerable = CheckBox.new()
+	debug_invulnerable.name = "Invulnerable"
+	debug_invulnerable.text = "Неуязвимость"
+	cheat_row.add_child(debug_invulnerable)
+	box.add_child(cheat_row)
+
+	var actions := HBoxContainer.new()
+	var clone_button := Button.new()
+	clone_button.name = "DebugClone"
+	clone_button.text = "Копировать объект"
+	actions.add_child(clone_button)
+	var reset_button := Button.new()
+	reset_button.name = "DebugReset"
+	reset_button.text = "Сбросить параметры"
+	actions.add_child(reset_button)
+	var delete_button := Button.new()
+	delete_button.name = "DebugDelete"
+	delete_button.text = "Удалить…"
+	actions.add_child(delete_button)
+	box.add_child(actions)
+
+	debug_delete_dialog = ConfirmationDialog.new()
+	debug_delete_dialog.name = "DebugDeleteDialog"
+	debug_delete_dialog.title = "Удаление объекта"
+	debug_delete_dialog.dialog_text = "Удалить выбранный объект из текущей игровой сессии?"
+	root.add_child(debug_delete_dialog)
+
+func _on_debug_filter_changed(_index: int) -> void:
+	_render_debug_object_list()
+
+func _on_debug_object_selected(index: int) -> void:
+	if index < 0 or index >= debug_object_list.item_count:
+		return
+	var object_id := str(debug_object_list.get_item_metadata(index))
+	debug_object_selected.emit(object_id)
+
+func _on_debug_cheat_toggled(_enabled: bool) -> void:
+	debug_cheats_changed.emit(
+		debug_infinite_stamina.button_pressed if debug_infinite_stamina != null else false,
+		debug_invulnerable.button_pressed if debug_invulnerable != null else false
+	)
+
+func _ask_debug_delete() -> void:
+	if debug_delete_dialog != null:
+		debug_delete_dialog.popup_centered()
+
+func _on_debug_clone_pressed() -> void:
+	debug_clone_requested.emit()
+
+func _on_debug_reset_pressed() -> void:
+	debug_reset_requested.emit()
+
+func _on_debug_delete_confirmed() -> void:
+	debug_delete_requested.emit()
+
+func _render_debug_object_list() -> void:
+	if debug_object_list == null:
+		return
+	debug_object_list.clear()
+	var filter_value := "all"
+	if debug_filter != null and debug_filter.selected >= 0:
+		filter_value = str(debug_filter.get_item_metadata(debug_filter.selected))
+	for entry in debug_objects:
+		var kind := str(entry.get("kind", "other"))
+		if filter_value != "all":
+			if filter_value == "tree" and kind != "tree" and kind != "stump":
+				continue
+			elif filter_value == "rock" and kind != "rock":
+				continue
+			elif filter_value == "drop" and kind != "drop":
+				continue
+			elif filter_value == "weapon" and kind != "weapon":
+				continue
+			elif filter_value == "player" and kind != "player":
+				continue
+		debug_object_list.add_item(str(entry.get("label", "Объект")))
+		var item_index := debug_object_list.item_count - 1
+		debug_object_list.set_item_metadata(item_index, str(entry.get("id", "")))
+		if str(entry.get("id", "")) == str(entry.get("selected_id", "")):
+			debug_object_list.select(item_index)
+
+func set_debug_objects(entries: Array[Dictionary], selected_id: String = "") -> void:
+	debug_objects.clear()
+	for entry in entries:
+		var copied_entry: Dictionary = entry.duplicate(true)
+		copied_entry["selected_id"] = selected_id
+		debug_objects.append(copied_entry)
+	_render_debug_object_list()
+
+func set_debug_properties(properties: Array[Dictionary]) -> void:
+	if debug_properties == null:
+		return
+	for child in debug_properties.get_children():
+		child.queue_free()
+	for property_data in properties:
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var title := _make_label(str(property_data.get("label", property_data.get("path", "Параметр"))), 11)
+		title.custom_minimum_size.x = 142
+		row.add_child(title)
+		var property_path := str(property_data.get("path", ""))
+		if property_data.has("options"):
+			var editor := OptionButton.new()
+			var options: Array = property_data["options"]
+			for option in options:
+				editor.add_item(str(option))
+			editor.select(clampi(roundi(float(property_data.get("value", 0.0))), 0, maxi(0, options.size() - 1)))
+			editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			editor.item_selected.connect(_on_inspector_option_changed.bind(property_path))
+			row.add_child(editor)
+		else:
+			var editor := SpinBox.new()
+			editor.min_value = float(property_data.get("min", -100000.0))
+			editor.max_value = float(property_data.get("max", 100000.0))
+			editor.step = float(property_data.get("step", 0.1))
+			editor.value = float(property_data.get("value", 0.0))
+			editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			editor.value_changed.connect(_on_inspector_value_changed.bind(property_path))
+			row.add_child(editor)
+		debug_properties.add_child(row)
+
+func _on_inspector_value_changed(value: float, property_path: String) -> void:
+	debug_value_changed.emit(property_path, value)
+
+func _on_inspector_option_changed(index: int, property_path: String) -> void:
+	debug_value_changed.emit(property_path, float(index))
+
+func set_debug_stats(value: String) -> void:
+	if debug_stats != null:
+		debug_stats.text = value
+
+func set_debug_cheats(infinite_stamina: bool, invulnerable: bool) -> void:
+	if debug_infinite_stamina != null:
+		debug_infinite_stamina.set_pressed_no_signal(infinite_stamina)
+	if debug_invulnerable != null:
+		debug_invulnerable.set_pressed_no_signal(invulnerable)
 
 func _create_logs() -> void:
 	var box := _create_center_panel("logs", "Журнал событий · F2", Rect2(-300, -205, 600, 410))
@@ -493,7 +716,7 @@ func _refresh_item_icons() -> void:
 			var count := 30 if item_id == "arrows" else 0
 			_set_slot_icon(inventory_grid.get_child(index) as Button, item_id, count)
 
-func _set_slot_icon(button: Button, item_id: String, count: int) -> void:
+func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String = "") -> void:
 	if button == null:
 		return
 	var icon_rect := button.get_node_or_null("Icon") as TextureRect
@@ -505,12 +728,63 @@ func _set_slot_icon(button: Button, item_id: String, count: int) -> void:
 			atlas.region = ITEM_RECTS[item_id]
 			icon_rect.texture = atlas
 			icon_rect.visible = true
+			button.text = ""
 		else:
 			icon_rect.texture = null
 			icon_rect.visible = false
+			if item_id == "wood":
+				button.text = "Д"
+			elif item_id == "stone":
+				button.text = "К"
+			else:
+				button.text = ""
+	var slot := button as InventorySlot
+	if slot != null:
+		slot.item_id = item_id
 	if count_label != null:
 		count_label.text = str(count) if count > 1 else ""
-	button.tooltip_text = str(ITEM_LABELS.get(item_id, "Пустая ячейка"))
+	if tooltip != "":
+		button.tooltip_text = tooltip
+	else:
+		button.tooltip_text = str(ITEM_LABELS.get(item_id, "Пустая ячейка"))
+
+func set_inventory_data(items: Array[Dictionary], open_slots: int, maximum_slots: int, definitions: Dictionary) -> void:
+	set_backpack_slots(open_slots, maximum_slots)
+	for index in range(hotbar_buttons.size()):
+		var stack: Dictionary = items[index] if index < items.size() else {}
+		var item_id := str(stack.get("id", ""))
+		var amount := int(stack.get("amount", 0))
+		_set_slot_icon(hotbar_buttons[index], item_id, amount, _build_item_tooltip(item_id, definitions))
+	if inventory_grid != null:
+		for index in range(inventory_grid.get_child_count()):
+			var source_index := index + 9
+			var stack: Dictionary = items[source_index] if source_index < items.size() else {}
+			var item_id := str(stack.get("id", ""))
+			var amount := int(stack.get("amount", 0))
+			_set_slot_icon(inventory_grid.get_child(index) as Button, item_id, amount, _build_item_tooltip(item_id, definitions))
+	# Reapply lock state after tooltip refresh so closed cells remain clearly marked.
+	set_backpack_slots(open_slots, maximum_slots)
+
+func _build_item_tooltip(item_id: String, definitions: Dictionary) -> String:
+	if item_id.is_empty():
+		return "Пустая ячейка"
+	var definition: Dictionary = definitions.get(item_id, {})
+	var lines := PackedStringArray()
+	lines.append(str(definition.get("label", ITEM_LABELS.get(item_id, item_id.capitalize()))))
+	if definition.has("damage"):
+		lines.append("Урон: %s" % str(definition["damage"]))
+	if definition.has("damage_type"):
+		lines.append("Тип урона: %s" % str(definition["damage_type"]))
+	if definition.has("attack_type"):
+		lines.append("Тип атаки: %s" % str(definition["attack_type"]))
+	if definition.has("stamina_cost"):
+		lines.append("Расход выносливости: %s" % str(definition["stamina_cost"]))
+	if definition.has("efficiency"):
+		lines.append("Эффективность: %s" % str(definition["efficiency"]))
+	return "\n".join(lines)
+
+func _on_inventory_slot_dropped(from_index: int, to_index: int) -> void:
+	inventory_slot_dropped.emit(from_index, to_index)
 
 func _on_hotbar_pressed(index: int) -> void:
 	slot_selected.emit(index)
@@ -556,10 +830,6 @@ func set_player_data(health: float, max_health: float, stamina: float, max_stami
 	stamina_text.text = "%d / %d" % [roundi(stamina), roundi(max_stamina)]
 	arrow_text.text = "Стрелы: %d" % arrows
 	fps_text.text = "FPS: %d" % Engine.get_frames_per_second()
-	if hotbar_buttons.size() > 4:
-		_set_slot_icon(hotbar_buttons[4], "arrows", arrows)
-	if inventory_grid != null and inventory_grid.get_child_count() > 0:
-		_set_slot_icon(inventory_grid.get_child(0) as Button, "arrows", arrows)
 
 func set_hotbar_selection(index: int) -> void:
 	for i in range(hotbar_buttons.size()):

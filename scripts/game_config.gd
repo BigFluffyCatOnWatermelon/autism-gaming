@@ -1,8 +1,7 @@
 extends RefCounted
 class_name GameConfig
 
-# The only place for frequently tuned gameplay and balance values.
-# WorldController makes a deep copy so the F3 inspector can change them live.
+# Centralized gameplay balance. WorldController keeps an editable runtime copy.
 static func make_default() -> Dictionary:
 	return {
 		"world": {
@@ -26,10 +25,14 @@ static func make_default() -> Dictionary:
 			"roll_stamina_cost": 22.0,
 			"stamina_run_drain": 19.0,
 			"stamina_regen": 16.0,
+			"stamina_sprint_resume": 30.0,
 			"roll_invulnerability_ms": 220.0,
 			"strength": 10.0,
 			"agility": 10.0,
 			"defense": 0.0,
+			"magnet": 1.0,
+			"pickup_base_radius": 34.0,
+			"pickup_magnet_per_level": 14.0,
 			"sprite_scale": 1.25,
 			"collision_radius": 8.0,
 		},
@@ -77,12 +80,39 @@ static func make_default() -> Dictionary:
 				"projectile_speed": 620.0, "projectile_range": 620.0, "stamina_cost": 3.0,
 			},
 		},
+		"resources": {
+			"tree_health": 90.0,
+			"rock_health": 110.0,
+			"tree_wood_drop": 5,
+			"rock_stone_drop": 4,
+			"tree_hit_radius": 29.0,
+			"rock_hit_radius": 23.0,
+		},
+		"drops": {
+			"scatter_speed_min": 100.0,
+			"scatter_speed_max": 230.0,
+			"horizontal_friction": 380.0,
+			"gravity": 520.0,
+			"bounce_factor": 0.36,
+			"magnet_speed": 570.0,
+			"pickup_distance": 22.0,
+		},
 		"inventory": {
 			"hotbar_slots": 9,
 			"base_backpack_slots": 12,
 			"max_backpack_slots": 27,
 			"expansion_step": 3,
+			"max_stack": 99,
 			"starting_arrows": 30,
+		},
+		"items": {
+			"sword": {"label": "Меч", "damage": 26.0, "damage_type": "режущий", "attack_type": "Рубящий удар / укол", "stamina_cost": 9.0, "efficiency": "Не добывает ресурсы"},
+			"pickaxe": {"label": "Кирка", "damage": 20.0, "damage_type": "колющий", "attack_type": "Удар по одной цели", "stamina_cost": 7.0, "efficiency": "Камень ×2.4"},
+			"axe": {"label": "Топор", "damage": 25.0, "damage_type": "режущий", "attack_type": "Удар по сектору", "stamina_cost": 7.0, "efficiency": "Дерево ×2.5"},
+			"bow": {"label": "Лук", "damage": 18.0, "damage_type": "колющий", "attack_type": "Дальний одиночный выстрел", "stamina_cost": 3.0, "efficiency": "Требует стрелы"},
+			"arrows": {"label": "Стрелы", "damage": 18.0, "damage_type": "колющий", "attack_type": "Боеприпас для лука", "stamina_cost": 0.0, "efficiency": "Расходуются при выстреле"},
+			"wood": {"label": "Древесина", "damage": 0.0, "damage_type": "—", "attack_type": "Материал", "stamina_cost": 0.0, "efficiency": "Ресурс для крафта"},
+			"stone": {"label": "Камень", "damage": 0.0, "damage_type": "—", "attack_type": "Материал", "stamina_cost": 0.0, "efficiency": "Ресурс для крафта"},
 		},
 		"settings": {
 			"screen_shake": true,

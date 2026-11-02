@@ -16,6 +16,10 @@ var moving := false
 var running := false
 var crouching := false
 var rolling := false
+var stamina_exhausted := false
+var debug_infinite_stamina := false
+var debug_invulnerable := false
+var debug_selected := false
 var roll_direction := Vector2.DOWN
 var last_move_direction := Vector2.DOWN
 var facing_row := 0
@@ -34,6 +38,7 @@ func configure(settings: Dictionary) -> void:
 	game_config = settings
 	current_health = float(game_config.player.max_health)
 	current_stamina = float(game_config.player.max_stamina)
+	stamina_exhausted = false
 	if camera != null:
 		camera.position_smoothing_speed = float(game_config.camera.follow_speed)
 		camera.zoom = Vector2.ONE * float(game_config.camera.base_zoom)
@@ -43,6 +48,7 @@ func _ready() -> void:
 		game_config = GameConfigScript.make_default()
 	collision_layer = 1
 	collision_mask = 2
+	queue_redraw()
 
 	var body_shape := get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if body_shape == null:
@@ -125,9 +131,9 @@ func set_held_item(item_id: String, aim_direction: Vector2) -> void:
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
+
 	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	moving = input_vector.length_squared() > 0.001
-
 	if moving:
 		last_move_direction = input_vector.normalized()
 
@@ -144,7 +150,12 @@ func _physics_process(delta: float) -> void:
 			rolling = false
 	else:
 		crouching = Input.is_action_pressed("crouch")
-		running = Input.is_action_pressed("run") and moving and not crouching and current_stamina > 0.0
+		var max_stamina := float(game_config.player.max_stamina)
+		var recovery_threshold := max_stamina * float(game_config.player.stamina_sprint_resume) / 100.0
+		if stamina_exhausted and current_stamina >= recovery_threshold:
+			stamina_exhausted = false
+
+		running = Input.is_action_pressed("run") and moving and not crouching and not stamina_exhausted and current_stamina > 0.0
 		var speed := float(game_config.player.walk_speed)
 		if crouching:
 			speed *= float(game_config.player.crouch_multiplier)
@@ -152,19 +163,28 @@ func _physics_process(delta: float) -> void:
 			speed *= float(game_config.player.run_multiplier)
 		velocity = input_vector * speed
 
-		if running:
+		if debug_infinite_stamina:
+			current_stamina = max_stamina
+			stamina_exhausted = false
+		elif running:
 			current_stamina = maxf(0.0, current_stamina - float(game_config.player.stamina_run_drain) * delta)
+			if current_stamina <= 0.0:
+				stamina_exhausted = true
+				running = false
 		else:
-			current_stamina = minf(float(game_config.player.max_stamina), current_stamina + float(game_config.player.stamina_regen) * delta)
+			current_stamina = minf(max_stamina, current_stamina + float(game_config.player.stamina_regen) * delta)
+			if stamina_exhausted and current_stamina >= recovery_threshold:
+				stamina_exhausted = false
 
 	move_and_slide()
 	_update_facing(input_vector)
 	_update_visuals(delta)
+	queue_redraw()
 
 func _try_dodge(input_vector: Vector2) -> void:
 	if rolling or roll_cooldown_timer > 0.0:
 		return
-	if current_stamina < float(game_config.player.roll_stamina_cost):
+	if current_stamina < float(game_config.player.roll_stamina_cost) and not debug_infinite_stamina:
 		return
 	var direction := input_vector.normalized()
 	if direction == Vector2.ZERO:
@@ -179,7 +199,8 @@ func _try_dodge(input_vector: Vector2) -> void:
 	roll_timer = float(game_config.player.roll_duration_ms) / 1000.0
 	roll_cooldown_timer = float(game_config.player.roll_cooldown_ms) / 1000.0
 	invulnerability_timer = float(game_config.player.roll_invulnerability_ms) / 1000.0
-	current_stamina = maxf(0.0, current_stamina - float(game_config.player.roll_stamina_cost))
+	if not debug_infinite_stamina:
+		current_stamina = maxf(0.0, current_stamina - float(game_config.player.roll_stamina_cost))
 
 func _update_facing(input_vector: Vector2) -> void:
 	var direction := input_vector
@@ -195,15 +216,19 @@ func _update_facing(input_vector: Vector2) -> void:
 		facing_row = 1 if direction.y < 0.0 else 0
 
 func _update_visuals(delta: float) -> void:
-	walk_animation_time += delta
-	var frame := 0
+	sprite.position = Vector2(0, -3)
 	if moving and not rolling:
+		walk_animation_time += delta
 		var interval := 0.085 if running else 0.145
-		frame = int(walk_animation_time / interval) % 4
-	if crouching:
-		sprite.frame_coords = Vector2i(0, 4)
-	else:
+		var frame := int(floor(walk_animation_time / interval)) % 4
 		sprite.frame_coords = Vector2i(frame, facing_row)
+	else:
+		walk_animation_time = 0.0
+		if crouching:
+			sprite.frame_coords = Vector2i(0, 4)
+		else:
+			sprite.frame_coords = Vector2i(0, facing_row)
+
 	if rolling:
 		sprite.modulate = Color(0.7, 0.85, 1.0, 0.72)
 		sprite.rotation = roll_direction.angle() + PI * 0.5
@@ -212,3 +237,20 @@ func _update_visuals(delta: float) -> void:
 		sprite.rotation = 0.0
 	shadow.scale = Vector2(0.9, 0.82) if crouching else Vector2(1.15, 1.0)
 	z_index = int(global_position.y / 16.0)
+
+func apply_damage(amount: float) -> bool:
+	if amount <= 0.0 or debug_invulnerable or invulnerability_timer > 0.0:
+		return false
+	current_health = maxf(0.0, current_health - amount)
+	return true
+
+func heal(amount: float) -> void:
+	current_health = minf(float(game_config.player.max_health), current_health + maxf(0.0, amount))
+
+func set_debug_selected(value: bool) -> void:
+	debug_selected = value
+	queue_redraw()
+
+func _draw() -> void:
+	if debug_selected:
+		draw_arc(Vector2(0, -3), 24.0, 0.0, TAU, 40, Color("#8ee6ff"), 2.0, true)
