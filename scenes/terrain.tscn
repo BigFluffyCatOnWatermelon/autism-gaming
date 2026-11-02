@@ -1,0 +1,48 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/terrain_editor.gd" id="1_terrain"]
+[ext_resource type="TileSet" path="res://Assets/Environment/Tilesets/grass_base.tres" id="2_ground"]
+[ext_resource type="TileSet" path="res://Assets/Environment/Tilesets/soil.tres" id="3_soil"]
+[ext_resource type="TileSet" path="res://Assets/Environment/Tilesets/stone.tres" id="4_stone"]
+[ext_resource type="TileSet" path="res://Assets/Environment/Tilesets/sand.tres" id="5_sand"]
+[ext_resource type="TileSet" path="res://Assets/Environment/Tilesets/water.tres" id="6_water"]
+[ext_resource type="TileSet" path="res://Assets/Environment/Tilesets/path.tres" id="7_paths"]
+[ext_resource type="TileSet" path="res://Assets/Environment/Tilesets/details.tres" id="8_details"]
+
+[node name="Terrain" type="Node2D"]
+script = ExtResource("1_terrain")
+
+[node name="Ground" type="TileMapLayer" parent="."]
+z_index = -128
+texture_filter = 1
+tile_set = ExtResource("2_ground")
+
+[node name="Soil" type="TileMapLayer" parent="."]
+z_index = -127
+texture_filter = 1
+tile_set = ExtResource("3_soil")
+
+[node name="Stone" type="TileMapLayer" parent="."]
+z_index = -126
+texture_filter = 1
+tile_set = ExtResource("4_stone")
+
+[node name="Sand" type="TileMapLayer" parent="."]
+z_index = -125
+texture_filter = 1
+tile_set = ExtResource("5_sand")
+
+[node name="Water" type="TileMapLayer" parent="."]
+z_index = -124
+texture_filter = 1
+tile_set = ExtResource("6_water")
+
+[node name="Paths" type="TileMapLayer" parent="."]
+z_index = -123
+texture_filter = 1
+tile_set = ExtResource("7_paths")
+
+[node name="Decorations" type="TileMapLayer" parent="."]
+z_index = -122
+texture_filter = 1
+tile_set = ExtResource("8_details")

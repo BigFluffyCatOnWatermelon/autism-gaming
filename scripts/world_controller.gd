@@ -3,7 +3,6 @@ extends Node2D
 const GameConfigScript = preload("res://scripts/game_config.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const PlayerControllerScript = preload("res://scripts/player_controller.gd")
-const ResourceNodeScript = preload("res://scripts/resource_node.gd")
 const ResourceDropScript = preload("res://scripts/resource_drop.gd")
 const ArrowProjectileScript = preload("res://scripts/arrow_projectile.gd")
 const ObjectsScene = preload("res://scenes/objects.tscn")
@@ -19,7 +18,6 @@ var config: Dictionary = {}
 var defaults_config: Dictionary = {}
 var player
 var ui
-var ground: TileMapLayer
 var world_objects: Node2D
 var resources: Array = []
 var drops: Array = []
@@ -49,7 +47,6 @@ func _ready() -> void:
 	rng.seed = int(config.world.seed)
 	_initialize_inventory()
 	_configure_input()
-	_create_ground()
 	_create_player()
 	_create_resources()
 	_create_ui()
@@ -100,103 +97,25 @@ func _add_mouse_action(action_name: String, button_index: int) -> void:
 	event.button_index = button_index
 	InputMap.action_add_event(action_name, event)
 
-func _create_ground() -> void:
-	ground = TileMapLayer.new()
-	ground.name = "GrassGround"
-	ground.z_index = -100
-	ground.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var tile_set := TileSet.new()
-	tile_set.tile_size = Vector2i(32, 32)
-	var atlas := TileSetAtlasSource.new()
-	atlas.texture = load("res://Assets/Environment/grass.png")
-	atlas.texture_region_size = Vector2i(32, 32)
-	atlas.create_tile(Vector2i.ZERO)
-	tile_set.add_source(atlas, 0)
-	ground.tile_set = tile_set
-	add_child(ground)
-	for x in range(-57, 57):
-		for y in range(-57, 57):
-			ground.set_cell(Vector2i(x, y), 0, Vector2i.ZERO)
-
-func _create_player() -> void:
-	player = get_node_or_null("Player")
-	if player == null:
-		player = PlayerControllerScript.new()
-		player.name = "Player"
-		add_child(player)
-	player.configure(config)
-	var camera: Camera2D = player.camera
-	var half_width := int(config.world.width / 2)
-	var half_height := int(config.world.height / 2)
-	camera.limit_left = -half_width
-	camera.limit_right = half_width
-	camera.limit_top = -half_height
-	camera.limit_bottom = half_height
-	camera.limit_smoothed = true
-
 func _create_resources() -> void:
 	world_objects = get_node_or_null("Objects") as Node2D
 	if world_objects == null:
 		world_objects = ObjectsScene.instantiate() as Node2D
+		if world_objects == null:
+			push_error("Не удалось создать пустой контейнер Objects.")
+			return
 		world_objects.name = "Objects"
 		add_child(world_objects)
 
+	# Ресурсы появляются только если их вручную разместили в сцене.
+	# Никакого случайного спавна деревьев или камней при запуске.
 	resources.clear()
-	var occupied_positions: Array[Vector2] = []
-	var existing_trees := 0
-	var existing_rocks := 0
 	for child in world_objects.get_children():
 		var resource := child as ResourceNode
 		if resource == null or resource.resource_type == "stump":
 			continue
 		_register_resource(resource)
-		occupied_positions.append(resource.global_position)
-		if resource.resource_type == "tree":
-			existing_trees += 1
-		elif resource.resource_type == "rock":
-			existing_rocks += 1
 
-	var target_trees := maxi(1, int(config.world.get("tree_count", 100)))
-	var target_rocks := maxi(1, int(config.world.get("rock_count", 75)))
-	while existing_trees < target_trees:
-		_spawn_world_resource("tree", existing_trees + 1, occupied_positions)
-		existing_trees += 1
-	while existing_rocks < target_rocks:
-		_spawn_world_resource("rock", existing_rocks + 1, occupied_positions)
-		existing_rocks += 1
-
-func _spawn_world_resource(kind: String, index: int, occupied_positions: Array[Vector2]) -> void:
-	var resource := ResourceNodeScript.new() as ResourceNode
-	var max_health := float(config.resources.tree_health) if kind == "tree" else float(config.resources.rock_health)
-	resource.configure(kind, max_health)
-	resource.name = "%s_%03d" % [kind.capitalize(), index]
-	resource.position = _find_resource_spawn_position(occupied_positions)
-	world_objects.add_child(resource)
-	_register_resource(resource)
-	occupied_positions.append(resource.global_position)
-
-func _find_resource_spawn_position(occupied_positions: Array[Vector2]) -> Vector2:
-	var half_width := float(config.world.width) * 0.5
-	var half_height := float(config.world.height) * 0.5
-	var edge_margin := 96.0
-	var clear_radius := float(config.world.get("keep_spawn_clear_radius", 230.0))
-	var minimum_spacing := 88.0
-	var candidate := Vector2.ZERO
-	for _attempt in range(300):
-		candidate = Vector2(
-			rng.randf_range(-half_width + edge_margin, half_width - edge_margin),
-			rng.randf_range(-half_height + edge_margin, half_height - edge_margin)
-		)
-		if candidate.length() < clear_radius:
-			continue
-		var overlaps := false
-		for other_position in occupied_positions:
-			if candidate.distance_to(other_position) < minimum_spacing:
-				overlaps = true
-				break
-		if not overlaps:
-			return candidate
-	return candidate
 
 func _register_resource(resource: ResourceNode) -> void:
 	if not is_instance_valid(resource):

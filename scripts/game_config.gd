@@ -8,9 +8,6 @@ static func make_default() -> Dictionary:
 			"width": 3600,
 			"height": 3600,
 			"grass_tile_size": 32,
-			"tree_count": 100,
-			"rock_count": 75,
-			"keep_spawn_clear_radius": 230.0,
 			"seed": 20261102,
 		},
 		"player": {
