@@ -316,7 +316,7 @@ export class WorldScene extends Phaser.Scene {
   flattenNumericProperties(value, prefix = '', output = {}) {
     for (const [key, entry] of Object.entries(value)) {
       const path = prefix ? `${prefix}.${key}` : key;
-      if (typeof entry === 'number') output[path] = entry;
+      if (typeof entry === 'number' || typeof entry === 'boolean') output[path] = entry;
       else if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
         this.flattenNumericProperties(entry, path, output);
       }
@@ -333,6 +333,19 @@ export class WorldScene extends Phaser.Scene {
     }
     const lastKey = keys[keys.length - 1];
     if (!target || typeof target[lastKey] !== 'number') return false;
+    target[lastKey] = value;
+    return true;
+  }
+
+  setNestedBooleanValue(object, path, value) {
+    const keys = path.split('.');
+    let target = object;
+    for (const key of keys.slice(0, -1)) {
+      if (!target || typeof target[key] !== 'object') return false;
+      target = target[key];
+    }
+    const lastKey = keys[keys.length - 1];
+    if (!target || typeof target[lastKey] !== 'boolean') return false;
     target[lastKey] = value;
     return true;
   }
@@ -383,6 +396,21 @@ export class WorldScene extends Phaser.Scene {
   }
 
   setDebugProperty(id, key, value) {
+    if (typeof value === 'boolean') {
+      if (!id.startsWith('config:')) return;
+      const category = id.split(':')[1];
+      const config = GAME_CONFIG[category];
+      if (config && this.setNestedBooleanValue(config, key, value)) {
+        if (category === 'camera' && key === 'enableShake') {
+          this.cameraController.setShakeEnabled(value);
+        }
+        this.log(`Изменён переключатель ${category}: ${key} = ${value}`, 'debug');
+        this.game.events.emit('debug-selection', this.getDebugEntityData({
+          type: 'config', id, category, label: `Параметры: ${category}`,
+        }));
+      }
+      return;
+    }
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return;
 
