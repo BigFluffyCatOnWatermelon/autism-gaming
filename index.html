@@ -3,10 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Autism Gaming — экспериментальная браузерная 2D-игра."
-    />
+    <meta name="description" content="Autism Gaming — браузерная пиксельная 2D-игра." />
     <meta name="theme-color" content="#0b1020" />
     <title>Autism Gaming</title>
   </head>
@@ -17,34 +14,35 @@
           <span class="brand-mark">A</span>
           <span>autism gaming</span>
         </a>
-        <span class="build-label">BROWSER BUILD · 0.1.0</span>
+        <span class="build-label">PIXEL WORLD · PROTOTYPE 0.2.0</span>
       </header>
 
       <main class="workspace">
         <section class="intro" aria-labelledby="page-title">
-          <p class="eyebrow">DEVELOPMENT WORKSPACE</p>
-          <h1 id="page-title">Техническая площадка</h1>
+          <p class="eyebrow">WORLD SANDBOX</p>
+          <h1 id="page-title">Первый мир</h1>
           <p class="intro-copy">
-            Проверяем, что игровой движок, отрисовка и управление работают в браузере.
+            Бесконечно выглядящий травяной луг, персонаж, камера и базовые системы выживания.
           </p>
         </section>
 
         <section class="game-frame" aria-label="Игровое окно">
           <div id="game"></div>
+          <div id="game-ui"></div>
         </section>
 
-        <footer class="controls">
-          <div class="control-hint">
-            <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span>
-            <span class="or">или</span>
-            <span class="key">↑</span><span class="key">←</span><span class="key">↓</span><span class="key">→</span>
-            <span class="hint-text">движение</span>
-          </div>
-          <span class="status"><span class="status-dot"></span> Движок запущен</span>
+        <footer class="page-footer">
+          <span>WASD — движение</span>
+          <span>Shift — бег</span>
+          <span>C — присесть</span>
+          <span>Space — перекат</span>
+          <span>B — инвентарь</span>
+          <span>F3 — отладчик</span>
+          <span>ЛКМ / ПКМ — атаки</span>
         </footer>
       </main>
 
-      <div class="bottom-note">Проект ещё без выбранного жанра — это тестовая сцена, а не финальный дизайн.</div>
+      <div class="bottom-note">Технический пиксельный прототип · параметры и системы постепенно расширяются.</div>
     </div>
 
     <script type="module" src="/src/main.js"></script>
