@@ -173,13 +173,21 @@ export const DEBUG_FIELDS = [
   { scope: 'combat', path: 'combat.arrowRange', label: 'Дальность стрелы', min: 100, max: 1800, step: 10, description: 'Максимальная дальность полёта стрелы.' },
 
   // Weapon stats (individual attacks are separate records).
+  { scope: 'weapons', path: 'weapons.sword.slash.damageType', label: 'Меч · тип замаха', type: 'select', options: [{ value: 'cutting', label: 'Режущий' }, { value: 'piercing', label: 'Колющий' }, { value: 'crushing', label: 'Дробящий' }], description: 'Тип повреждения размашистой атаки.' },
+  { scope: 'weapons', path: 'weapons.sword.thrust.damageType', label: 'Меч · тип тычка', type: 'select', options: [{ value: 'cutting', label: 'Режущий' }, { value: 'piercing', label: 'Колющий' }, { value: 'crushing', label: 'Дробящий' }], description: 'Тип повреждения колющей атаки.' },
+  { scope: 'weapons', path: 'weapons.pickaxe.damageType', label: 'Кирка · тип урона', type: 'select', options: [{ value: 'cutting', label: 'Режущий' }, { value: 'piercing', label: 'Колющий' }, { value: 'crushing', label: 'Дробящий' }], description: 'Тип повреждения кирки.' },
+  { scope: 'weapons', path: 'weapons.axe.damageType', label: 'Топор · тип урона', type: 'select', options: [{ value: 'cutting', label: 'Режущий' }, { value: 'piercing', label: 'Колющий' }, { value: 'crushing', label: 'Дробящий' }], description: 'Тип повреждения топора.' },
+  { scope: 'weapons', path: 'weapons.bow.damageType', label: 'Лук · тип урона', type: 'select', options: [{ value: 'cutting', label: 'Режущий' }, { value: 'piercing', label: 'Колющий' }, { value: 'crushing', label: 'Дробящий' }], description: 'Тип повреждения стрелы.' },
   { scope: 'weapons', path: 'weapons.sword.slash.damage', label: 'Меч · размашистый урон', min: 1, max: 250, step: 1, description: 'Режущий урон по сектору.' },
   { scope: 'weapons', path: 'weapons.sword.slash.cooldownMs', label: 'Меч · перезарядка замаха', min: 80, max: 2000, step: 10, description: 'Задержка между замахами.' },
   { scope: 'weapons', path: 'weapons.sword.slash.staminaCost', label: 'Меч · расход замаха', min: 0, max: 100, step: 1, description: 'Стоимость размашистой атаки.' },
   { scope: 'weapons', path: 'weapons.sword.slash.reach', label: 'Меч · радиус замаха', min: 20, max: 200, step: 2, description: 'Радиус зоны поражения.' },
+  { scope: 'weapons', path: 'weapons.sword.slash.arcDegrees', label: 'Меч · угол замаха', min: 20, max: 240, step: 2, description: 'Угол сектора поражения.' },
   { scope: 'weapons', path: 'weapons.sword.thrust.damage', label: 'Меч · урон тычка', min: 1, max: 250, step: 1, description: 'Колющий урон по узкой линии.' },
   { scope: 'weapons', path: 'weapons.sword.thrust.cooldownMs', label: 'Меч · перезарядка тычка', min: 80, max: 2000, step: 10, description: 'Задержка между тычками.' },
   { scope: 'weapons', path: 'weapons.sword.thrust.staminaCost', label: 'Меч · расход тычка', min: 0, max: 100, step: 1, description: 'Стоимость колющей атаки.' },
+  { scope: 'weapons', path: 'weapons.sword.thrust.reach', label: 'Меч · дальность тычка', min: 20, max: 260, step: 2, description: 'Длина колющего удара.' },
+  { scope: 'weapons', path: 'weapons.sword.thrust.width', label: 'Меч · ширина тычка', min: 4, max: 80, step: 1, description: 'Половина ширины зоны попадания.' },
   { scope: 'weapons', path: 'weapons.pickaxe.damage', label: 'Кирка · урон', min: 1, max: 250, step: 1, description: 'Базовый урон кирки.' },
   { scope: 'weapons', path: 'weapons.pickaxe.stoneMultiplier', label: 'Кирка · бонус по камню', min: 0.1, max: 10, step: 0.1, description: 'Множитель урона по каменным целям.' },
   { scope: 'weapons', path: 'weapons.pickaxe.woodMultiplier', label: 'Кирка · бонус по дереву', min: 0.1, max: 10, step: 0.1, description: 'Множитель урона по деревянным целям.' },
@@ -189,6 +197,7 @@ export const DEBUG_FIELDS = [
   { scope: 'weapons', path: 'weapons.axe.stoneMultiplier', label: 'Топор · бонус по камню', min: 0.1, max: 10, step: 0.1, description: 'Множитель урона по камню.' },
   { scope: 'weapons', path: 'weapons.bow.damage', label: 'Лук · урон стрелы', min: 1, max: 250, step: 1, description: 'Базовый колющий урон стрелы.' },
   { scope: 'weapons', path: 'weapons.bow.cooldownMs', label: 'Лук · перезарядка', min: 80, max: 2000, step: 10, description: 'Задержка между выстрелами.' },
+  { scope: 'weapons', path: 'weapons.bow.projectileSpeed', label: 'Лук · скорость стрелы', min: 100, max: 1600, step: 10, description: 'Скорость анимации полёта стрелы.' },
 
   // World dimensions. Changing them also updates camera bounds.
   { scope: 'world', path: 'world.width', label: 'Ширина мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по горизонтали.' },
