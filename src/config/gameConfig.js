@@ -183,6 +183,10 @@ export const DEBUG_FIELDS = [
   { scope: 'weapons', path: 'weapons.bow.damage', label: 'Лук · урон стрелы', min: 1, max: 250, step: 1, description: 'Базовый колющий урон стрелы.' },
   { scope: 'weapons', path: 'weapons.bow.cooldownMs', label: 'Лук · перезарядка', min: 80, max: 2000, step: 10, description: 'Задержка между выстрелами.' },
 
+  // World dimensions. Changing them also updates camera bounds.
+  { scope: 'world', path: 'world.width', label: 'Ширина мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по горизонтали.' },
+  { scope: 'world', path: 'world.height', label: 'Высота мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по вертикали.' },
+
   // Inventory setup.
   { scope: 'inventory', path: 'inventory.baseBackpackSlots', label: 'Открытые ячейки рюкзака', min: 1, max: 24, step: 1, description: 'Количество доступных ячеек до расширений.' },
   { scope: 'inventory', path: 'inventory.maxBackpackSlots', label: 'Максимум ячеек рюкзака', min: 1, max: 60, step: 1, description: 'Верхний предел после будущих покупок.' },
@@ -193,6 +197,7 @@ export const DEBUG_FIELDS = [
 export const DEBUG_SCOPES = [
   { id: 'player', label: 'Игрок' },
   { id: 'camera', label: 'Камера' },
+  { id: 'world', label: 'Мир' },
   { id: 'combat', label: 'Бой' },
   { id: 'weapons', label: 'Оружие' },
   { id: 'inventory', label: 'Инвентарь' },
