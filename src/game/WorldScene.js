@@ -540,6 +540,7 @@ export class WorldScene extends Phaser.Scene {
         reach: weapon.reach,
         woodMultiplier: weapon.woodMultiplier,
         stoneMultiplier: weapon.stoneMultiplier,
+        natureMultiplier: weapon.natureMultiplier,
       };
     }
 
@@ -559,8 +560,8 @@ export class WorldScene extends Phaser.Scene {
     this.stats.stamina -= profile.staminaCost;
     const angle = this.lastAimAngle;
     const origin = { x: this.playerSprite.x, y: this.playerSprite.y - 13 };
-    const strengthMultiplier = Math.max(0.25, 1 + ((this.stats.strength - 10) * GAME_CONFIG.combat.damageAttributeScale));
-    const attack = { ...profile, damage: profile.damage * strengthMultiplier };
+    // Strength scaling is applied once inside calculateDamage().
+    const attack = { ...profile };
     const targetsHit = this.resolveAttackTargets(attack, attackKind, origin, angle);
 
     if (itemId === 'sword' && attackKind === 'slash') this.drawSwordSlash(origin, angle, profile);
@@ -596,7 +597,10 @@ export class WorldScene extends Phaser.Scene {
         hit = distanceToSegment(target.x, target.y, origin.x, origin.y, endX, endY)
           <= (attack.width || GAME_CONFIG.combat.thrustWidth);
       } else if (attackKind === 'shot') {
-        hit = Phaser.Math.Distance.Between(origin.x, origin.y, target.x, target.y) <= range;
+        const endX = origin.x + Math.cos(angle) * range;
+        const endY = origin.y + Math.sin(angle) * range;
+        // A shot only hits targets along the arrow path, not every nearby object.
+        hit = distanceToSegment(target.x, target.y, origin.x, origin.y, endX, endY) <= 8;
       }
 
       if (!hit) continue;
