@@ -452,7 +452,7 @@ func _attack(secondary: bool) -> void:
 		if not is_instance_valid(target) or target.destroying:
 			continue
 		var offset: Vector2 = target.global_position - player.global_position
-		var distance := offset.length()
+		var distance: float = offset.length()
 		var reach := float(attack.get("reach", 70.0))
 		var is_hit := false
 		if mode == "slash" or mode == "swing":
@@ -627,7 +627,7 @@ func _update_drops() -> void:
 		if not is_instance_valid(drop):
 			drops.erase(drop)
 			continue
-		var distance := drop.global_position.distance_to(player.global_position)
+		var distance: float = drop.global_position.distance_to(player.global_position)
 		if distance <= magnet_radius:
 			drop.set_magnet_target(player)
 		else:
@@ -743,13 +743,13 @@ func _select_debug_target(world_position: Vector2) -> void:
 			var resource := child as ResourceNode
 			if resource == null:
 				continue
-			var distance := world_position.distance_to(resource.global_position)
+			var distance: float = world_position.distance_to(resource.global_position)
 			if distance <= resource.hit_radius + 10.0 and distance < nearest_distance:
 				nearest_id = str(resource.get_instance_id())
 				nearest_distance = distance
 	for drop in drops:
 		if is_instance_valid(drop):
-			var distance := world_position.distance_to(drop.global_position)
+			var distance: float = world_position.distance_to(drop.global_position)
 			if distance < nearest_distance:
 				nearest_id = str(drop.get_instance_id())
 				nearest_distance = distance
