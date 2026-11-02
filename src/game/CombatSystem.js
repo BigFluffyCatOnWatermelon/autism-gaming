@@ -35,11 +35,15 @@ export function calculateDamage(attack, target = {}, playerStats = {}) {
   const strength = Number(playerStats.strength ?? 10);
   const attributeMultiplier = Math.max(0.25, 1 + ((strength - 10) * 0.025));
 
-  const toolMultiplier = target.material === 'wood' && attack.woodMultiplier
-    ? attack.woodMultiplier
-    : target.material === 'stone' && attack.stoneMultiplier
-      ? attack.stoneMultiplier
-      : 1;
+  // Weapon specialisation is separate from natural material resistance.
+  // This is what makes an axe useful against an Ent-like nature target while
+  // a pickaxe remains the right tool for stone.
+  const materialBonus = {
+    wood: attack.woodMultiplier,
+    stone: attack.stoneMultiplier,
+    nature: attack.natureMultiplier,
+  }[material];
+  const toolMultiplier = Number(materialBonus || 1);
 
   const rawDamage = Number(attack.damage || 0);
   const damage = Math.max(0, Math.round(rawDamage * materialMultiplier * toolMultiplier * attributeMultiplier));
