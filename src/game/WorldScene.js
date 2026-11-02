@@ -249,12 +249,65 @@ export class WorldScene extends Phaser.Scene {
   }
 
   createDebugTargets() {
-    // This registry is the extension point for future trees, rocks, NPCs and
-    // enemies. Each registered object becomes selectable by the F3 inspector.
-    this.debugTargets = [
-      { id: 'player', label: 'Персонаж', object: this.playerSprite },
-      { id: 'world', label: 'Трава / мир', object: this.ground },
-    ];
+    // Register objects here so F3 can inspect them. Future trees, stones,
+    // enemies, loot and NPCs should call registerDebugTarget() when created.
+    this.debugTargets = [];
+    this.registerDebugTarget({
+      id: 'player',
+      label: 'Персонаж',
+      scope: 'player',
+      object: this.playerSprite,
+      hitRadius: 44,
+    });
+    this.registerDebugTarget({
+      id: 'world',
+      label: 'Трава / мир',
+      scope: 'world',
+      object: this.ground,
+      hitTest: () => true, // Fallback target when no object is under the cursor.
+    });
+    this.registerDebugTarget({ id: 'camera', label: 'Камера', scope: 'camera' });
+    this.registerDebugTarget({ id: 'weapons', label: 'Оружие', scope: 'weapons' });
+  }
+
+  /**
+   * Register any world object for selection in developer mode.
+   *
+   * Optional fields can describe object-specific properties:
+   * { path, label, min, max, step, description, getValue, setValue }.
+   * getValue / setValue make the inspector independent of the object's shape.
+   */
+  registerDebugTarget(target) {
+    if (!target?.id || !target?.label) {
+      throw new Error('Debug target needs an id and a readable label.');
+    }
+    const entry = { scope: 'player', hitRadius: 36, ...target };
+    const existingIndex = this.debugTargets.findIndex(item => item.id === entry.id);
+    if (existingIndex >= 0) this.debugTargets[existingIndex] = entry;
+    else this.debugTargets.push(entry);
+    return entry;
+  }
+
+  getDebugTarget(id) {
+    return this.debugTargets.find(target => target.id === id) || null;
+  }
+
+  getDebugTargetAt(worldX, worldY) {
+    // Prefer concrete objects over the world fallback. This lets new objects
+    // register custom hit tests or use their Phaser display bounds.
+    const candidates = this.debugTargets.filter(target => target.object || target.hitTest);
+    for (const target of candidates) {
+      if (target.id === 'world') continue;
+      if (typeof target.hitTest === 'function' && target.hitTest(worldX, worldY)) return target;
+      if (target.object?.getBounds) {
+        const bounds = target.object.getBounds();
+        if (Phaser.Geom.Rectangle.Contains(bounds, worldX, worldY)) return target;
+      } else if (target.object && Number.isFinite(target.object.x) && Number.isFinite(target.object.y)) {
+        const distance = Phaser.Math.Distance.Between(worldX, worldY, target.object.x, target.object.y);
+        if (distance <= target.hitRadius) return target;
+      }
+    }
+    return this.getDebugTarget('world');
   }
 
   update(time, delta) {
@@ -471,15 +524,18 @@ export class WorldScene extends Phaser.Scene {
   updateDebugHover() {
     if (!this.debugMode) return;
     const pointer = this.input.activePointer;
-    const distance = Phaser.Math.Distance.Between(
-      pointer.worldX, pointer.worldY,
-      this.playerSprite.x, this.playerSprite.y - 14,
-    );
-
+    const target = this.getDebugTargetAt(pointer.worldX, pointer.worldY);
+    this.hoveredDebugTarget = target;
     this.debugHighlight.clear();
-    if (distance < 70) {
+
+    if (target?.object) {
+      const bounds = target.object.getBounds?.();
       this.debugHighlight.lineStyle(2, 0x65e6c4, 0.95);
-      this.debugHighlight.strokeCircle(this.playerSprite.x, this.playerSprite.y - 15, 30);
+      if (bounds) {
+        this.debugHighlight.strokeRect(bounds.x - 4, bounds.y - 4, bounds.width + 8, bounds.height + 8);
+      } else {
+        this.debugHighlight.strokeCircle(target.object.x, target.object.y, target.hitRadius || 30);
+      }
     } else {
       this.debugHighlight.lineStyle(1, 0x65e6c4, 0.55);
       this.debugHighlight.strokeCircle(pointer.worldX, pointer.worldY, 14);
@@ -492,16 +548,10 @@ export class WorldScene extends Phaser.Scene {
     if (this.ui.inventoryOpen || this.ui.settingsOpen || this.ui.logsOpen) return;
 
     if (this.debugMode) {
-      const distance = Phaser.Math.Distance.Between(
-        pointer.worldX, pointer.worldY,
-        this.playerSprite.x, this.playerSprite.y - 14,
-      );
-      if (distance < 70) {
-        this.ui.setDebugTarget('player', 'Персонаж');
-        this.ui.addLog('debug', 'Выбран объект: персонаж.');
-      } else {
-        this.ui.setDebugTarget('world', 'Мир / земля');
-        this.ui.addLog('debug', 'Выбран объект: мир.');
+      const target = this.getDebugTargetAt(pointer.worldX, pointer.worldY);
+      if (target) {
+        this.ui.setDebugTarget(target.id, target.label, target.scope);
+        this.ui.addLog('debug', `Выбран объект: ${target.label}.`);
       }
       this.ui.setDebugOpen(true);
       return;
