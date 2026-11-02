@@ -1,6 +1,4963 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://dumfefyt6fha4"]
 
-[ext_resource type="Script" path="res://scripts/game_ui.gd" id="1_ui"]
+[ext_resource type="Script" uid="uid://6kk5kwawp2j8" path="res://scripts/game_ui.gd" id="1_ui"]
+[ext_resource type="Script" uid="uid://d34yoqrx6pqa8" path="res://scripts/inventory_drop_zone.gd" id="2_gdt2y"]
+[ext_resource type="Script" uid="uid://hrjhenso0066" path="res://scripts/inventory_slot.gd" id="3_wm3ai"]
+[ext_resource type="Texture2D" uid="uid://pkmqc5eqto04" path="res://public/assets/items.png" id="4_8dubc"]
 
-[node name="UI" type="CanvasLayer"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p7vwb"]
+content_margin_left = 11.0
+content_margin_top = 8.0
+content_margin_right = 11.0
+content_margin_bottom = 8.0
+bg_color = Color(0.055, 0.075, 0.07, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.34509805, 0.41960785, 0.34901962, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ktti3"]
+bg_color = Color(0.078431375, 0.101960786, 0.105882354, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.27450982, 0.3254902, 0.2901961, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cgfq5"]
+bg_color = Color(0.7882353, 0.3647059, 0.32941177, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.8136471, 0.44094118, 0.40988237, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7dvkv"]
+bg_color = Color(0.078431375, 0.101960786, 0.105882354, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.27450982, 0.3254902, 0.2901961, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vdcm2"]
+bg_color = Color(0.54901963, 0.67058825, 0.34509805, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.60313725, 0.71011764, 0.42368627, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6rmj2"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.15294118, 0.16862746, 0.1882353, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.54509807, 0.57254905, 0.6, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vsj0x"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qsv74"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h1mc3"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cof4p"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_f7tlh"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8k7j3"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jkdwc"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rlppe"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ycmcx"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kupmu"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_catpy"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_41akx"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sesyt"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gglip"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0tsab"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i5tog"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_rleeb"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wu1et"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wquew"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pawqx"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3vrs6"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ukrhx"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5ls34"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fsl8s"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x4rqp"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6bb67"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mgb8n"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y6fpy"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_phcun"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7crvc"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(128, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wibvp"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ymt3a"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3dj8n"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e4ov1"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_wqsf6"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gng4c"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nvokx"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0qcho"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_don14"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_jqxon"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4ixst"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mc4m6"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_87egt"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7p75u"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_2ajps"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lqayg"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4yk3w"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r0njt"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a8yq8"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5ir31"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b4c0f"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.15294118, 0.16862746, 0.1882353, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.54509807, 0.57254905, 0.6, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_towb4"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fy3dn"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hgisg"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pxo3c"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_05gkk"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_76blg"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gqmbq"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u10pm"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_msveu"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_t6lye"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6kpae"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yl308"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uvviu"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_af2ar"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_6gcs0"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_njwk3"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1cx52"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_loaij"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_byx7s"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_qpac2"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0hyy1"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_em40w"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_21fgf"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g8k7k"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_osw2r"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sqjo1"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nso6c"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_558wq"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_shmb1"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b50qt"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d748s"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5ce08"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bhmtk"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_afrei"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gnxq7"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hdjwh"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_86hw1"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0wayy"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_t8kq5"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ed1ov"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jdbl7"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_i6y43"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6vb00"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rvpve"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ehbud"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3tn2y"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nln26"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_g5lia"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4j5hc"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ccl3a"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dsboa"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fjs2k"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ewckt"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_pl7v1"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xvu8b"]
+atlas = ExtResource("4_8dubc")
+region = Rect2(128, 0, 32, 32)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yup7q"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3w4x0"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ih8jx"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_injxw"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_chqca"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c3lix"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4qyo2"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wfm5r"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i43ja"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_r8k4g"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hv1h1"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2sh62"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fvgmb"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mace6"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4gle6"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u6ou0"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lcso5"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_unr46"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_db3ys"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_vouh1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_idtdt"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_c7v0f"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iyskt"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mvo2t"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_rxq7q"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qxvvy"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3jpe2"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q6835"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_46hm0"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ojtu4"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_720u4"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_61mfh"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3ogoo"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8be6q"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tnsgc"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0q10w"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i1l17"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_po3ja"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vr1w8"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_x3fvy"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_q7i67"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8yk0m"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_khmqh"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p6cvy"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gkff7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yynwd"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oafu6"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oego3"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yleij"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gjsgx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_21ypp"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gwx1s"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_how6g"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_3yieh"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_xc0ff"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kvcrw"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_677p3"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gvyed"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wecsv"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ddwll"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_73mvs"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1wlr5"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ly56k"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hpk8t"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tg5yc"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cab24"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_83yty"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wrnmr"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_01osc"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ubh3w"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_axtaw"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f1352"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p5yin"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wrueb"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fnso1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7g7c8"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tn1ai"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_per1a"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b1ods"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_j03xt"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_53520"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h4to2"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xtcpg"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_w88ju"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_awcy3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_axoyc"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lnflj"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y2lkq"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gynwy"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_hvpea"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_naskc"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kswqn"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4meib"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jjmyi"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_q644p"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wfhxs"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h4mua"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kagp8"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lxoun"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_cvl4x"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oiwn7"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ama7j"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bdiy5"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pywoo"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_furqe"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_yrel1"]
+bg_color = Color(0.20392157, 0.22352941, 0.2509804, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.52156866, 0.5529412, 0.5882353, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_easkc"]
+bg_color = Color(0.35686275, 0.39607844, 0.30588236, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.84705883, 0.90588236, 0.7411765, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jki2u"]
+bg_color = Color(0.26666668, 0.29803923, 0.33333334, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.76862746, 0.8, 0.827451, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_l5xf2"]
+bg_color = Color(0.1254902, 0.13725491, 0.15686275, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25490198, 0.27450982, 0.29803923, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ntxn8"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_70raf"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.15294118, 0.16862746, 0.1882353, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.54509807, 0.57254905, 0.6, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gxb08"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.15294118, 0.16862746, 0.1882353, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.54509807, 0.57254905, 0.6, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r673p"]
+content_margin_left = 12.0
+content_margin_top = 10.0
+content_margin_right = 12.0
+content_margin_bottom = 10.0
+bg_color = Color(0.15294118, 0.16862746, 0.1882353, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.54509807, 0.57254905, 0.6, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[node name="UI" type="CanvasLayer" unique_id=2096112408]
+layer = 10
 script = ExtResource("1_ui")
+
+[node name="Root" type="Control" parent="." unique_id=57308306]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="WorldDropZone" type="Control" parent="Root" unique_id=1759441470]
+z_index = -10
+anchors_preset = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("2_gdt2y")
+
+[node name="HUD" type="PanelContainer" parent="Root" unique_id=1146359324]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 1.0
+offset_top = -106.0
+offset_right = 221.0
+offset_bottom = 12.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_p7vwb")
+
+[node name="HUDContent" type="VBoxContainer" parent="Root/HUD" unique_id=663658919]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="HealthRow" type="HBoxContainer" parent="Root/HUD/HUDContent" unique_id=1295625209]
+layout_mode = 2
+
+[node name="@Label@19898" type="Label" parent="Root/HUD/HUDContent/HealthRow" unique_id=1576633327]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9411765, 0.78431374, 0.7529412, 1)
+theme_override_font_sizes/font_size = 11
+text = "ЗДОРОВЬЕ"
+
+[node name="@Control@19899" type="Control" parent="Root/HUD/HUDContent/HealthRow" unique_id=1705846810]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HealthValue" type="Label" parent="Root/HUD/HUDContent/HealthRow" unique_id=256500857]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9490196, 0.78039217, 0.7411765, 1)
+theme_override_font_sizes/font_size = 11
+text = "100 / 100"
+
+[node name="HealthBar" type="ProgressBar" parent="Root/HUD/HUDContent" unique_id=566977043]
+custom_minimum_size = Vector2(190, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/background = SubResource("StyleBoxFlat_ktti3")
+theme_override_styles/fill = SubResource("StyleBoxFlat_cgfq5")
+value = 100.0
+show_percentage = false
+
+[node name="StaminaRow" type="HBoxContainer" parent="Root/HUD/HUDContent" unique_id=140718524]
+layout_mode = 2
+
+[node name="@Label@19900" type="Label" parent="Root/HUD/HUDContent/StaminaRow" unique_id=531348467]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8784314, 0.68235296, 1)
+theme_override_font_sizes/font_size = 11
+text = "ВЫНОСЛИВОСТЬ"
+
+[node name="@Control@19901" type="Control" parent="Root/HUD/HUDContent/StaminaRow" unique_id=398152062]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StaminaValue" type="Label" parent="Root/HUD/HUDContent/StaminaRow" unique_id=1480781865]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8156863, 0.8980392, 0.6784314, 1)
+theme_override_font_sizes/font_size = 11
+text = "100 / 100"
+
+[node name="StaminaBar" type="ProgressBar" parent="Root/HUD/HUDContent" unique_id=295580886]
+custom_minimum_size = Vector2(190, 12)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/background = SubResource("StyleBoxFlat_7dvkv")
+theme_override_styles/fill = SubResource("StyleBoxFlat_vdcm2")
+value = 100.0
+show_percentage = false
+
+[node name="ArrowText" type="Label" parent="Root/HUD/HUDContent" unique_id=359649070]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8666667, 0.78431374, 0.56078434, 1)
+theme_override_font_sizes/font_size = 10
+text = "Стрелы: 30"
+
+[node name="FPSText" type="Label" parent="Root" unique_id=585761912]
+layout_mode = 0
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -100.0
+offset_top = 18.0
+offset_right = -16.0
+offset_bottom = 42.0
+theme_override_colors/font_color = Color(0.81960785, 0.84705883, 0.78431374, 1)
+theme_override_font_sizes/font_size = 12
+text = "FPS: 145"
+horizontal_alignment = 2
+
+[node name="Hotbar" type="PanelContainer" parent="Root" unique_id=781729547]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -78.0
+offset_right = 260.0
+offset_bottom = -10.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_6rmj2")
+
+[node name="HotbarRow" type="HBoxContainer" parent="Root/Hotbar" unique_id=730067331]
+layout_mode = 2
+theme_override_constants/separation = 5
+alignment = 1
+
+[node name="Slot1" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=368530941]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Меч"
+theme_override_styles/normal = SubResource("StyleBoxFlat_vsj0x")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_qsv74")
+theme_override_styles/hover = SubResource("StyleBoxFlat_h1mc3")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_cof4p")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_f7tlh")
+toggle_mode = true
+button_pressed = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot1" unique_id=1154336662]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_8k7j3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot1" unique_id=10073292]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "1"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot1" unique_id=470318630]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot1" unique_id=388450630]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot2" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=675517805]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Кирка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_jkdwc")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_rlppe")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ycmcx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_kupmu")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_catpy")
+toggle_mode = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot2" unique_id=1617895392]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_41akx")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot2" unique_id=1059657865]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "2"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot2" unique_id=1957802580]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot2" unique_id=1590854633]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot3" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=2002767015]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Топор"
+theme_override_styles/normal = SubResource("StyleBoxFlat_sesyt")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_gglip")
+theme_override_styles/hover = SubResource("StyleBoxFlat_0tsab")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_i5tog")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_rleeb")
+toggle_mode = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot3" unique_id=13869747]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_wu1et")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot3" unique_id=644513769]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "3"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot3" unique_id=1703420227]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot3" unique_id=1109747753]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot4" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=586397624]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Лук"
+theme_override_styles/normal = SubResource("StyleBoxFlat_wquew")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_pawqx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_3vrs6")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_ukrhx")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_5ls34")
+toggle_mode = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot4" unique_id=1972306847]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_fsl8s")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot4" unique_id=805499664]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "4"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot4" unique_id=488594494]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot4" unique_id=1389029996]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot5" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=769565272]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Стрелы"
+theme_override_styles/normal = SubResource("StyleBoxFlat_x4rqp")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_6bb67")
+theme_override_styles/hover = SubResource("StyleBoxFlat_mgb8n")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_y6fpy")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_phcun")
+toggle_mode = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot5" unique_id=407815067]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_7crvc")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot5" unique_id=2132446901]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "5"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot5" unique_id=390399969]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "30"
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot5" unique_id=594338433]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot6" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=1404331644]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_wibvp")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ymt3a")
+theme_override_styles/hover = SubResource("StyleBoxFlat_3dj8n")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_e4ov1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_wqsf6")
+toggle_mode = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot6" unique_id=1938763387]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot6" unique_id=1791217905]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "6"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot6" unique_id=200171168]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot6" unique_id=1692438497]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot7" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=2064281374]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_gng4c")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_nvokx")
+theme_override_styles/hover = SubResource("StyleBoxFlat_0qcho")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_don14")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_jqxon")
+toggle_mode = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot7" unique_id=468279086]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot7" unique_id=681280338]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "7"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot7" unique_id=1703407991]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot7" unique_id=328880819]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot8" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=1718445957]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_4ixst")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_mc4m6")
+theme_override_styles/hover = SubResource("StyleBoxFlat_87egt")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_7p75u")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_2ajps")
+toggle_mode = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot8" unique_id=963607263]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot8" unique_id=1571940154]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "8"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot8" unique_id=973591127]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot8" unique_id=968255603]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot9" type="Button" parent="Root/Hotbar/HotbarRow" unique_id=907413479]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_lqayg")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_4yk3w")
+theme_override_styles/hover = SubResource("StyleBoxFlat_r0njt")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_a8yq8")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_5ir31")
+toggle_mode = true
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/Hotbar/HotbarRow/Slot9" unique_id=757416752]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/Hotbar/HotbarRow/Slot9" unique_id=251107451]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+text = "9"
+
+[node name="StackCount" type="Label" parent="Root/Hotbar/HotbarRow/Slot9" unique_id=1771371407]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/Hotbar/HotbarRow/Slot9" unique_id=1443919698]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InventoryPanel" type="PanelContainer" parent="Root" unique_id=1146965696]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -370.0
+offset_top = -195.0
+offset_right = 370.0
+offset_bottom = 195.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_b4c0f")
+
+[node name="Content" type="VBoxContainer" parent="Root/InventoryPanel" unique_id=305535866]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Root/InventoryPanel/Content" unique_id=1634964666]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Root/InventoryPanel/Content/Header" unique_id=1044857857]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0.92941177, 0.80784315, 1)
+theme_override_font_sizes/font_size = 19
+text = "Инвентарь"
+
+[node name="Spacer" type="Control" parent="Root/InventoryPanel/Content/Header" unique_id=482792571]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="Root/InventoryPanel/Content/Header" unique_id=544752644]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "×"
+
+[node name="@HSeparator@19902" type="HSeparator" parent="Root/InventoryPanel/Content" unique_id=1932994522]
+layout_mode = 2
+
+[node name="InventoryLayout" type="HBoxContainer" parent="Root/InventoryPanel/Content" unique_id=1356825820]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="EquipmentColumn" type="VBoxContainer" parent="Root/InventoryPanel/Content/InventoryLayout" unique_id=629779202]
+custom_minimum_size = Vector2(142, 0)
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="@Label@19903" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/EquipmentColumn" unique_id=1517035024]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72156864, 0.83137256, 0.62352943, 1)
+theme_override_font_sizes/font_size = 14
+text = "Экипировка"
+
+[node name="Equipment_Шлем" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/EquipmentColumn" unique_id=733699501]
+custom_minimum_size = Vector2(132, 48)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_towb4")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_fy3dn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_hgisg")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_pxo3c")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_05gkk")
+disabled = true
+text = "Шлем
+—"
+
+[node name="Equipment_Нагрудник" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/EquipmentColumn" unique_id=622261365]
+custom_minimum_size = Vector2(132, 48)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_76blg")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_gqmbq")
+theme_override_styles/hover = SubResource("StyleBoxFlat_u10pm")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_msveu")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_t6lye")
+disabled = true
+text = "Нагрудник
+—"
+
+[node name="Equipment_Перчатки" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/EquipmentColumn" unique_id=1409336829]
+custom_minimum_size = Vector2(132, 48)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_6kpae")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_yl308")
+theme_override_styles/hover = SubResource("StyleBoxFlat_uvviu")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_af2ar")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_6gcs0")
+disabled = true
+text = "Перчатки
+—"
+
+[node name="Equipment_Поножи" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/EquipmentColumn" unique_id=983630819]
+custom_minimum_size = Vector2(132, 48)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_njwk3")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_1cx52")
+theme_override_styles/hover = SubResource("StyleBoxFlat_loaij")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_byx7s")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_qpac2")
+disabled = true
+text = "Поножи
+—"
+
+[node name="Equipment_Сапоги" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/EquipmentColumn" unique_id=654616474]
+custom_minimum_size = Vector2(132, 48)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_0hyy1")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_em40w")
+theme_override_styles/hover = SubResource("StyleBoxFlat_21fgf")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_g8k7k")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_osw2r")
+disabled = true
+text = "Сапоги
+—"
+
+[node name="BackpackColumn" type="VBoxContainer" parent="Root/InventoryPanel/Content/InventoryLayout" unique_id=1675384350]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="@Label@19904" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn" unique_id=150055458]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72156864, 0.83137256, 0.62352943, 1)
+theme_override_font_sizes/font_size = 14
+text = "Рюкзак · 9 × 3"
+
+[node name="BackpackText" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn" unique_id=1114230618]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83137256, 0.87058824, 0.78431374, 1)
+theme_override_font_sizes/font_size = 12
+text = "12 / 24 ячеек открыто"
+
+[node name="BackpackGrid" type="GridContainer" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn" unique_id=1108301808]
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 9
+
+[node name="BackpackSlot00" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=2060078775]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Меч"
+theme_override_styles/normal = SubResource("StyleBoxFlat_sqjo1")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_nso6c")
+theme_override_styles/hover = SubResource("StyleBoxFlat_558wq")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_shmb1")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_b50qt")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot00" unique_id=947756963]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_d748s")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot00" unique_id=1227566485]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot00" unique_id=1518937303]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot00" unique_id=1492333998]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot01" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1899712341]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Кирка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_5ce08")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_bhmtk")
+theme_override_styles/hover = SubResource("StyleBoxFlat_afrei")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_gnxq7")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_hdjwh")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot01" unique_id=1001911901]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_86hw1")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot01" unique_id=484547244]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot01" unique_id=503347339]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot01" unique_id=2013090261]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot02" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=741914772]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Топор"
+theme_override_styles/normal = SubResource("StyleBoxFlat_0wayy")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_t8kq5")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ed1ov")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_jdbl7")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_i6y43")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot02" unique_id=2011600683]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_6vb00")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot02" unique_id=172527947]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot02" unique_id=1887847661]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot02" unique_id=1087859645]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot03" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=769541078]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Лук"
+theme_override_styles/normal = SubResource("StyleBoxFlat_rvpve")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ehbud")
+theme_override_styles/hover = SubResource("StyleBoxFlat_3tn2y")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_nln26")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_g5lia")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot03" unique_id=564041421]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_4j5hc")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot03" unique_id=47542349]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot03" unique_id=1273931374]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot03" unique_id=20109421]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot04" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1312754489]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Стрелы"
+theme_override_styles/normal = SubResource("StyleBoxFlat_ccl3a")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_dsboa")
+theme_override_styles/hover = SubResource("StyleBoxFlat_fjs2k")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_ewckt")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_pl7v1")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot04" unique_id=691276416]
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_xvu8b")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot04" unique_id=1170980069]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot04" unique_id=509636312]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+text = "30"
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot04" unique_id=229819928]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot05" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=130628777]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_yup7q")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_3w4x0")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ih8jx")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_injxw")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_chqca")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot05" unique_id=176393600]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot05" unique_id=1876225834]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot05" unique_id=1813973528]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot05" unique_id=310306159]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot06" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=2079798263]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_c3lix")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_4qyo2")
+theme_override_styles/hover = SubResource("StyleBoxFlat_wfm5r")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_i43ja")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_r8k4g")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot06" unique_id=766882552]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot06" unique_id=652253092]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot06" unique_id=759249477]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot06" unique_id=1259934624]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot07" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=898833020]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_hv1h1")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_2sh62")
+theme_override_styles/hover = SubResource("StyleBoxFlat_fvgmb")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_mace6")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_4gle6")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot07" unique_id=582281979]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot07" unique_id=536497514]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot07" unique_id=1271448635]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot07" unique_id=182468944]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot08" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1732914522]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_u6ou0")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_lcso5")
+theme_override_styles/hover = SubResource("StyleBoxFlat_unr46")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_db3ys")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_vouh1")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot08" unique_id=1913734141]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot08" unique_id=108063600]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot08" unique_id=475803714]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot08" unique_id=1386105700]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot09" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1866145803]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_idtdt")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_c7v0f")
+theme_override_styles/hover = SubResource("StyleBoxFlat_iyskt")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_mvo2t")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_rxq7q")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot09" unique_id=1385063186]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot09" unique_id=749690343]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot09" unique_id=76054640]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot09" unique_id=975094060]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot10" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1650226211]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_qxvvy")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_3jpe2")
+theme_override_styles/hover = SubResource("StyleBoxFlat_q6835")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_46hm0")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_ojtu4")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot10" unique_id=1481808309]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot10" unique_id=1170401036]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot10" unique_id=1881601357]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot10" unique_id=1532248505]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot11" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=2146000298]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_720u4")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_61mfh")
+theme_override_styles/hover = SubResource("StyleBoxFlat_3ogoo")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_8be6q")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_tnsgc")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot11" unique_id=722457805]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot11" unique_id=1917708923]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot11" unique_id=2145651159]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot11" unique_id=1677208475]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot12" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=789450009]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_0q10w")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_i1l17")
+theme_override_styles/hover = SubResource("StyleBoxFlat_po3ja")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_vr1w8")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_x3fvy")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot12" unique_id=1024644474]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot12" unique_id=1413884573]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot12" unique_id=870103447]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot12" unique_id=1776082536]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot13" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=803267474]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_q7i67")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_8yk0m")
+theme_override_styles/hover = SubResource("StyleBoxFlat_khmqh")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_p6cvy")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gkff7")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot13" unique_id=1620204355]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot13" unique_id=909708781]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot13" unique_id=385074183]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot13" unique_id=467191986]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot14" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=372550766]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_yynwd")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_oafu6")
+theme_override_styles/hover = SubResource("StyleBoxFlat_oego3")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_yleij")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gjsgx")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot14" unique_id=856702716]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot14" unique_id=507024179]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot14" unique_id=2005467590]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot14" unique_id=1755188880]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot15" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1088024304]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_21ypp")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_gwx1s")
+theme_override_styles/hover = SubResource("StyleBoxFlat_how6g")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_3yieh")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_xc0ff")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot15" unique_id=1728651372]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot15" unique_id=1662422220]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot15" unique_id=2112566626]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot15" unique_id=2110152327]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot16" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1548819679]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_kvcrw")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_677p3")
+theme_override_styles/hover = SubResource("StyleBoxFlat_gvyed")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_wecsv")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_ddwll")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot16" unique_id=1379254580]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot16" unique_id=412708353]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot16" unique_id=1897635581]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot16" unique_id=2113778894]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot17" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1225428821]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_73mvs")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_1wlr5")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ly56k")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_hpk8t")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_tg5yc")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot17" unique_id=1504457050]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot17" unique_id=1918009121]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot17" unique_id=588733382]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot17" unique_id=1019566860]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot18" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=69766756]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_cab24")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_83yty")
+theme_override_styles/hover = SubResource("StyleBoxFlat_wrnmr")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_01osc")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_ubh3w")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot18" unique_id=334865618]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot18" unique_id=1100257041]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot18" unique_id=915486918]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot18" unique_id=1967394064]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot19" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1982163643]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_axtaw")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_f1352")
+theme_override_styles/hover = SubResource("StyleBoxFlat_p5yin")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_wrueb")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_fnso1")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot19" unique_id=1915966656]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot19" unique_id=1029977443]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot19" unique_id=2131898691]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot19" unique_id=871596776]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot20" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=2053867013]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_7g7c8")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_tn1ai")
+theme_override_styles/hover = SubResource("StyleBoxFlat_per1a")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_b1ods")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_j03xt")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot20" unique_id=1466962514]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot20" unique_id=427508012]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot20" unique_id=59475371]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot20" unique_id=1411973959]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot21" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=314898540]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_53520")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_h4to2")
+theme_override_styles/hover = SubResource("StyleBoxFlat_xtcpg")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_w88ju")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_awcy3")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot21" unique_id=1994567533]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot21" unique_id=1340563004]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot21" unique_id=2031641364]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot21" unique_id=1540918804]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot22" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=2122325214]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_axoyc")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_lnflj")
+theme_override_styles/hover = SubResource("StyleBoxFlat_y2lkq")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_gynwy")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_hvpea")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot22" unique_id=677418118]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot22" unique_id=683449324]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot22" unique_id=1126395113]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot22" unique_id=84613948]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot23" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=512881729]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_naskc")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_kswqn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_4meib")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_jjmyi")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_q644p")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot23" unique_id=1842231817]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot23" unique_id=483205300]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot23" unique_id=732329659]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot23" unique_id=1366465092]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot24" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=230072264]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_wfhxs")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_h4mua")
+theme_override_styles/hover = SubResource("StyleBoxFlat_kagp8")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_lxoun")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_cvl4x")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot24" unique_id=1173844998]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot24" unique_id=1707519254]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot24" unique_id=104205559]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot24" unique_id=1863733405]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot25" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=1067917942]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_oiwn7")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ama7j")
+theme_override_styles/hover = SubResource("StyleBoxFlat_bdiy5")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_pywoo")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_furqe")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot25" unique_id=850283921]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot25" unique_id=533911319]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot25" unique_id=2102843427]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot25" unique_id=386532935]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BackpackSlot26" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid" unique_id=552151643]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+tooltip_text = "Пустая ячейка"
+theme_override_styles/normal = SubResource("StyleBoxFlat_yrel1")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_easkc")
+theme_override_styles/hover = SubResource("StyleBoxFlat_jki2u")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_l5xf2")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_ntxn8")
+script = ExtResource("3_wm3ai")
+
+[node name="Icon" type="TextureRect" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot26" unique_id=1887564529]
+visible = false
+texture_filter = 1
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="KeyNumber" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot26" unique_id=1290680401]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 1.0
+theme_override_colors/font_color = Color(0.88235295, 0.8980392, 0.9137255, 1)
+theme_override_font_sizes/font_size = 10
+
+[node name="StackCount" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot26" unique_id=1621295973]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -30.0
+offset_top = -19.0
+offset_right = -3.0
+offset_bottom = -2.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="LockMark" type="Label" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn/BackpackGrid/BackpackSlot26" unique_id=1226491364]
+visible = false
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_color = Color(0.5529412, 0.5803922, 0.60784316, 1)
+theme_override_font_sizes/font_size = 20
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExpandBackpack" type="Button" parent="Root/InventoryPanel/Content/InventoryLayout/BackpackColumn" unique_id=1317795004]
+custom_minimum_size = Vector2(0, 28)
+layout_mode = 2
+text = "Увеличить рюкзак (+3)"
+
+[node name="@Label@19905" type="Label" parent="Root/InventoryPanel/Content" unique_id=643366639]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.61960787, 0.6666667, 0.5764706, 1)
+theme_override_font_sizes/font_size = 11
+text = "Предметы и экипировка отображаются отдельными ячейками, как в Minecraft."
+
+[node name="SettingsPanel" type="PanelContainer" parent="Root" unique_id=1951757068]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -190.0
+offset_right = 240.0
+offset_bottom = 190.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_70raf")
+
+[node name="Content" type="VBoxContainer" parent="Root/SettingsPanel" unique_id=53895956]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Root/SettingsPanel/Content" unique_id=1906702138]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Root/SettingsPanel/Content/Header" unique_id=401770340]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0.92941177, 0.80784315, 1)
+theme_override_font_sizes/font_size = 19
+text = "Настройки"
+
+[node name="Spacer" type="Control" parent="Root/SettingsPanel/Content/Header" unique_id=373099589]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="Root/SettingsPanel/Content/Header" unique_id=1201742540]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "×"
+
+[node name="@HSeparator@19906" type="HSeparator" parent="Root/SettingsPanel/Content" unique_id=1692501992]
+layout_mode = 2
+
+[node name="@Label@19907" type="Label" parent="Root/SettingsPanel/Content" unique_id=137890132]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72156864, 0.83137256, 0.62352943, 1)
+theme_override_font_sizes/font_size = 14
+text = "Эффекты камеры"
+
+[node name="ScreenShake" type="CheckBox" parent="Root/SettingsPanel/Content" unique_id=465824137]
+layout_mode = 2
+text = "Тряска камеры при ударах"
+
+[node name="@Label@19908" type="Label" parent="Root/SettingsPanel/Content" unique_id=918329850]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8980392, 0.9254902, 0.8509804, 1)
+theme_override_font_sizes/font_size = 13
+text = "Базовый масштаб камеры"
+
+[node name="CameraZoom" type="HSlider" parent="Root/SettingsPanel/Content" unique_id=84747285]
+layout_mode = 2
+min_value = 0.8
+max_value = 3.0
+step = 0.05
+value = 1.85
+
+[node name="@HSeparator@19909" type="HSeparator" parent="Root/SettingsPanel/Content" unique_id=499969506]
+layout_mode = 2
+
+[node name="@Label@19910" type="Label" parent="Root/SettingsPanel/Content" unique_id=1103401678]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72156864, 0.83137256, 0.62352943, 1)
+theme_override_font_sizes/font_size = 14
+text = "Отладка"
+
+[node name="DebugMode" type="CheckBox" parent="Root/SettingsPanel/Content" unique_id=1943795089]
+layout_mode = 2
+text = "Режим выделения объектов (Debug Inspector)"
+
+[node name="@Label@19911" type="Label" parent="Root/SettingsPanel/Content" unique_id=1665912268]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.61960787, 0.6666667, 0.5764706, 1)
+theme_override_font_sizes/font_size = 11
+text = "Включи режим, затем нажимай на объекты мира, чтобы открыть и менять их параметры. F3 — быстрый переключатель."
+
+[node name="@Label@19912" type="Label" parent="Root/SettingsPanel/Content" unique_id=133083614]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.61960787, 0.6666667, 0.5764706, 1)
+theme_override_font_sizes/font_size = 11
+text = "Настройки сохраняются в локальном файле Godot."
+
+[node name="DebugPanel" type="PanelContainer" parent="Root" unique_id=1946716567]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 70.0
+offset_top = -250.0
+offset_right = 500.0
+offset_bottom = 250.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_gxb08")
+
+[node name="Content" type="VBoxContainer" parent="Root/DebugPanel" unique_id=1596847434]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Root/DebugPanel/Content" unique_id=797817686]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Root/DebugPanel/Content/Header" unique_id=729045015]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0.92941177, 0.80784315, 1)
+theme_override_font_sizes/font_size = 19
+text = "Debug Inspector · F3"
+
+[node name="Spacer" type="Control" parent="Root/DebugPanel/Content/Header" unique_id=662044567]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="Root/DebugPanel/Content/Header" unique_id=1663992558]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "×"
+
+[node name="@HSeparator@19913" type="HSeparator" parent="Root/DebugPanel/Content" unique_id=1346337714]
+layout_mode = 2
+
+[node name="DebugStats" type="Label" parent="Root/DebugPanel/Content" unique_id=1419313010]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72156864, 0.83137256, 0.62352943, 1)
+theme_override_font_sizes/font_size = 11
+text = "FPS: — · Позиция: — · Бег: —"
+
+[node name="DebugTarget" type="Label" parent="Root/DebugPanel/Content" unique_id=1847427463]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8980392, 0.8392157, 0.6509804, 1)
+theme_override_font_sizes/font_size = 12
+text = "Выбран объект: Игрок"
+
+[node name="@HBoxContainer@19925" type="HBoxContainer" parent="Root/DebugPanel/Content" unique_id=1796169950]
+layout_mode = 2
+
+[node name="@Label@19914" type="Label" parent="Root/DebugPanel/Content/@HBoxContainer@19925" unique_id=1565291163]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8980392, 0.9254902, 0.8509804, 1)
+theme_override_font_sizes/font_size = 12
+text = "Фильтр объектов:"
+
+[node name="DebugFilter" type="OptionButton" parent="Root/DebugPanel/Content/@HBoxContainer@19925" unique_id=59246666]
+layout_mode = 2
+selected = 0
+item_count = 6
+popup/item_0/text = "Все объекты"
+popup/item_0/id = 0
+popup/item_1/text = "Игрок"
+popup/item_1/id = 1
+popup/item_2/text = "Деревья"
+popup/item_2/id = 2
+popup/item_3/text = "Камни"
+popup/item_3/id = 3
+popup/item_4/text = "Предметы"
+popup/item_4/id = 4
+popup/item_5/text = "Оружие"
+popup/item_5/id = 5
+
+[node name="@HBoxContainer@19926" type="HBoxContainer" parent="Root/DebugPanel/Content" unique_id=94386885]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="DebugObjectList" type="ItemList" parent="Root/DebugPanel/Content/@HBoxContainer@19926" unique_id=1573416472]
+custom_minimum_size = Vector2(145, 300)
+layout_mode = 2
+size_flags_vertical = 3
+allow_reselect = true
+
+[node name="@ScrollContainer@19931" type="ScrollContainer" parent="Root/DebugPanel/Content/@HBoxContainer@19926" unique_id=606674510]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DebugProperties" type="VBoxContainer" parent="Root/DebugPanel/Content/@HBoxContainer@19926/@ScrollContainer@19931" unique_id=219203053]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="@Label@19932" type="Label" parent="Root/DebugPanel/Content/@HBoxContainer@19926/@ScrollContainer@19931/DebugProperties" unique_id=1834207720]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.83137256, 0.87058824, 0.78431374, 1)
+theme_override_font_sizes/font_size = 12
+text = "Выбери объект в списке или кликни по нему в мире."
+
+[node name="@HBoxContainer@19933" type="HBoxContainer" parent="Root/DebugPanel/Content" unique_id=1969776558]
+layout_mode = 2
+
+[node name="InfiniteStamina" type="CheckBox" parent="Root/DebugPanel/Content/@HBoxContainer@19933" unique_id=1067582792]
+layout_mode = 2
+text = "Бесконечная выносливость"
+
+[node name="Invulnerable" type="CheckBox" parent="Root/DebugPanel/Content/@HBoxContainer@19933" unique_id=1607463196]
+layout_mode = 2
+text = "Неуязвимость"
+
+[node name="@HBoxContainer@19934" type="HBoxContainer" parent="Root/DebugPanel/Content" unique_id=1319695560]
+layout_mode = 2
+
+[node name="DebugClone" type="Button" parent="Root/DebugPanel/Content/@HBoxContainer@19934" unique_id=1348423458]
+layout_mode = 2
+text = "Копировать объект"
+
+[node name="DebugReset" type="Button" parent="Root/DebugPanel/Content/@HBoxContainer@19934" unique_id=1135043171]
+layout_mode = 2
+text = "Сбросить параметры"
+
+[node name="DebugDelete" type="Button" parent="Root/DebugPanel/Content/@HBoxContainer@19934" unique_id=621223468]
+layout_mode = 2
+text = "Удалить…"
+
+[node name="DebugDeleteDialog" type="ConfirmationDialog" parent="Root" unique_id=279717417]
+title = "Удаление объекта"
+dialog_text = "Удалить выбранный объект из текущей игровой сессии?"
+
+[node name="LogsPanel" type="PanelContainer" parent="Root" unique_id=1326098493]
+visible = false
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -205.0
+offset_right = 300.0
+offset_bottom = 205.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_r673p")
+
+[node name="Content" type="VBoxContainer" parent="Root/LogsPanel" unique_id=262600884]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Root/LogsPanel/Content" unique_id=2125659529]
+layout_mode = 2
+
+[node name="Heading" type="Label" parent="Root/LogsPanel/Content/Header" unique_id=1760741239]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8784314, 0.92941177, 0.80784315, 1)
+theme_override_font_sizes/font_size = 19
+text = "Журнал событий · F2"
+
+[node name="Spacer" type="Control" parent="Root/LogsPanel/Content/Header" unique_id=300204052]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CloseButton" type="Button" parent="Root/LogsPanel/Content/Header" unique_id=435705291]
+custom_minimum_size = Vector2(34, 30)
+layout_mode = 2
+text = "×"
+
+[node name="@HSeparator@19943" type="HSeparator" parent="Root/LogsPanel/Content" unique_id=454192676]
+layout_mode = 2
+
+[node name="LogText" type="TextEdit" parent="Root/LogsPanel/Content" unique_id=501420479]
+custom_minimum_size = Vector2(570, 325)
+layout_mode = 2
+text = "[01:31:35] Интерфейс загружен."
+editable = false
+wrap_mode = 1
+
+[node name="ClearLogs" type="Button" parent="Root/LogsPanel/Content" unique_id=894148388]
+layout_mode = 2
+text = "Очистить журнал"

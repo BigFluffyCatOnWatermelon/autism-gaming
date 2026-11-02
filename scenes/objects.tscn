@@ -1,30 +1,29 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://i8jntgy3lww7"]
 
-[ext_resource type="Script" path="res://scripts/resource_node.gd" id="1_resource"]
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_resource"]
 
 [sub_resource type="CircleShape2D" id="TreeCollision"]
-radius = 12.0
+radius = 9.0
 
 [sub_resource type="CircleShape2D" id="RockCollision"]
-radius = 16.0
+radius = 22.561028
 
-[node name="Objects" type="Node2D"]
+[node name="Objects" type="Node2D" unique_id=2121347067]
 
-[node name="Tree" type="StaticBody2D" parent="."]
-position = Vector2(-520, -360)
+[node name="Tree" type="StaticBody2D" parent="." unique_id=1010811317]
+position = Vector2(82, 89)
 script = ExtResource("1_resource")
-resource_type = "tree"
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree"]
-position = Vector2(0, 8)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Tree" unique_id=492581813]
+position = Vector2(0, -12)
 shape = SubResource("TreeCollision")
 
-[node name="Rock" type="StaticBody2D" parent="."]
-position = Vector2(540, 360)
+[node name="Rock" type="StaticBody2D" parent="." unique_id=1486095239]
+position = Vector2(244, 88)
 script = ExtResource("1_resource")
 resource_type = "rock"
 max_health = 110.0
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock"]
-position = Vector2(0, 8)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Rock" unique_id=47805170]
+position = Vector2(2, -26)
 shape = SubResource("RockCollision")
