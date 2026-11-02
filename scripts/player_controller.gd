@@ -1,12 +1,12 @@
 extends CharacterBody2D
 
 const GameConfigScript = preload("res://scripts/game_config.gd")
-const ITEM_RECTS := {
-	"sword": Rect2(0, 0, 32, 32),
-	"pickaxe": Rect2(32, 0, 32, 32),
-	"axe": Rect2(64, 0, 32, 32),
-	"bow": Rect2(96, 0, 32, 32),
-	"arrows": Rect2(128, 0, 32, 32),
+const ITEM_TEXTURE_PATHS := {
+	"sword": "res://Assets/Weapons/sword.svg",
+	"pickaxe": "res://Assets/Tools/pickaxe.png",
+	"axe": "res://Assets/Tools/axe.png",
+	"bow": "res://Assets/Weapons/bow.png",
+	"arrows": "res://Assets/Items/arrows.png",
 }
 
 var game_config: Dictionary = {}
@@ -67,7 +67,7 @@ func _ready() -> void:
 	if shadow == null:
 		shadow = Sprite2D.new()
 		shadow.name = "Shadow"
-		shadow.texture = load("res://public/assets/shadow.png")
+		shadow.texture = load("res://Assets/Effects/shadow.png")
 		add_child(shadow)
 	shadow.position = Vector2(0, 15)
 	shadow.scale = Vector2(1.15, 1.0)
@@ -78,7 +78,7 @@ func _ready() -> void:
 	if sprite == null:
 		sprite = Sprite2D.new()
 		sprite.name = "Sprite"
-		sprite.texture = load("res://public/assets/player.png")
+		sprite.texture = load("res://Assets/Creatures/player.png")
 		sprite.hframes = 4
 		sprite.vframes = 5
 		add_child(sprite)
@@ -110,15 +110,12 @@ func _ready() -> void:
 func set_held_item(item_id: String, aim_direction: Vector2) -> void:
 	if held_item_sprite == null:
 		return
-	if not ITEM_RECTS.has(item_id):
+	if not ITEM_TEXTURE_PATHS.has(item_id):
 		current_held_item = ""
 		held_item_sprite.visible = false
 		return
 	if current_held_item != item_id:
-		var atlas := AtlasTexture.new()
-		atlas.atlas = load("res://public/assets/items.png")
-		atlas.region = ITEM_RECTS[item_id]
-		held_item_sprite.texture = atlas
+		held_item_sprite.texture = load(ITEM_TEXTURE_PATHS[item_id]) as Texture2D
 		current_held_item = item_id
 	var direction := aim_direction.normalized()
 	if direction.length_squared() < 0.001:

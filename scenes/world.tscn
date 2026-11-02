@@ -4,8 +4,8 @@
 [ext_resource type="PackedScene" path="res://scenes/objects.tscn" id="2_objects"]
 [ext_resource type="PackedScene" path="res://scenes/ui.tscn" id="3_ui"]
 [ext_resource type="Script" path="res://scripts/player_controller.gd" id="4_player"]
-[ext_resource type="Texture2D" path="res://public/assets/player.png" id="5_player_texture"]
-[ext_resource type="Texture2D" path="res://public/assets/shadow.png" id="6_shadow_texture"]
+[ext_resource type="Texture2D" path="res://Assets/Creatures/player.png" id="5_player_texture"]
+[ext_resource type="Texture2D" path="res://Assets/Effects/shadow.png" id="6_shadow_texture"]
 
 [sub_resource type="CapsuleShape2D" id="PlayerCollision"]
 radius = 8.0

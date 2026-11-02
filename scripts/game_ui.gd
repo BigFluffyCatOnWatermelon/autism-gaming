@@ -54,14 +54,14 @@ const ITEM_LABELS := {
 	"pickaxe": "Кирка",
 	"axe": "Топор",
 	"bow": "Лук",
-	"arrows": "Стрелы",
+	"arrows": "Стрелы · боеприпас",
 }
-const ITEM_RECTS := {
-	"sword": Rect2(0, 0, 32, 32),
-	"pickaxe": Rect2(32, 0, 32, 32),
-	"axe": Rect2(64, 0, 32, 32),
-	"bow": Rect2(96, 0, 32, 32),
-	"arrows": Rect2(128, 0, 32, 32),
+const ITEM_TEXTURE_PATHS := {
+	"sword": "res://Assets/Weapons/sword.svg",
+	"pickaxe": "res://Assets/Tools/pickaxe.png",
+	"axe": "res://Assets/Tools/axe.png",
+	"bow": "res://Assets/Weapons/bow.png",
+	"arrows": "res://Assets/Items/arrows.png",
 }
 
 func _ready() -> void:
@@ -810,11 +810,8 @@ func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String
 	var icon_rect := button.get_node_or_null("Icon") as TextureRect
 	var count_label := button.get_node_or_null("StackCount") as Label
 	if icon_rect != null:
-		if ITEM_RECTS.has(item_id):
-			var atlas := AtlasTexture.new()
-			atlas.atlas = load("res://public/assets/items.png")
-			atlas.region = ITEM_RECTS[item_id]
-			icon_rect.texture = atlas
+		if ITEM_TEXTURE_PATHS.has(item_id):
+			icon_rect.texture = load(ITEM_TEXTURE_PATHS[item_id]) as Texture2D
 			icon_rect.visible = true
 			button.text = ""
 		elif item_id == "wood" or item_id == "stone":

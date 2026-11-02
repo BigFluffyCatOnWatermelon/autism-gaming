@@ -1,13 +1,12 @@
 extends Node2D
 class_name ResourceDrop
 
-const ITEM_ATLAS := preload("res://public/assets/items.png")
-const ITEM_RECTS := {
-	"sword": Rect2(0, 0, 32, 32),
-	"pickaxe": Rect2(32, 0, 32, 32),
-	"axe": Rect2(64, 0, 32, 32),
-	"bow": Rect2(96, 0, 32, 32),
-	"arrows": Rect2(128, 0, 32, 32),
+const ITEM_TEXTURES := {
+	"sword": preload("res://Assets/Weapons/sword.svg"),
+	"pickaxe": preload("res://Assets/Tools/pickaxe.png"),
+	"axe": preload("res://Assets/Tools/axe.png"),
+	"bow": preload("res://Assets/Weapons/bow.png"),
+	"arrows": preload("res://Assets/Items/arrows.png"),
 }
 
 var item_id := "wood"
@@ -119,9 +118,9 @@ func _draw() -> void:
 		var points := PackedVector2Array([Vector2(-7, 2), Vector2(-5, -5), Vector2(2, -7), Vector2(8, -1), Vector2(5, 5), Vector2(-3, 6)])
 		draw_colored_polygon(points, Color("#818d8b"))
 		draw_line(Vector2(-3, -3), Vector2(3, -5), Color("#c1c9bd"), 1.0)
-	elif ITEM_RECTS.has(item_id):
+	elif ITEM_TEXTURES.has(item_id):
 		draw_set_transform(lift, 0.0, Vector2.ONE * 0.72)
-		draw_texture_rect_region(ITEM_ATLAS, Rect2(-16, -16, 32, 32), ITEM_RECTS[item_id])
+		draw_texture_rect(ITEM_TEXTURES[item_id], Rect2(-16, -16, 32, 32), false)
 	if amount > 1:
 		draw_set_transform(lift, 0.0, Vector2.ONE)
 		draw_string(ThemeDB.fallback_font, Vector2(8, -4), str(amount), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 9, Color.WHITE)
