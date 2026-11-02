@@ -1,4 +1,4 @@
-name: Validate browser game
+name: Validate Godot project
 
 on:
   push:
@@ -7,23 +7,24 @@ on:
     branches: [main]
 
 jobs:
-  build:
-    name: Install dependencies and build
+  godot-check:
+    name: Import and launch Godot project
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Install Godot 4.7.2 Standard
+        uses: chickensoft-games/setup-godot@v2
         with:
-          node-version: 22
+          version: 4.7.2
+          use-dotnet: false
 
-      - name: Install dependencies
-        run: npm install
+      - name: Print Godot version
+        run: godot --version
 
-      - name: Run gameplay logic tests
-        run: npm test
+      - name: Import resources and parse project
+        run: godot --headless --editor --path . --quit
 
-      - name: Build production bundle
-        run: npm run build
+      - name: Launch main scene briefly
+        run: godot --headless --path . --quit-after 5

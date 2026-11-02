@@ -1,6 +1,8 @@
 node_modules/
 dist/
 .vite/
+.godot/
+.import/
 .DS_Store
 .env
 .env.*
