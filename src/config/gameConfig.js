@@ -95,6 +95,7 @@ export const GAME_CONFIG = {
       cooldownMs: 560,
       reach: 72,
       woodMultiplier: 2.5, // Axes are effective against trees and wood.
+      natureMultiplier: 1.7, // Axes are a strong counter to Ent-like creatures.
       stoneMultiplier: 0.35,
     },
     bow: {
@@ -179,11 +180,14 @@ export const DEBUG_FIELDS = [
   { scope: 'weapons', path: 'weapons.pickaxe.woodMultiplier', label: 'Кирка · бонус по дереву', min: 0.1, max: 10, step: 0.1, description: 'Множитель урона по деревянным целям.' },
   { scope: 'weapons', path: 'weapons.axe.damage', label: 'Топор · урон', min: 1, max: 250, step: 1, description: 'Базовый урон топора.' },
   { scope: 'weapons', path: 'weapons.axe.woodMultiplier', label: 'Топор · бонус по дереву', min: 0.1, max: 10, step: 0.1, description: 'Множитель урона по деревьям и древесине.' },
+  { scope: 'weapons', path: 'weapons.axe.natureMultiplier', label: 'Топор · бонус по энтам', min: 0.1, max: 10, step: 0.1, description: 'Множитель урона по существам природы.' },
   { scope: 'weapons', path: 'weapons.axe.stoneMultiplier', label: 'Топор · бонус по камню', min: 0.1, max: 10, step: 0.1, description: 'Множитель урона по камню.' },
   { scope: 'weapons', path: 'weapons.bow.damage', label: 'Лук · урон стрелы', min: 1, max: 250, step: 1, description: 'Базовый колющий урон стрелы.' },
   { scope: 'weapons', path: 'weapons.bow.cooldownMs', label: 'Лук · перезарядка', min: 80, max: 2000, step: 10, description: 'Задержка между выстрелами.' },
 
   // World dimensions. Changing them also updates camera bounds.
+  { scope: 'world', path: 'world.width', label: 'Ширина мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по горизонтали.' },
+  { scope: 'world', path: 'world.height', label: 'Высота мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по вертикали.' },
   { scope: 'world', path: 'world.width', label: 'Ширина мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по горизонтали.' },
   { scope: 'world', path: 'world.height', label: 'Высота мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по вертикали.' },
 
