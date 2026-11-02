@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import { GAME_CONFIG } from '../../config/gameConfig.js';
 
 /**
