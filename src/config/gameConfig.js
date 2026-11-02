@@ -15,7 +15,9 @@ export const GAME_CONFIG = {
 
   player: {
     maxHealth: 100, // Maximum health.
+    health: 100, // Current health at world start; editable in the F3 inspector.
     maxStamina: 100, // Maximum stamina.
+    stamina: 100, // Current stamina at world start; editable in the F3 inspector.
     walkSpeed: 155, // Normal movement speed, world pixels per second.
     runMultiplier: 1.65, // Shift movement speed multiplier.
     crouchMultiplier: 0.52, // C movement speed multiplier.
@@ -131,6 +133,8 @@ export const GAME_CONFIG = {
  */
 export const DEBUG_FIELDS = [
   // Player and character attributes.
+  { scope: 'player', path: 'player.health', label: 'Текущее здоровье', min: 0, max: 1000, step: 1, description: 'Текущее здоровье персонажа.' },
+  { scope: 'player', path: 'player.stamina', label: 'Текущая выносливость', min: 0, max: 1000, step: 1, description: 'Текущий запас выносливости.' },
   { scope: 'player', path: 'player.maxHealth', label: 'Макс. здоровье', min: 1, max: 1000, step: 1, description: 'Верхний предел здоровья.' },
   { scope: 'player', path: 'player.maxStamina', label: 'Макс. выносливость', min: 1, max: 1000, step: 1, description: 'Верхний предел выносливости.' },
   { scope: 'player', path: 'player.walkSpeed', label: 'Скорость ходьбы', min: 20, max: 600, step: 5, description: 'Скорость в мировых пикселях в секунду.' },
@@ -186,8 +190,6 @@ export const DEBUG_FIELDS = [
   { scope: 'weapons', path: 'weapons.bow.cooldownMs', label: 'Лук · перезарядка', min: 80, max: 2000, step: 10, description: 'Задержка между выстрелами.' },
 
   // World dimensions. Changing them also updates camera bounds.
-  { scope: 'world', path: 'world.width', label: 'Ширина мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по горизонтали.' },
-  { scope: 'world', path: 'world.height', label: 'Высота мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по вертикали.' },
   { scope: 'world', path: 'world.width', label: 'Ширина мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по горизонтали.' },
   { scope: 'world', path: 'world.height', label: 'Высота мира', min: 600, max: 12000, step: 100, description: 'Размер травяной карты по вертикали.' },
 
