@@ -2,11 +2,13 @@
 extends CanvasLayer
 
 const InventorySlotScript = preload("res://scripts/inventory_slot.gd")
+const InventoryDropZoneScript = preload("res://scripts/inventory_drop_zone.gd")
 
 signal slot_selected(index: int)
 signal backpack_expand_requested
 signal settings_changed(screen_shake: bool, camera_zoom: float)
 signal debug_value_changed(path: String, value: float)
+signal debug_mode_requested(enabled: bool)
 signal inventory_slot_dropped(from_index: int, to_index: int)
 signal debug_object_selected(object_id: String)
 signal debug_clone_requested
@@ -28,6 +30,8 @@ var inventory_grid: GridContainer
 var backpack_text: Label
 var settings_shake: CheckBox
 var settings_zoom: HSlider
+var settings_debug: CheckBox
+var resource_icon_cache: Dictionary = {}
 var debug_target_text: Label
 var debug_walk_speed: SpinBox
 var debug_strength: SpinBox
@@ -66,6 +70,7 @@ func _ready() -> void:
 		_bind_existing_ui()
 	else:
 		_build_ui()
+	_create_world_drop_zone()
 	if Engine.is_editor_hint() and get_tree().edited_scene_root == self:
 		_claim_editor_ownership(root, self)
 	_wire_controls()
@@ -80,6 +85,21 @@ func _ready() -> void:
 	else:
 		close_panels()
 	add_log("Интерфейс загружен.")
+
+func _create_world_drop_zone() -> void:
+	if root == null or root.get_node_or_null("WorldDropZone") != null:
+		return
+	var zone := InventoryDropZoneScript.new() as Control
+	zone.name = "WorldDropZone"
+	zone.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	zone.mouse_filter = Control.MOUSE_FILTER_PASS
+	zone.z_index = -10
+	zone.drop_requested.connect(_on_world_drop_requested)
+	root.add_child(zone)
+	root.move_child(zone, 0)
+
+func _on_world_drop_requested(from_index: int) -> void:
+	inventory_slot_dropped.emit(from_index, -1)
 
 func _build_ui() -> void:
 	root = Control.new()
@@ -106,6 +126,7 @@ func _bind_existing_ui() -> void:
 	backpack_text = _find_node("BackpackText") as Label
 	settings_shake = _find_node("ScreenShake") as CheckBox
 	settings_zoom = _find_node("CameraZoom") as HSlider
+	settings_debug = _find_node("DebugMode") as CheckBox
 	debug_target_text = _find_node("DebugTarget") as Label
 	debug_stats = _find_node("DebugStats") as Label
 	debug_filter = _find_node("DebugFilter") as OptionButton
@@ -161,6 +182,8 @@ func _wire_controls() -> void:
 		settings_shake.toggled.connect(_on_settings_toggled)
 	if settings_zoom != null and not settings_zoom.value_changed.is_connected(_on_camera_zoom_changed):
 		settings_zoom.value_changed.connect(_on_camera_zoom_changed)
+	if settings_debug != null and not settings_debug.toggled.is_connected(_on_settings_debug_toggled):
+		settings_debug.toggled.connect(_on_settings_debug_toggled)
 	if debug_walk_speed != null and not debug_walk_speed.value_changed.is_connected(_on_walk_speed_changed):
 		debug_walk_speed.value_changed.connect(_on_walk_speed_changed)
 	if debug_strength != null and not debug_strength.value_changed.is_connected(_on_strength_changed):
@@ -290,61 +313,88 @@ func _create_slot_visuals(button: Button, key_text: String = "") -> void:
 	lock_label.visible = false
 	button.add_child(lock_label)
 
+func _style_hud_bar(bar: ProgressBar, fill_color: Color) -> void:
+	var background := StyleBoxFlat.new()
+	background.bg_color = Color("#141a1b")
+	background.border_color = Color("#46534a")
+	background.set_border_width_all(1)
+	background.set_corner_radius_all(4)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = fill_color
+	fill.border_color = fill_color.lightened(0.12)
+	fill.set_border_width_all(1)
+	fill.set_corner_radius_all(4)
+	bar.add_theme_stylebox_override("background", background)
+	bar.add_theme_stylebox_override("fill", fill)
+
 func _create_hud() -> void:
 	var panel := PanelContainer.new()
 	panel.name = "HUD"
 	panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	panel.anchor_top = 1.0
 	panel.anchor_bottom = 1.0
-	panel.offset_left = 16
-	panel.offset_top = -152
-	panel.offset_right = 200
-	panel.offset_bottom = -12
-	_style_panel(panel)
+	panel.offset_left = 18
+	panel.offset_top = -132
+	panel.offset_right = 238
+	panel.offset_bottom = -14
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.055, 0.075, 0.07, 0.94)
+	panel_style.border_color = Color("#586b59")
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(8)
+	panel_style.content_margin_left = 11
+	panel_style.content_margin_right = 11
+	panel_style.content_margin_top = 8
+	panel_style.content_margin_bottom = 8
+	panel.add_theme_stylebox_override("panel", panel_style)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(panel)
-
 	var box := VBoxContainer.new()
 	box.name = "HUDContent"
 	box.add_theme_constant_override("separation", 5)
 	panel.add_child(box)
-	var title := _make_label("AUTISM GAMING  ·  ТЕСТОВЫЙ МИР", 12, Color("#b7d29c"))
+	var title := _make_label("СОСТОЯНИЕ", 10, Color("#b7d29c"))
 	title.name = "GameTitle"
 	box.add_child(title)
-
 	var health_row := HBoxContainer.new()
 	health_row.name = "HealthRow"
-	health_row.add_child(_make_label("Здоровье", 13))
-	health_text = _make_label("100 / 100", 12, Color("#f2c7bd"))
+	health_row.add_child(_make_label("ЗДОРОВЬЕ", 11, Color("#f0c8c0")))
+	var health_spacer := Control.new()
+	health_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	health_row.add_child(health_spacer)
+	health_text = _make_label("100 / 100", 11, Color("#f2c7bd"))
 	health_text.name = "HealthValue"
 	health_row.add_child(health_text)
 	box.add_child(health_row)
-
 	health_bar = ProgressBar.new()
 	health_bar.name = "HealthBar"
-	health_bar.custom_minimum_size = Vector2(150, 14)
+	health_bar.custom_minimum_size = Vector2(190, 12)
+	health_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	health_bar.max_value = 100
 	health_bar.show_percentage = false
+	_style_hud_bar(health_bar, Color("#c95d54"))
 	box.add_child(health_bar)
-
 	var stamina_row := HBoxContainer.new()
 	stamina_row.name = "StaminaRow"
-	stamina_row.add_child(_make_label("Выносливость", 13))
-	stamina_text = _make_label("100 / 100", 12, Color("#c8e6ad"))
+	stamina_row.add_child(_make_label("ВЫНОСЛИВОСТЬ", 11, Color("#cce0ae")))
+	var stamina_spacer := Control.new()
+	stamina_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stamina_row.add_child(stamina_spacer)
+	stamina_text = _make_label("100 / 100", 11, Color("#d0e5ad"))
 	stamina_text.name = "StaminaValue"
 	stamina_row.add_child(stamina_text)
 	box.add_child(stamina_row)
-
 	stamina_bar = ProgressBar.new()
 	stamina_bar.name = "StaminaBar"
-	stamina_bar.custom_minimum_size = Vector2(150, 14)
+	stamina_bar.custom_minimum_size = Vector2(190, 12)
+	stamina_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stamina_bar.max_value = 100
 	stamina_bar.show_percentage = false
+	_style_hud_bar(stamina_bar, Color("#8cab58"))
 	box.add_child(stamina_bar)
-
-	arrow_text = _make_label("Стрелы: 30", 12, Color("#d7c99d"))
+	arrow_text = _make_label("СТРЕЛЫ  ·  30", 10, Color("#ddc88f"))
 	arrow_text.name = "ArrowText"
 	box.add_child(arrow_text)
-
 	fps_text = _make_label("FPS: 60", 12, Color("#d1d8c8"))
 	fps_text.name = "FPSText"
 	fps_text.set_anchors_preset(Control.PRESET_TOP_RIGHT)
@@ -483,7 +533,7 @@ func _create_inventory() -> void:
 	box.add_child(_make_label("Предметы и экипировка отображаются отдельными ячейками, как в Minecraft.", 11, Color("#9eaa93")))
 
 func _create_settings() -> void:
-	var box := _create_center_panel("settings", "Настройки", Rect2(-220, -150, 440, 300))
+	var box := _create_center_panel("settings", "Настройки", Rect2(-240, -190, 480, 380))
 	box.add_child(_make_label("Эффекты камеры", 14, Color("#b8d49f")))
 	settings_shake = CheckBox.new()
 	settings_shake.name = "ScreenShake"
@@ -497,10 +547,17 @@ func _create_settings() -> void:
 	settings_zoom.step = 0.05
 	settings_zoom.value = 1.85
 	box.add_child(settings_zoom)
+	box.add_child(HSeparator.new())
+	box.add_child(_make_label("Отладка", 14, Color("#b8d49f")))
+	settings_debug = CheckBox.new()
+	settings_debug.name = "DebugMode"
+	settings_debug.text = "Режим выделения объектов (Debug Inspector)"
+	box.add_child(settings_debug)
+	box.add_child(_make_label("Включи режим, затем нажимай на объекты мира, чтобы открыть и менять их параметры. F3 — быстрый переключатель.", 11, Color("#9eaa93")))
 	box.add_child(_make_label("Настройки сохраняются в локальном файле Godot.", 11, Color("#9eaa93")))
 
 func _create_debug() -> void:
-	var box := _create_center_panel("debug", "Отладчик и Debug Inspector · F3", Rect2(-390, -255, 780, 510))
+	var box := _create_center_panel("debug", "Debug Inspector · F3", Rect2(70, -250, 430, 500))
 	debug_stats = _make_label("FPS: — · Позиция: — · Бег: —", 11, Color("#b8d49f"))
 	debug_stats.name = "DebugStats"
 	box.add_child(debug_stats)
@@ -521,7 +578,7 @@ func _create_debug() -> void:
 	debug_filter.set_item_metadata(2, "tree")
 	debug_filter.add_item("Камни")
 	debug_filter.set_item_metadata(3, "rock")
-	debug_filter.add_item("Ресурсы")
+	debug_filter.add_item("Предметы")
 	debug_filter.set_item_metadata(4, "drop")
 	debug_filter.add_item("Оружие")
 	debug_filter.set_item_metadata(5, "weapon")
@@ -535,7 +592,7 @@ func _create_debug() -> void:
 
 	debug_object_list = ItemList.new()
 	debug_object_list.name = "DebugObjectList"
-	debug_object_list.custom_minimum_size = Vector2(215, 300)
+	debug_object_list.custom_minimum_size = Vector2(145, 300)
 	debug_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	debug_object_list.allow_reselect = true
 	body.add_child(debug_object_list)
@@ -686,6 +743,10 @@ func set_debug_stats(value: String) -> void:
 	if debug_stats != null:
 		debug_stats.text = value
 
+func set_debug_mode_enabled(enabled: bool) -> void:
+	if settings_debug != null:
+		settings_debug.set_pressed_no_signal(enabled)
+
 func set_debug_cheats(infinite_stamina: bool, invulnerable: bool) -> void:
 	if debug_infinite_stamina != null:
 		debug_infinite_stamina.set_pressed_no_signal(infinite_stamina)
@@ -716,6 +777,33 @@ func _refresh_item_icons() -> void:
 			var count := 30 if item_id == "arrows" else 0
 			_set_slot_icon(inventory_grid.get_child(index) as Button, item_id, count)
 
+func _get_resource_icon(item_id: String) -> Texture2D:
+	if resource_icon_cache.has(item_id):
+		return resource_icon_cache[item_id] as Texture2D
+	var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	if item_id == "wood":
+		image.fill_rect(Rect2i(5, 9, 22, 14), Color("#82512f"))
+		image.fill_rect(Rect2i(4, 12, 24, 8), Color("#a96f3e"))
+		image.fill_rect(Rect2i(6, 8, 20, 3), Color("#c28b54"))
+		image.fill_rect(Rect2i(7, 21, 18, 3), Color("#5b3926"))
+		image.fill_rect(Rect2i(8, 12, 3, 8), Color("#d5a36a"))
+		image.fill_rect(Rect2i(20, 12, 2, 8), Color("#6e452b"))
+		image.fill_rect(Rect2i(4, 11, 3, 10), Color("#d1a06a"))
+		image.fill_rect(Rect2i(25, 11, 3, 10), Color("#5b3926"))
+	else:
+		image.fill_rect(Rect2i(9, 5, 14, 3), Color("#aebbb1"))
+		image.fill_rect(Rect2i(5, 8, 22, 4), Color("#8c9992"))
+		image.fill_rect(Rect2i(3, 12, 26, 11), Color("#697874"))
+		image.fill_rect(Rect2i(7, 23, 17, 4), Color("#4d5d59"))
+		image.fill_rect(Rect2i(6, 12, 5, 3), Color("#c0c9bd"))
+		image.fill_rect(Rect2i(16, 9, 5, 3), Color("#bdc7ba"))
+		image.fill_rect(Rect2i(13, 17, 4, 3), Color("#4c5a57"))
+		image.fill_rect(Rect2i(22, 14, 4, 5), Color("#899891"))
+	var texture := ImageTexture.create_from_image(image)
+	resource_icon_cache[item_id] = texture
+	return texture
+
 func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String = "") -> void:
 	if button == null:
 		return
@@ -729,15 +817,14 @@ func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String
 			icon_rect.texture = atlas
 			icon_rect.visible = true
 			button.text = ""
+		elif item_id == "wood" or item_id == "stone":
+			icon_rect.texture = _get_resource_icon(item_id)
+			icon_rect.visible = true
+			button.text = ""
 		else:
 			icon_rect.texture = null
 			icon_rect.visible = false
-			if item_id == "wood":
-				button.text = "Д"
-			elif item_id == "stone":
-				button.text = "К"
-			else:
-				button.text = ""
+			button.text = ""
 	var slot := button as InventorySlot
 	if slot != null:
 		slot.item_id = item_id
@@ -794,6 +881,9 @@ func _on_expand_pressed() -> void:
 
 func _on_settings_toggled(_pressed: bool) -> void:
 	_emit_settings()
+
+func _on_settings_debug_toggled(enabled: bool) -> void:
+	debug_mode_requested.emit(enabled)
 
 func _on_camera_zoom_changed(_value: float) -> void:
 	_emit_settings()

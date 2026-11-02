@@ -22,8 +22,8 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	if disabled or not (data is Dictionary) or not data.has("from"):
 		return false
-	return int(data["from"]) != slot_index
+	return int(data["from"]) >= 0
 
 func _drop_data(_at_position: Vector2, data: Variant) -> void:
-	if data is Dictionary and data.has("from"):
+	if data is Dictionary and data.has("from") and int(data["from"]) != slot_index:
 		drop_requested.emit(int(data["from"]), slot_index)

@@ -1,6 +1,15 @@
 extends Node2D
 class_name ResourceDrop
 
+const ITEM_ATLAS := preload("res://public/assets/items.png")
+const ITEM_RECTS := {
+	"sword": Rect2(0, 0, 32, 32),
+	"pickaxe": Rect2(32, 0, 32, 32),
+	"axe": Rect2(64, 0, 32, 32),
+	"bow": Rect2(96, 0, 32, 32),
+	"arrows": Rect2(128, 0, 32, 32),
+}
+
 var item_id := "wood"
 var amount := 1
 var default_item_id := "wood"
@@ -18,6 +27,9 @@ var magnet_speed := 570.0
 var magnet_target: Node2D
 var picked := false
 var debug_selected := false
+var player_drop_protected := false
+var player_drop_origin := Vector2.ZERO
+var player_drop_exclusion_radius := 0.0
 
 func configure(kind: String, quantity: int, launch_velocity: Vector2, settings: Dictionary) -> void:
 	item_id = kind
@@ -43,6 +55,18 @@ func clear_magnet_target() -> void:
 func set_debug_selected(value: bool) -> void:
 	debug_selected = value
 	queue_redraw()
+
+func protect_from_player(origin: Vector2, exclusion_radius: float) -> void:
+	player_drop_origin = origin
+	player_drop_exclusion_radius = maxf(0.0, exclusion_radius)
+	player_drop_protected = global_position.distance_to(origin) <= player_drop_exclusion_radius
+
+func is_protected_from_player() -> bool:
+	if not player_drop_protected:
+		return false
+	if global_position.distance_to(player_drop_origin) > player_drop_exclusion_radius:
+		player_drop_protected = false
+	return player_drop_protected
 
 func can_collect() -> bool:
 	return not picked and vertical_offset <= 4.0
@@ -90,11 +114,14 @@ func _draw() -> void:
 		draw_rect(Rect2(-7, -4, 14, 8), Color("#8b5a32"))
 		draw_rect(Rect2(-5, -3, 10, 2), Color("#c48a4c"))
 		draw_line(Vector2(-4, 1), Vector2(4, 1), Color("#5f3d27"), 1.0)
-	else:
+	elif item_id == "stone":
 		draw_set_transform(lift, deg_to_rad(-8.0), Vector2.ONE)
 		var points := PackedVector2Array([Vector2(-7, 2), Vector2(-5, -5), Vector2(2, -7), Vector2(8, -1), Vector2(5, 5), Vector2(-3, 6)])
 		draw_colored_polygon(points, Color("#818d8b"))
 		draw_line(Vector2(-3, -3), Vector2(3, -5), Color("#c1c9bd"), 1.0)
+	elif ITEM_RECTS.has(item_id):
+		draw_set_transform(lift, 0.0, Vector2.ONE * 0.72)
+		draw_texture_rect_region(ITEM_ATLAS, Rect2(-16, -16, 32, 32), ITEM_RECTS[item_id])
 	if amount > 1:
 		draw_set_transform(lift, 0.0, Vector2.ONE)
 		draw_string(ThemeDB.fallback_font, Vector2(8, -4), str(amount), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 9, Color.WHITE)

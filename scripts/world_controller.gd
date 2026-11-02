@@ -78,6 +78,7 @@ func _configure_input() -> void:
 	_add_key_action("settings", [KEY_ESCAPE])
 	_add_key_action("debug", [KEY_F3])
 	_add_key_action("logs", [KEY_F2])
+	_add_key_action("drop_item", [KEY_Q])
 	for index in range(9):
 		_add_key_action("slot_%d" % (index + 1), [KEY_1 + index])
 	_add_mouse_action("attack_primary", MOUSE_BUTTON_LEFT)
@@ -163,6 +164,7 @@ func _create_ui() -> void:
 	ui.backpack_expand_requested.connect(_expand_backpack)
 	ui.settings_changed.connect(_on_settings_changed)
 	ui.debug_value_changed.connect(_on_debug_value_changed)
+	ui.debug_mode_requested.connect(_on_debug_mode_requested)
 	ui.inventory_slot_dropped.connect(_move_inventory_slot)
 	ui.debug_object_selected.connect(_on_debug_object_selected)
 	ui.debug_clone_requested.connect(_clone_debug_selection)
@@ -177,6 +179,7 @@ func _create_ui() -> void:
 func _process(delta: float) -> void:
 	_handle_hotkeys()
 	_update_attack_cooldowns(delta)
+	_handle_held_bow()
 	_update_projectiles(delta)
 	_update_drops()
 	_update_camera(delta)
@@ -217,6 +220,15 @@ func _process(delta: float) -> void:
 				]
 			)
 
+func _handle_held_bow() -> void:
+	if player == null or ui == null or ui.has_modal_open():
+		return
+	var selected_item := _get_selected_item_id()
+	if selected_item != "bow" and selected_item != "arrows":
+		return
+	if Input.is_action_pressed("attack_primary") or Input.is_action_pressed("attack_secondary"):
+		_fire_arrow(config.weapons.get("bow", {}))
+
 func _update_held_item() -> void:
 	if player == null or not player.has_method("set_held_item"):
 		return
@@ -231,11 +243,16 @@ func _handle_hotkeys() -> void:
 		ui.toggle_panel("inventory")
 	if Input.is_action_just_pressed("settings"):
 		if ui.has_modal_open():
+			var was_debug_open := ui.current_panel == "debug"
 			ui.close_panels()
+			ui.set_debug_mode_enabled(false)
+			if was_debug_open:
+				_clear_debug_selection()
 		else:
 			ui.toggle_panel("settings")
 	if Input.is_action_just_pressed("debug"):
 		ui.toggle_panel("debug")
+		ui.set_debug_mode_enabled(ui.current_panel == "debug")
 		if ui.current_panel == "debug":
 			player.set_debug_selected(true)
 			debug_selected_id = str(player.get_instance_id())
@@ -246,6 +263,8 @@ func _handle_hotkeys() -> void:
 			_clear_debug_selection()
 	if Input.is_action_just_pressed("logs"):
 		ui.toggle_panel("logs")
+	if Input.is_action_just_pressed("drop_item") and not ui.has_modal_open():
+		_drop_selected_item()
 	for index in range(9):
 		if Input.is_action_just_pressed("slot_%d" % (index + 1)):
 			_on_slot_selected(index)
@@ -290,7 +309,12 @@ func _expand_backpack() -> void:
 	inventory_dirty = true
 
 func _move_inventory_slot(from_index: int, to_index: int) -> void:
-	if from_index < 0 or to_index < 0 or from_index >= inventory.size() or to_index >= inventory.size():
+	if from_index < 0 or from_index >= inventory.size():
+		return
+	if to_index == -1:
+		_drop_inventory_item(from_index, get_global_mouse_position())
+		return
+	if to_index < 0 or to_index >= inventory.size():
 		return
 	if from_index == to_index or not _inventory_slot_unlocked(to_index):
 		return
@@ -314,6 +338,46 @@ func _move_inventory_slot(from_index: int, to_index: int) -> void:
 		inventory[to_index] = source
 	inventory_dirty = true
 	_update_resource_counts()
+
+func _drop_selected_item() -> void:
+	if player == null:
+		return
+	var direction: Vector2 = get_global_mouse_position() - player.global_position
+	if direction.length_squared() < 0.001:
+		direction = player.last_move_direction
+	if direction.length_squared() < 0.001:
+		direction = Vector2.DOWN
+	direction = direction.normalized()
+	var spawn_position: Vector2 = player.global_position + direction * (_get_magnet_radius() + 32.0)
+	_drop_inventory_item(selected_slot, spawn_position)
+
+func _drop_inventory_item(slot_index: int, drop_position: Vector2) -> void:
+	if player == null or world_objects == null or not _inventory_slot_unlocked(slot_index):
+		return
+	var stack: Dictionary = inventory[slot_index]
+	var item_id := str(stack.get("id", ""))
+	var amount := int(stack.get("amount", 0))
+	if item_id.is_empty() or amount <= 0:
+		return
+	var direction: Vector2 = drop_position - player.global_position
+	if direction.length_squared() < 0.001:
+		direction = player.last_move_direction
+	if direction.length_squared() < 0.001:
+		direction = Vector2.DOWN
+	direction = direction.normalized()
+	if drop_position.distance_to(player.global_position) < _get_magnet_radius() + 12.0:
+		drop_position = player.global_position + direction * (_get_magnet_radius() + 32.0)
+	var dropped := ResourceDropScript.new() as ResourceDrop
+	dropped.name = "Dropped_%s_%03d" % [item_id, drops.size() + 1]
+	dropped.configure(item_id, amount, direction * 220.0, config.drops)
+	world_objects.add_child(dropped)
+	dropped.global_position = drop_position
+	dropped.protect_from_player(player.global_position, 24.0)
+	drops.append(dropped)
+	inventory[slot_index] = {"id": "", "amount": 0}
+	inventory_dirty = true
+	_update_resource_counts()
+	_log("Выброшено: %s ×%d." % [str(config.items.get(item_id, {}).get("label", item_id)), amount])
 
 func _inventory_slot_unlocked(index: int) -> bool:
 	if index < int(config.inventory.hotbar_slots):
@@ -498,10 +562,10 @@ func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_deg
 		tween.tween_callback(effect.queue_free)
 
 func _fire_arrow(weapon: Dictionary) -> void:
+	if weapon.is_empty() or float(attack_cooldowns.get("bow", 0.0)) > 0.0:
+		return
 	if arrow_count <= 0:
 		_log("Стрелы закончились.")
-		return
-	if weapon.is_empty() or float(attack_cooldowns.get("bow", 0.0)) > 0.0:
 		return
 	var aim_vector: Vector2 = get_global_mouse_position() - player.global_position
 	if aim_vector.length_squared() < 0.001:
@@ -552,8 +616,20 @@ func _update_projectiles(delta: float) -> void:
 		for target in resources:
 			if not is_instance_valid(target) or target.destroying or target.resource_type == "stump":
 				continue
-			var collision_distance := CombatSystemScript.distance_to_segment(target.global_position, previous, next_position)
-			if collision_distance <= target.hit_radius * 0.62 + 4.0:
+			var collision_points: Array[Vector2] = []
+			var collision_radius := 16.0
+			if target.resource_type == "tree":
+				collision_points = [target.global_position + Vector2(0, -30), target.global_position + Vector2(0, -10), target.global_position + Vector2(0, 12)]
+				collision_radius = 18.0
+			else:
+				collision_points = [target.global_position + Vector2(0, -5)]
+				collision_radius = maxf(16.0, target.hit_radius * 0.78)
+			var hit_visible_area := false
+			for collision_point in collision_points:
+				if CombatSystemScript.distance_to_segment(collision_point, previous, next_position) <= collision_radius:
+					hit_visible_area = true
+					break
+			if hit_visible_area:
 				hit_target = target
 				break
 		if hit_target != null:
@@ -628,6 +704,9 @@ func _update_drops() -> void:
 			drops.erase(drop)
 			continue
 		var distance: float = drop.global_position.distance_to(player.global_position)
+		if drop.is_protected_from_player():
+			drop.clear_magnet_target()
+			continue
 		if distance <= magnet_radius:
 			drop.set_magnet_target(player)
 		else:
@@ -716,7 +795,7 @@ func _refresh_debug_entries() -> void:
 			debug_entries.append({"id": str(resource.get_instance_id()), "kind": kind, "label": "%s · %s" % [label, resource.name], "node": resource})
 	for drop in drops:
 		if is_instance_valid(drop):
-			debug_entries.append({"id": str(drop.get_instance_id()), "kind": "drop", "label": "Ресурс · %s ×%d" % [str(drop.item_id), int(drop.amount)], "node": drop})
+			debug_entries.append({"id": str(drop.get_instance_id()), "kind": "drop", "label": "Предмет · %s ×%d" % [str(config.items.get(str(drop.item_id), {}).get("label", drop.item_id)), int(drop.amount)], "node": drop})
 	for weapon_id in config.weapons.keys():
 		debug_entries.append({"id": "weapon:" + str(weapon_id), "kind": "weapon", "label": "Оружие · " + str(weapon_id), "node": null})
 	var ui_entries: Array[Dictionary] = []
@@ -734,8 +813,8 @@ func _refresh_debug_entries() -> void:
 
 func _select_debug_target(world_position: Vector2) -> void:
 	var nearest_id := ""
-	var nearest_distance := 48.0
-	if world_position.distance_to(player.global_position) < nearest_distance:
+	var nearest_distance := 72.0
+	if is_instance_valid(player) and world_position.distance_to(player.global_position) <= 30.0 and world_position.distance_to(player.global_position) < nearest_distance:
 		nearest_id = str(player.get_instance_id())
 		nearest_distance = world_position.distance_to(player.global_position)
 	if world_objects != null:
@@ -743,14 +822,16 @@ func _select_debug_target(world_position: Vector2) -> void:
 			var resource := child as ResourceNode
 			if resource == null:
 				continue
-			var distance: float = world_position.distance_to(resource.global_position)
-			if distance <= resource.hit_radius + 10.0 and distance < nearest_distance:
+			var selection_center: Vector2 = resource.global_position + Vector2(0, -8)
+			var distance: float = world_position.distance_to(selection_center)
+			var selection_radius: float = resource.hit_radius + 20.0
+			if distance <= selection_radius and distance < nearest_distance:
 				nearest_id = str(resource.get_instance_id())
 				nearest_distance = distance
 	for drop in drops:
 		if is_instance_valid(drop):
 			var distance: float = world_position.distance_to(drop.global_position)
-			if distance < nearest_distance:
+			if distance <= 20.0 and distance < nearest_distance:
 				nearest_id = str(drop.get_instance_id())
 				nearest_distance = distance
 	if nearest_id.is_empty():
@@ -1016,6 +1097,23 @@ func _on_debug_value_changed(path: String, value: float) -> void:
 	_update_resource_counts()
 	inventory_dirty = true
 	_update_debug_inspector()
+
+func _on_debug_mode_requested(enabled: bool) -> void:
+	if ui == null:
+		return
+	if enabled:
+		if ui.current_panel != "debug":
+			ui.toggle_panel("debug")
+			player.set_debug_selected(true)
+			debug_selected_id = str(player.get_instance_id())
+			_refresh_debug_entries()
+			_update_debug_inspector()
+			ui.set_debug_cheats(player.debug_infinite_stamina, player.debug_invulnerable)
+	else:
+		if ui.current_panel == "debug":
+			ui.close_panels()
+		_clear_debug_selection()
+	ui.set_debug_mode_enabled(enabled)
 
 func _on_debug_cheats_changed(infinite_stamina: bool, invulnerable: bool) -> void:
 	player.debug_infinite_stamina = infinite_stamina

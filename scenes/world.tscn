@@ -48,7 +48,7 @@ z_index = 2
 texture_filter = 1
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
-position_smoothing_enabled = true
+position_smoothing_enabled = false
 position_smoothing_speed = 8.0
 zoom = Vector2(1.85, 1.85)
 

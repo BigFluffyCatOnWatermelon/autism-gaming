@@ -28,6 +28,9 @@ static func calculate_damage(attack: Dictionary, material: String, strength: flo
 	var material_multiplier: float = float(material_data.get(damage_type, 1.0))
 	var strength_scale: float = float(config.combat.damage_attribute_scale)
 	var attribute_multiplier: float = maxf(0.25, 1.0 + ((strength - 10.0) * strength_scale))
+	# Configured melee damage is the per-hit value; compatibility handles resource efficiency.
+	if weapon_id == "sword" or weapon_id == "pickaxe" or weapon_id == "axe":
+		return maxf(0.0, roundf(float(attack.get("damage", 0.0)) * attribute_multiplier))
 	var tool_multiplier := 1.0
 	match material:
 		"wood":

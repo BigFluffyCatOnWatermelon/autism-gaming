@@ -101,7 +101,7 @@ func _ready() -> void:
 		camera = Camera2D.new()
 		camera.name = "Camera2D"
 		add_child(camera)
-	camera.position_smoothing_enabled = true
+	camera.position_smoothing_enabled = false
 	camera.position_smoothing_speed = float(game_config.camera.follow_speed)
 	camera.zoom = Vector2.ONE * float(game_config.camera.base_zoom)
 	if not Engine.is_editor_hint():
