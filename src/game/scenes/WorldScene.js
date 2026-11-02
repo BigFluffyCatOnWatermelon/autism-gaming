@@ -176,6 +176,9 @@ export class WorldScene extends Phaser.Scene {
       case 'debug-property':
         this.setDebugProperty(action.id, action.key, action.value);
         break;
+      case 'debug-target':
+        this.selectDebugTarget(action.target);
+        break;
       case 'clear-logs':
         this.logger.entries.length = 0;
         this.game.events.emit('logs-cleared');
@@ -291,7 +294,63 @@ export class WorldScene extends Phaser.Scene {
     this.log(`Отладчик: выбран объект «${entity.label}»`, 'debug');
   }
 
+  selectDebugTarget(target) {
+    if (target === 'player') {
+      this.selectDebugEntity({ type: 'player', id: 'player', label: 'Игрок' });
+      return;
+    }
+    if (target.startsWith('weapon:')) {
+      const weaponId = target.split(':')[1];
+      this.selectDebugEntity({
+        type: 'weapon', id: target, weaponId,
+        label: GAME_CONFIG.weapons[weaponId]?.name ?? weaponId,
+      });
+      return;
+    }
+    if (target.startsWith('config:')) {
+      const category = target.split(':')[1];
+      this.selectDebugEntity({ type: 'config', id: target, category, label: `Параметры: ${category}` });
+    }
+  }
+
+  flattenNumericProperties(value, prefix = '', output = {}) {
+    for (const [key, entry] of Object.entries(value)) {
+      const path = prefix ? `${prefix}.${key}` : key;
+      if (typeof entry === 'number') output[path] = entry;
+      else if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+        this.flattenNumericProperties(entry, path, output);
+      }
+    }
+    return output;
+  }
+
+  setNestedNumericValue(object, path, value) {
+    const keys = path.split('.');
+    let target = object;
+    for (const key of keys.slice(0, -1)) {
+      if (!target || typeof target[key] !== 'object') return false;
+      target = target[key];
+    }
+    const lastKey = keys[keys.length - 1];
+    if (!target || typeof target[lastKey] !== 'number') return false;
+    target[lastKey] = value;
+    return true;
+  }
+
   getDebugEntityData(entity) {
+    if (entity.type === 'weapon') {
+      const weapon = GAME_CONFIG.weapons[entity.weaponId];
+      return {
+        id: entity.id, label: entity.label, type: 'weapon',
+        properties: this.flattenNumericProperties(weapon),
+      };
+    }
+    if (entity.type === 'config') {
+      return {
+        id: entity.id, label: entity.label, type: 'config',
+        properties: this.flattenNumericProperties(GAME_CONFIG[entity.category]),
+      };
+    }
     if (entity.type === 'player') {
       return {
         id: 'player',
@@ -326,6 +385,31 @@ export class WorldScene extends Phaser.Scene {
   setDebugProperty(id, key, value) {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return;
+
+    if (id.startsWith('weapon:')) {
+      const weaponId = id.split(':')[1];
+      const weapon = GAME_CONFIG.weapons[weaponId];
+      if (weapon && this.setNestedNumericValue(weapon, key, numeric)) {
+        this.log(`Изменено оружие ${weapon.name}: ${key} = ${numeric}`, 'debug');
+        this.game.events.emit('debug-selection', this.getDebugEntityData({
+          type: 'weapon', id, weaponId, label: weapon.name,
+        }));
+      }
+      return;
+    }
+
+    if (id.startsWith('config:')) {
+      const category = id.split(':')[1];
+      const config = GAME_CONFIG[category];
+      if (config && this.setNestedNumericValue(config, key, numeric)) {
+        this.log(`Изменена категория ${category}: ${key} = ${numeric}`, 'debug');
+        this.game.events.emit('debug-selection', this.getDebugEntityData({
+          type: 'config', id, category, label: `Параметры: ${category}`,
+        }));
+      }
+      return;
+    }
+
     if (id === 'player') {
       const allowed = ['health', 'maxHealth', 'stamina', 'maxStamina', 'armor', 'arrows', 'walkSpeed', 'runSpeed'];
       if (!allowed.includes(key)) return;
