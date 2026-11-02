@@ -1,5 +1,14 @@
 extends CharacterBody2D
 
+const GameConfigScript = preload("res://scripts/game_config.gd")
+const ITEM_RECTS := {
+	"sword": Rect2(0, 0, 32, 32),
+	"pickaxe": Rect2(32, 0, 32, 32),
+	"axe": Rect2(64, 0, 32, 32),
+	"bow": Rect2(96, 0, 32, 32),
+	"arrows": Rect2(128, 0, 32, 32),
+}
+
 var game_config: Dictionary = {}
 var current_health: float = 100.0
 var current_stamina: float = 100.0
@@ -14,53 +23,108 @@ var roll_timer := 0.0
 var roll_cooldown_timer := 0.0
 var invulnerability_timer := 0.0
 var walk_animation_time := 0.0
+var current_held_item := ""
 
 var sprite: Sprite2D
 var shadow: Sprite2D
 var camera: Camera2D
+var held_item_sprite: Sprite2D
 
 func configure(settings: Dictionary) -> void:
 	game_config = settings
 	current_health = float(game_config.player.max_health)
 	current_stamina = float(game_config.player.max_stamina)
+	if camera != null:
+		camera.position_smoothing_speed = float(game_config.camera.follow_speed)
+		camera.zoom = Vector2.ONE * float(game_config.camera.base_zoom)
 
 func _ready() -> void:
+	if game_config.is_empty():
+		game_config = GameConfigScript.make_default()
 	collision_layer = 1
 	collision_mask = 2
 
-	var body_shape := CollisionShape2D.new()
-	var capsule := CapsuleShape2D.new()
+	var body_shape := get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if body_shape == null:
+		body_shape = CollisionShape2D.new()
+		body_shape.name = "CollisionShape2D"
+		add_child(body_shape)
+	var capsule := body_shape.shape as CapsuleShape2D
+	if capsule == null:
+		capsule = CapsuleShape2D.new()
+		body_shape.shape = capsule
 	capsule.radius = float(game_config.player.collision_radius)
 	capsule.height = 28.0
-	body_shape.shape = capsule
 	body_shape.position = Vector2(0, 4)
-	add_child(body_shape)
 
-	shadow = Sprite2D.new()
-	shadow.texture = load("res://public/assets/shadow.png")
+	shadow = get_node_or_null("Shadow") as Sprite2D
+	if shadow == null:
+		shadow = Sprite2D.new()
+		shadow.name = "Shadow"
+		shadow.texture = load("res://public/assets/shadow.png")
+		add_child(shadow)
 	shadow.position = Vector2(0, 15)
 	shadow.scale = Vector2(1.15, 1.0)
 	shadow.z_index = -1
 	shadow.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_child(shadow)
 
-	sprite = Sprite2D.new()
-	sprite.texture = load("res://public/assets/player.png")
-	sprite.hframes = 4
-	sprite.vframes = 5
+	sprite = get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		sprite = Sprite2D.new()
+		sprite.name = "Sprite"
+		sprite.texture = load("res://public/assets/player.png")
+		sprite.hframes = 4
+		sprite.vframes = 5
+		add_child(sprite)
 	sprite.scale = Vector2.ONE * float(game_config.player.sprite_scale)
 	sprite.position = Vector2(0, -3)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	add_child(sprite)
 
-	camera = Camera2D.new()
+	held_item_sprite = get_node_or_null("HeldItem") as Sprite2D
+	if held_item_sprite == null:
+		held_item_sprite = Sprite2D.new()
+		held_item_sprite.name = "HeldItem"
+		add_child(held_item_sprite)
+	held_item_sprite.scale = Vector2(0.72, 0.72)
+	held_item_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	held_item_sprite.z_index = 2
+	held_item_sprite.visible = false
+
+	camera = get_node_or_null("Camera2D") as Camera2D
+	if camera == null:
+		camera = Camera2D.new()
+		camera.name = "Camera2D"
+		add_child(camera)
 	camera.position_smoothing_enabled = true
 	camera.position_smoothing_speed = float(game_config.camera.follow_speed)
 	camera.zoom = Vector2.ONE * float(game_config.camera.base_zoom)
-	add_child(camera)
-	camera.make_current()
+	if not Engine.is_editor_hint():
+		camera.make_current()
+
+func set_held_item(item_id: String, aim_direction: Vector2) -> void:
+	if held_item_sprite == null:
+		return
+	if not ITEM_RECTS.has(item_id):
+		current_held_item = ""
+		held_item_sprite.visible = false
+		return
+	if current_held_item != item_id:
+		var atlas := AtlasTexture.new()
+		atlas.atlas = load("res://public/assets/items.png")
+		atlas.region = ITEM_RECTS[item_id]
+		held_item_sprite.texture = atlas
+		current_held_item = item_id
+	var direction := aim_direction.normalized()
+	if direction.length_squared() < 0.001:
+		direction = Vector2.RIGHT
+	held_item_sprite.visible = true
+	held_item_sprite.position = direction * 13.0 + Vector2(0, 3)
+	held_item_sprite.rotation = direction.angle()
+	held_item_sprite.z_index = -2 if direction.y < -0.25 else 2
 
 func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	var input_vector := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	moving = input_vector.length_squared() > 0.001
 

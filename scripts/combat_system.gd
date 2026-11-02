@@ -8,7 +8,21 @@ const MATERIAL_MATCHUPS := {
 	"nature": {"cutting": 1.35, "piercing": 0.75, "crushing": 0.9},
 }
 
+static func can_damage_resource(weapon_id: String, material: String) -> bool:
+	match weapon_id:
+		"sword":
+			return false
+		"pickaxe":
+			return material == "stone"
+		"axe":
+			return material == "wood"
+		_:
+			return true
+
 static func calculate_damage(attack: Dictionary, material: String, strength: float, config: Dictionary) -> float:
+	var weapon_id := str(attack.get("weapon_id", ""))
+	if weapon_id != "" and not can_damage_resource(weapon_id, material):
+		return 0.0
 	var damage_type: String = str(attack.get("damage_type", "crushing"))
 	var material_data: Dictionary = MATERIAL_MATCHUPS.get(material, MATERIAL_MATCHUPS["flesh"])
 	var material_multiplier: float = float(material_data.get(damage_type, 1.0))

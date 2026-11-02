@@ -1,6 +1,12 @@
+@tool
 extends StaticBody2D
 
-var resource_type := "tree"
+@export_enum("tree", "rock") var resource_type := "tree":
+	set(value):
+		resource_type = value
+		if is_inside_tree():
+			queue_redraw()
+
 var health := 90.0
 var max_health := 90.0
 var hit_radius := 28.0
@@ -11,19 +17,28 @@ func configure(kind: String, starting_health: float) -> void:
 	health = starting_health
 	max_health = starting_health
 	hit_radius = 29.0 if kind == "tree" else 23.0
+	queue_redraw()
 
 func _ready() -> void:
-	collision_layer = 2
-	collision_mask = 0
-	var collision := CollisionShape2D.new()
-	var circle := CircleShape2D.new()
-	circle.radius = 12.0 if resource_type == "tree" else 16.0
-	collision.shape = circle
-	collision.position = Vector2(0, 8)
-	add_child(collision)
+	max_health = 90.0 if resource_type == "tree" else 110.0
+	health = max_health
+	hit_radius = 29.0 if resource_type == "tree" else 23.0
+	if get_node_or_null("CollisionShape2D") == null:
+		var collision := CollisionShape2D.new()
+		collision.name = "CollisionShape2D"
+		var circle := CircleShape2D.new()
+		circle.radius = 12.0 if resource_type == "tree" else 16.0
+		collision.shape = circle
+		collision.position = Vector2(0, 8)
+		add_child(collision)
+	if not Engine.is_editor_hint():
+		collision_layer = 2
+		collision_mask = 0
 	queue_redraw()
 
 func apply_damage(amount: float) -> bool:
+	if amount <= 0.0:
+		return false
 	health = maxf(0.0, health - amount)
 	flash_timer = 0.12
 	queue_redraw()

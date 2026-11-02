@@ -1,3 +1,4 @@
+@tool
 extends CanvasLayer
 
 signal slot_selected(index: int)
@@ -27,12 +28,46 @@ var log_lines: Array[String] = []
 var backpack_slots := 12
 var max_backpack_slots := 24
 
-const SLOT_NAMES := ["МЕЧ", "КИРКА", "ТОПОР", "ЛУК", "СТРЕЛЫ", "—", "—", "—", "—"]
-const SLOT_MARKS := ["⚔", "⛏", "🪓", "➶", "↗", "·", "·", "·", "·"]
+const HOTBAR_ITEMS := ["sword", "pickaxe", "axe", "bow", "arrows", "", "", "", ""]
+const ITEM_LABELS := {
+	"sword": "Меч",
+	"pickaxe": "Кирка",
+	"axe": "Топор",
+	"bow": "Лук",
+	"arrows": "Стрелы",
+}
+const ITEM_RECTS := {
+	"sword": Rect2(0, 0, 32, 32),
+	"pickaxe": Rect2(32, 0, 32, 32),
+	"axe": Rect2(64, 0, 32, 32),
+	"bow": Rect2(96, 0, 32, 32),
+	"arrows": Rect2(128, 0, 32, 32),
+}
 
 func _ready() -> void:
 	layer = 10
+	if has_node("Root"):
+		_bind_existing_ui()
+	else:
+		_build_ui()
+	if Engine.is_editor_hint() and get_tree().edited_scene_root == self:
+		_claim_editor_ownership(root, self)
+	_wire_controls()
+	_refresh_item_icons()
+	set_player_data(100.0, 100.0, 100.0, 100.0, 30)
+	set_hotbar_selection(0)
+	if Engine.is_editor_hint():
+		var inventory_panel := panels.get("inventory") as Control
+		if inventory_panel != null:
+			inventory_panel.visible = true
+			current_panel = "inventory"
+	else:
+		close_panels()
+	add_log("Интерфейс загружен.")
+
+func _build_ui() -> void:
 	root = Control.new()
+	root.name = "Root"
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
@@ -42,16 +77,81 @@ func _ready() -> void:
 	_create_settings()
 	_create_debug()
 	_create_logs()
-	set_player_data(100.0, 100.0, 100.0, 100.0, 30)
-	set_hotbar_selection(0)
-	add_log("Интерфейс загружен.")
+
+func _bind_existing_ui() -> void:
+	root = get_node("Root") as Control
+	health_bar = _find_node("HealthBar") as ProgressBar
+	stamina_bar = _find_node("StaminaBar") as ProgressBar
+	health_text = _find_node("HealthValue") as Label
+	stamina_text = _find_node("StaminaValue") as Label
+	arrow_text = _find_node("ArrowText") as Label
+	fps_text = _find_node("FPSText") as Label
+	inventory_grid = _find_node("BackpackGrid") as GridContainer
+	backpack_text = _find_node("BackpackText") as Label
+	settings_shake = _find_node("ScreenShake") as CheckBox
+	settings_zoom = _find_node("CameraZoom") as HSlider
+	debug_target_text = _find_node("DebugTarget") as Label
+	debug_walk_speed = _find_node("WalkSpeed") as SpinBox
+	debug_strength = _find_node("Strength") as SpinBox
+	logs_text = _find_node("LogText") as TextEdit
+
+	panels = {
+		"inventory": _find_node("InventoryPanel"),
+		"settings": _find_node("SettingsPanel"),
+		"debug": _find_node("DebugPanel"),
+		"logs": _find_node("LogsPanel"),
+	}
+	hotbar_buttons.clear()
+	var row := _find_node("HotbarRow") as HBoxContainer
+	if row != null:
+		for child in row.get_children():
+			if child is Button:
+				hotbar_buttons.append(child as Button)
+
+func _find_node(node_name: String) -> Node:
+	return root.find_child(node_name, true, false) if root != null else null
+
+func _claim_editor_ownership(node: Node, scene_root: Node) -> void:
+	node.owner = scene_root
+	for child in node.get_children():
+		_claim_editor_ownership(child, scene_root)
+
+func _wire_controls() -> void:
+	for index in range(hotbar_buttons.size()):
+		var callback := Callable(self, "_on_hotbar_pressed").bind(index)
+		if not hotbar_buttons[index].pressed.is_connected(callback):
+			hotbar_buttons[index].pressed.connect(callback)
+
+	var expand_button := _find_node("ExpandBackpack") as Button
+	if expand_button != null and not expand_button.pressed.is_connected(_on_expand_pressed):
+		expand_button.pressed.connect(_on_expand_pressed)
+
+	if settings_shake != null and not settings_shake.toggled.is_connected(_on_settings_toggled):
+		settings_shake.toggled.connect(_on_settings_toggled)
+	if settings_zoom != null and not settings_zoom.value_changed.is_connected(_on_camera_zoom_changed):
+		settings_zoom.value_changed.connect(_on_camera_zoom_changed)
+	if debug_walk_speed != null and not debug_walk_speed.value_changed.is_connected(_on_walk_speed_changed):
+		debug_walk_speed.value_changed.connect(_on_walk_speed_changed)
+	if debug_strength != null and not debug_strength.value_changed.is_connected(_on_strength_changed):
+		debug_strength.value_changed.connect(_on_strength_changed)
+
+	var clear_button := _find_node("ClearLogs") as Button
+	if clear_button != null and not clear_button.pressed.is_connected(_on_clear_logs):
+		clear_button.pressed.connect(_on_clear_logs)
+	for panel_value in panels.values():
+		var panel := panel_value as Control
+		if panel == null:
+			continue
+		var close_button := panel.find_child("CloseButton", true, false) as Button
+		if close_button != null and not close_button.pressed.is_connected(close_panels):
+			close_button.pressed.connect(close_panels)
 
 func _style_panel(panel: PanelContainer) -> void:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.045, 0.065, 0.055, 0.94)
-	style.border_color = Color(0.35, 0.48, 0.35, 0.95)
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(8)
+	style.bg_color = Color("#272b30")
+	style.border_color = Color("#8b9299")
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(3)
 	style.content_margin_left = 12
 	style.content_margin_right = 12
 	style.content_margin_top = 10
@@ -59,12 +159,86 @@ func _style_panel(panel: PanelContainer) -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 
+func _style_slot(button: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color("#343940")
+	normal.border_color = Color("#858d96")
+	normal.set_border_width_all(2)
+	normal.set_corner_radius_all(2)
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.bg_color = Color("#444c55")
+	hover.border_color = Color("#c4ccd3")
+	var pressed := normal.duplicate() as StyleBoxFlat
+	pressed.bg_color = Color("#5b654e")
+	pressed.border_color = Color("#d8e7bd")
+	var disabled := normal.duplicate() as StyleBoxFlat
+	disabled.bg_color = Color("#202328")
+	disabled.border_color = Color("#41464c")
+	button.add_theme_stylebox_override("normal", normal)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+
 func _make_label(text_value: String, size: int = 14, color: Color = Color("#e5ecd9")) -> Label:
 	var label := Label.new()
 	label.text = text_value
 	label.add_theme_font_size_override("font_size", size)
 	label.add_theme_color_override("font_color", color)
 	return label
+
+func _create_slot_visuals(button: Button, key_text: String = "") -> void:
+	var icon_rect := TextureRect.new()
+	icon_rect.name = "Icon"
+	icon_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	icon_rect.offset_left = 8
+	icon_rect.offset_top = 8
+	icon_rect.offset_right = -8
+	icon_rect.offset_bottom = -8
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(icon_rect)
+
+	var key_label := Label.new()
+	key_label.name = "KeyNumber"
+	key_label.text = key_text
+	key_label.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	key_label.offset_left = 4
+	key_label.offset_top = 1
+	key_label.add_theme_font_size_override("font_size", 10)
+	key_label.add_theme_color_override("font_color", Color("#e1e5e9"))
+	key_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(key_label)
+
+	var count_label := Label.new()
+	count_label.name = "StackCount"
+	count_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	count_label.offset_left = -30
+	count_label.offset_top = -19
+	count_label.offset_right = -3
+	count_label.offset_bottom = -2
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	count_label.add_theme_font_size_override("font_size", 11)
+	count_label.add_theme_color_override("font_color", Color.WHITE)
+	count_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	count_label.add_theme_constant_override("shadow_offset_x", 1)
+	count_label.add_theme_constant_override("shadow_offset_y", 1)
+	count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(count_label)
+
+	var lock_label := Label.new()
+	lock_label.name = "LockMark"
+	lock_label.text = "×"
+	lock_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lock_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lock_label.add_theme_font_size_override("font_size", 20)
+	lock_label.add_theme_color_override("font_color", Color("#8d949b"))
+	lock_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lock_label.visible = false
+	button.add_child(lock_label)
 
 func _create_hud() -> void:
 	var panel := PanelContainer.new()
@@ -76,36 +250,51 @@ func _create_hud() -> void:
 	panel.offset_bottom = 142
 	_style_panel(panel)
 	root.add_child(panel)
+
 	var box := VBoxContainer.new()
+	box.name = "HUDContent"
 	box.add_theme_constant_override("separation", 5)
 	panel.add_child(box)
-	box.add_child(_make_label("AUTISM GAMING  ·  ТЕСТОВЫЙ МИР", 12, Color("#b7d29c")))
+	var title := _make_label("AUTISM GAMING  ·  ТЕСТОВЫЙ МИР", 12, Color("#b7d29c"))
+	title.name = "GameTitle"
+	box.add_child(title)
 
 	var health_row := HBoxContainer.new()
+	health_row.name = "HealthRow"
 	health_row.add_child(_make_label("Здоровье", 13))
 	health_text = _make_label("100 / 100", 12, Color("#f2c7bd"))
+	health_text.name = "HealthValue"
 	health_row.add_child(health_text)
 	box.add_child(health_row)
+
 	health_bar = ProgressBar.new()
+	health_bar.name = "HealthBar"
 	health_bar.custom_minimum_size = Vector2(200, 14)
 	health_bar.max_value = 100
 	health_bar.show_percentage = false
 	box.add_child(health_bar)
 
 	var stamina_row := HBoxContainer.new()
+	stamina_row.name = "StaminaRow"
 	stamina_row.add_child(_make_label("Выносливость", 13))
 	stamina_text = _make_label("100 / 100", 12, Color("#c8e6ad"))
+	stamina_text.name = "StaminaValue"
 	stamina_row.add_child(stamina_text)
 	box.add_child(stamina_row)
+
 	stamina_bar = ProgressBar.new()
+	stamina_bar.name = "StaminaBar"
 	stamina_bar.custom_minimum_size = Vector2(200, 14)
 	stamina_bar.max_value = 100
 	stamina_bar.show_percentage = false
 	box.add_child(stamina_bar)
+
 	arrow_text = _make_label("Стрелы: 30", 12, Color("#d7c99d"))
+	arrow_text.name = "ArrowText"
 	box.add_child(arrow_text)
 
-	fps_text = _make_label("", 12, Color("#d1d8c8"))
+	fps_text = _make_label("FPS: 60", 12, Color("#d1d8c8"))
+	fps_text.name = "FPSText"
 	fps_text.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	fps_text.offset_left = -100
 	fps_text.offset_top = 18
@@ -124,27 +313,30 @@ func _create_hotbar() -> void:
 	panel.offset_left = -276
 	panel.offset_right = 276
 	panel.offset_top = -78
-	panel.offset_bottom = -12
+	panel.offset_bottom = -10
 	_style_panel(panel)
 	root.add_child(panel)
+
 	var row := HBoxContainer.new()
+	row.name = "HotbarRow"
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 5)
 	panel.add_child(row)
 	for index in range(9):
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(54, 52)
+		button.name = "Slot%d" % (index + 1)
+		button.custom_minimum_size = Vector2(54, 54)
 		button.toggle_mode = true
-		button.text = str(index + 1) + "\n" + SLOT_MARKS[index] + " " + SLOT_NAMES[index]
-		button.add_theme_font_size_override("font_size", 11)
-		button.tooltip_text = SLOT_NAMES[index]
-		button.pressed.connect(func() -> void: slot_selected.emit(index))
+		button.text = ""
+		button.tooltip_text = ITEM_LABELS.get(HOTBAR_ITEMS[index], "Пустой слот")
+		_style_slot(button)
+		_create_slot_visuals(button, str(index + 1))
 		row.add_child(button)
 		hotbar_buttons.append(button)
 
 func _create_center_panel(panel_name: String, title_text: String, rect: Rect2) -> VBoxContainer:
 	var panel := PanelContainer.new()
-	panel.name = panel_name
+	panel.name = panel_name.capitalize() + "Panel"
 	panel.anchor_left = 0.5
 	panel.anchor_right = 0.5
 	panel.anchor_top = 0.5
@@ -159,91 +351,120 @@ func _create_center_panel(panel_name: String, title_text: String, rect: Rect2) -
 	panels[panel_name] = panel
 
 	var box := VBoxContainer.new()
+	box.name = "Content"
 	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
+
 	var header := HBoxContainer.new()
-	header.add_child(_make_label(title_text, 19, Color("#e0edce")))
+	header.name = "Header"
+	var heading := _make_label(title_text, 19, Color("#e0edce"))
+	heading.name = "Heading"
+	header.add_child(heading)
 	var spacer := Control.new()
+	spacer.name = "Spacer"
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)
 	var close := Button.new()
+	close.name = "CloseButton"
 	close.text = "×"
 	close.custom_minimum_size = Vector2(34, 30)
-	close.pressed.connect(close_panels)
 	header.add_child(close)
 	box.add_child(header)
 	box.add_child(HSeparator.new())
 	return box
 
 func _create_inventory() -> void:
-	var box := _create_center_panel("inventory", "Инвентарь", Rect2(-270, -220, 540, 440))
-	box.add_child(_make_label("Экипировка", 14, Color("#b8d49f")))
-	var equipment := HFlowContainer.new()
-	equipment.add_theme_constant_override("h_separation", 6)
-	equipment.add_theme_constant_override("v_separation", 4)
-	for item in ["Шлем", "Нагрудник", "Перчатки", "Поножи", "Сапоги"]:
+	var box := _create_center_panel("inventory", "Инвентарь", Rect2(-370, -195, 740, 390))
+	var layout := HBoxContainer.new()
+	layout.name = "InventoryLayout"
+	layout.add_theme_constant_override("separation", 14)
+	box.add_child(layout)
+
+	var equipment_column := VBoxContainer.new()
+	equipment_column.name = "EquipmentColumn"
+	equipment_column.custom_minimum_size.x = 142
+	equipment_column.add_theme_constant_override("separation", 5)
+	layout.add_child(equipment_column)
+	equipment_column.add_child(_make_label("Экипировка", 14, Color("#b8d49f")))
+	for item_name in ["Шлем", "Нагрудник", "Перчатки", "Поножи", "Сапоги"]:
 		var slot := Button.new()
-		slot.text = item + "\n—"
-		slot.custom_minimum_size = Vector2(94, 48)
+		slot.name = "Equipment_" + item_name
+		slot.text = item_name + "\n—"
+		slot.custom_minimum_size = Vector2(132, 48)
 		slot.disabled = true
-		equipment.add_child(slot)
-	box.add_child(equipment)
-	box.add_child(_make_label("Слоты рюкзака", 14, Color("#b8d49f")))
-	backpack_text = _make_label("12 / 24 открыто", 12, Color("#d4dec8"))
-	box.add_child(backpack_text)
+		_style_slot(slot)
+		equipment_column.add_child(slot)
+
+	var backpack_column := VBoxContainer.new()
+	backpack_column.name = "BackpackColumn"
+	backpack_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	backpack_column.add_theme_constant_override("separation", 5)
+	layout.add_child(backpack_column)
+	backpack_column.add_child(_make_label("Рюкзак · 9 × 3", 14, Color("#b8d49f")))
+	backpack_text = _make_label("12 / 24 ячеек открыто", 12, Color("#d4dec8"))
+	backpack_text.name = "BackpackText"
+	backpack_column.add_child(backpack_text)
+
 	inventory_grid = GridContainer.new()
-	inventory_grid.columns = 6
-	inventory_grid.add_theme_constant_override("h_separation", 5)
-	inventory_grid.add_theme_constant_override("v_separation", 5)
-	box.add_child(inventory_grid)
-	for index in range(24):
+	inventory_grid.name = "BackpackGrid"
+	inventory_grid.columns = 9
+	inventory_grid.add_theme_constant_override("h_separation", 4)
+	inventory_grid.add_theme_constant_override("v_separation", 4)
+	backpack_column.add_child(inventory_grid)
+	for index in range(27):
 		var slot := Button.new()
-		slot.custom_minimum_size = Vector2(70, 42)
-		slot.text = "·" if index < backpack_slots else "ЗАКР."
-		slot.disabled = index >= backpack_slots
+		slot.name = "BackpackSlot%02d" % index
+		slot.custom_minimum_size = Vector2(48, 48)
+		slot.text = ""
+		slot.tooltip_text = "Пустая ячейка"
+		_style_slot(slot)
+		_create_slot_visuals(slot)
 		inventory_grid.add_child(slot)
+
 	var expand := Button.new()
-	expand.text = "Расширить рюкзак (+3 ячейки) · заглушка"
-	expand.pressed.connect(func() -> void: backpack_expand_requested.emit())
-	box.add_child(expand)
-	box.add_child(_make_label("Броня, магазин и перенос предметов пока находятся в разработке.", 11, Color("#9eaa93")))
+	expand.name = "ExpandBackpack"
+	expand.text = "Увеличить рюкзак (+3)"
+	expand.custom_minimum_size.y = 28
+	backpack_column.add_child(expand)
+	box.add_child(_make_label("Предметы и экипировка отображаются отдельными ячейками, как в Minecraft.", 11, Color("#9eaa93")))
 
 func _create_settings() -> void:
 	var box := _create_center_panel("settings", "Настройки", Rect2(-220, -150, 440, 300))
 	box.add_child(_make_label("Эффекты камеры", 14, Color("#b8d49f")))
 	settings_shake = CheckBox.new()
+	settings_shake.name = "ScreenShake"
 	settings_shake.text = "Тряска камеры при ударах"
-	settings_shake.toggled.connect(func(_pressed: bool) -> void: _emit_settings())
 	box.add_child(settings_shake)
 	box.add_child(_make_label("Базовый масштаб камеры", 13))
 	settings_zoom = HSlider.new()
+	settings_zoom.name = "CameraZoom"
 	settings_zoom.min_value = 0.8
 	settings_zoom.max_value = 3.0
 	settings_zoom.step = 0.05
 	settings_zoom.value = 1.85
-	settings_zoom.value_changed.connect(func(_value: float) -> void: _emit_settings())
 	box.add_child(settings_zoom)
 	box.add_child(_make_label("Настройки сохраняются в локальном файле Godot.", 11, Color("#9eaa93")))
 
 func _create_debug() -> void:
 	var box := _create_center_panel("debug", "Отладчик · F3", Rect2(-250, -190, 500, 380))
 	debug_target_text = _make_label("Выбран объект: Игрок", 13, Color("#e5d6a6"))
+	debug_target_text.name = "DebugTarget"
 	box.add_child(debug_target_text)
 	box.add_child(_make_label("Скорость ходьбы", 12))
 	debug_walk_speed = SpinBox.new()
+	debug_walk_speed.name = "WalkSpeed"
 	debug_walk_speed.min_value = 20
 	debug_walk_speed.max_value = 600
 	debug_walk_speed.step = 5
 	debug_walk_speed.value = 155
-	debug_walk_speed.value_changed.connect(func(value: float) -> void: debug_value_changed.emit("player.walk_speed", value))
 	box.add_child(debug_walk_speed)
 	box.add_child(_make_label("Сила персонажа", 12))
 	debug_strength = SpinBox.new()
+	debug_strength.name = "Strength"
 	debug_strength.min_value = 0
 	debug_strength.max_value = 100
 	debug_strength.step = 1
 	debug_strength.value = 10
-	debug_strength.value_changed.connect(func(value: float) -> void: debug_value_changed.emit("player.strength", value))
 	box.add_child(debug_strength)
 	box.add_child(_make_label("Клик по игроку, дереву или камню в мире выбирает объект.", 11, Color("#9eaa93")))
 	box.add_child(_make_label("Изменения чисел применяются сразу.", 11, Color("#9eaa93")))
@@ -251,17 +472,67 @@ func _create_debug() -> void:
 func _create_logs() -> void:
 	var box := _create_center_panel("logs", "Журнал событий · F2", Rect2(-300, -205, 600, 410))
 	logs_text = TextEdit.new()
+	logs_text.name = "LogText"
 	logs_text.custom_minimum_size = Vector2(570, 325)
 	logs_text.editable = false
 	logs_text.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	box.add_child(logs_text)
 	var clear := Button.new()
+	clear.name = "ClearLogs"
 	clear.text = "Очистить журнал"
-	clear.pressed.connect(func() -> void:
-		log_lines.clear()
-		_render_logs()
-	)
 	box.add_child(clear)
+
+func _refresh_item_icons() -> void:
+	for index in range(hotbar_buttons.size()):
+		var item_id := str(HOTBAR_ITEMS[index])
+		_set_slot_icon(hotbar_buttons[index], item_id, 30 if item_id == "arrows" else 0)
+	if inventory_grid != null:
+		var backpack_items := ["sword", "pickaxe", "axe", "bow", "arrows"]
+		for index in range(inventory_grid.get_child_count()):
+			var item_id := str(backpack_items[index]) if index < backpack_items.size() else ""
+			var count := 30 if item_id == "arrows" else 0
+			_set_slot_icon(inventory_grid.get_child(index) as Button, item_id, count)
+
+func _set_slot_icon(button: Button, item_id: String, count: int) -> void:
+	if button == null:
+		return
+	var icon_rect := button.get_node_or_null("Icon") as TextureRect
+	var count_label := button.get_node_or_null("StackCount") as Label
+	if icon_rect != null:
+		if ITEM_RECTS.has(item_id):
+			var atlas := AtlasTexture.new()
+			atlas.atlas = load("res://public/assets/items.png")
+			atlas.region = ITEM_RECTS[item_id]
+			icon_rect.texture = atlas
+			icon_rect.visible = true
+		else:
+			icon_rect.texture = null
+			icon_rect.visible = false
+	if count_label != null:
+		count_label.text = str(count) if count > 1 else ""
+	button.tooltip_text = str(ITEM_LABELS.get(item_id, "Пустая ячейка"))
+
+func _on_hotbar_pressed(index: int) -> void:
+	slot_selected.emit(index)
+
+func _on_expand_pressed() -> void:
+	backpack_expand_requested.emit()
+
+func _on_settings_toggled(_pressed: bool) -> void:
+	_emit_settings()
+
+func _on_camera_zoom_changed(_value: float) -> void:
+	_emit_settings()
+
+func _on_walk_speed_changed(value: float) -> void:
+	debug_value_changed.emit("player.walk_speed", value)
+
+func _on_strength_changed(value: float) -> void:
+	debug_value_changed.emit("player.strength", value)
+
+func _on_clear_logs() -> void:
+	log_lines.clear()
+	_render_logs()
 
 func _emit_settings() -> void:
 	if settings_shake == null or settings_zoom == null:
@@ -285,6 +556,10 @@ func set_player_data(health: float, max_health: float, stamina: float, max_stami
 	stamina_text.text = "%d / %d" % [roundi(stamina), roundi(max_stamina)]
 	arrow_text.text = "Стрелы: %d" % arrows
 	fps_text.text = "FPS: %d" % Engine.get_frames_per_second()
+	if hotbar_buttons.size() > 4:
+		_set_slot_icon(hotbar_buttons[4], "arrows", arrows)
+	if inventory_grid != null and inventory_grid.get_child_count() > 0:
+		_set_slot_icon(inventory_grid.get_child(0) as Button, "arrows", arrows)
 
 func set_hotbar_selection(index: int) -> void:
 	for i in range(hotbar_buttons.size()):
@@ -302,7 +577,8 @@ func toggle_panel(panel_name: String) -> void:
 
 func close_panels() -> void:
 	for panel in panels.values():
-		(panel as Control).visible = false
+		if panel is Control:
+			(panel as Control).visible = false
 	current_panel = ""
 
 func has_modal_open() -> bool:
@@ -313,12 +589,15 @@ func set_backpack_slots(open_slots: int, maximum: int) -> void:
 	max_backpack_slots = maximum
 	if backpack_text == null or inventory_grid == null:
 		return
-	backpack_text.text = "%d / %d открыто" % [backpack_slots, max_backpack_slots]
+	backpack_text.text = "%d / %d ячеек открыто" % [backpack_slots, max_backpack_slots]
 	for index in range(inventory_grid.get_child_count()):
 		var slot := inventory_grid.get_child(index) as Button
 		var unlocked := index < backpack_slots
 		slot.disabled = not unlocked
-		slot.text = "·" if unlocked else "ЗАКР."
+		slot.tooltip_text = "Пустая ячейка" if unlocked else "Ячейка закрыта"
+		var lock_mark := slot.get_node_or_null("LockMark") as Label
+		if lock_mark != null:
+			lock_mark.visible = not unlocked
 
 func set_debug_values(walk_speed: float, strength: float) -> void:
 	if debug_walk_speed != null:

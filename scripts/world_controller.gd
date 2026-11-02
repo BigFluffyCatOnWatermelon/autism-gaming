@@ -5,6 +5,8 @@ const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const PlayerControllerScript = preload("res://scripts/player_controller.gd")
 const ResourceNodeScript = preload("res://scripts/resource_node.gd")
 const GameUIScript = preload("res://scripts/game_ui.gd")
+const PlayerScene = preload("res://scenes/player.tscn")
+const UIScene = preload("res://scenes/game_ui.tscn")
 
 const HOTBAR_ITEMS := ["sword", "pickaxe", "axe", "bow", "arrows", "", "", "", ""]
 const DAMAGE_LABELS := {"cutting": "режущий", "piercing": "колющий", "crushing": "дробящий"}
@@ -13,6 +15,7 @@ var config: Dictionary
 var player
 var ui
 var ground: TileMapLayer
+var world_objects: Node2D
 var resources: Array = []
 var projectiles: Array = []
 var attack_cooldowns: Dictionary = {}
@@ -89,10 +92,12 @@ func _create_ground() -> void:
 			ground.set_cell(Vector2i(x, y), 0, Vector2i.ZERO)
 
 func _create_player() -> void:
-	player = PlayerControllerScript.new()
+	player = get_node_or_null("Player")
+	if player == null:
+		player = PlayerScene.instantiate()
+		player.name = "Player"
+		add_child(player)
 	player.configure(config)
-	player.name = "Player"
-	add_child(player)
 	player.global_position = Vector2.ZERO
 	var camera: Camera2D = player.camera
 	var half_width := int(config.world.width / 2)
@@ -104,6 +109,16 @@ func _create_player() -> void:
 	camera.limit_smoothed = true
 
 func _create_resources() -> void:
+	world_objects = get_node_or_null("WorldObjects") as Node2D
+	if world_objects == null:
+		world_objects = Node2D.new()
+		world_objects.name = "WorldObjects"
+		add_child(world_objects)
+	for node in world_objects.get_children():
+		if node.has_method("apply_damage"):
+			resources.append(node)
+	if not resources.is_empty():
+		return
 	for _index in range(int(config.world.tree_count)):
 		_spawn_resource("tree")
 	for _index in range(int(config.world.rock_count)):
@@ -114,7 +129,7 @@ func _spawn_resource(kind: String) -> void:
 	var node = ResourceNodeScript.new()
 	node.configure(kind, 90.0 if kind == "tree" else 110.0)
 	node.name = ("Tree" if kind == "tree" else "Rock") + "_" + str(resources.size() + 1)
-	add_child(node)
+	world_objects.add_child(node)
 	node.global_position = position
 	resources.append(node)
 
@@ -138,8 +153,11 @@ func _random_resource_position() -> Vector2:
 	return Vector2(rng.randf_range(500, half_width), rng.randf_range(500, half_height))
 
 func _create_ui() -> void:
-	ui = GameUIScript.new()
-	add_child(ui)
+	ui = get_node_or_null("GameUI")
+	if ui == null:
+		ui = UIScene.instantiate()
+		ui.name = "GameUI"
+		add_child(ui)
 	ui.slot_selected.connect(_on_slot_selected)
 	ui.backpack_expand_requested.connect(_expand_backpack)
 	ui.settings_changed.connect(_on_settings_changed)
@@ -154,6 +172,10 @@ func _process(delta: float) -> void:
 	_update_projectiles(delta)
 	_update_camera(delta)
 	_update_z_order()
+	if player != null and player.has_method("set_held_item"):
+		var selected_item := str(HOTBAR_ITEMS[selected_slot])
+		var aim_direction := (get_global_mouse_position() - player.global_position).normalized()
+		player.set_held_item(selected_item, aim_direction)
 	if ui != null and player != null:
 		ui.set_player_data(
 			player.current_health,
@@ -201,6 +223,9 @@ func _on_slot_selected(index: int) -> void:
 	selected_slot = index
 	ui.set_hotbar_selection(selected_slot)
 	var label: String = str(HOTBAR_ITEMS[index])
+	if player != null and player.has_method("set_held_item"):
+		var aim_direction := (get_global_mouse_position() - player.global_position).normalized()
+		player.set_held_item(label, aim_direction)
 	if label == "":
 		_log("Пустой слот.")
 	else:
@@ -286,8 +311,7 @@ func _attack(secondary: bool) -> void:
 	if weapon.is_empty():
 		return
 	if weapon_id == "bow":
-		if not secondary:
-			_fire_arrow(aim_direction, weapon)
+		_fire_arrow(aim_direction, weapon)
 		return
 
 	var attack: Dictionary = weapon
@@ -302,6 +326,11 @@ func _attack(secondary: bool) -> void:
 			attack = weapon.slash
 			mode = "slash"
 			cooldown_key = "sword_slash"
+	elif weapon_id == "axe":
+		mode = "swing"
+		cooldown_key = "axe_swing"
+	attack = attack.duplicate(true)
+	attack["weapon_id"] = weapon_id
 	if float(attack_cooldowns.get(cooldown_key, 0.0)) > 0.0:
 		return
 	var stamina_cost := float(attack.get("stamina_cost", config.combat.attack_stamina_cost))
@@ -310,7 +339,11 @@ func _attack(secondary: bool) -> void:
 		return
 	player.current_stamina -= stamina_cost
 	attack_cooldowns[cooldown_key] = float(attack.get("cooldown", 0.4))
-	_show_attack_effect(aim_direction, float(attack.get("reach", 70.0)), mode, float(attack.get("arc_degrees", config.combat.slash_arc_degrees)))
+	var agility := float(config.player.get("agility", 10.0))
+	var skill_scale := clampf(1.0 + (agility - 10.0) * float(config.combat.effect_width_skill_scale), 0.65, 1.65)
+	var attack_arc := clampf(float(attack.get("arc_degrees", config.combat.slash_arc_degrees)) + (agility - 10.0) * float(config.combat.arc_skill_bonus), 60.0, 175.0)
+	var effect_width := float(attack.get("effect_width", 14.0)) * skill_scale
+	_show_attack_effect(aim_direction, float(attack.get("reach", 70.0)), mode, attack_arc, effect_width)
 
 	var hit_count := 0
 	for target in resources.duplicate():
@@ -318,44 +351,53 @@ func _attack(secondary: bool) -> void:
 		var distance := offset.length()
 		var reach := float(attack.get("reach", 70.0))
 		var is_hit := false
-		if mode == "slash":
-			is_hit = CombatSystemScript.point_in_arc(player.global_position, target.global_position, aim_angle, reach + target.hit_radius, float(attack.get("arc_degrees", 118.0)))
-		elif mode == "thrust":
+		if mode == "slash" or mode == "swing":
+			is_hit = CombatSystemScript.point_in_arc(player.global_position, target.global_position, aim_angle, reach + target.hit_radius, attack_arc)
+		else:
 			var start: Vector2 = player.global_position + aim_direction * 12.0
 			var finish: Vector2 = player.global_position + aim_direction * reach
-			is_hit = CombatSystemScript.distance_to_segment(target.global_position, start, finish) <= float(attack.get("width", 24.0)) + target.hit_radius * 0.35
-		else:
-			is_hit = distance <= reach + target.hit_radius and absf(CombatSystemScript.angle_difference(offset.angle(), aim_angle)) <= deg_to_rad(38.0)
+			var hit_width := float(attack.get("width", 22.0)) * skill_scale
+			is_hit = distance <= reach + target.hit_radius and CombatSystemScript.distance_to_segment(target.global_position, start, finish) <= hit_width + target.hit_radius * 0.35
 		if is_hit:
+			var material := "wood" if target.resource_type == "tree" else "stone"
+			if not CombatSystemScript.can_damage_resource(weapon_id, material):
+				continue
 			_damage_target(target, attack)
 			hit_count += 1
 	if hit_count == 0:
 		_log("Удар: %s" % weapon_id)
 
-func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_degrees: float) -> void:
-	var effect := Line2D.new()
-	effect.width = 4.0 if mode == "slash" else 5.0
-	effect.default_color = Color("#cceaff") if mode == "thrust" else Color("#e9edbd")
-	effect.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	effect.end_cap_mode = Line2D.LINE_CAP_ROUND
-	effect.position = player.global_position
-	if mode == "slash":
-		var points := PackedVector2Array()
-		var center_angle := direction.angle()
-		for step in range(9):
-			var angle := center_angle + deg_to_rad(-arc_degrees * 0.5 + arc_degrees * float(step) / 8.0)
-			points.append(Vector2.from_angle(angle) * reach)
-		effect.points = points
-	else:
-		effect.points = PackedVector2Array([direction * 12.0, direction * reach])
-	add_child(effect)
-	var tween := create_tween()
-	tween.tween_property(effect, "modulate:a", 0.0, 0.16)
-	tween.tween_callback(effect.queue_free)
+func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_degrees: float, effect_width: float) -> void:
+	var visual_reach := maxf(22.0, reach * float(config.combat.effect_reach_scale))
+	var base_color := Color("#cceaff") if mode == "thrust" else (Color("#e8b96f") if mode == "swing" else Color("#e9edbd"))
+	for layer_index in range(3):
+		var effect := Line2D.new()
+		effect.width = effect_width * [2.5, 1.55, 0.72][layer_index]
+		effect.default_color = Color(base_color.r, base_color.g, base_color.b, [0.10, 0.22, 0.72][layer_index])
+		effect.antialiased = true
+		effect.begin_cap_mode = Line2D.LINE_CAP_ROUND
+		effect.end_cap_mode = Line2D.LINE_CAP_ROUND
+		effect.position = player.global_position
+		effect.z_index = player.z_index + 5
+		if mode == "slash" or mode == "swing":
+			var points := PackedVector2Array()
+			var center_angle := direction.angle()
+			for step in range(13):
+				var angle := center_angle + deg_to_rad(-arc_degrees * 0.5 + arc_degrees * float(step) / 12.0)
+				points.append(Vector2.from_angle(angle) * (visual_reach - 6.0))
+			effect.points = points
+		else:
+			effect.points = PackedVector2Array([direction * 12.0, direction * visual_reach])
+		add_child(effect)
+		var tween := create_tween()
+		tween.tween_property(effect, "modulate:a", 0.0, 0.15 + float(layer_index) * 0.025)
+		tween.tween_callback(effect.queue_free)
 
 func _damage_target(target, attack: Dictionary) -> void:
 	var material := "wood" if target.resource_type == "tree" else "stone"
 	var amount := CombatSystemScript.calculate_damage(attack, material, float(config.player.strength), config)
+	if amount <= 0.0:
+		return
 	var destroyed: bool = target.apply_damage(amount)
 	var type_name := str(DAMAGE_LABELS.get(str(attack.get("damage_type", "cutting")), ""))
 	_log("%s: -%.0f HP (%s)." % [str(target.resource_type).capitalize(), amount, type_name])
@@ -392,6 +434,7 @@ func _fire_arrow(direction: Vector2, weapon: Dictionary) -> void:
 		"remaining": float(weapon.projectile_range),
 		"damage": float(weapon.damage),
 		"damage_type": str(weapon.damage_type),
+		"weapon_id": "bow",
 	})
 	_log("Выстрел. Осталось стрел: %d." % arrow_count)
 
@@ -411,7 +454,7 @@ func _update_projectiles(delta: float) -> void:
 				hit_target = target
 				break
 		if hit_target != null:
-			var attack := {"damage": shot["damage"], "damage_type": shot["damage_type"]}
+			var attack := {"damage": shot["damage"], "damage_type": shot["damage_type"], "weapon_id": "bow"}
 			_damage_target(hit_target, attack)
 			arrow.queue_free()
 			projectiles.remove_at(index)

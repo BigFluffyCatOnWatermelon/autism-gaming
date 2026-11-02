@@ -1,0 +1,42 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/player_controller.gd" id="1_player"]
+[ext_resource type="Texture2D" path="res://public/assets/player.png" id="2_player_texture"]
+[ext_resource type="Texture2D" path="res://public/assets/shadow.png" id="3_shadow_texture"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_player"]
+radius = 8.0
+height = 28.0
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_player")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 4)
+shape = SubResource("CapsuleShape2D_player")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+texture = ExtResource("3_shadow_texture")
+position = Vector2(0, 15)
+scale = Vector2(1.15, 1)
+z_index = -1
+texture_filter = 1
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_player_texture")
+position = Vector2(0, -3)
+scale = Vector2(1.25, 1.25)
+hframes = 4
+vframes = 5
+texture_filter = 1
+
+[node name="HeldItem" type="Sprite2D" parent="."]
+visible = false
+scale = Vector2(0.72, 0.72)
+z_index = 2
+texture_filter = 1
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+zoom = Vector2(1.85, 1.85)
