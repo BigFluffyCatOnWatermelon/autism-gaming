@@ -11,7 +11,7 @@ radius = 16.0
 [node name="Objects" type="Node2D"]
 
 [node name="Tree" type="StaticBody2D" parent="."]
-position = Vector2(-145, -18)
+position = Vector2(-520, -360)
 script = ExtResource("1_resource")
 resource_type = "tree"
 
@@ -20,7 +20,7 @@ position = Vector2(0, 8)
 shape = SubResource("TreeCollision")
 
 [node name="Rock" type="StaticBody2D" parent="."]
-position = Vector2(155, 42)
+position = Vector2(540, 360)
 script = ExtResource("1_resource")
 resource_type = "rock"
 max_health = 110.0
