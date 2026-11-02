@@ -121,9 +121,17 @@ export class WorldScene extends Phaser.Scene {
 
     // One repeated tile covers the entire world; the camera reveals only a
     // small region at a time, so the empty map has almost no draw overhead.
-    this.ground = this.add.tileSprite(0, 0, width, height, 'grass')
+    // Tile only the visible canvas, not the 3600×3600 world. Phaser's docs
+    // explicitly recommend scrolling TileSprite.tilePosition instead of
+    // creating huge TileSprites, which waste memory and hurt performance.
+    this.ground = this.add.tileSprite(0, 0, this.scale.width, this.scale.height, 'grass')
       .setOrigin(0, 0)
+      .setScrollFactor(0)
       .setDepth(0);
+
+    this.scale.on(Phaser.Scale.Events.RESIZE, gameSize => {
+      this.ground.setSize(gameSize.width, gameSize.height);
+    });
 
     // Extra tiny pixel clusters break up the repeated tile without importing
     // large tilesets. Seeded randomness makes the same world on every reload.
@@ -145,9 +153,8 @@ export class WorldScene extends Phaser.Scene {
     }
 
     // A subtle world edge is useful when testing camera bounds.
-    const boundary = this.add.graphics().setDepth(2);
-    boundary.lineStyle(5, 0x355d35, 0.7);
-    boundary.strokeRect(0, 0, width, height);
+    this.worldBoundary = this.add.graphics().setDepth(2);
+    this.redrawWorldBoundary();
   }
 
   createAnimations() {
@@ -251,6 +258,7 @@ export class WorldScene extends Phaser.Scene {
     this.handleGlobalKeys();
     this.updatePlayer(frameDelta);
     this.updateCamera();
+    this.updateGroundTextureScroll();
     this.updateDebugHover();
     this.updateDepth();
 
@@ -416,6 +424,21 @@ export class WorldScene extends Phaser.Scene {
       duration: 260,
       onComplete: () => echo.destroy(),
     });
+  }
+
+  updateGroundTextureScroll() {
+    // The ground stays screen-sized while its texture follows camera scroll,
+    // creating a continuous grassy world without allocating a giant bitmap.
+    const camera = this.cameras.main;
+    this.ground.tilePositionX = camera.scrollX;
+    this.ground.tilePositionY = camera.scrollY;
+  }
+
+  redrawWorldBoundary() {
+    const { width, height } = GAME_CONFIG.world;
+    this.worldBoundary.clear();
+    this.worldBoundary.lineStyle(5, 0x355d35, 0.7);
+    this.worldBoundary.strokeRect(0, 0, width, height);
   }
 
   updateCamera() {
@@ -824,8 +847,10 @@ export class WorldScene extends Phaser.Scene {
     if (path === 'player.agility') this.stats.agility = value;
 
     if (path === 'world.width' || path === 'world.height') {
-      this.ground.setSize(GAME_CONFIG.world.width, GAME_CONFIG.world.height);
       this.cameras.main.setBounds(0, 0, GAME_CONFIG.world.width, GAME_CONFIG.world.height);
+      this.playerSprite.x = Phaser.Math.Clamp(this.playerSprite.x, 36, GAME_CONFIG.world.width - 36);
+      this.playerSprite.y = Phaser.Math.Clamp(this.playerSprite.y, 42, GAME_CONFIG.world.height - 36);
+      this.redrawWorldBoundary();
     }
     if (path.startsWith('camera.')) this.lastCameraZoom = -1;
     this.ui.updateHud();
