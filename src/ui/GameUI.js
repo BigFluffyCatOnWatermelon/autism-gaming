@@ -165,12 +165,7 @@ export class GameUI {
           <div><span class="panel-eyebrow">DEVELOPER TOOLS · F3</span><h2>Отладчик</h2><small id="debug-target-label">Объект: Персонаж</small></div>
           <button class="panel-close" data-action="close-debug" aria-label="Закрыть">×</button>
         </div>
-        <div class="debug-targets">
-          <button data-debug-target="player" class="active">Персонаж</button>
-          <button data-debug-target="camera">Камера</button>
-          <button data-debug-target="world">Мир</button>
-          <button data-debug-target="weapons">Оружие</button>
-        </div>
+        <div class="debug-targets" id="debug-targets"></div>
         <nav class="debug-tabs" id="debug-tabs"></nav>
         <div class="debug-fields" id="debug-fields"></div>
         <div class="debug-footnote">Изменения применяются сразу. Для добавления нового редактируемого параметра опиши его в src/config/gameConfig.js → DEBUG_FIELDS.</div>
@@ -228,10 +223,16 @@ export class GameUI {
     this.root.addEventListener('change', event => {
       const field = event.target.closest('[data-debug-path]');
       if (field) {
-        const path = field.dataset.debugPath;
-        const value = Number(field.value);
-        if (!Number.isFinite(value)) return;
-        this.setConfigValue(path, value);
+        const descriptor = DEBUG_FIELDS.find(item => item.path === field.dataset.debugPath);
+        const value = descriptor?.type === 'select' ? field.value : Number(field.value);
+        if (descriptor?.type !== 'select' && !Number.isFinite(value)) return;
+        this.setConfigValue(field.dataset.debugPath, value);
+        return;
+      }
+
+      const customField = event.target.closest('[data-debug-custom-index]');
+      if (customField) {
+        this.setCustomDebugValue(Number(customField.dataset.debugCustomIndex), customField);
         return;
       }
 
@@ -342,18 +343,12 @@ export class GameUI {
     }
   }
 
-  setDebugTarget(target, label = null) {
+  setDebugTarget(target, label = null, scope = null) {
+    const entry = this.scene.getDebugTarget?.(target);
     this.debugTarget = target;
-    const targetLabels = {
-      player: 'Персонаж',
-      camera: 'Камера',
-      world: 'Мир',
-      weapons: 'Оружие',
-    };
-    this.debugTargetLabel = label || targetLabels[target] || target;
-    if (['player', 'camera', 'world', 'weapons'].includes(target)) {
-      this.debugScope = target;
-    }
+    this.debugTargetLabel = label || entry?.label || target;
+    const nextScope = scope || entry?.scope || target;
+    if (DEBUG_SCOPES.some(item => item.id === nextScope)) this.debugScope = nextScope;
     this.renderDebug();
   }
 
@@ -363,11 +358,37 @@ export class GameUI {
     for (const part of parts.slice(0, -1)) target = target[part];
     const key = parts.at(-1);
     const descriptor = DEBUG_FIELDS.find(field => field.path === path);
-    const next = Math.max(descriptor?.min ?? -Infinity, Math.min(descriptor?.max ?? Infinity, value));
+    let next = value;
+
+    // Numeric controls are clamped; select controls preserve their string key.
+    if (descriptor?.type !== 'select') {
+      next = Math.max(descriptor?.min ?? -Infinity, Math.min(descriptor?.max ?? Infinity, Number(value)));
+      if (!Number.isFinite(next)) return;
+    }
+
     target[key] = next;
     this.scene.onConfigChanged(path, next);
     this.addLog('debug', `${path} = ${next}`);
-    // Refresh only the inspector fields; other UI remains untouched.
+    this.renderDebug();
+  }
+
+  setCustomDebugValue(index, control) {
+    const target = this.scene.getDebugTarget?.(this.debugTarget);
+    const field = target?.fields?.[index];
+    if (!field?.setValue) return;
+
+    let value;
+    if (field.type === 'checkbox') value = control.checked;
+    else if (field.type === 'select') value = control.value;
+    else value = Number(control.value);
+
+    if (typeof value === 'number') {
+      if (!Number.isFinite(value)) return;
+      value = Math.max(field.min ?? -Infinity, Math.min(field.max ?? Infinity, value));
+    }
+
+    field.setValue(value);
+    this.addLog('debug', `${target.label} · ${field.label}: ${value}`);
     this.renderDebug();
   }
 
@@ -466,26 +487,58 @@ export class GameUI {
     const targetLabel = this.root.querySelector('#debug-target-label');
     targetLabel.textContent = `Объект: ${this.debugTargetLabel}`;
 
-    const targetButtons = this.root.querySelectorAll('[data-debug-target]');
-    targetButtons.forEach(button => button.classList.toggle('active', button.dataset.debugTarget === this.debugTarget));
+    // Targets are populated from the scene registry. New inspectable world
+    // objects appear here automatically after registerDebugTarget().
+    const targetsHost = this.root.querySelector('#debug-targets');
+    targetsHost.innerHTML = this.scene.debugTargets
+      .filter(target => target.showInInspector !== false)
+      .map(target => `
+        <button data-debug-target="${escapeHtml(target.id)}"
+          class="${target.id === this.debugTarget ? 'active' : ''}">${escapeHtml(target.label)}</button>
+      `).join('');
 
     const tabs = this.root.querySelector('#debug-tabs');
     tabs.innerHTML = DEBUG_SCOPES.map(scope => `
       <button data-debug-scope="${scope.id}" class="${scope.id === this.debugScope ? 'active' : ''}">${escapeHtml(scope.label)}</button>
     `).join('');
 
-    const fields = DEBUG_FIELDS.filter(field => field.scope === this.debugScope);
+    const selectedTarget = this.scene.getDebugTarget?.(this.debugTarget);
+    const customFields = selectedTarget?.fields?.length ? selectedTarget.fields : null;
+    const fields = customFields || DEBUG_FIELDS.filter(field => field.scope === this.debugScope);
     const host = this.root.querySelector('#debug-fields');
+
     if (!fields.length) {
-      host.innerHTML = '<p class="debug-empty">Для этой категории пока нет параметров.</p>';
+      host.innerHTML = '<p class="debug-empty">Для этого объекта пока нет редактируемых параметров.</p>';
       return;
     }
-    host.innerHTML = fields.map(field => {
-      const value = getPath(GAME_CONFIG, field.path);
+
+    host.innerHTML = fields.map((field, index) => {
+      const custom = Boolean(customFields);
+      const value = custom
+        ? (field.getValue ? field.getValue() : field.value)
+        : getPath(GAME_CONFIG, field.path);
+      const binding = custom
+        ? `data-debug-custom-index="${index}"`
+        : `data-debug-path="${field.path}"`;
+      let control = '';
+
+      if (field.type === 'select') {
+        control = `<select ${binding}>${(field.options || []).map(option => {
+          const optionValue = typeof option === 'string' ? option : option.value;
+          const optionLabel = typeof option === 'string' ? option : option.label;
+          return `<option value="${escapeHtml(optionValue)}" ${String(optionValue) === String(value) ? 'selected' : ''}>${escapeHtml(optionLabel)}</option>`;
+        }).join('')}</select>`;
+      } else if (field.type === 'checkbox') {
+        control = `<input type="checkbox" ${binding} ${value ? 'checked' : ''}>`;
+      } else {
+        control = `<input type="number" ${binding}
+          min="${field.min ?? ''}" max="${field.max ?? ''}" step="${field.step ?? 1}" value="${escapeHtml(value ?? 0)}">`;
+      }
+
       return `
         <label class="debug-field">
-          <span class="debug-field-info"><b>${escapeHtml(field.label)}</b><small>${escapeHtml(field.description)}</small></span>
-          <input type="number" data-debug-path="${field.path}" min="${field.min}" max="${field.max}" step="${field.step}" value="${value}">
+          <span class="debug-field-info"><b>${escapeHtml(field.label)}</b><small>${escapeHtml(field.description || '')}</small></span>
+          ${control}
         </label>`;
     }).join('');
   }
