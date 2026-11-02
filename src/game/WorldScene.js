@@ -299,7 +299,7 @@ export class WorldScene extends Phaser.Scene {
       - Number(keys.a.isDown || keys.left.isDown);
     let dy = Number(keys.s.isDown || keys.down.isDown)
       - Number(keys.w.isDown || keys.up.isDown);
-    const moving = dx !== 0 || dy !== 0;
+    let moving = dx !== 0 || dy !== 0;
 
     if (moving) {
       const length = Math.hypot(dx, dy);
@@ -818,5 +818,6 @@ export class WorldScene extends Phaser.Scene {
     }
     if (path.startsWith('camera.')) this.lastCameraZoom = -1;
     this.ui.updateHud();
+    if (this.ui.inventoryOpen) this.ui.renderInventory();
   }
 }
