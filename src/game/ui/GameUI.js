@@ -111,6 +111,10 @@ export class GameUI {
             <button data-debug-target="config:camera">Камера</button>
             <button data-debug-target="config:world">Мир</button>
             <button data-debug-target="config:dodge">Перекат</button>
+            <button data-debug-target="config:player">Параметры игрока</button>
+            <button data-debug-target="config:weapons">Все оружия</button>
+            <button data-debug-target="config:inventory">Инвентарь</button>
+            <button data-debug-target="config:pixelArt">Пиксели</button>
           </div>
         </div>
         <div class="debug-section">
@@ -202,7 +206,9 @@ export class GameUI {
 
     const weaponStats = data.weapon
       ? `<div class="stat-line"><span>Оружие</span><b>${data.weapon.name}</b></div>
-         <div class="stat-line"><span>Тип урона</span><b>${data.weapon.damageType}</b></div>`
+         <div class="stat-line"><span>Тип урона</span><b>${data.weapon.damageType}</b></div>
+         ${data.weapon.slash ? `<div class="stat-line"><span>Размах</span><b>${data.weapon.slash.damage} урона · ${data.weapon.slash.arcDegrees}°</b></div>
+         <div class="stat-line"><span>Выпад</span><b>${data.weapon.thrust.damage} урона · ${data.weapon.thrust.range} дальность</b></div>` : `<div class="stat-line"><span>Урон</span><b>${data.weapon.damage}</b></div>`}`
       : '';
     const stats = this.root.querySelector('#character-stats');
     if (stats) {
