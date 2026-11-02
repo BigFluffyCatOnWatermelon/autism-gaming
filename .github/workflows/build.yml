@@ -8,7 +8,7 @@ on:
 
 jobs:
   godot-check:
-    name: Import and launch Godot project
+    name: Import, parse and launch Godot project
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -23,8 +23,22 @@ jobs:
       - name: Print Godot version
         run: godot --version
 
-      - name: Import resources and parse project
-        run: godot --headless --editor --path . --quit
+      - name: Import resources and validate scripts
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --editor --path . --quit 2>&1 | tee godot-editor.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' godot-editor.log; then
+            echo "Godot reported script or resource errors."
+            exit 1
+          fi
 
-      - name: Launch main scene briefly
-        run: godot --headless --path . --quit-after 5
+      - name: Launch main scene and check runtime
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --quit-after 5 2>&1 | tee godot-runtime.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' godot-runtime.log; then
+            echo "Godot reported runtime errors."
+            exit 1
+          fi
