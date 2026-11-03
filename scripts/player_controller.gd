@@ -4,22 +4,40 @@ const GameConfigScript = preload("res://scripts/game_config.gd")
 const WORLD_Z_SORT_OFFSET := 2048
 @export_group("Анимации персонажа")
 @export var movement_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
+@export_range(1, 32, 1) var movement_columns: int = 6
+@export_range(1, 16, 1) var movement_rows: int = 4
 @export var run_sheet: Texture2D
+@export_range(1, 32, 1) var run_columns: int = 6
+@export_range(1, 16, 1) var run_rows: int = 4
 @export var hurt_sheet: Texture2D
+@export_range(1, 32, 1) var hurt_columns: int = 3
+@export_range(1, 16, 1) var hurt_rows: int = 4
 @export var death_sheet: Texture2D
+@export_range(1, 32, 1) var death_columns: int = 4
+@export_range(1, 16, 1) var death_rows: int = 4
 @export var dodge_sheet: Texture2D
+@export_range(1, 32, 1) var dodge_columns: int = 5
+@export_range(1, 16, 1) var dodge_rows: int = 4
 @export var interact_sheet: Texture2D
+@export_range(1, 32, 1) var interact_columns: int = 4
+@export_range(1, 16, 1) var interact_rows: int = 4
 
 @export_group("Боевые анимации")
 @export var axe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
+@export_range(1, 32, 1) var axe_attack_columns: int = 3
+@export_range(1, 16, 1) var axe_attack_rows: int = 4
 @export var pickaxe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
+@export_range(1, 32, 1) var pickaxe_attack_columns: int = 3
+@export_range(1, 16, 1) var pickaxe_attack_rows: int = 4
 @export var sword_slash_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
+@export_range(1, 32, 1) var sword_slash_columns: int = 3
+@export_range(1, 16, 1) var sword_slash_rows: int = 4
 @export var sword_thrust_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
+@export_range(1, 32, 1) var sword_thrust_columns: int = 3
+@export_range(1, 16, 1) var sword_thrust_rows: int = 4
 @export var bow_attack_sheet: Texture2D
-
-@export_group("Настройки кадров анимации")
-@export_range(1, 12, 1) var attack_sheet_columns: int = 3
-@export_range(1, 12, 1) var attack_sheet_rows: int = 4
+@export_range(1, 32, 1) var bow_attack_columns: int = 5
+@export_range(1, 16, 1) var bow_attack_rows: int = 4
 
 const ITEM_TEXTURE_PATHS := {
 	"sword": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png",
@@ -53,6 +71,8 @@ var attack_animation_duration := 0.0
 var attack_animation_item := ""
 var attack_animation_row := 0
 var attack_animation_uses_sheet := false
+var active_attack_columns := 3
+var active_attack_rows := 4
 var current_held_item := ""
 
 var sprite: Sprite2D
@@ -106,8 +126,8 @@ func _ready() -> void:
 		sprite.name = "Sprite"
 		add_child(sprite)
 	sprite.texture = movement_sheet
-	sprite.hframes = 6
-	sprite.vframes = 4
+	sprite.hframes = maxi(1, movement_columns)
+	sprite.vframes = maxi(1, movement_rows)
 	sprite.scale = Vector2.ONE * float(game_config.player.sprite_scale)
 	sprite.position = Vector2(0, -3)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -201,14 +221,24 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	match sheet_id:
 		"axe":
 			action_texture = axe_attack_sheet
+			active_attack_columns = axe_attack_columns
+			active_attack_rows = axe_attack_rows
 		"pickaxe":
 			action_texture = pickaxe_attack_sheet
+			active_attack_columns = pickaxe_attack_columns
+			active_attack_rows = pickaxe_attack_rows
 		"sword_slash":
 			action_texture = sword_slash_sheet
+			active_attack_columns = sword_slash_columns
+			active_attack_rows = sword_slash_rows
 		"sword_thrust":
 			action_texture = sword_thrust_sheet
+			active_attack_columns = sword_thrust_columns
+			active_attack_rows = sword_thrust_rows
 		"bow":
 			action_texture = bow_attack_sheet
+			active_attack_columns = bow_attack_columns
+			active_attack_rows = bow_attack_rows
 		_:
 			action_texture = null
 
@@ -230,8 +260,9 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 
 	# Configure the grid in the Inspector to match the selected action sheets.
 	sprite.texture = action_texture
-	sprite.hframes = maxi(1, attack_sheet_columns)
-	sprite.vframes = maxi(1, attack_sheet_rows)
+	sprite.hframes = maxi(1, active_attack_columns)
+	sprite.vframes = maxi(1, active_attack_rows)
+	attack_animation_row = clampi(attack_animation_row, 0, sprite.vframes - 1)
 	sprite.frame_coords = Vector2i(0, attack_animation_row)
 
 func _restore_player_sheet() -> void:
@@ -344,19 +375,22 @@ func _update_visuals(delta: float) -> void:
 
 	if attack_animation_time > 0.0 and attack_animation_uses_sheet:
 		var progress := 1.0 - attack_animation_time / maxf(attack_animation_duration, 0.001)
-		var action_frame := mini(maxi(0, attack_sheet_columns - 1), int(floor(progress * float(maxi(1, attack_sheet_columns)))))
-		sprite.frame_coords = Vector2i(action_frame, attack_animation_row)
+		var action_frame := mini(sprite.hframes - 1, int(floor(progress * float(sprite.hframes))))
+		sprite.frame_coords = Vector2i(action_frame, clampi(attack_animation_row, 0, sprite.vframes - 1))
 	elif moving and not rolling:
 		walk_animation_time += delta
 		idle_animation_time = 0.0
 		var interval := 0.085 if running else 0.145
-		var frame := int(floor(walk_animation_time / interval)) % 4
-		sprite.frame_coords = Vector2i(frame, sheet_row)
+		var walk_frame_count := maxi(1, mini(4, movement_columns))
+		var frame := int(floor(walk_animation_time / interval)) % walk_frame_count
+		sprite.frame_coords = Vector2i(frame, clampi(sheet_row, 0, sprite.vframes - 1))
 	else:
 		walk_animation_time = 0.0
 		idle_animation_time += delta
-		var idle_frame := 4 + (int(floor(idle_animation_time / 0.35)) % 2)
-		sprite.frame_coords = Vector2i(idle_frame, sheet_row)
+		var idle_start := maxi(0, movement_columns - 2)
+		var idle_frame_count := maxi(1, movement_columns - idle_start)
+		var idle_frame := idle_start + (int(floor(idle_animation_time / 0.35)) % idle_frame_count)
+		sprite.frame_coords = Vector2i(idle_frame, clampi(sheet_row, 0, sprite.vframes - 1))
 
 	if rolling:
 		sprite.modulate = Color(0.7, 0.85, 1.0, 0.72)
