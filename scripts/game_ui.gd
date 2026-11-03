@@ -15,6 +15,8 @@ signal debug_clone_requested
 signal debug_delete_requested
 signal debug_reset_requested
 signal debug_cheats_changed(infinite_stamina: bool, invulnerable: bool)
+signal debug_default_requested(path: String, value: Variant)
+signal debug_spawn_item_requested(item_id: String, amount: int)
 
 var root: Control
 var panels: Dictionary = {}
@@ -45,6 +47,23 @@ var debug_infinite_stamina: CheckBox
 var debug_invulnerable: CheckBox
 var debug_delete_dialog: ConfirmationDialog
 var debug_objects: Array[Dictionary] = []
+var debug_panel_size := Vector2(760.0, 620.0)
+var debug_panel_position := Vector2(-1.0, -1.0)
+var debug_panel_opacity := 0.92
+var debug_panel_dragging := false
+var debug_panel_drag_offset := Vector2.ZERO
+var debug_window_settings: VBoxContainer
+var debug_panel_settings_button: Button
+var debug_panel_width_slider: HSlider
+var debug_panel_height_slider: HSlider
+var debug_panel_opacity_slider: HSlider
+var debug_panel_reset_position_button: Button
+var debug_spawn_toggle: Button
+var debug_spawn_menu: VBoxContainer
+var debug_spawn_option: OptionButton
+var debug_spawn_amount: SpinBox
+var debug_spawn_confirm: Button
+var debug_spawn_catalog: Dictionary = {}
 var backpack_slots := 12
 var max_backpack_slots := 24
 
@@ -73,9 +92,11 @@ func _ready() -> void:
 	else:
 		_build_ui()
 	_create_world_drop_zone()
+	_ensure_debug_panel_features()
 	if Engine.is_editor_hint() and get_tree().edited_scene_root == self:
 		_claim_editor_ownership(root, self)
 	_wire_controls()
+	_load_debug_panel_settings()
 	_refresh_item_icons()
 	if not get_viewport().size_changed.is_connected(_fit_debug_panel_to_viewport):
 		get_viewport().size_changed.connect(_fit_debug_panel_to_viewport)
@@ -230,6 +251,20 @@ func _wire_controls() -> void:
 	var clear_button := _find_node("ClearLogs") as Button
 	if clear_button != null and not clear_button.pressed.is_connected(_on_clear_logs):
 		clear_button.pressed.connect(_on_clear_logs)
+	if debug_panel_settings_button != null and not debug_panel_settings_button.pressed.is_connected(_toggle_debug_window_settings):
+		debug_panel_settings_button.pressed.connect(_toggle_debug_window_settings)
+	if debug_panel_width_slider != null and not debug_panel_width_slider.value_changed.is_connected(_on_debug_panel_dimension_changed):
+		debug_panel_width_slider.value_changed.connect(_on_debug_panel_dimension_changed)
+	if debug_panel_height_slider != null and not debug_panel_height_slider.value_changed.is_connected(_on_debug_panel_dimension_changed):
+		debug_panel_height_slider.value_changed.connect(_on_debug_panel_dimension_changed)
+	if debug_panel_opacity_slider != null and not debug_panel_opacity_slider.value_changed.is_connected(_on_debug_panel_opacity_changed):
+		debug_panel_opacity_slider.value_changed.connect(_on_debug_panel_opacity_changed)
+	if debug_panel_reset_position_button != null and not debug_panel_reset_position_button.pressed.is_connected(_reset_debug_panel_position):
+		debug_panel_reset_position_button.pressed.connect(_reset_debug_panel_position)
+	if debug_spawn_toggle != null and not debug_spawn_toggle.pressed.is_connected(_toggle_debug_spawn_menu):
+		debug_spawn_toggle.pressed.connect(_toggle_debug_spawn_menu)
+	if debug_spawn_confirm != null and not debug_spawn_confirm.pressed.is_connected(_on_debug_spawn_confirmed):
+		debug_spawn_confirm.pressed.connect(_on_debug_spawn_confirmed)
 	for panel_value in panels.values():
 		var panel := panel_value as Control
 		if panel == null:
@@ -658,6 +693,212 @@ func _create_debug() -> void:
 	debug_delete_dialog.dialog_text = "Удалить выбранный объект из текущей игровой сессии?"
 	root.add_child(debug_delete_dialog)
 
+
+func _ensure_debug_panel_features() -> void:
+	var panel := panels.get("debug") as PanelContainer
+	if panel == null:
+		return
+	var content := panel.get_node_or_null("Content") as VBoxContainer
+	if content == null:
+		return
+
+	# Keep the title row fixed while the complete inspector body scrolls.
+	if not panel.has_meta("debug_scroll_layout_ready"):
+		var header := content.get_node_or_null("Header") as HBoxContainer
+		var separator: Control
+		for child in content.get_children():
+			if child is HSeparator:
+				separator = child as Control
+				break
+		if header != null:
+			content.remove_child(header)
+		if separator != null:
+			content.remove_child(separator)
+		panel.remove_child(content)
+		var outer := VBoxContainer.new()
+		outer.name = "DebugPanelLayout"
+		outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		outer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		outer.add_theme_constant_override("separation", 4)
+		panel.add_child(outer)
+		if header != null:
+			outer.add_child(header)
+		if separator != null:
+			outer.add_child(separator)
+		var scroll := ScrollContainer.new()
+		scroll.name = "DebugContentViewport"
+		scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+		outer.add_child(scroll)
+		content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		content.custom_minimum_size = Vector2.ZERO
+		scroll.add_child(content)
+		panel.set_meta("debug_scroll_layout_ready", true)
+	panel.custom_minimum_size = Vector2.ZERO
+	panel.clip_contents = true
+
+	var header_row := panel.find_child("Header", true, false) as HBoxContainer
+	if header_row != null:
+		var heading := header_row.get_node_or_null("Heading") as Label
+		var spacer := header_row.get_node_or_null("Spacer")
+		if spacer != null:
+			header_row.remove_child(spacer)
+			spacer.queue_free()
+		if heading != null:
+			heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			heading.mouse_filter = Control.MOUSE_FILTER_STOP
+			heading.mouse_default_cursor_shape = Control.CURSOR_MOVE
+			if not heading.gui_input.is_connected(_on_debug_title_gui_input):
+				heading.gui_input.connect(_on_debug_title_gui_input)
+		var close_button := header_row.get_node_or_null("CloseButton") as Button
+		if debug_panel_settings_button == null:
+			debug_panel_settings_button = Button.new()
+			debug_panel_settings_button.name = "DebugWindowSettingsButton"
+			debug_panel_settings_button.text = "Окно ⚙"
+			debug_panel_settings_button.tooltip_text = "Размер, прозрачность и положение инспектора"
+			debug_panel_settings_button.custom_minimum_size = Vector2(86, 30)
+			if close_button != null:
+				header_row.add_child(debug_panel_settings_button)
+				header_row.move_child(debug_panel_settings_button, close_button.get_index())
+			else:
+				header_row.add_child(debug_panel_settings_button)
+
+	if debug_window_settings == null:
+		debug_window_settings = VBoxContainer.new()
+		debug_window_settings.name = "DebugWindowSettings"
+		debug_window_settings.visible = false
+		debug_window_settings.add_theme_constant_override("separation", 3)
+		debug_window_settings.add_child(_make_label("Размер и прозрачность окна", 12, Color("#b8d49f")))
+
+		var width_row := HBoxContainer.new()
+		width_row.add_child(_make_label("Ширина", 11))
+		debug_panel_width_slider = HSlider.new()
+		debug_panel_width_slider.name = "DebugPanelWidth"
+		debug_panel_width_slider.min_value = 360.0
+		debug_panel_width_slider.max_value = 1200.0
+		debug_panel_width_slider.step = 20.0
+		debug_panel_width_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		width_row.add_child(debug_panel_width_slider)
+		debug_window_settings.add_child(width_row)
+
+		var height_row := HBoxContainer.new()
+		height_row.add_child(_make_label("Высота", 11))
+		debug_panel_height_slider = HSlider.new()
+		debug_panel_height_slider.name = "DebugPanelHeight"
+		debug_panel_height_slider.min_value = 300.0
+		debug_panel_height_slider.max_value = 1000.0
+		debug_panel_height_slider.step = 20.0
+		debug_panel_height_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		height_row.add_child(debug_panel_height_slider)
+		debug_window_settings.add_child(height_row)
+
+		var opacity_row := HBoxContainer.new()
+		opacity_row.add_child(_make_label("Непрозрачность", 11))
+		debug_panel_opacity_slider = HSlider.new()
+		debug_panel_opacity_slider.name = "DebugPanelOpacity"
+		debug_panel_opacity_slider.min_value = 0.25
+		debug_panel_opacity_slider.max_value = 1.0
+		debug_panel_opacity_slider.step = 0.05
+		debug_panel_opacity_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		opacity_row.add_child(debug_panel_opacity_slider)
+		debug_window_settings.add_child(opacity_row)
+
+		debug_panel_reset_position_button = Button.new()
+		debug_panel_reset_position_button.name = "DebugPanelResetPosition"
+		debug_panel_reset_position_button.text = "Вернуть окно по центру"
+		debug_window_settings.add_child(debug_panel_reset_position_button)
+		content.add_child(debug_window_settings)
+		content.move_child(debug_window_settings, 0)
+
+	var filter := _find_node("DebugFilter") as OptionButton
+	var filter_row := filter.get_parent() as HBoxContainer if filter != null else null
+	if filter_row != null and debug_spawn_toggle == null:
+		debug_spawn_toggle = Button.new()
+		debug_spawn_toggle.name = "DebugSpawnToggle"
+		debug_spawn_toggle.text = "+ Предмет"
+		debug_spawn_toggle.tooltip_text = "Открыть меню создания предметов в мире"
+		filter_row.add_child(debug_spawn_toggle)
+
+	if debug_spawn_menu == null:
+		debug_spawn_menu = VBoxContainer.new()
+		debug_spawn_menu.name = "DebugSpawnMenu"
+		debug_spawn_menu.visible = false
+		debug_spawn_menu.add_theme_constant_override("separation", 4)
+		debug_spawn_menu.add_child(_make_label("Добавление предмета в мир", 12, Color("#b8d49f")))
+		var spawn_row := HBoxContainer.new()
+		spawn_row.add_child(_make_label("Предмет", 11))
+		debug_spawn_option = OptionButton.new()
+		debug_spawn_option.name = "DebugSpawnItem"
+		debug_spawn_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		spawn_row.add_child(debug_spawn_option)
+		spawn_row.add_child(_make_label("Кол-во", 11))
+		debug_spawn_amount = SpinBox.new()
+		debug_spawn_amount.name = "DebugSpawnAmount"
+		debug_spawn_amount.min_value = 1
+		debug_spawn_amount.max_value = 9999
+		debug_spawn_amount.value = 1
+		debug_spawn_amount.custom_minimum_size.x = 82
+		spawn_row.add_child(debug_spawn_amount)
+		debug_spawn_menu.add_child(spawn_row)
+		debug_spawn_confirm = Button.new()
+		debug_spawn_confirm.name = "DebugSpawnConfirm"
+		debug_spawn_confirm.text = "Создать возле курсора"
+		debug_spawn_menu.add_child(debug_spawn_confirm)
+		if filter_row != null:
+			content.add_child(debug_spawn_menu)
+			content.move_child(debug_spawn_menu, filter_row.get_index() + 1)
+		else:
+			content.add_child(debug_spawn_menu)
+
+	if debug_object_list != null:
+		debug_object_list.custom_minimum_size = Vector2(130, 140)
+	_apply_debug_panel_appearance()
+
+
+func _load_debug_panel_settings() -> void:
+	var save := ConfigFile.new()
+	if save.load("user://debug_panel.cfg") == OK:
+		debug_panel_size.x = float(save.get_value("window", "width", debug_panel_size.x))
+		debug_panel_size.y = float(save.get_value("window", "height", debug_panel_size.y))
+		debug_panel_opacity = clampf(float(save.get_value("window", "opacity", debug_panel_opacity)), 0.25, 1.0)
+		debug_panel_position = Vector2(float(save.get_value("window", "x", -1.0)), float(save.get_value("window", "y", -1.0)))
+	if debug_panel_width_slider != null:
+		debug_panel_width_slider.set_value_no_signal(debug_panel_size.x)
+	if debug_panel_height_slider != null:
+		debug_panel_height_slider.set_value_no_signal(debug_panel_size.y)
+	if debug_panel_opacity_slider != null:
+		debug_panel_opacity_slider.set_value_no_signal(debug_panel_opacity)
+	_apply_debug_panel_appearance()
+
+
+func _save_debug_panel_settings() -> void:
+	var save := ConfigFile.new()
+	save.set_value("window", "width", debug_panel_size.x)
+	save.set_value("window", "height", debug_panel_size.y)
+	save.set_value("window", "opacity", debug_panel_opacity)
+	save.set_value("window", "x", debug_panel_position.x)
+	save.set_value("window", "y", debug_panel_position.y)
+	var error := save.save("user://debug_panel.cfg")
+	if error != OK:
+		add_log("Не удалось сохранить настройки окна отладки: %s" % error)
+
+
+func _apply_debug_panel_appearance() -> void:
+	var panel := panels.get("debug") as PanelContainer
+	if panel == null:
+		return
+	var source_style := panel.get_theme_stylebox("panel")
+	if source_style is StyleBoxFlat:
+		var style := (source_style as StyleBoxFlat).duplicate() as StyleBoxFlat
+		var background := style.bg_color
+		background.a = debug_panel_opacity
+		style.bg_color = background
+		panel.add_theme_stylebox_override("panel", style)
+
+
 func _fit_debug_panel_to_viewport() -> void:
 	var panel := panels.get("debug") as Control
 	if panel == null or root == null:
@@ -665,26 +906,119 @@ func _fit_debug_panel_to_viewport() -> void:
 	var viewport_size := root.size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		viewport_size = get_viewport().get_visible_rect().size
-	var available := Vector2(maxf(120.0, viewport_size.x - 24.0), maxf(120.0, viewport_size.y - 24.0))
-	var panel_width := minf(430.0, available.x)
-	var panel_height := minf(500.0, available.y)
-	panel.anchor_left = 0.5
-	panel.anchor_right = 0.5
-	panel.anchor_top = 0.5
-	panel.anchor_bottom = 0.5
-	panel.offset_left = -panel_width * 0.5
-	panel.offset_right = panel_width * 0.5
-	panel.offset_top = -panel_height * 0.5
-	panel.offset_bottom = panel_height * 0.5
-	panel.clip_contents = true
+	var available := Vector2(maxf(1.0, viewport_size.x - 20.0), maxf(1.0, viewport_size.y - 20.0))
+	var panel_width := minf(maxf(300.0, debug_panel_size.x), available.x)
+	var panel_height := minf(maxf(220.0, debug_panel_size.y), available.y)
+	var target_position := debug_panel_position
+	if target_position.x < 0.0 or target_position.y < 0.0:
+		target_position = (viewport_size - Vector2(panel_width, panel_height)) * 0.5
+	target_position.x = clampf(target_position.x, 0.0, maxf(0.0, viewport_size.x - panel_width))
+	target_position.y = clampf(target_position.y, 0.0, maxf(0.0, viewport_size.y - panel_height))
+	debug_panel_position = target_position
 
-	# The object list used to force a 300 px minimum height, making the panel
-	# overflow short game windows. Scale its minimum with the available space.
+	panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	panel.offset_left = target_position.x
+	panel.offset_top = target_position.y
+	panel.offset_right = target_position.x + panel_width
+	panel.offset_bottom = target_position.y + panel_height
+	panel.custom_minimum_size = Vector2.ZERO
+	panel.clip_contents = true
 	if debug_object_list != null:
 		debug_object_list.custom_minimum_size = Vector2(
-			minf(145.0, maxf(90.0, panel_width * 0.34)),
-			clampf(panel_height - 300.0, 64.0, 180.0)
+			minf(160.0, maxf(100.0, panel_width * 0.27)),
+			minf(180.0, maxf(80.0, panel_height * 0.28))
 		)
+
+
+func _toggle_debug_window_settings() -> void:
+	if debug_window_settings != null:
+		debug_window_settings.visible = not debug_window_settings.visible
+
+
+func _on_debug_panel_dimension_changed(_value: float) -> void:
+	if debug_panel_width_slider != null:
+		debug_panel_size.x = debug_panel_width_slider.value
+	if debug_panel_height_slider != null:
+		debug_panel_size.y = debug_panel_height_slider.value
+	_fit_debug_panel_to_viewport()
+	_save_debug_panel_settings()
+
+
+func _on_debug_panel_opacity_changed(value: float) -> void:
+	debug_panel_opacity = clampf(value, 0.25, 1.0)
+	_apply_debug_panel_appearance()
+	_save_debug_panel_settings()
+
+
+func _reset_debug_panel_position() -> void:
+	debug_panel_position = Vector2(-1.0, -1.0)
+	_fit_debug_panel_to_viewport()
+	_save_debug_panel_settings()
+
+
+func _on_debug_title_gui_input(event: InputEvent) -> void:
+	var panel := panels.get("debug") as Control
+	if panel == null:
+		return
+	if event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index != MOUSE_BUTTON_LEFT:
+			return
+		if mouse_button.pressed:
+			debug_panel_dragging = true
+			debug_panel_drag_offset = mouse_button.global_position - panel.global_position
+		elif debug_panel_dragging:
+			debug_panel_dragging = false
+			_save_debug_panel_settings()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseMotion and debug_panel_dragging:
+		var mouse_motion := event as InputEventMouseMotion
+		debug_panel_position = mouse_motion.global_position - root.global_position - debug_panel_drag_offset
+		_fit_debug_panel_to_viewport()
+		get_viewport().set_input_as_handled()
+
+
+func _toggle_debug_spawn_menu() -> void:
+	if debug_spawn_menu == null:
+		return
+	debug_spawn_menu.visible = not debug_spawn_menu.visible
+	if debug_spawn_toggle != null:
+		debug_spawn_toggle.text = "− Предмет" if debug_spawn_menu.visible else "+ Предмет"
+
+
+func _on_debug_spawn_confirmed() -> void:
+	if debug_spawn_option == null or debug_spawn_option.selected < 0:
+		return
+	var item_id := str(debug_spawn_option.get_item_metadata(debug_spawn_option.selected))
+	var amount := maxi(1, roundi(debug_spawn_amount.value if debug_spawn_amount != null else 1.0))
+	debug_spawn_item_requested.emit(item_id, amount)
+
+
+func set_debug_item_catalog(definitions: Dictionary) -> void:
+	debug_spawn_catalog = definitions.duplicate(true)
+	if debug_spawn_option == null:
+		return
+	debug_spawn_option.clear()
+	var item_ids: Array = debug_spawn_catalog.keys()
+	item_ids.sort()
+	for item_id_value in item_ids:
+		var item_id := str(item_id_value)
+		var definition: Dictionary = debug_spawn_catalog[item_id]
+		debug_spawn_option.add_item(str(definition.get("label", item_id)))
+		debug_spawn_option.set_item_metadata(debug_spawn_option.item_count - 1, item_id)
+	if debug_spawn_option.item_count > 0:
+		debug_spawn_option.select(0)
+
+
+func _on_save_debug_default_pressed(property_path: String, editor: Control) -> void:
+	var value: Variant = 0.0
+	if editor is OptionButton:
+		var option := editor as OptionButton
+		if option.selected >= 0:
+			value = option.get_item_text(option.selected)
+	elif editor is SpinBox:
+		value = (editor as SpinBox).value
+	debug_default_requested.emit(property_path, value)
 
 
 func _on_debug_filter_changed(_index: int) -> void:
@@ -780,6 +1114,13 @@ func set_debug_properties(properties: Array[Dictionary]) -> void:
 			editor.value_changed.connect(_on_inspector_value_changed.bind(property_path))
 			row.add_child(editor)
 		debug_properties.add_child(row)
+		if bool(property_data.get("save_default", false)):
+			var save_button := Button.new()
+			save_button.text = "База"
+			save_button.custom_minimum_size = Vector2(54, 26)
+			save_button.tooltip_text = "Сохранить текущее значение как базовое в scripts/debug_defaults.gd"
+			save_button.pressed.connect(_on_save_debug_default_pressed.bind(property_path, editor))
+			row.add_child(save_button)
 
 func _on_inspector_value_changed(value: float, property_path: String) -> void:
 	debug_value_changed.emit(property_path, value)

@@ -37,11 +37,13 @@ var rng := RandomNumberGenerator.new()
 var debug_entries: Array[Dictionary] = []
 var debug_selected_id := ""
 var debug_refresh_timer := 0.0
+var debug_default_overrides: Dictionary = {}
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	config = GameConfigScript.make_default()
+	_load_saved_debug_defaults()
 	defaults_config = config.duplicate(true)
 	backpack_slots = int(config.inventory.base_backpack_slots)
 	rng.seed = int(config.world.seed)
@@ -52,6 +54,127 @@ func _ready() -> void:
 	_create_ui()
 	_load_settings()
 	_log("Мир загружен. Добро пожаловать!")
+
+func _load_saved_debug_defaults() -> void:
+	debug_default_overrides = GameConfigScript.get_debug_default_overrides()
+	var save := ConfigFile.new()
+	if save.load("user://debug_defaults.cfg") == OK:
+		for key in save.get_section_keys("defaults"):
+			debug_default_overrides[str(key)] = save.get_value("defaults", key)
+	for key in debug_default_overrides:
+		_set_config_path_value(str(key), debug_default_overrides[key])
+	defaults_config = config.duplicate(true)
+
+
+func _set_config_path_value(path: String, value: Variant) -> bool:
+	var parts := path.split(".")
+	if parts.size() < 2:
+		return false
+	var current: Dictionary = config
+	for index in range(parts.size() - 1):
+		var next_value: Variant = current.get(parts[index])
+		if not next_value is Dictionary:
+			return false
+		current = next_value
+	current[parts[parts.size() - 1]] = value
+	return true
+
+
+func _get_debug_default_config_path(path: String, entry: Dictionary) -> String:
+	var kind := str(entry.get("kind", ""))
+	if kind == "player":
+		if path in ["player.max_health", "player.max_stamina", "player.walk_speed", "player.run_multiplier", "player.strength", "player.magnet", "player.pickup_base_radius", "player.pickup_magnet_per_level"]:
+			return path
+	elif kind == "weapon":
+		var weapon_id := debug_selected_id.trim_prefix("weapon:")
+		if weapon_id in config.weapons and path.begins_with("weapon."):
+			return "weapons.%s.%s" % [weapon_id, path.trim_prefix("weapon.")]
+	elif kind == "tree" or kind == "rock" or kind == "stump":
+		var resource_kind := "tree" if kind == "tree" or kind == "stump" else "rock"
+		match path:
+			"resource.max_health":
+				return "resources.%s_health" % resource_kind
+			"resource.wood_drop_amount":
+				return "resources.tree_wood_drop" if resource_kind == "tree" else ""
+			"resource.stone_drop_amount":
+				return "resources.rock_stone_drop" if resource_kind == "rock" else ""
+			"resource.hit_radius":
+				return "resources.%s_hit_radius" % resource_kind
+			"resource.swing_strength":
+				return "resources.swing_strength"
+			"resource.destruction_duration":
+				return "resources.destruction_duration"
+			"resource.fall_angle_degrees":
+				return "resources.fall_angle_degrees"
+			"resource.resistance_cutting":
+				return "resources.resistance_cutting"
+			"resource.resistance_piercing":
+				return "resources.resistance_piercing"
+			"resource.resistance_crushing":
+				return "resources.resistance_crushing"
+	elif kind == "drop":
+		match path:
+			"drop.gravity":
+				return "drops.gravity"
+			"drop.friction":
+				return "drops.horizontal_friction"
+			"drop.bounce_factor":
+				return "drops.bounce_factor"
+			"drop.pickup_radius":
+				return "drops.pickup_distance"
+	return ""
+
+
+func _save_debug_default(path: String, value: Variant) -> void:
+	var entry := _find_debug_entry()
+	if entry.is_empty():
+		return
+	var config_path := _get_debug_default_config_path(path, entry)
+	if config_path.is_empty():
+		_log("Для этого параметра нельзя задать базовое значение.")
+		return
+	debug_default_overrides[config_path] = value
+	if not _set_config_path_value(config_path, value):
+		_log("Не удалось применить базовое значение: %s." % config_path)
+		return
+	defaults_config = config.duplicate(true)
+
+	var save := ConfigFile.new()
+	for key in debug_default_overrides:
+		save.set_value("defaults", str(key), debug_default_overrides[key])
+	var save_error := save.save("user://debug_defaults.cfg")
+	var code_saved := _write_debug_defaults_source()
+	if code_saved:
+		_log("Базовое значение сохранено в scripts/debug_defaults.gd.")
+	elif save_error == OK:
+		_log("Папка проекта недоступна для записи; значение сохранено в user://debug_defaults.cfg.")
+	else:
+		_log("Не удалось сохранить базовое значение. Код: %s." % save_error)
+	_update_debug_inspector()
+
+
+func _write_debug_defaults_source() -> bool:
+	const source_path := "res://scripts/debug_defaults.gd"
+	var source := FileAccess.get_file_as_string(source_path)
+	var begin_marker := "# BEGIN GENERATED VALUES"
+	var end_marker := "# END GENERATED VALUES"
+	var begin_index := source.find(begin_marker)
+	var end_index := source.find(end_marker, begin_index)
+	if begin_index < 0 or end_index < 0:
+		return false
+	var generated := "\n"
+	var keys: Array = debug_default_overrides.keys()
+	keys.sort()
+	for key in keys:
+		generated += "\t%s: %s,\n" % [JSON.stringify(str(key)), var_to_str(debug_default_overrides[key])]
+	var updated_source := source.substr(0, begin_index + begin_marker.length()) + generated + source.substr(end_index)
+	var file := FileAccess.open(source_path, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(updated_source)
+	file.close()
+	return true
+
 
 func _initialize_inventory() -> void:
 	inventory.clear()
@@ -118,9 +241,35 @@ func _create_resources() -> void:
 func _register_resources_recursive(root: Node) -> void:
 	var resource := root as ResourceNode
 	if resource != null and resource.resource_type != "stump":
+		_apply_saved_resource_defaults(resource)
 		_register_resource(resource)
 	for child in root.get_children():
 		_register_resources_recursive(child)
+
+
+func _apply_saved_resource_defaults(resource: ResourceNode) -> void:
+	var resource_kind := "tree" if resource.resource_type == "tree" else "rock"
+	var health_key := "resources.%s_health" % resource_kind
+	var hit_radius_key := "resources.%s_hit_radius" % resource_kind
+	if debug_default_overrides.has(health_key):
+		resource.max_health = float(config.resources.get("%s_health" % resource_kind, resource.max_health))
+		resource.health = resource.max_health
+	if debug_default_overrides.has("resources.tree_wood_drop"):
+		resource.wood_drop_amount = int(config.resources.tree_wood_drop)
+	if debug_default_overrides.has("resources.rock_stone_drop"):
+		resource.stone_drop_amount = int(config.resources.rock_stone_drop)
+	if debug_default_overrides.has(hit_radius_key):
+		resource.hit_radius = float(config.resources.get("%s_hit_radius" % resource_kind, resource.hit_radius))
+	if debug_default_overrides.has("resources.swing_strength"):
+		resource.swing_strength = float(config.resources.swing_strength)
+	if debug_default_overrides.has("resources.destruction_duration"):
+		resource.destruction_duration = float(config.resources.destruction_duration)
+	if debug_default_overrides.has("resources.fall_angle_degrees"):
+		resource.fall_angle_degrees = float(config.resources.fall_angle_degrees)
+	for damage_type in ["cutting", "piercing", "crushing"]:
+		var resistance_key := "resources.resistance_%s" % damage_type
+		if debug_default_overrides.has(resistance_key):
+			resource.damage_resistances[damage_type] = float(config.resources.get("resistance_%s" % damage_type, 1.0))
 
 
 func _watch_resource_tree(root: Node) -> void:
@@ -194,6 +343,9 @@ func _create_ui() -> void:
 	ui.debug_delete_requested.connect(_delete_debug_selection)
 	ui.debug_reset_requested.connect(_reset_debug_selection)
 	ui.debug_cheats_changed.connect(_on_debug_cheats_changed)
+	ui.debug_default_requested.connect(_save_debug_default)
+	ui.debug_spawn_item_requested.connect(_spawn_debug_item)
+	ui.set_debug_item_catalog(config.items)
 	ui.set_backpack_slots(backpack_slots, int(config.inventory.max_backpack_slots))
 	ui.set_hotbar_selection(selected_slot)
 	ui.set_inventory_data(inventory, backpack_slots, int(config.inventory.max_backpack_slots), config.items)
@@ -415,6 +567,30 @@ func _drop_inventory_item(slot_index: int, drop_position: Vector2) -> void:
 	inventory_dirty = true
 	_update_resource_counts()
 	_log("Выброшено: %s ×%d." % [str(config.items.get(item_id, {}).get("label", item_id)), amount])
+
+func _spawn_debug_item(item_id: String, amount: int) -> void:
+	if not config.items.has(item_id) or player == null:
+		_log("Неизвестный предмет: %s." % item_id)
+		return
+	if world_objects == null:
+		world_objects = self
+	var spawn_position := get_global_mouse_position()
+	var direction := spawn_position - player.global_position
+	if direction.length_squared() < 0.001:
+		direction = Vector2.RIGHT
+	var spawned := ResourceDropScript.new() as ResourceDrop
+	spawned.name = "DebugSpawn_%s_%03d" % [item_id, drops.size() + 1]
+	spawned.configure(item_id, maxi(1, amount), direction.normalized() * 70.0, config.drops)
+	world_objects.add_child(spawned)
+	spawned.global_position = spawn_position
+	spawned.protect_from_player(player.global_position, 14.0)
+	drops.append(spawned)
+	debug_selected_id = str(spawned.get_instance_id())
+	_refresh_debug_entries()
+	_update_debug_selection_highlight()
+	_update_debug_inspector()
+	_log("В мир добавлено: %s ×%d." % [str(config.items[item_id].get("label", item_id)), amount])
+
 
 func _inventory_slot_unlocked(index: int) -> bool:
 	if index < int(config.inventory.hotbar_slots):
@@ -926,7 +1102,15 @@ func _update_debug_inspector() -> void:
 	ui.set_debug_properties(_build_debug_properties(entry))
 
 func _debug_property(path: String, label: String, value: float, minimum: float = -100000.0, maximum: float = 100000.0, step: float = 0.1) -> Dictionary:
-	return {"path": path, "label": label, "value": value, "min": minimum, "max": maximum, "step": step}
+	var save_default := path in [
+		"player.max_health", "player.max_stamina", "player.walk_speed", "player.run_multiplier",
+		"player.strength", "player.magnet", "player.pickup_base_radius", "player.pickup_magnet_per_level",
+		"resource.max_health", "resource.wood_drop_amount", "resource.stone_drop_amount", "resource.hit_radius",
+		"resource.swing_strength", "resource.destruction_duration", "resource.fall_angle_degrees",
+		"resource.resistance_cutting", "resource.resistance_piercing", "resource.resistance_crushing",
+		"drop.gravity", "drop.friction", "drop.bounce_factor", "drop.pickup_radius"
+	] or path.begins_with("weapon.")
+	return {"path": path, "label": label, "value": value, "min": minimum, "max": maximum, "step": step, "save_default": save_default}
 
 func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
@@ -987,16 +1171,16 @@ func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 			result.append(_debug_property("weapon.slash.cooldown", "Скорость рубящего удара", slash.get("cooldown", 0.5), 0.01, 10.0, 0.01))
 			result.append(_debug_property("weapon.slash.reach", "Дальность рубящего удара", slash.get("reach", 0.0), 1.0, 500.0, 1.0))
 			result.append(_debug_property("weapon.slash.stamina_cost", "Выносливость рубящего удара", slash.get("stamina_cost", 0.0), 0.0, 500.0, 1.0))
-			result.append({"path": "weapon.slash.damage_type", "label": "Тип урона рубящего", "value": maxi(0, damage_types.find(str(slash.get("damage_type", "cutting")))), "options": damage_types})
+			result.append({"path": "weapon.slash.damage_type", "label": "Тип урона рубящего", "value": maxi(0, damage_types.find(str(slash.get("damage_type", "cutting")))), "options": damage_types, "save_default": true})
 			result.append(_debug_property("weapon.thrust.damage", "Урон выпада", thrust.get("damage", 0.0), 0.0, 5000.0, 1.0))
 			result.append(_debug_property("weapon.thrust.cooldown", "Скорость выпада", thrust.get("cooldown", 0.31), 0.01, 10.0, 0.01))
 			result.append(_debug_property("weapon.thrust.reach", "Дальность выпада", thrust.get("reach", 0.0), 1.0, 500.0, 1.0))
 			result.append(_debug_property("weapon.thrust.stamina_cost", "Выносливость выпада", thrust.get("stamina_cost", 0.0), 0.0, 500.0, 1.0))
-			result.append({"path": "weapon.thrust.damage_type", "label": "Тип урона выпада", "value": maxi(0, damage_types.find(str(thrust.get("damage_type", "piercing")))), "options": damage_types})
+			result.append({"path": "weapon.thrust.damage_type", "label": "Тип урона выпада", "value": maxi(0, damage_types.find(str(thrust.get("damage_type", "piercing")))), "options": damage_types, "save_default": true})
 		else:
 			result.append(_debug_property("weapon.damage", "Урон", weapon.get("damage", 0.0), 0.0, 5000.0, 1.0))
 			result.append(_debug_property("weapon.cooldown", "Скорость атаки", weapon.get("cooldown", 0.5), 0.01, 10.0, 0.01))
-			result.append({"path": "weapon.damage_type", "label": "Тип урона", "value": maxi(0, damage_types.find(str(weapon.get("damage_type", "crushing")))), "options": damage_types})
+			result.append({"path": "weapon.damage_type", "label": "Тип урона", "value": maxi(0, damage_types.find(str(weapon.get("damage_type", "crushing")))), "options": damage_types, "save_default": true})
 			result.append(_debug_property("weapon.reach", "Дальность атаки", weapon.get("reach", 0.0), 0.0, 1000.0, 1.0))
 			result.append(_debug_property("weapon.stamina_cost", "Расход выносливости", weapon.get("stamina_cost", config.combat.attack_stamina_cost), 0.0, 500.0, 1.0))
 			if weapon_id == "axe":
@@ -1214,10 +1398,14 @@ func _reset_debug_selection() -> void:
 		node.wood_drop_amount = int(config.resources.tree_wood_drop)
 		node.stone_drop_amount = int(config.resources.rock_stone_drop)
 		node.hit_radius = float(config.resources.tree_hit_radius if original_kind == "tree" else config.resources.rock_hit_radius)
-		node.swing_strength = 1.0
-		node.destruction_duration = 0.48
-		node.fall_angle_degrees = 78.0
-		node.damage_resistances = {"cutting": 1.0, "piercing": 1.0, "crushing": 1.0}
+		node.swing_strength = float(config.resources.swing_strength)
+		node.destruction_duration = float(config.resources.destruction_duration)
+		node.fall_angle_degrees = float(config.resources.fall_angle_degrees)
+		node.damage_resistances = {
+			"cutting": float(config.resources.resistance_cutting),
+			"piercing": float(config.resources.resistance_piercing),
+			"crushing": float(config.resources.resistance_crushing)
+		}
 		node.scale = Vector2.ONE
 		node.rotation = 0.0
 		node.modulate = Color.WHITE

@@ -1,9 +1,11 @@
 extends RefCounted
 class_name GameConfig
 
+const DebugDefaultsScript = preload("res://scripts/debug_defaults.gd")
+
 # Centralized gameplay balance. WorldController keeps an editable runtime copy.
 static func make_default() -> Dictionary:
-	return {
+	var config: Dictionary = {
 		"world": {
 			"width": 3600,
 			"height": 3600,
@@ -83,6 +85,12 @@ static func make_default() -> Dictionary:
 			"rock_stone_drop": 4,
 			"tree_hit_radius": 29.0,
 			"rock_hit_radius": 23.0,
+			"swing_strength": 1.0,
+			"destruction_duration": 0.48,
+			"fall_angle_degrees": 78.0,
+			"resistance_cutting": 1.0,
+			"resistance_piercing": 1.0,
+			"resistance_crushing": 1.0,
 		},
 		"drops": {
 			"scatter_speed_min": 100.0,
@@ -115,3 +123,8 @@ static func make_default() -> Dictionary:
 			"show_fps": false,
 		},
 	}
+	return DebugDefaultsScript.apply(config)
+
+
+static func get_debug_default_overrides() -> Dictionary:
+	return DebugDefaultsScript.get_overrides()
