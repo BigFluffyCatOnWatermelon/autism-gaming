@@ -574,8 +574,9 @@ func _spawn_debug_item(item_id: String, amount: int) -> void:
 		return
 	if world_objects == null:
 		world_objects = self
-	var spawn_position := get_global_mouse_position()
-	var direction := spawn_position - player.global_position
+	var spawn_position: Vector2 = get_global_mouse_position()
+	var player_position: Vector2 = player.global_position
+	var direction: Vector2 = spawn_position - player_position
 	if direction.length_squared() < 0.001:
 		direction = Vector2.RIGHT
 	var spawned := ResourceDropScript.new() as ResourceDrop

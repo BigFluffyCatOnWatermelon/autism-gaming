@@ -1095,24 +1095,27 @@ func set_debug_properties(properties: Array[Dictionary]) -> void:
 		title.custom_minimum_size.x = 142
 		row.add_child(title)
 		var property_path := str(property_data.get("path", ""))
+		var editor: Control
 		if property_data.has("options"):
-			var editor := OptionButton.new()
+			var option_editor := OptionButton.new()
 			var options: Array = property_data["options"]
 			for option in options:
-				editor.add_item(str(option))
-			editor.select(clampi(roundi(float(property_data.get("value", 0.0))), 0, maxi(0, options.size() - 1)))
-			editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			editor.item_selected.connect(_on_inspector_option_changed.bind(property_path))
-			row.add_child(editor)
+				option_editor.add_item(str(option))
+			option_editor.select(clampi(roundi(float(property_data.get("value", 0.0))), 0, maxi(0, options.size() - 1)))
+			option_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			option_editor.item_selected.connect(_on_inspector_option_changed.bind(property_path))
+			row.add_child(option_editor)
+			editor = option_editor
 		else:
-			var editor := SpinBox.new()
-			editor.min_value = float(property_data.get("min", -100000.0))
-			editor.max_value = float(property_data.get("max", 100000.0))
-			editor.step = float(property_data.get("step", 0.1))
-			editor.value = float(property_data.get("value", 0.0))
-			editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			editor.value_changed.connect(_on_inspector_value_changed.bind(property_path))
-			row.add_child(editor)
+			var spin_editor := SpinBox.new()
+			spin_editor.min_value = float(property_data.get("min", -100000.0))
+			spin_editor.max_value = float(property_data.get("max", 100000.0))
+			spin_editor.step = float(property_data.get("step", 0.1))
+			spin_editor.value = float(property_data.get("value", 0.0))
+			spin_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			spin_editor.value_changed.connect(_on_inspector_value_changed.bind(property_path))
+			row.add_child(spin_editor)
+			editor = spin_editor
 		debug_properties.add_child(row)
 		if bool(property_data.get("save_default", false)):
 			var save_button := Button.new()
