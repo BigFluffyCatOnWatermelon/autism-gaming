@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://cf568dt0ylj66"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_16rlu"]
+[ext_resource type="Texture2D" uid="uid://cjm0ttr5opjfy" path="res://Assets/CozyVillageFarm/04_Props/signpost.png" id="2_bdirg"]
+
+[node name="signpost" type="StaticBody2D" unique_id=1780376504]
+collision_layer = 2
+script = ExtResource("1_16rlu")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=722356252]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_bdirg")

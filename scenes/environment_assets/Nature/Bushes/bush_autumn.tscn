@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cw737hqc6mfgo"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_d3yhj"]
+[ext_resource type="Texture2D" uid="uid://dswcc4v86ycvn" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_autumn.png" id="2_186y7"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_777fi"]
+size = Vector2(12.24, 6)
+
+[node name="bush_autumn" type="StaticBody2D" unique_id=1830201737]
+collision_layer = 2
+script = ExtResource("1_d3yhj")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=459096625]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_186y7")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1797106949]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_777fi")

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cefhpmg385r27"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_phdl0"]
+[ext_resource type="Texture2D" uid="uid://brrtef3r3tbdo" path="res://Assets/CozyVillageFarm/04_Props/lamp_post_on.png" id="2_jt7cr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_emp6r"]
+size = Vector2(11.52, 10.24)
+
+[node name="lamp_post_on" type="StaticBody2D" unique_id=2087745038]
+collision_layer = 2
+script = ExtResource("1_phdl0")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=530625153]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_jt7cr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=250728738]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_emp6r")

@@ -1,5 +1,174 @@
-[gd_resource type="TileSet" format=3]
+[gd_resource type="TileSet" format=3 uid="uid://b0n3np2rp5l73"]
+
+[ext_resource type="Texture2D" uid="uid://duywf6jgdqlm1" path="res://Assets/CozyVillageFarm/12_Effects/chimney_smoke_anim_5f.png" id="1_ju1ro"]
+[ext_resource type="Texture2D" uid="uid://k35hht1kr2x" path="res://Assets/CozyVillageFarm/12_Effects/coin_spin_anim_4f.png" id="2_dnpfd"]
+[ext_resource type="Texture2D" uid="uid://cfdh3b1igkhlw" path="res://Assets/CozyVillageFarm/12_Effects/sparkle_anim_4f.png" id="3_tyej3"]
+[ext_resource type="Texture2D" uid="uid://px84xnwms7kj" path="res://Assets/CozyVillageFarm/12_Effects/sword_slash_anim_3f.png" id="4_hkbut"]
+[ext_resource type="Texture2D" uid="uid://bbqk8ba8v8g7f" path="res://Assets/CozyVillageFarm/12_Effects/water_ripple_anim_4f.png" id="5_f6cgp"]
+[ext_resource type="Texture2D" uid="uid://dqvb43efqo63m" path="res://Assets/CozyVillageFarm/12_Effects/water_splash_anim_4f.png" id="6_1iyl4"]
+[ext_resource type="Texture2D" uid="uid://d0bwlsmd6itgs" path="res://Assets/CozyVillageFarm/12_Effects/dust_puff_anim_4f.png" id="7_s2x3p"]
+[ext_resource type="Texture2D" uid="uid://307butdfoswv" path="res://Assets/CozyVillageFarm/12_Effects/falling_leaves_anim_4f.png" id="8_r23j3"]
+[ext_resource type="Texture2D" uid="uid://h3el8s2jtfwa" path="res://Assets/CozyVillageFarm/12_Effects/fire_small_anim_3f.png" id="9_3flvq"]
+[ext_resource type="Texture2D" uid="uid://dskn0usuwjad4" path="res://Assets/CozyVillageFarm/12_Effects/harvest_pop_anim_4f.png" id="10_0tuo0"]
+[ext_resource type="Texture2D" uid="uid://bwwuiot5743kj" path="res://Assets/CozyVillageFarm/12_Effects/heart_pop_anim_4f.png" id="11_iqspl"]
+[ext_resource type="Texture2D" uid="uid://dvyldq66xr1xn" path="res://Assets/CozyVillageFarm/12_Effects/hit_spark_anim_3f.png" id="12_ufjvj"]
+[ext_resource type="Texture2D" uid="uid://dmbv1s6ibphqa" path="res://Assets/CozyVillageFarm/12_Effects/rain_overlay_anim_4f.png" id="13_pleqd"]
+[ext_resource type="Texture2D" uid="uid://dwmcdo53pwd1d" path="res://Assets/CozyVillageFarm/12_Effects/snow_overlay_anim_4f.png" id="14_s2e0r"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_clh1o"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/chimney_smoke_anim_5f.png"
+texture = ExtResource("1_ju1ro")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/animation_frame_4/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0stpn"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/coin_spin_anim_4f.png"
+texture = ExtResource("2_dnpfd")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qi6vl"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/sparkle_anim_4f.png"
+texture = ExtResource("3_tyej3")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_36ual"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/sword_slash_anim_3f.png"
+texture = ExtResource("4_hkbut")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jfvlv"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/water_ripple_anim_4f.png"
+texture = ExtResource("5_f6cgp")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2o3fg"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/water_splash_anim_4f.png"
+texture = ExtResource("6_1iyl4")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3pv5i"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/dust_puff_anim_4f.png"
+texture = ExtResource("7_s2x3p")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_h4rvr"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/falling_leaves_anim_4f.png"
+texture = ExtResource("8_r23j3")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kqv7x"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/fire_small_anim_3f.png"
+texture = ExtResource("9_3flvq")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6s11m"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/harvest_pop_anim_4f.png"
+texture = ExtResource("10_0tuo0")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rtfqy"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/heart_pop_anim_4f.png"
+texture = ExtResource("11_iqspl")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7i0xc"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/hit_spark_anim_3f.png"
+texture = ExtResource("12_ufjvj")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dcqpu"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/rain_overlay_anim_4f.png"
+texture = ExtResource("13_pleqd")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_yjy35"]
+resource_name = "res://Assets/CozyVillageFarm/12_Effects/snow_overlay_anim_4f.png"
+texture = ExtResource("14_s2e0r")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
 
 [resource]
-tile_size = Vector2i(16, 16)
-resource_name = "Эффекты"
+resource_name = "Effects"
+physics_layer_0/collision_layer = 2
+sources/0 = SubResource("TileSetAtlasSource_clh1o")
+sources/1 = SubResource("TileSetAtlasSource_0stpn")
+sources/2 = SubResource("TileSetAtlasSource_3pv5i")
+sources/3 = SubResource("TileSetAtlasSource_h4rvr")
+sources/4 = SubResource("TileSetAtlasSource_kqv7x")
+sources/5 = SubResource("TileSetAtlasSource_6s11m")
+sources/6 = SubResource("TileSetAtlasSource_rtfqy")
+sources/7 = SubResource("TileSetAtlasSource_7i0xc")
+sources/8 = SubResource("TileSetAtlasSource_dcqpu")
+sources/9 = SubResource("TileSetAtlasSource_yjy35")
+sources/10 = SubResource("TileSetAtlasSource_qi6vl")
+sources/11 = SubResource("TileSetAtlasSource_36ual")
+sources/12 = SubResource("TileSetAtlasSource_jfvlv")
+sources/13 = SubResource("TileSetAtlasSource_2o3fg")

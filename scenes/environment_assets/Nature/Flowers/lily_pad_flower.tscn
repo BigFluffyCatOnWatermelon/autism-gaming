@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bfbw2yr3lrlhe"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_qn1rh"]
+[ext_resource type="Texture2D" uid="uid://wdevi6amqdec" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/lily_pad_flower.png" id="2_ttiuj"]
+
+[node name="lily_pad_flower" type="StaticBody2D" unique_id=2057942636]
+collision_layer = 2
+script = ExtResource("1_qn1rh")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1874230967]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_ttiuj")

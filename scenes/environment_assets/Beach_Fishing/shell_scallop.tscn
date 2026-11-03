@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ddb43lfe7yve"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_rkeh1"]
+[ext_resource type="Texture2D" uid="uid://ctrqjivkau18q" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/shell_scallop.png" id="2_3048r"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rsu8n"]
+size = Vector2(11.52, 5.12)
+
+[node name="shell_scallop" type="StaticBody2D" unique_id=1262324289]
+collision_layer = 2
+script = ExtResource("1_rkeh1")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=983655018]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_3048r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1197772462]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_rsu8n")

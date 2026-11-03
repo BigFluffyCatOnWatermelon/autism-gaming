@@ -1,17 +1,15 @@
-[gd_resource type="Resource" script_class="ItemCatalog" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="ItemCatalog" format=3 uid="uid://bct1sn4fxw87d"]
 
-[ext_resource type="Script" path="res://scripts/item_catalog.gd" id="1_catalog"]
-[ext_resource type="Script" path="res://scripts/item_definition.gd" id="2_definition"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Resources/wood.png" id="3_wood_icon"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Resources/stone.png" id="4_stone_icon"]
+[ext_resource type="Script" uid="uid://cuyey64sw13o1" path="res://scripts/item_catalog.gd" id="1_catalog"]
+[ext_resource type="Script" uid="uid://mwxrkjlsbs3u" path="res://scripts/item_definition.gd" id="2_definition"]
+[ext_resource type="Texture2D" uid="uid://b3atybtbmq13n" path="res://Assets/CozyVillageFarm/10_Items/Resources/wood.png" id="3_wood_icon"]
+[ext_resource type="Texture2D" uid="uid://ibs82sut3qwy" path="res://Assets/CozyVillageFarm/10_Items/Resources/stone.png" id="4_stone_icon"]
 
 [sub_resource type="Resource" id="Wood"]
 script = ExtResource("2_definition")
 item_id = "wood"
 display_name = "Древесина"
 description = "Базовый строительный и ремесленный материал."
-category = "materials"
-stack_limit = 99
 icon = ExtResource("3_wood_icon")
 properties = {
 "attack_type": "Материал",
@@ -23,8 +21,6 @@ script = ExtResource("2_definition")
 item_id = "stone"
 display_name = "Камень"
 description = "Базовый строительный и ремесленный материал."
-category = "materials"
-stack_limit = 99
 icon = ExtResource("4_stone_icon")
 properties = {
 "attack_type": "Материал",
@@ -33,7 +29,6 @@ properties = {
 
 [resource]
 script = ExtResource("1_catalog")
-category = "materials"
 display_name = "Материалы"
 description = "Материалы и ресурсы, которые могут складываться в стопки."
 items = Array[ExtResource("2_definition")]([SubResource("Wood"), SubResource("Stone")])

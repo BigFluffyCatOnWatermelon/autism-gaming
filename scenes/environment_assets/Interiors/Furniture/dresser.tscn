@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ccrsrdaofxflx"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_htaj4"]
+[ext_resource type="Texture2D" uid="uid://b7o08blwfm76s" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/dresser.png" id="2_nukvs"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pllv8"]
+size = Vector2(23.04, 10.24)
+
+[node name="dresser" type="StaticBody2D" unique_id=567091764]
+collision_layer = 2
+script = ExtResource("1_htaj4")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1806628666]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_nukvs")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=93250850]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_pllv8")

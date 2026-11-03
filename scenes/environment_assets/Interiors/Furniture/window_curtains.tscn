@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dyecimojgpjvu"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_qm823"]
+[ext_resource type="Texture2D" uid="uid://vfryv6e88dd7" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/window_curtains.png" id="2_5dg07"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_38pwh"]
+size = Vector2(11.52, 5.12)
+
+[node name="window_curtains" type="StaticBody2D" unique_id=1016236047]
+collision_layer = 2
+script = ExtResource("1_qm823")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=14889584]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_5dg07")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1927980600]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_38pwh")

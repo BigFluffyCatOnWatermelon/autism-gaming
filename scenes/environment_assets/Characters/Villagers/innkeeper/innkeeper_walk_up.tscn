@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://byttqhr41psad"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_ry73w"]
+[ext_resource type="Texture2D" uid="uid://ddiwi88udougq" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/innkeeper/innkeeper_walk_up.png" id="2_lngmk"]
+
+[node name="innkeeper_walk_up" type="StaticBody2D" unique_id=327517684]
+collision_layer = 2
+script = ExtResource("1_ry73w")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=991138430]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_lngmk")

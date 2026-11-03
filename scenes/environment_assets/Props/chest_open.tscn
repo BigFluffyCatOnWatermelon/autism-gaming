@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ls3smopwa2jy"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_6aig0"]
+[ext_resource type="Texture2D" uid="uid://bf5cyssn6etdj" path="res://Assets/CozyVillageFarm/04_Props/chest_open.png" id="2_8r7jh"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_64j3g"]
+size = Vector2(11.52, 5.12)
+
+[node name="chest_open" type="StaticBody2D" unique_id=1709960412]
+collision_layer = 2
+script = ExtResource("1_6aig0")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1748847816]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_8r7jh")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=568322005]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_64j3g")

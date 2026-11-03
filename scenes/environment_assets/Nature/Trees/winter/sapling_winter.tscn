@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://incjdbjmmolj"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_7u43w"]
+[ext_resource type="Texture2D" uid="uid://dgatw2h1u283b" path="res://Assets/CozyVillageFarm/02_Nature/Trees/winter/sapling_winter.png" id="2_lqefr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qu1rp"]
+size = Vector2(5, 7)
+
+[node name="sapling_winter" type="StaticBody2D" unique_id=2141288044]
+collision_layer = 2
+script = ExtResource("1_7u43w")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=69886615]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_lqefr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2041249989]
+position = Vector2(0, -3.5)
+shape = SubResource("RectangleShape2D_qu1rp")

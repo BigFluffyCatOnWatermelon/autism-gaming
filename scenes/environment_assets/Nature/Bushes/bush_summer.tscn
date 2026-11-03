@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://1mfpij00bk7f"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_7lud6"]
+[ext_resource type="Texture2D" uid="uid://cqhe4rw2eed7n" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_summer.png" id="2_usyxm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jx7em"]
+size = Vector2(12.24, 6)
+
+[node name="bush_summer" type="StaticBody2D" unique_id=1231569829]
+collision_layer = 2
+script = ExtResource("1_7lud6")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2081065859]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_usyxm")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1820071728]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_jx7em")

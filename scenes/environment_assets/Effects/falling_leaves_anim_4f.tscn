@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://14dgsteme5v1"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_ry128"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_q2wuw"]
+
+[node name="falling_leaves_anim_4f" type="StaticBody2D" unique_id=404648586]
+collision_layer = 2
+script = ExtResource("1_ry128")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=455900434]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_q2wuw")
+autoplay = "default"

@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://c8nd3thnyrvnj"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_n3th3"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_gxgni"]
+
+[node name="sword_slash_anim_3f" type="StaticBody2D" unique_id=1849316935]
+collision_layer = 2
+script = ExtResource("1_n3th3")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=854345085]
+texture_filter = 1
+position = Vector2(0, -16)
+sprite_frames = SubResource("SpriteFrames_gxgni")
+autoplay = "default"

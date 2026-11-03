@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bpjxsjx7vi8cf"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_fsxvv"]
+[ext_resource type="Texture2D" uid="uid://c37a6temjxhpo" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/driftwood.png" id="2_gvssb"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ee2mu"]
+size = Vector2(23.04, 5.12)
+
+[node name="driftwood" type="StaticBody2D" unique_id=1518664946]
+collision_layer = 2
+script = ExtResource("1_fsxvv")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1926987348]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_gvssb")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1930368259]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_ee2mu")

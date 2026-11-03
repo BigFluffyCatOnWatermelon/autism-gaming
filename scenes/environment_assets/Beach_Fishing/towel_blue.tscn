@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bbmsrp4lll8yo"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_xcy16"]
+[ext_resource type="Texture2D" uid="uid://vhxix0u4wbfe" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/towel_blue.png" id="2_lj6xr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g8t4g"]
+size = Vector2(11.52, 10.24)
+
+[node name="towel_blue" type="StaticBody2D" unique_id=1184374244]
+collision_layer = 2
+script = ExtResource("1_xcy16")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=261021769]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_lj6xr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2060417544]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_g8t4g")

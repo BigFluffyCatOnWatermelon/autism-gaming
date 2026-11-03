@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://cehbx2sd7r0ji"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_tyil2"]
+[ext_resource type="Texture2D" uid="uid://dfwhyvy51a0tt" path="res://Assets/CozyVillageFarm/02_Nature/Trees/winter/oak_winter.png" id="2_besh0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_nvydq"]
+size = Vector2(7.68, 8.8)
+
+[node name="oak_winter" type="StaticBody2D" unique_id=67668976]
+collision_layer = 2
+script = ExtResource("1_tyil2")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=495627468]
+texture_filter = 1
+position = Vector2(0, -20)
+texture = ExtResource("2_besh0")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1323270044]
+position = Vector2(0, -4.4)
+shape = SubResource("RectangleShape2D_nvydq")

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://e5ov51hmmfn2"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_7ra43"]
+[ext_resource type="Texture2D" uid="uid://dyj41a5uqt0if" path="res://Assets/CozyVillageFarm/03_Buildings/house_blue_stone.png" id="2_v00xt"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_0kg1c"]
+size = Vector2(42.24, 13.44)
+
+[node name="house_blue_stone" type="StaticBody2D" unique_id=1639573994]
+collision_layer = 2
+script = ExtResource("1_7ra43")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=762654897]
+texture_filter = 1
+position = Vector2(0, -24)
+texture = ExtResource("2_v00xt")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=391443964]
+position = Vector2(0, -6.72)
+shape = SubResource("RectangleShape2D_0kg1c")

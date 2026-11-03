@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://4f5si4h5wd5t"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_xqcjw"]
+[ext_resource type="Texture2D" uid="uid://bjuq035yrc7ly" path="res://Assets/CozyVillageFarm/03_Buildings/greenhouse.png" id="2_4u2o8"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gt34s"]
+size = Vector2(56.32, 13.44)
+
+[node name="greenhouse" type="StaticBody2D" unique_id=1363674600]
+collision_layer = 2
+script = ExtResource("1_xqcjw")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1305239647]
+texture_filter = 1
+position = Vector2(0, -24)
+texture = ExtResource("2_4u2o8")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2048804707]
+position = Vector2(0, -6.72)
+shape = SubResource("RectangleShape2D_gt34s")

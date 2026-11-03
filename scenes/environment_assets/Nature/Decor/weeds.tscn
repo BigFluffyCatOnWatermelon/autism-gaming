@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bwqkwshpyqse6"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_x6xm4"]
+[ext_resource type="Texture2D" uid="uid://btx6icv4ku3rp" path="res://Assets/CozyVillageFarm/02_Nature/Decor/weeds.png" id="2_tfko1"]
+
+[node name="weeds" type="StaticBody2D" unique_id=887747833]
+collision_layer = 2
+script = ExtResource("1_x6xm4")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1117484040]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_tfko1")

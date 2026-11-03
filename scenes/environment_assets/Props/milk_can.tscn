@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cyuhjdpyujopm"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_uruek"]
+[ext_resource type="Texture2D" uid="uid://b3jmqplj6s3eb" path="res://Assets/CozyVillageFarm/04_Props/milk_can.png" id="2_fr5tf"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q8qns"]
+size = Vector2(11.52, 5.12)
+
+[node name="milk_can" type="StaticBody2D" unique_id=1389370928]
+collision_layer = 2
+script = ExtResource("1_uruek")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1370453955]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_fr5tf")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=96096385]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_q8qns")

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://8dxsto81s5ij"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_522dj"]
+[ext_resource type="Texture2D" uid="uid://crcveenmsui0h" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/wall_clock.png" id="2_8ve32"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qujj0"]
+size = Vector2(11.52, 5.12)
+
+[node name="wall_clock" type="StaticBody2D" unique_id=1587558163]
+collision_layer = 2
+script = ExtResource("1_522dj")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=569093937]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_8ve32")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2130672222]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_qujj0")

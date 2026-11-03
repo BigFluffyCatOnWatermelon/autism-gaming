@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bojkev1ulp1yl"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_p0q66"]
+[ext_resource type="Texture2D" uid="uid://y3rp0y1idwk3" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/painting.png" id="2_x6utm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wu4ra"]
+size = Vector2(23.04, 5.12)
+
+[node name="painting" type="StaticBody2D" unique_id=1594686355]
+collision_layer = 2
+script = ExtResource("1_p0q66")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=208458348]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_x6utm")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=299839580]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_wu4ra")

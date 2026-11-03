@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://co6tgrqdu0nn4"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_va55k"]
+[ext_resource type="Texture2D" uid="uid://bdf03h6n3q41e" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_winter.png" id="2_uni4o"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_b0jd8"]
+size = Vector2(12.24, 6)
+
+[node name="bush_winter" type="StaticBody2D" unique_id=644086848]
+collision_layer = 2
+script = ExtResource("1_va55k")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1076525152]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_uni4o")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=621205671]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_b0jd8")

@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://b001jqdyxk63e"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_3vcxm"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_hmocr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kqju6"]
+size = Vector2(13.12, 7.68)
+
+[node name="rock_in_water_anim_3f" type="StaticBody2D" unique_id=621443989]
+collision_layer = 2
+script = ExtResource("1_3vcxm")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1577202255]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_hmocr")
+autoplay = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1136660677]
+position = Vector2(0, -7.68)
+shape = SubResource("RectangleShape2D_kqju6")

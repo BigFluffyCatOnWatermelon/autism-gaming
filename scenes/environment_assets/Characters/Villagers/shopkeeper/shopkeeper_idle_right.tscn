@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://3dwoxjj8xetr"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_fsji2"]
+[ext_resource type="Texture2D" uid="uid://dnora1xrj63jn" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/shopkeeper/shopkeeper_idle_right.png" id="2_lvoh5"]
+
+[node name="shopkeeper_idle_right" type="StaticBody2D" unique_id=989916570]
+collision_layer = 2
+script = ExtResource("1_fsji2")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=78641657]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_lvoh5")

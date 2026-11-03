@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://c5aqc1qb1qiln"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_p7oso"]
+[ext_resource type="Texture2D" uid="uid://ctd7etlk8umga" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/shop_shelf.png" id="2_jlnmb"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hvpqn"]
+size = Vector2(23.04, 10.24)
+
+[node name="shop_shelf" type="StaticBody2D" unique_id=79793384]
+collision_layer = 2
+script = ExtResource("1_p7oso")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2003728860]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_jlnmb")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1291534956]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_hvpqn")

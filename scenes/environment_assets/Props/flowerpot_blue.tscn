@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://75dbq1g8qlr2"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_v0xs2"]
+[ext_resource type="Texture2D" uid="uid://dvu7b2op60a5e" path="res://Assets/CozyVillageFarm/04_Props/flowerpot_blue.png" id="2_0c8l8"]
+
+[node name="flowerpot_blue" type="StaticBody2D" unique_id=991319985]
+collision_layer = 2
+script = ExtResource("1_v0xs2")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1037071408]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_0c8l8")

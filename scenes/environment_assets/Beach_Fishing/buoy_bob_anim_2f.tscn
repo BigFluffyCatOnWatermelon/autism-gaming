@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://bigmwclhy4tax"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_xqn8p"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_nmd8i"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4gl3j"]
+size = Vector2(11.52, 5.12)
+
+[node name="buoy_bob_anim_2f" type="StaticBody2D" unique_id=332934270]
+collision_layer = 2
+script = ExtResource("1_xqn8p")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=684524764]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_nmd8i")
+autoplay = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1900586816]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_4gl3j")

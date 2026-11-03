@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://cs56pb7xk3upn"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_56uya"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_v4g56"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_x2blg"]
+size = Vector2(11.52, 5.12)
+
+[node name="seaweed_sway_anim_3f" type="StaticBody2D" unique_id=530801196]
+collision_layer = 2
+script = ExtResource("1_56uya")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1869032420]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_v4g56")
+autoplay = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=5424900]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_x2blg")

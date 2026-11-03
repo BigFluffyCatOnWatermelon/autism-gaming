@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://big3pgqaatnq"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_lmfnt"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_k1ugf"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_qo4a0"]
+size = Vector2(11.52, 5.12)
+
+[node name="campfire_anim_3f" type="StaticBody2D" unique_id=1482000489]
+collision_layer = 2
+script = ExtResource("1_lmfnt")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=59110743]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_k1ugf")
+autoplay = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=730371786]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_qo4a0")

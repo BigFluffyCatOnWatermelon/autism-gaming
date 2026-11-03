@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dudpo4g45n13s"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_5rv5j"]
+[ext_resource type="Texture2D" uid="uid://nc2vf0vduf77" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/sandcastle.png" id="2_veuxm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_47nul"]
+size = Vector2(11.52, 5.12)
+
+[node name="sandcastle" type="StaticBody2D" unique_id=1092605562]
+collision_layer = 2
+script = ExtResource("1_5rv5j")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2028092282]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_veuxm")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1616085769]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_47nul")

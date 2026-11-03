@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://dmv5ofbo8hjb5"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_yjc1e"]
+[ext_resource type="Texture2D" uid="uid://bdwd067y81wae" path="res://Assets/CozyVillageFarm/07_Animals/chicken_brown_sheet.png" id="2_xv527"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x058d"]
+atlas = ExtResource("2_xv527")
+region = Rect2(64, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kp0l1"]
+atlas = ExtResource("2_xv527")
+region = Rect2(80, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uty5b"]
+atlas = ExtResource("2_xv527")
+region = Rect2(64, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m8vtp"]
+atlas = ExtResource("2_xv527")
+region = Rect2(80, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nkvn3"]
+atlas = ExtResource("2_xv527")
+region = Rect2(0, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1aupv"]
+atlas = ExtResource("2_xv527")
+region = Rect2(16, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_i5lnp"]
+atlas = ExtResource("2_xv527")
+region = Rect2(32, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_13wlh"]
+atlas = ExtResource("2_xv527")
+region = Rect2(48, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lhnv7"]
+atlas = ExtResource("2_xv527")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6x4ea"]
+atlas = ExtResource("2_xv527")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5ph5d"]
+atlas = ExtResource("2_xv527")
+region = Rect2(32, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ughx0"]
+atlas = ExtResource("2_xv527")
+region = Rect2(48, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_36tr4"]
+animations = [{
+"frames": [],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x058d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kp0l1")
+}],
+"loop": 1,
+"name": &"idle_left",
+"speed": 2.5
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uty5b")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m8vtp")
+}],
+"loop": 1,
+"name": &"idle_right",
+"speed": 2.5
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nkvn3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1aupv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_i5lnp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_13wlh")
+}],
+"loop": 1,
+"name": &"walk_left",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lhnv7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6x4ea")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5ph5d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ughx0")
+}],
+"loop": 1,
+"name": &"walk_right",
+"speed": 7.0
+}]
+
+[node name="chicken_brown_sheet" type="StaticBody2D" unique_id=334154892]
+collision_layer = 2
+script = ExtResource("1_yjc1e")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=624090788]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_36tr4")
+animation = &"walk_right"
+autoplay = "walk_right"

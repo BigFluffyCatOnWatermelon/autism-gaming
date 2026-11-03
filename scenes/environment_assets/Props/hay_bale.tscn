@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cw7qyjnsjml8a"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_fqyow"]
+[ext_resource type="Texture2D" uid="uid://brufr81dmy05y" path="res://Assets/CozyVillageFarm/04_Props/hay_bale.png" id="2_nj6gv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1pg51"]
+size = Vector2(11.52, 5.12)
+
+[node name="hay_bale" type="StaticBody2D" unique_id=710935854]
+collision_layer = 2
+script = ExtResource("1_fqyow")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=928394240]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_nj6gv")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1389795759]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_1pg51")

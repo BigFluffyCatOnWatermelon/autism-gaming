@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://d828u1karsio"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_o3pll"]
+[ext_resource type="Texture2D" uid="uid://cqngrfhdq5j0v" path="res://Assets/CozyVillageFarm/03_Buildings/inn.png" id="2_s3sg3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6axw3"]
+size = Vector2(70.4, 17.92)
+
+[node name="inn" type="StaticBody2D" unique_id=385516193]
+collision_layer = 2
+script = ExtResource("1_o3pll")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2045415830]
+texture_filter = 1
+position = Vector2(0, -32)
+texture = ExtResource("2_s3sg3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1530067250]
+position = Vector2(0, -8.96)
+shape = SubResource("RectangleShape2D_6axw3")

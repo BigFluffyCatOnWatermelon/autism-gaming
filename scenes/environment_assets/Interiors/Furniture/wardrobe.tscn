@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dgd7751e14jyd"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_otyln"]
+[ext_resource type="Texture2D" uid="uid://2q23jx6dweq6" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/wardrobe.png" id="2_50gdi"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ee6by"]
+size = Vector2(11.52, 10.24)
+
+[node name="wardrobe" type="StaticBody2D" unique_id=2082626607]
+collision_layer = 2
+script = ExtResource("1_otyln")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1976226431]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_50gdi")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1327583559]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_ee6by")

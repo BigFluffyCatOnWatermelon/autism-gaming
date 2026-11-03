@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bnh8c36irn3cq"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_x2vae"]
+[ext_resource type="Texture2D" uid="uid://dcdpycwt5qkln" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter_cutting_board.png" id="2_akgxk"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_13i0m"]
+size = Vector2(11.52, 10.24)
+
+[node name="counter_cutting_board" type="StaticBody2D" unique_id=120266012]
+collision_layer = 2
+script = ExtResource("1_x2vae")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1674943852]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_akgxk")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1604820536]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_13i0m")

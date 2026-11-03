@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bsy0pwcifjbv5"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_6vedy"]
+[ext_resource type="Texture2D" uid="uid://0yuis4f2kedb" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/chair_side.png" id="2_d7orr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3th15"]
+size = Vector2(11.52, 5.12)
+
+[node name="chair_side" type="StaticBody2D" unique_id=628401758]
+collision_layer = 2
+script = ExtResource("1_6vedy")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1075927712]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_d7orr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1839952405]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_3th15")

@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://dicj50x6a5luw"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_rxlek"]
+[ext_resource type="Texture2D" uid="uid://di42cj1qnnyx4" path="res://Assets/CozyVillageFarm/07_Animals/duck_sheet.png" id="2_xfkb4"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k6ktm"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(64, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iqcre"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(80, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nf2qm"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(64, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rceex"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(80, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_8ax81"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(0, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d41fa"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(16, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_bsnic"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(32, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gq7w4"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(48, 16, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_auuby"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qcicy"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ocx1v"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(32, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_51l0j"]
+atlas = ExtResource("2_xfkb4")
+region = Rect2(48, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_woc5l"]
+animations = [{
+"frames": [],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k6ktm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iqcre")
+}],
+"loop": 1,
+"name": &"idle_left",
+"speed": 2.5
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nf2qm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rceex")
+}],
+"loop": 1,
+"name": &"idle_right",
+"speed": 2.5
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_8ax81")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d41fa")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_bsnic")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gq7w4")
+}],
+"loop": 1,
+"name": &"walk_left",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_auuby")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qcicy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ocx1v")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_51l0j")
+}],
+"loop": 1,
+"name": &"walk_right",
+"speed": 7.0
+}]
+
+[node name="duck_sheet" type="StaticBody2D" unique_id=598940438]
+collision_layer = 2
+script = ExtResource("1_rxlek")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1749685204]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_woc5l")
+animation = &"walk_right"
+autoplay = "walk_right"

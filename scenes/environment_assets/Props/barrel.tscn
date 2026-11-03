@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://buh8lir62phl6"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_8qqwg"]
+[ext_resource type="Texture2D" uid="uid://cs1ro248grvm0" path="res://Assets/CozyVillageFarm/04_Props/barrel.png" id="2_awxbs"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_f7a8m"]
+size = Vector2(11.52, 5.12)
+
+[node name="barrel" type="StaticBody2D" unique_id=1026981984]
+collision_layer = 2
+script = ExtResource("1_8qqwg")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1547403810]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_awxbs")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=173121920]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_f7a8m")

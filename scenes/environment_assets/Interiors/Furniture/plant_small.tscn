@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://c4hse26fnpluh"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_2kxen"]
+[ext_resource type="Texture2D" uid="uid://d24v4e546x2sk" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/plant_small.png" id="2_rtr11"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q7pap"]
+size = Vector2(11.52, 5.12)
+
+[node name="plant_small" type="StaticBody2D" unique_id=366109424]
+collision_layer = 2
+script = ExtResource("1_2kxen")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=481881039]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_rtr11")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1936449364]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_q7pap")

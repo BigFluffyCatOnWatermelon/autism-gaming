@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bvmlxqi8t7654"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_gwlg8"]
+[ext_resource type="Texture2D" uid="uid://djx0w1tgr74sb" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/shopkeeper/shopkeeper_walk_down.png" id="2_a3qeg"]
+
+[node name="shopkeeper_walk_down" type="StaticBody2D" unique_id=159997586]
+collision_layer = 2
+script = ExtResource("1_gwlg8")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=858203675]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_a3qeg")

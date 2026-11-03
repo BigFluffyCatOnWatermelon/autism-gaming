@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://c52svk0eobtld"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_h55gb"]
+[ext_resource type="Texture2D" uid="uid://nm6e5lbl6xnw" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_purple.png" id="2_pph4a"]
+
+[node name="mushroom_purple" type="StaticBody2D" unique_id=1980410524]
+collision_layer = 2
+script = ExtResource("1_h55gb")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1325552631]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_pph4a")

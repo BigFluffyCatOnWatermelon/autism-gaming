@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ip5t8fbg5t7q"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_tlgqa"]
+[ext_resource type="Texture2D" uid="uid://w6i78levld46" path="res://Assets/CozyVillageFarm/04_Props/wheelbarrow.png" id="2_vf2jd"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1tnis"]
+size = Vector2(23.04, 5.12)
+
+[node name="wheelbarrow" type="StaticBody2D" unique_id=1928673458]
+collision_layer = 2
+script = ExtResource("1_tlgqa")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1840499018]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_vf2jd")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1828481519]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_1tnis")

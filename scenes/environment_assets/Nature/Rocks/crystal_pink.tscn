@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://17aa7v0d2vd6"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_rkvfo"]
+[ext_resource type="Texture2D" uid="uid://bpmbl67c3vhgl" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_pink.png" id="2_plhsc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3yooe"]
+size = Vector2(13.12, 7.68)
+
+[node name="crystal_pink" type="StaticBody2D" unique_id=1207992172]
+collision_layer = 2
+script = ExtResource("1_rkvfo")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1760265707]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_plhsc")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1497209270]
+position = Vector2(0, -7.68)
+shape = SubResource("RectangleShape2D_3yooe")

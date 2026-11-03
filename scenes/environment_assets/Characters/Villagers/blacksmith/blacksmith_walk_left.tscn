@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://ikbaju4m8ijg"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_uepig"]
+[ext_resource type="Texture2D" uid="uid://bmfmm1a1ebpi8" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/blacksmith/blacksmith_walk_left.png" id="2_lmdtl"]
+
+[node name="blacksmith_walk_left" type="StaticBody2D" unique_id=881071425]
+collision_layer = 2
+script = ExtResource("1_uepig")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1402634898]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_lmdtl")

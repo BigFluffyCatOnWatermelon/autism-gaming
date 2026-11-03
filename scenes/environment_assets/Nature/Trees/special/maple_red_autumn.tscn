@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://bol3h5t3mxtw6"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_b6kex"]
+[ext_resource type="Texture2D" uid="uid://ci7cil8u33xei" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/maple_red_autumn.png" id="2_kwvdv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4sgpi"]
+size = Vector2(7.68, 8.8)
+
+[node name="maple_red_autumn" type="StaticBody2D" unique_id=1672055386]
+collision_layer = 2
+script = ExtResource("1_b6kex")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1901271611]
+texture_filter = 1
+position = Vector2(0, -20)
+texture = ExtResource("2_kwvdv")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=411479323]
+position = Vector2(0, -4.4)
+shape = SubResource("RectangleShape2D_4sgpi")

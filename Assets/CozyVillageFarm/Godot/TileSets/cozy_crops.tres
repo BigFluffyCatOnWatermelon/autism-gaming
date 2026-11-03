@@ -1,22 +1,22 @@
-[gd_resource type="TileSet" format=3]
+[gd_resource type="TileSet" format=3 uid="uid://bu5p7xenis8nn"]
 
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/beetroot_stages_5.png" id="tex_0"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/blueberry_stages_5.png" id="tex_1"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/cabbage_stages_5.png" id="tex_2"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/carrot_stages_5.png" id="tex_3"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/chili_stages_5.png" id="tex_4"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/corn_stages_5.png" id="tex_5"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/eggplant_stages_5.png" id="tex_6"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/onion_stages_5.png" id="tex_7"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/potato_stages_5.png" id="tex_8"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/pumpkin_stages_5.png" id="tex_9"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/strawberry_stages_5.png" id="tex_10"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/sunflower_stages_5.png" id="tex_11"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/tomato_stages_5.png" id="tex_12"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/turnip_stages_5.png" id="tex_13"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/watermelon_stages_5.png" id="tex_14"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/wheat_stages_5.png" id="tex_15"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Crops/crop_withered.png" id="tex_16"]
+[ext_resource type="Texture2D" uid="uid://dm3jr66hggdc" path="res://Assets/CozyVillageFarm/06_Farming/Crops/beetroot_stages_5.png" id="tex_0"]
+[ext_resource type="Texture2D" uid="uid://bn0a7jtekdpin" path="res://Assets/CozyVillageFarm/06_Farming/Crops/blueberry_stages_5.png" id="tex_1"]
+[ext_resource type="Texture2D" uid="uid://c3hc4p2foavya" path="res://Assets/CozyVillageFarm/06_Farming/Crops/cabbage_stages_5.png" id="tex_2"]
+[ext_resource type="Texture2D" uid="uid://ls82fkahrrxa" path="res://Assets/CozyVillageFarm/06_Farming/Crops/carrot_stages_5.png" id="tex_3"]
+[ext_resource type="Texture2D" uid="uid://b2q4b3afdq4ut" path="res://Assets/CozyVillageFarm/06_Farming/Crops/chili_stages_5.png" id="tex_4"]
+[ext_resource type="Texture2D" uid="uid://bero3xv4dhhgu" path="res://Assets/CozyVillageFarm/06_Farming/Crops/corn_stages_5.png" id="tex_5"]
+[ext_resource type="Texture2D" uid="uid://0bc1n8iettp" path="res://Assets/CozyVillageFarm/06_Farming/Crops/eggplant_stages_5.png" id="tex_6"]
+[ext_resource type="Texture2D" uid="uid://c4d655652jkr5" path="res://Assets/CozyVillageFarm/06_Farming/Crops/onion_stages_5.png" id="tex_7"]
+[ext_resource type="Texture2D" uid="uid://dlf5wa0gfq4to" path="res://Assets/CozyVillageFarm/06_Farming/Crops/potato_stages_5.png" id="tex_8"]
+[ext_resource type="Texture2D" uid="uid://by73tfp1i25wv" path="res://Assets/CozyVillageFarm/06_Farming/Crops/pumpkin_stages_5.png" id="tex_9"]
+[ext_resource type="Texture2D" uid="uid://tlj71cl2rwl2" path="res://Assets/CozyVillageFarm/06_Farming/Crops/strawberry_stages_5.png" id="tex_10"]
+[ext_resource type="Texture2D" uid="uid://b404bwg5ogdqe" path="res://Assets/CozyVillageFarm/06_Farming/Crops/sunflower_stages_5.png" id="tex_11"]
+[ext_resource type="Texture2D" uid="uid://e288uiyyx7rk" path="res://Assets/CozyVillageFarm/06_Farming/Crops/tomato_stages_5.png" id="tex_12"]
+[ext_resource type="Texture2D" uid="uid://cks1wv4kf8gk8" path="res://Assets/CozyVillageFarm/06_Farming/Crops/turnip_stages_5.png" id="tex_13"]
+[ext_resource type="Texture2D" uid="uid://j56eap4468l1" path="res://Assets/CozyVillageFarm/06_Farming/Crops/watermelon_stages_5.png" id="tex_14"]
+[ext_resource type="Texture2D" uid="uid://g1ts6rmo8hgw" path="res://Assets/CozyVillageFarm/06_Farming/Crops/wheat_stages_5.png" id="tex_15"]
+[ext_resource type="Texture2D" uid="uid://bo67dbypfcca0" path="res://Assets/CozyVillageFarm/06_Farming/Crops/crop_withered.png" id="tex_16"]
 
 [sub_resource type="TileSetAtlasSource" id="Crop_0"]
 texture = ExtResource("tex_0")
@@ -45,6 +45,94 @@ texture_region_size = Vector2i(16, 32)
 3:0/0/texture_origin = Vector2i(0, -8)
 4:0/0 = 0
 4:0/0/texture_origin = Vector2i(0, -8)
+
+[sub_resource type="TileSetAtlasSource" id="Crop_10"]
+texture = ExtResource("tex_10")
+texture_region_size = Vector2i(16, 32)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, -8)
+1:0/0 = 0
+1:0/0/texture_origin = Vector2i(0, -8)
+2:0/0 = 0
+2:0/0/texture_origin = Vector2i(0, -8)
+3:0/0 = 0
+3:0/0/texture_origin = Vector2i(0, -8)
+4:0/0 = 0
+4:0/0/texture_origin = Vector2i(0, -8)
+
+[sub_resource type="TileSetAtlasSource" id="Crop_11"]
+texture = ExtResource("tex_11")
+texture_region_size = Vector2i(16, 32)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, -8)
+1:0/0 = 0
+1:0/0/texture_origin = Vector2i(0, -8)
+2:0/0 = 0
+2:0/0/texture_origin = Vector2i(0, -8)
+3:0/0 = 0
+3:0/0/texture_origin = Vector2i(0, -8)
+4:0/0 = 0
+4:0/0/texture_origin = Vector2i(0, -8)
+
+[sub_resource type="TileSetAtlasSource" id="Crop_12"]
+texture = ExtResource("tex_12")
+texture_region_size = Vector2i(16, 32)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, -8)
+1:0/0 = 0
+1:0/0/texture_origin = Vector2i(0, -8)
+2:0/0 = 0
+2:0/0/texture_origin = Vector2i(0, -8)
+3:0/0 = 0
+3:0/0/texture_origin = Vector2i(0, -8)
+4:0/0 = 0
+4:0/0/texture_origin = Vector2i(0, -8)
+
+[sub_resource type="TileSetAtlasSource" id="Crop_13"]
+texture = ExtResource("tex_13")
+texture_region_size = Vector2i(16, 32)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, -8)
+1:0/0 = 0
+1:0/0/texture_origin = Vector2i(0, -8)
+2:0/0 = 0
+2:0/0/texture_origin = Vector2i(0, -8)
+3:0/0 = 0
+3:0/0/texture_origin = Vector2i(0, -8)
+4:0/0 = 0
+4:0/0/texture_origin = Vector2i(0, -8)
+
+[sub_resource type="TileSetAtlasSource" id="Crop_14"]
+texture = ExtResource("tex_14")
+texture_region_size = Vector2i(16, 32)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, -8)
+1:0/0 = 0
+1:0/0/texture_origin = Vector2i(0, -8)
+2:0/0 = 0
+2:0/0/texture_origin = Vector2i(0, -8)
+3:0/0 = 0
+3:0/0/texture_origin = Vector2i(0, -8)
+4:0/0 = 0
+4:0/0/texture_origin = Vector2i(0, -8)
+
+[sub_resource type="TileSetAtlasSource" id="Crop_15"]
+texture = ExtResource("tex_15")
+texture_region_size = Vector2i(16, 32)
+0:0/0 = 0
+0:0/0/texture_origin = Vector2i(0, -8)
+1:0/0 = 0
+1:0/0/texture_origin = Vector2i(0, -8)
+2:0/0 = 0
+2:0/0/texture_origin = Vector2i(0, -8)
+3:0/0 = 0
+3:0/0/texture_origin = Vector2i(0, -8)
+4:0/0 = 0
+4:0/0/texture_origin = Vector2i(0, -8)
+
+[sub_resource type="TileSetAtlasSource" id="Crop_16"]
+texture = ExtResource("tex_16")
+0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Crop_2"]
 texture = ExtResource("tex_2")
@@ -158,97 +246,7 @@ texture_region_size = Vector2i(16, 32)
 4:0/0 = 0
 4:0/0/texture_origin = Vector2i(0, -8)
 
-[sub_resource type="TileSetAtlasSource" id="Crop_10"]
-texture = ExtResource("tex_10")
-texture_region_size = Vector2i(16, 32)
-0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, -8)
-1:0/0 = 0
-1:0/0/texture_origin = Vector2i(0, -8)
-2:0/0 = 0
-2:0/0/texture_origin = Vector2i(0, -8)
-3:0/0 = 0
-3:0/0/texture_origin = Vector2i(0, -8)
-4:0/0 = 0
-4:0/0/texture_origin = Vector2i(0, -8)
-
-[sub_resource type="TileSetAtlasSource" id="Crop_11"]
-texture = ExtResource("tex_11")
-texture_region_size = Vector2i(16, 32)
-0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, -8)
-1:0/0 = 0
-1:0/0/texture_origin = Vector2i(0, -8)
-2:0/0 = 0
-2:0/0/texture_origin = Vector2i(0, -8)
-3:0/0 = 0
-3:0/0/texture_origin = Vector2i(0, -8)
-4:0/0 = 0
-4:0/0/texture_origin = Vector2i(0, -8)
-
-[sub_resource type="TileSetAtlasSource" id="Crop_12"]
-texture = ExtResource("tex_12")
-texture_region_size = Vector2i(16, 32)
-0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, -8)
-1:0/0 = 0
-1:0/0/texture_origin = Vector2i(0, -8)
-2:0/0 = 0
-2:0/0/texture_origin = Vector2i(0, -8)
-3:0/0 = 0
-3:0/0/texture_origin = Vector2i(0, -8)
-4:0/0 = 0
-4:0/0/texture_origin = Vector2i(0, -8)
-
-[sub_resource type="TileSetAtlasSource" id="Crop_13"]
-texture = ExtResource("tex_13")
-texture_region_size = Vector2i(16, 32)
-0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, -8)
-1:0/0 = 0
-1:0/0/texture_origin = Vector2i(0, -8)
-2:0/0 = 0
-2:0/0/texture_origin = Vector2i(0, -8)
-3:0/0 = 0
-3:0/0/texture_origin = Vector2i(0, -8)
-4:0/0 = 0
-4:0/0/texture_origin = Vector2i(0, -8)
-
-[sub_resource type="TileSetAtlasSource" id="Crop_14"]
-texture = ExtResource("tex_14")
-texture_region_size = Vector2i(16, 32)
-0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, -8)
-1:0/0 = 0
-1:0/0/texture_origin = Vector2i(0, -8)
-2:0/0 = 0
-2:0/0/texture_origin = Vector2i(0, -8)
-3:0/0 = 0
-3:0/0/texture_origin = Vector2i(0, -8)
-4:0/0 = 0
-4:0/0/texture_origin = Vector2i(0, -8)
-
-[sub_resource type="TileSetAtlasSource" id="Crop_15"]
-texture = ExtResource("tex_15")
-texture_region_size = Vector2i(16, 32)
-0:0/0 = 0
-0:0/0/texture_origin = Vector2i(0, -8)
-1:0/0 = 0
-1:0/0/texture_origin = Vector2i(0, -8)
-2:0/0 = 0
-2:0/0/texture_origin = Vector2i(0, -8)
-3:0/0 = 0
-3:0/0/texture_origin = Vector2i(0, -8)
-4:0/0 = 0
-4:0/0/texture_origin = Vector2i(0, -8)
-
-[sub_resource type="TileSetAtlasSource" id="Crop_16"]
-texture = ExtResource("tex_16")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
 [resource]
-tile_size = Vector2i(16, 16)
 sources/0 = SubResource("Crop_0")
 sources/1 = SubResource("Crop_1")
 sources/2 = SubResource("Crop_2")

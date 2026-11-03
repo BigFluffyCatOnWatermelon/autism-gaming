@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://q53y3ba6sblv"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_04r0g"]
+[ext_resource type="Texture2D" uid="uid://daj46acerhca6" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_small.png" id="2_rdmmo"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7y3jf"]
+size = Vector2(9.84, 6)
+
+[node name="rock_small" type="StaticBody2D" unique_id=1297094442]
+collision_layer = 2
+script = ExtResource("1_04r0g")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=220800226]
+texture_filter = 1
+position = Vector2(0, -5)
+texture = ExtResource("2_rdmmo")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=190870953]
+position = Vector2(0, -5.4)
+shape = SubResource("RectangleShape2D_7y3jf")

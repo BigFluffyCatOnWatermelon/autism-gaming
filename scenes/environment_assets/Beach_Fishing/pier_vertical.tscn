@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://c76h0ays5fk8e"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_nmj6v"]
+[ext_resource type="Texture2D" uid="uid://slniw00vepib" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_vertical.png" id="2_5yrpf"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ag24h"]
+size = Vector2(11.52, 5.12)
+
+[node name="pier_vertical" type="StaticBody2D" unique_id=1389222771]
+collision_layer = 2
+script = ExtResource("1_nmj6v")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=411698504]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_5yrpf")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1980653105]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_ag24h")

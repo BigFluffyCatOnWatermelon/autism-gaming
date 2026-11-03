@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ddr4c474gqmis"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_alc71"]
+[ext_resource type="Texture2D" uid="uid://dhnqa2xh21bol" path="res://Assets/CozyVillageFarm/03_Buildings/market_stall_red.png" id="2_x6pa1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ch8yd"]
+size = Vector2(28.16, 8.96)
+
+[node name="market_stall_red" type="StaticBody2D" unique_id=1945915530]
+collision_layer = 2
+script = ExtResource("1_alc71")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1349155048]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_x6pa1")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2013937877]
+position = Vector2(0, -4.48)
+shape = SubResource("RectangleShape2D_ch8yd")

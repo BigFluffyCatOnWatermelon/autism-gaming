@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="ItemCatalog" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="ItemCatalog" format=3 uid="uid://jnr5oxk4mplm"]
 
-[ext_resource type="Script" path="res://scripts/item_catalog.gd" id="1_catalog"]
-[ext_resource type="Script" path="res://scripts/item_definition.gd" id="2_definition"]
-[ext_resource type="Texture2D" path="res://Assets/Items/arrows.png" id="3_arrow_icon"]
+[ext_resource type="Script" uid="uid://cuyey64sw13o1" path="res://scripts/item_catalog.gd" id="1_catalog"]
+[ext_resource type="Script" uid="uid://mwxrkjlsbs3u" path="res://scripts/item_definition.gd" id="2_definition"]
+[ext_resource type="Texture2D" uid="uid://dx2fujuruj7e8" path="res://Assets/Items/arrows.png" id="3_arrow_icon"]
 
 [sub_resource type="Resource" id="Arrows"]
 script = ExtResource("2_definition")
@@ -10,15 +10,13 @@ item_id = "arrows"
 display_name = "Стрелы"
 description = "Боеприпас для лука. Расходуется при выстреле."
 category = "ammunition"
-stack_limit = 99
 icon = ExtResource("3_arrow_icon")
 properties = {
+"attack_type": "Боеприпас для лука",
 "damage": 18.0,
 "damage_type": "колющий",
-"attack_type": "Боеприпас для лука",
 "efficiency": "Расходуются при выстреле"
 }
-combat_stats = {}
 
 [resource]
 script = ExtResource("1_catalog")

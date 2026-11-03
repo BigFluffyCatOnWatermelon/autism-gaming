@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dwg6pa2uhb4mr"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_lo2es"]
+[ext_resource type="Texture2D" uid="uid://diqwex4xspkuv" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/umbrella_red.png" id="2_1bva7"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mgaqh"]
+size = Vector2(23.04, 10.24)
+
+[node name="umbrella_red" type="StaticBody2D" unique_id=1986894836]
+collision_layer = 2
+script = ExtResource("1_lo2es")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1174826778]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_1bva7")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=682117012]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_mgaqh")

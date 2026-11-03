@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://dcihkn62q2r7q"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_rowkr"]
+[ext_resource type="Texture2D" uid="uid://claqp10k0n4x7" path="res://Assets/CozyVillageFarm/02_Nature/Decor/snowman.png" id="2_22k1a"]
+
+[node name="snowman" type="StaticBody2D" unique_id=57749521]
+collision_layer = 2
+script = ExtResource("1_rowkr")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=735357249]
+texture_filter = 1
+position = Vector2(0, -12)
+texture = ExtResource("2_22k1a")

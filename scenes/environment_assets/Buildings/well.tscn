@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dfxkne21nqttv"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_ajuld"]
+[ext_resource type="Texture2D" uid="uid://d0n8cbq1tkxlw" path="res://Assets/CozyVillageFarm/03_Buildings/well.png" id="2_gjekd"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8ggqf"]
+size = Vector2(28.16, 11.2)
+
+[node name="well" type="StaticBody2D" unique_id=2037325215]
+collision_layer = 2
+script = ExtResource("1_ajuld")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1654857713]
+texture_filter = 1
+position = Vector2(0, -20)
+texture = ExtResource("2_gjekd")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1083952189]
+position = Vector2(0, -5.6)
+shape = SubResource("RectangleShape2D_8ggqf")

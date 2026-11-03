@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://ccjjhymarkef1"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_5knug"]
+[ext_resource type="Texture2D" uid="uid://djf6w2ksqn1lq" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/mayor/mayor_walk_left.png" id="2_qmd1j"]
+
+[node name="mayor_walk_left" type="StaticBody2D" unique_id=1775788211]
+collision_layer = 2
+script = ExtResource("1_5knug")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=403942654]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_qmd1j")

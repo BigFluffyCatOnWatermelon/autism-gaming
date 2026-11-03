@@ -81,7 +81,7 @@ func _ready() -> void:
 		shadow.name = "Shadow"
 		shadow.texture = load("res://Assets/Effects/shadow.png")
 		add_child(shadow)
-	shadow.position = Vector2(0, 15)
+	shadow.position = Vector2(0, 0)
 	shadow.scale = Vector2(1.15, 1.0)
 	shadow.z_index = -1
 	shadow.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://du4u7mfmveboi"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_x76ak"]
+[ext_resource type="Texture2D" uid="uid://n5cggeceg0nj" path="res://Assets/CozyVillageFarm/03_Buildings/bakery.png" id="2_kiacy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3lucq"]
+size = Vector2(42.24, 13.44)
+
+[node name="bakery" type="StaticBody2D" unique_id=586768267]
+collision_layer = 2
+script = ExtResource("1_x76ak")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1283278557]
+texture_filter = 1
+position = Vector2(0, -24)
+texture = ExtResource("2_kiacy")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1060591295]
+position = Vector2(0, -6.72)
+shape = SubResource("RectangleShape2D_3lucq")

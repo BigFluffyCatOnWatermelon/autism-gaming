@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://dfia7237gucly"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_h60td"]
+[ext_resource type="Texture2D" uid="uid://0qrvcuccddsm" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/girl/girl_walk_left.png" id="2_pcpe6"]
+
+[node name="girl_walk_left" type="StaticBody2D" unique_id=1965108737]
+collision_layer = 2
+script = ExtResource("1_h60td")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1853729490]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_pcpe6")

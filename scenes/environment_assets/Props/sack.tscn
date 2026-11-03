@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://1uslqvgcbq2d"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_cs34l"]
+[ext_resource type="Texture2D" uid="uid://cdcimmyw31sco" path="res://Assets/CozyVillageFarm/04_Props/sack.png" id="2_k5kn5"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cgbqp"]
+size = Vector2(11.52, 5.12)
+
+[node name="sack" type="StaticBody2D" unique_id=1289089658]
+collision_layer = 2
+script = ExtResource("1_cs34l")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1519560724]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_k5kn5")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1017901547]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_cgbqp")

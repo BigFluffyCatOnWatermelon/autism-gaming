@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://5xtpkay1joiv"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_io3g4"]
+[ext_resource type="Texture2D" uid="uid://bxsr45ieto51d" path="res://Assets/CozyVillageFarm/02_Nature/Decor/leaf_pile.png" id="2_wor0i"]
+
+[node name="leaf_pile" type="StaticBody2D" unique_id=1000693550]
+collision_layer = 2
+script = ExtResource("1_io3g4")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=471448709]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_wor0i")

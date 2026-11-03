@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://sobil0t81n55"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_oywbp"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_l40wl"]
+
+[node name="heart_pop_anim_4f" type="StaticBody2D" unique_id=1653523667]
+collision_layer = 2
+script = ExtResource("1_oywbp")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=581429293]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_l40wl")
+autoplay = "default"

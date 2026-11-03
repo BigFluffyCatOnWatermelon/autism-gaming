@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://h0xm5bcjr47b"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_drap7"]
+[ext_resource type="Texture2D" uid="uid://btd3dvhqqhddj" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_amethyst.png" id="2_kx7mu"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_i85cy"]
+size = Vector2(13.12, 6.72)
+
+[node name="ore_amethyst" type="StaticBody2D" unique_id=70842809]
+collision_layer = 2
+script = ExtResource("1_drap7")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=264249983]
+texture_filter = 1
+position = Vector2(0, -7)
+texture = ExtResource("2_kx7mu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=416071188]
+position = Vector2(0, -6.72)
+shape = SubResource("RectangleShape2D_i85cy")

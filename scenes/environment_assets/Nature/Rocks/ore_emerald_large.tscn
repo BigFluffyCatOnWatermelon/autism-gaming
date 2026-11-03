@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://b33u2ocbp57o0"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_c2gnn"]
+[ext_resource type="Texture2D" uid="uid://duuo4q747nogy" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_emerald_large.png" id="2_meau4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_spnkf"]
+size = Vector2(19.68, 9.6)
+
+[node name="ore_emerald_large" type="StaticBody2D" unique_id=63525267]
+collision_layer = 2
+script = ExtResource("1_c2gnn")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1429585411]
+texture_filter = 1
+position = Vector2(0, -10)
+texture = ExtResource("2_meau4")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=161465472]
+position = Vector2(0, -9.6)
+shape = SubResource("RectangleShape2D_spnkf")

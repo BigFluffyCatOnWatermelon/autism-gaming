@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://der3f8rpwrle0"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_ir518"]
+[ext_resource type="Texture2D" uid="uid://cfaj353es8srf" path="res://Assets/CozyVillageFarm/04_Props/cart_produce.png" id="2_2f8sa"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_6yb20"]
+size = Vector2(23.04, 10.24)
+
+[node name="cart_produce" type="StaticBody2D" unique_id=100430025]
+collision_layer = 2
+script = ExtResource("1_ir518")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1831012482]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_2f8sa")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1351172011]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_6yb20")

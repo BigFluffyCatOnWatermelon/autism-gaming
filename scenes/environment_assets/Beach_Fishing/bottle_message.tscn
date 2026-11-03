@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://rq5jsalnf5ie"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_vq8wc"]
+[ext_resource type="Texture2D" uid="uid://coxaeb2k3x8jb" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/bottle_message.png" id="2_pvh0y"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_br3qc"]
+size = Vector2(11.52, 5.12)
+
+[node name="bottle_message" type="StaticBody2D" unique_id=1726138125]
+collision_layer = 2
+script = ExtResource("1_vq8wc")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1715769458]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_pvh0y")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=330842858]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_br3qc")

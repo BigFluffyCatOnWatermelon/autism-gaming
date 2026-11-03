@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ftq5fa43u848"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_jawq4"]
+[ext_resource type="Texture2D" uid="uid://bh3yrwryx7243" path="res://Assets/CozyVillageFarm/03_Buildings/barn.png" id="2_wxmnn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hsk7y"]
+size = Vector2(56.32, 15.68)
+
+[node name="barn" type="StaticBody2D" unique_id=274866808]
+collision_layer = 2
+script = ExtResource("1_jawq4")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=872705888]
+texture_filter = 1
+position = Vector2(0, -28)
+texture = ExtResource("2_wxmnn")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=459226061]
+position = Vector2(0, -7.84)
+shape = SubResource("RectangleShape2D_hsk7y")

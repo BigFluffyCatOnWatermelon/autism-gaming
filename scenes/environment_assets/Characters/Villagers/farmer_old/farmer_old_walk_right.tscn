@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://dgdojaw8yqtyl"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_05xg4"]
+[ext_resource type="Texture2D" uid="uid://ddqjo1hk14bk7" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/farmer_old/farmer_old_walk_right.png" id="2_n1oea"]
+
+[node name="farmer_old_walk_right" type="StaticBody2D" unique_id=575858488]
+collision_layer = 2
+script = ExtResource("1_05xg4")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=601312530]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_n1oea")

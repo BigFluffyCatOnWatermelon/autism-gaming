@@ -1,30 +1,30 @@
-[gd_resource type="Resource" script_class="ItemCatalog" load_steps=49 format=3]
+[gd_resource type="Resource" script_class="ItemCatalog" format=3 uid="uid://d2jraoixqdtmu"]
 
-[ext_resource type="Script" path="res://scripts/item_catalog.gd" id="1_catalog"]
-[ext_resource type="Script" path="res://scripts/item_definition.gd" id="2_definition"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/baguette.png" id="tex_0"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/bread.png" id="tex_1"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/cake_slice.png" id="tex_2"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/cheese.png" id="tex_3"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/coffee.png" id="tex_4"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/cookie.png" id="tex_5"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/fried_egg.png" id="tex_6"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/grilled_fish.png" id="tex_7"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/honey.png" id="tex_8"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/jam_strawberry.png" id="tex_9"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/juice_orange.png" id="tex_10"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/milk.png" id="tex_11"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/pancakes.png" id="tex_12"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/pickles.png" id="tex_13"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/pie.png" id="tex_14"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/porridge.png" id="tex_15"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/ramen.png" id="tex_16"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/salad.png" id="tex_17"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/soup_pumpkin.png" id="tex_18"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/soup_tomato.png" id="tex_19"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/stew.png" id="tex_20"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/sushi.png" id="tex_21"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/10_Items/Food/tea.png" id="tex_22"]
+[ext_resource type="Script" uid="uid://cuyey64sw13o1" path="res://scripts/item_catalog.gd" id="1_catalog"]
+[ext_resource type="Script" uid="uid://mwxrkjlsbs3u" path="res://scripts/item_definition.gd" id="2_definition"]
+[ext_resource type="Texture2D" uid="uid://dabgmqgqu3qaa" path="res://Assets/CozyVillageFarm/10_Items/Food/baguette.png" id="tex_0"]
+[ext_resource type="Texture2D" uid="uid://bq5tg0s80mm4a" path="res://Assets/CozyVillageFarm/10_Items/Food/bread.png" id="tex_1"]
+[ext_resource type="Texture2D" uid="uid://8ravoy6bn6vb" path="res://Assets/CozyVillageFarm/10_Items/Food/cake_slice.png" id="tex_2"]
+[ext_resource type="Texture2D" uid="uid://ccaqer76k6gn8" path="res://Assets/CozyVillageFarm/10_Items/Food/cheese.png" id="tex_3"]
+[ext_resource type="Texture2D" uid="uid://k5wn5l3sa4d4" path="res://Assets/CozyVillageFarm/10_Items/Food/coffee.png" id="tex_4"]
+[ext_resource type="Texture2D" uid="uid://ci8d30ljbbwhd" path="res://Assets/CozyVillageFarm/10_Items/Food/cookie.png" id="tex_5"]
+[ext_resource type="Texture2D" uid="uid://rbshpbahpxkt" path="res://Assets/CozyVillageFarm/10_Items/Food/fried_egg.png" id="tex_6"]
+[ext_resource type="Texture2D" uid="uid://ch8ejlqdjf8je" path="res://Assets/CozyVillageFarm/10_Items/Food/grilled_fish.png" id="tex_7"]
+[ext_resource type="Texture2D" uid="uid://ca58ery71ckh4" path="res://Assets/CozyVillageFarm/10_Items/Food/honey.png" id="tex_8"]
+[ext_resource type="Texture2D" uid="uid://bx01xk1hk2q11" path="res://Assets/CozyVillageFarm/10_Items/Food/jam_strawberry.png" id="tex_9"]
+[ext_resource type="Texture2D" uid="uid://crvhpfii082ld" path="res://Assets/CozyVillageFarm/10_Items/Food/juice_orange.png" id="tex_10"]
+[ext_resource type="Texture2D" uid="uid://bjbe55cx4dqua" path="res://Assets/CozyVillageFarm/10_Items/Food/milk.png" id="tex_11"]
+[ext_resource type="Texture2D" uid="uid://w08bg68ik7pv" path="res://Assets/CozyVillageFarm/10_Items/Food/pancakes.png" id="tex_12"]
+[ext_resource type="Texture2D" uid="uid://b3u1c2uk5vmtq" path="res://Assets/CozyVillageFarm/10_Items/Food/pickles.png" id="tex_13"]
+[ext_resource type="Texture2D" uid="uid://ceiwy2qss5e7u" path="res://Assets/CozyVillageFarm/10_Items/Food/pie.png" id="tex_14"]
+[ext_resource type="Texture2D" uid="uid://i1wwb6koixyh" path="res://Assets/CozyVillageFarm/10_Items/Food/porridge.png" id="tex_15"]
+[ext_resource type="Texture2D" uid="uid://bvjcng4ecsugx" path="res://Assets/CozyVillageFarm/10_Items/Food/ramen.png" id="tex_16"]
+[ext_resource type="Texture2D" uid="uid://cevomgw2iyufo" path="res://Assets/CozyVillageFarm/10_Items/Food/salad.png" id="tex_17"]
+[ext_resource type="Texture2D" uid="uid://djfmqjrmyr8yd" path="res://Assets/CozyVillageFarm/10_Items/Food/soup_pumpkin.png" id="tex_18"]
+[ext_resource type="Texture2D" uid="uid://dgljgukj2prly" path="res://Assets/CozyVillageFarm/10_Items/Food/soup_tomato.png" id="tex_19"]
+[ext_resource type="Texture2D" uid="uid://chi8ogh5yx6w2" path="res://Assets/CozyVillageFarm/10_Items/Food/stew.png" id="tex_20"]
+[ext_resource type="Texture2D" uid="uid://c7xxyphjlcghp" path="res://Assets/CozyVillageFarm/10_Items/Food/sushi.png" id="tex_21"]
+[ext_resource type="Texture2D" uid="uid://fe66kiptpmv6" path="res://Assets/CozyVillageFarm/10_Items/Food/tea.png" id="tex_22"]
 
 [sub_resource type="Resource" id="baguette"]
 script = ExtResource("2_definition")
@@ -34,8 +34,6 @@ description = "Хрустящий багет."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_0")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="bread"]
 script = ExtResource("2_definition")
@@ -45,8 +43,6 @@ description = "Базовый хлеб для походных запасов."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_1")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="cake_slice"]
 script = ExtResource("2_definition")
@@ -56,8 +52,6 @@ description = "Сладкий десерт."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_2")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="cheese"]
 script = ExtResource("2_definition")
@@ -67,8 +61,6 @@ description = "Кусок сыра."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_3")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="coffee"]
 script = ExtResource("2_definition")
@@ -78,8 +70,6 @@ description = "Горячий кофейный напиток."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_4")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="cookie"]
 script = ExtResource("2_definition")
@@ -89,8 +79,6 @@ description = "Небольшое сладкое печенье."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_5")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="fried_egg"]
 script = ExtResource("2_definition")
@@ -100,8 +88,6 @@ description = "Приготовленное яйцо."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_6")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="grilled_fish"]
 script = ExtResource("2_definition")
@@ -111,8 +97,6 @@ description = "Рыба, приготовленная на огне."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_7")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="honey"]
 script = ExtResource("2_definition")
@@ -122,8 +106,6 @@ description = "Натуральный сладкий продукт."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_8")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="jam_strawberry"]
 script = ExtResource("2_definition")
@@ -133,8 +115,6 @@ description = "Варенье из клубники."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_9")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="juice_orange"]
 script = ExtResource("2_definition")
@@ -144,8 +124,6 @@ description = "Фруктовый напиток из апельсинов."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_10")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="milk"]
 script = ExtResource("2_definition")
@@ -155,8 +133,6 @@ description = "Молочный напиток."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_11")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="pancakes"]
 script = ExtResource("2_definition")
@@ -166,8 +142,6 @@ description = "Приготовленные блины."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_12")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="pickles"]
 script = ExtResource("2_definition")
@@ -177,8 +151,6 @@ description = "Овощи, заготовленные в маринаде."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_13")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="pie"]
 script = ExtResource("2_definition")
@@ -188,8 +160,6 @@ description = "Порция домашнего пирога."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_14")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="porridge"]
 script = ExtResource("2_definition")
@@ -199,8 +169,6 @@ description = "Готовое блюдо из крупы."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_15")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="ramen"]
 script = ExtResource("2_definition")
@@ -210,8 +178,6 @@ description = "Горячее блюдо с лапшой."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_16")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="salad"]
 script = ExtResource("2_definition")
@@ -221,8 +187,6 @@ description = "Блюдо из свежих овощей."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_17")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="soup_pumpkin"]
 script = ExtResource("2_definition")
@@ -232,8 +196,6 @@ description = "Горячий суп из тыквы."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_18")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="soup_tomato"]
 script = ExtResource("2_definition")
@@ -243,8 +205,6 @@ description = "Горячий суп из томатов."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_19")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="stew"]
 script = ExtResource("2_definition")
@@ -254,8 +214,6 @@ description = "Сытное тушёное блюдо."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_20")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="sushi"]
 script = ExtResource("2_definition")
@@ -265,8 +223,6 @@ description = "Порции суши."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_21")
-properties = {}
-combat_stats = {}
 
 [sub_resource type="Resource" id="tea"]
 script = ExtResource("2_definition")
@@ -276,8 +232,6 @@ description = "Горячий чайный напиток."
 category = "food"
 stack_limit = 20
 icon = ExtResource("tex_22")
-properties = {}
-combat_stats = {}
 
 [resource]
 script = ExtResource("1_catalog")

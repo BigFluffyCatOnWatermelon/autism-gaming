@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://uxjh33lt5df2"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_uirrq"]
+[ext_resource type="Texture2D" uid="uid://cksdvhudrcvh6" path="res://Assets/CozyVillageFarm/04_Props/bench.png" id="2_crn0h"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_455sc"]
+size = Vector2(23.04, 5.12)
+
+[node name="bench" type="StaticBody2D" unique_id=1697826153]
+collision_layer = 2
+script = ExtResource("1_uirrq")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=949867868]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_crn0h")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1055410318]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_455sc")

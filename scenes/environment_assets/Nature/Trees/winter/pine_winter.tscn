@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://db0sftmmvguvl"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_tygll"]
+[ext_resource type="Texture2D" uid="uid://c0qi7eyo1m7eu" path="res://Assets/CozyVillageFarm/02_Nature/Trees/winter/pine_winter.png" id="2_0k5u7"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_181sn"]
+size = Vector2(7.68, 8.8)
+
+[node name="pine_winter" type="StaticBody2D" unique_id=43485489]
+collision_layer = 2
+script = ExtResource("1_tygll")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=302517920]
+texture_filter = 1
+position = Vector2(0, -20)
+texture = ExtResource("2_0k5u7")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=244782818]
+position = Vector2(0, -4.4)
+shape = SubResource("RectangleShape2D_181sn")

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ds7117cgb23ew"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_rxwb6"]
+[ext_resource type="Texture2D" uid="uid://6w48e48qim3f" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_berry_red.png" id="2_101yv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fe2qp"]
+size = Vector2(12.24, 6)
+
+[node name="bush_berry_red" type="StaticBody2D" unique_id=978627385]
+collision_layer = 2
+script = ExtResource("1_rxwb6")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=262545454]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_101yv")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1597309477]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_fe2qp")

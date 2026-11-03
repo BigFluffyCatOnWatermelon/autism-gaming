@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://b3f2s3ke2jay4"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_0dicc"]
+[ext_resource type="Texture2D" uid="uid://dgisy3itxvjpx" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/granny/granny_idle_right.png" id="2_pmbi8"]
+
+[node name="granny_idle_right" type="StaticBody2D" unique_id=1209169394]
+collision_layer = 2
+script = ExtResource("1_0dicc")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2138413716]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_pmbi8")

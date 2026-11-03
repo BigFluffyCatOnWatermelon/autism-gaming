@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://d345631w4ivkp"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_2enck"]
+[ext_resource type="Texture2D" uid="uid://dvuvh3q7ki84u" path="res://Assets/CozyVillageFarm/02_Nature/Trees/summer/pine_summer.png" id="2_4w3mr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_le380"]
+size = Vector2(7.68, 8.8)
+
+[node name="pine_summer" type="StaticBody2D" unique_id=1970134651]
+collision_layer = 2
+script = ExtResource("1_2enck")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=149751488]
+texture_filter = 1
+position = Vector2(0, -20)
+texture = ExtResource("2_4w3mr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2075896191]
+position = Vector2(0, -4.4)
+shape = SubResource("RectangleShape2D_le380")

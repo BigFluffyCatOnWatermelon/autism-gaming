@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://br25jbnf0fe1r"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_1navk"]
+[ext_resource type="Texture2D" uid="uid://bdn56kgo6rjhy" path="res://Assets/CozyVillageFarm/02_Nature/Trees/spring/oak_spring.png" id="2_hx3qf"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hs1gv"]
+size = Vector2(7.68, 8.8)
+
+[node name="oak_spring" type="StaticBody2D" unique_id=967035346]
+collision_layer = 2
+script = ExtResource("1_1navk")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=496120379]
+texture_filter = 1
+position = Vector2(0, -20)
+texture = ExtResource("2_hx3qf")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1725658479]
+position = Vector2(0, -4.4)
+shape = SubResource("RectangleShape2D_hs1gv")

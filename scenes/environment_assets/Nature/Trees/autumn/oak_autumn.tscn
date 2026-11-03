@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://d02rdmr8bqe1h"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_35nqd"]
+[ext_resource type="Texture2D" uid="uid://bdge2kentvwe7" path="res://Assets/CozyVillageFarm/02_Nature/Trees/autumn/oak_autumn.png" id="2_xqf7p"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_b82d6"]
+size = Vector2(7.68, 8.8)
+
+[node name="oak_autumn" type="StaticBody2D" unique_id=726729989]
+collision_layer = 2
+script = ExtResource("1_35nqd")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1938030613]
+texture_filter = 1
+position = Vector2(0, -20)
+texture = ExtResource("2_xqf7p")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2041090130]
+position = Vector2(0, -4.4)
+shape = SubResource("RectangleShape2D_b82d6")

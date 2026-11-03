@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://h7iy452v1j4r"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_ae2de"]
+[ext_resource type="Texture2D" uid="uid://b56cerfhterbr" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/kid/kid_walk_right.png" id="2_oaed4"]
+
+[node name="kid_walk_right" type="StaticBody2D" unique_id=570752303]
+collision_layer = 2
+script = ExtResource("1_ae2de")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=12545806]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_oaed4")

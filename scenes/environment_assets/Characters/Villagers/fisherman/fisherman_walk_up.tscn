@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://c0xwmwqku5g2f"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_0xg34"]
+[ext_resource type="Texture2D" uid="uid://uiqpadqklvu4" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/fisherman/fisherman_walk_up.png" id="2_4w420"]
+
+[node name="fisherman_walk_up" type="StaticBody2D" unique_id=8002839]
+collision_layer = 2
+script = ExtResource("1_0xg34")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1978992384]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_4w420")

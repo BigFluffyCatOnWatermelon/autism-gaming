@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://cmj67f2c4xx11"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_e408i"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_3mtud"]
+
+[node name="harvest_pop_anim_4f" type="StaticBody2D" unique_id=211192027]
+collision_layer = 2
+script = ExtResource("1_e408i")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=137761214]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_3mtud")
+autoplay = "default"

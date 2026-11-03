@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://bm3ij0q42b28n"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_iykla"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_jogwe"]
+
+[node name="chimney_smoke_anim_5f" type="StaticBody2D" unique_id=2140788817]
+collision_layer = 2
+script = ExtResource("1_iykla")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=905280613]
+texture_filter = 1
+position = Vector2(0, -16)
+sprite_frames = SubResource("SpriteFrames_jogwe")
+autoplay = "default"

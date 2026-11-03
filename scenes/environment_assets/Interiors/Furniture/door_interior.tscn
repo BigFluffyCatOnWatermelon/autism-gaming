@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://drwcx1vxg3di8"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_il0vc"]
+[ext_resource type="Texture2D" uid="uid://cxwb2pl677sqc" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/door_interior.png" id="2_isjln"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7yeri"]
+size = Vector2(11.52, 10.24)
+
+[node name="door_interior" type="StaticBody2D" unique_id=1435522280]
+collision_layer = 2
+script = ExtResource("1_il0vc")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1654599657]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_isjln")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=755812268]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_7yeri")

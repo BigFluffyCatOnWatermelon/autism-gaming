@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://m57cvkkn7nyo"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_r80ds"]
+[ext_resource type="Texture2D" uid="uid://cn5vexfg27akn" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_brown.png" id="2_ti6ea"]
+
+[node name="mushroom_brown" type="StaticBody2D" unique_id=95442037]
+collision_layer = 2
+script = ExtResource("1_r80ds")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=385270799]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_ti6ea")

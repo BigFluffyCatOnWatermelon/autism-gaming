@@ -1,5 +1,239 @@
-[gd_resource type="TileSet" format=3]
+[gd_resource type="TileSet" format=3 uid="uid://dwv04ii408jwy"]
+
+[ext_resource type="Texture2D" uid="uid://coxaeb2k3x8jb" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/bottle_message.png" id="1_bfvxn"]
+[ext_resource type="Texture2D" uid="uid://ya4qs3fcfjq2" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/buoy_bob_anim_2f.png" id="2_1l153"]
+[ext_resource type="Texture2D" uid="uid://c3lm1y1trsj30" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_post.png" id="3_u8eua"]
+[ext_resource type="Texture2D" uid="uid://slniw00vepib" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_vertical.png" id="4_1scr3"]
+[ext_resource type="Texture2D" uid="uid://busa4lof1t5a1" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_vertical_end.png" id="5_6bt7q"]
+[ext_resource type="Texture2D" uid="uid://0kgm33yn5aip" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/rock_in_water_anim_3f.png" id="6_es0qj"]
+[ext_resource type="Texture2D" uid="uid://c3swl51y8tfkx" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/rowboat.png" id="7_2wh5c"]
+[ext_resource type="Texture2D" uid="uid://nc2vf0vduf77" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/sandcastle.png" id="8_ctl4m"]
+[ext_resource type="Texture2D" uid="uid://c2ogp2fqprbkw" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/seagull_fly_anim_3f.png" id="9_odr20"]
+[ext_resource type="Texture2D" uid="uid://c8lw3dcooria6" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/seaweed_sway_anim_3f.png" id="10_kdtro"]
+[ext_resource type="Texture2D" uid="uid://b8tqbqm4uahcf" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/shell_conch.png" id="11_wcjj0"]
+[ext_resource type="Texture2D" uid="uid://ctrqjivkau18q" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/shell_scallop.png" id="12_eov00"]
+[ext_resource type="Texture2D" uid="uid://dci3oa4v43o3g" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/coral_orange.png" id="13_jag4i"]
+[ext_resource type="Texture2D" uid="uid://c333xkbpg08ug" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/shell_spiral.png" id="14_7wxqg"]
+[ext_resource type="Texture2D" uid="uid://c73di07teav2c" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/starfish.png" id="15_jiibi"]
+[ext_resource type="Texture2D" uid="uid://vhxix0u4wbfe" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/towel_blue.png" id="16_d3r32"]
+[ext_resource type="Texture2D" uid="uid://6xdsfxy1g7dd" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/towel_red.png" id="17_8yt5a"]
+[ext_resource type="Texture2D" uid="uid://dgp4f65u48nxi" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/umbrella_blue.png" id="18_edb8f"]
+[ext_resource type="Texture2D" uid="uid://diqwex4xspkuv" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/umbrella_red.png" id="19_s6qev"]
+[ext_resource type="Texture2D" uid="uid://cqnb8tefakiet" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/coral_pink.png" id="20_gb2h3"]
+[ext_resource type="Texture2D" uid="uid://b3u24n3dcla0j" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/crab_walk_anim_2f.png" id="21_1wc1a"]
+[ext_resource type="Texture2D" uid="uid://c37a6temjxhpo" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/driftwood.png" id="22_0k3mr"]
+[ext_resource type="Texture2D" uid="uid://c3jwwxa1g02l7" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/fishing_bobber_anim_4f.png" id="23_fkdqr"]
+[ext_resource type="Texture2D" uid="uid://oom0qj4o22as" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/palm_tree.png" id="24_1j62j"]
+[ext_resource type="Texture2D" uid="uid://c5wd5tr20x5y4" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_horizontal.png" id="25_15ihh"]
+[ext_resource type="Texture2D" uid="uid://2le2lq7hka5b" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_horizontal_end.png" id="26_tdon0"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pfvjg"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/bottle_message.png"
+texture = ExtResource("1_bfvxn")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5ayrc"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/buoy_bob_anim_2f.png"
+texture = ExtResource("2_1l153")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_drh54"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_post.png"
+texture = ExtResource("3_u8eua")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5lfog"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_vertical.png"
+texture = ExtResource("4_1scr3")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3ln3o"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_vertical_end.png"
+texture = ExtResource("5_6bt7q")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qnpio"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/rock_in_water_anim_3f.png"
+texture = ExtResource("6_es0qj")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -7.68, 6.56, -7.68, 6.56, 0, -6.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6ersa"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/rowboat.png"
+texture = ExtResource("7_2wh5c")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pgugr"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/sandcastle.png"
+texture = ExtResource("8_ctl4m")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_q2fsi"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/seagull_fly_anim_3f.png"
+texture = ExtResource("9_odr20")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tl1va"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/seaweed_sway_anim_3f.png"
+texture = ExtResource("10_kdtro")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qxbb6"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/shell_conch.png"
+texture = ExtResource("11_wcjj0")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pu8n8"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/shell_scallop.png"
+texture = ExtResource("12_eov00")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5py6q"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/coral_orange.png"
+texture = ExtResource("13_jag4i")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_71hid"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/shell_spiral.png"
+texture = ExtResource("14_7wxqg")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ecujb"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/starfish.png"
+texture = ExtResource("15_jiibi")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dj6df"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/towel_blue.png"
+texture = ExtResource("16_d3r32")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_agyh0"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/towel_red.png"
+texture = ExtResource("17_8yt5a")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_v453e"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/umbrella_blue.png"
+texture = ExtResource("18_edb8f")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mh017"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/umbrella_red.png"
+texture = ExtResource("19_s6qev")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_yko8x"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/coral_pink.png"
+texture = ExtResource("20_gb2h3")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lx4ey"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/crab_walk_anim_2f.png"
+texture = ExtResource("21_1wc1a")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_basrk"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/driftwood.png"
+texture = ExtResource("22_0k3mr")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5, 11.52, -5, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_m24e4"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/fishing_bobber_anim_4f.png"
+texture = ExtResource("23_fkdqr")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2ev0f"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/palm_tree.png"
+texture = ExtResource("24_1j62j")
+0:0/size_in_atlas = Vector2i(2, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -11.52, 11.52, -11.52, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_elitg"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_horizontal.png"
+texture = ExtResource("25_15ihh")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_f7i6p"]
+resource_name = "res://Assets/CozyVillageFarm/09_Beach_Fishing/pier_horizontal_end.png"
+texture = ExtResource("26_tdon0")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
 
 [resource]
-tile_size = Vector2i(16, 16)
-resource_name = "Пляж и рыбалка"
+resource_name = "Beach and Fishing"
+physics_layer_0/collision_layer = 2
+sources/0 = SubResource("TileSetAtlasSource_pfvjg")
+sources/1 = SubResource("TileSetAtlasSource_5ayrc")
+sources/2 = SubResource("TileSetAtlasSource_5py6q")
+sources/3 = SubResource("TileSetAtlasSource_yko8x")
+sources/4 = SubResource("TileSetAtlasSource_lx4ey")
+sources/5 = SubResource("TileSetAtlasSource_basrk")
+sources/6 = SubResource("TileSetAtlasSource_m24e4")
+sources/7 = SubResource("TileSetAtlasSource_2ev0f")
+sources/8 = SubResource("TileSetAtlasSource_elitg")
+sources/9 = SubResource("TileSetAtlasSource_f7i6p")
+sources/10 = SubResource("TileSetAtlasSource_drh54")
+sources/11 = SubResource("TileSetAtlasSource_5lfog")
+sources/12 = SubResource("TileSetAtlasSource_3ln3o")
+sources/13 = SubResource("TileSetAtlasSource_qnpio")
+sources/14 = SubResource("TileSetAtlasSource_6ersa")
+sources/15 = SubResource("TileSetAtlasSource_pgugr")
+sources/16 = SubResource("TileSetAtlasSource_q2fsi")
+sources/17 = SubResource("TileSetAtlasSource_tl1va")
+sources/18 = SubResource("TileSetAtlasSource_qxbb6")
+sources/19 = SubResource("TileSetAtlasSource_pu8n8")
+sources/20 = SubResource("TileSetAtlasSource_71hid")
+sources/21 = SubResource("TileSetAtlasSource_ecujb")
+sources/22 = SubResource("TileSetAtlasSource_dj6df")
+sources/23 = SubResource("TileSetAtlasSource_agyh0")
+sources/24 = SubResource("TileSetAtlasSource_v453e")
+sources/25 = SubResource("TileSetAtlasSource_mh017")

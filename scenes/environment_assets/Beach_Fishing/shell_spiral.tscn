@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://d3k7f853qet6b"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_xd0vp"]
+[ext_resource type="Texture2D" uid="uid://c333xkbpg08ug" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/shell_spiral.png" id="2_8orj5"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_e3k6c"]
+size = Vector2(11.52, 5.12)
+
+[node name="shell_spiral" type="StaticBody2D" unique_id=1582584892]
+collision_layer = 2
+script = ExtResource("1_xd0vp")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1187377445]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_8orj5")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1814565221]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_e3k6c")

@@ -4,13 +4,17 @@
 [ext_resource type="PackedScene" path="res://scenes/objects.tscn" id="2_objects"]
 [ext_resource type="PackedScene" uid="uid://dumfefyt6fha4" path="res://scenes/ui.tscn" id="3_ui"]
 [ext_resource type="Script" uid="uid://pueheorbixg" path="res://scripts/player_controller.gd" id="4_player"]
-[ext_resource type="Texture2D" uid="uid://h40r2qorhnjo" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png" id="5_player_texture"]
 [ext_resource type="Texture2D" uid="uid://ch5s216cd63rb" path="res://Assets/Effects/shadow.png" id="6_shadow_texture"]
-[ext_resource type="PackedScene" path="res://scenes/terrain.tscn" id="7_terrain"]
+[ext_resource type="PackedScene" uid="uid://c4ys8f3t71vt" path="res://scenes/terrain.tscn" id="7_terrain"]
+[ext_resource type="PackedScene" uid="uid://c2gv6tv61mjfj" path="res://scenes/environment_assets/Nature/Trees/summer/oak_summer.tscn" id="8_7r4gi"]
+[ext_resource type="PackedScene" uid="uid://ddeassbgpjklt" path="res://scenes/environment_assets/Nature/Rocks/rock_large.tscn" id="9_w7kh3"]
 
 [sub_resource type="CapsuleShape2D" id="PlayerCollision"]
-radius = 8.0
-height = 28.0
+radius = 7.0
+height = 17.857113
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_4mrxx"]
+load_path = "res://.godot/imported/player_walk_idle_sheet.png-3090407548a1806c188796f9da8dff49.ctex"
 
 [node name="World" type="Node2D" unique_id=7108458]
 script = ExtResource("1_world")
@@ -22,26 +26,29 @@ position = Vector2(-13, 15)
 script = ExtResource("4_player")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=583635825]
-position = Vector2(0, 4)
+position = Vector2(0, 15)
+scale = Vector2(1, 0.5600008)
 shape = SubResource("PlayerCollision")
 
 [node name="Shadow" type="Sprite2D" parent="Player" unique_id=98215389]
 z_index = -1
 texture_filter = 1
-position = Vector2(0, 15)
+position = Vector2(0, 20)
 scale = Vector2(1.15, 1)
 texture = ExtResource("6_shadow_texture")
+offset = Vector2(0, -5)
 
 [node name="Sprite" type="Sprite2D" parent="Player" unique_id=1588598864]
 texture_filter = 1
-position = Vector2(0, -3)
+position = Vector2(0, 18)
 scale = Vector2(1.25, 1.25)
-texture = ExtResource("5_player_texture")
+texture = SubResource("CompressedTexture2D_4mrxx")
+offset = Vector2(0, -16)
 hframes = 6
 vframes = 4
+region_rect = Rect2(2, 10, 12, 22)
 
 [node name="HeldItem" type="Sprite2D" parent="Player" unique_id=690079888]
-visible = false
 z_index = 2
 texture_filter = 1
 scale = Vector2(0.72, 0.72)
@@ -53,3 +60,13 @@ position_smoothing_speed = 8.0
 [node name="Objects" parent="." unique_id=1700838550 instance=ExtResource("2_objects")]
 
 [node name="UI" parent="." unique_id=1558874100 instance=ExtResource("3_ui")]
+
+[node name="oak_summer" parent="." unique_id=1288095231 instance=ExtResource("8_7r4gi")]
+z_index = 2074
+z_as_relative = false
+position = Vector2(-84, 25)
+
+[node name="rock_large" parent="." unique_id=298973204 instance=ExtResource("9_w7kh3")]
+z_index = 2112
+z_as_relative = false
+position = Vector2(-76, 63)

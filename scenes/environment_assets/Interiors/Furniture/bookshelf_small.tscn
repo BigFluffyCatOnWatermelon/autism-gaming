@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dlnsgooswx6ii"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_q6aau"]
+[ext_resource type="Texture2D" uid="uid://bennmf03if2bc" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/bookshelf_small.png" id="2_8a7ru"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_cyr0o"]
+size = Vector2(11.52, 10.24)
+
+[node name="bookshelf_small" type="StaticBody2D" unique_id=1919321562]
+collision_layer = 2
+script = ExtResource("1_q6aau")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1460586828]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_8a7ru")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1599589389]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_cyr0o")

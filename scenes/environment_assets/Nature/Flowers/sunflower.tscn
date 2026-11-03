@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://bs6k3nibhvvbk"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_dv1tk"]
+[ext_resource type="Texture2D" uid="uid://2jwy1lbjc21w" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/sunflower.png" id="2_83qbv"]
+
+[node name="sunflower" type="StaticBody2D" unique_id=2096470148]
+collision_layer = 2
+script = ExtResource("1_dv1tk")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=365391241]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_83qbv")

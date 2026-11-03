@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://f67rqlok6fig"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_ue6vf"]
+[ext_resource type="Texture2D" uid="uid://c4yw4f52p4ru0" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/log_fallen.png" id="2_54urc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gcbfm"]
+size = Vector2(7.68, 7)
+
+[node name="log_fallen" type="StaticBody2D" unique_id=2108820738]
+collision_layer = 2
+script = ExtResource("1_ue6vf")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=601945728]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_54urc")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1302786774]
+position = Vector2(0, -3.5)
+shape = SubResource("RectangleShape2D_gcbfm")

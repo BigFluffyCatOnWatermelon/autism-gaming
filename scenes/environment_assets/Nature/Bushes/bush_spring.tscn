@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dre50rs1jpvvm"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_stq4h"]
+[ext_resource type="Texture2D" uid="uid://cgw8vj2g1ayx3" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_spring.png" id="2_o7bih"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_grt6k"]
+size = Vector2(12.24, 6)
+
+[node name="bush_spring" type="StaticBody2D" unique_id=698696304]
+collision_layer = 2
+script = ExtResource("1_stq4h")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=584587435]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_o7bih")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1525004470]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_grt6k")

@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://btan58i607uyq"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_q5b3m"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_gwvuo"]
+
+[node name="snow_overlay_anim_4f" type="StaticBody2D" unique_id=1180523041]
+collision_layer = 2
+script = ExtResource("1_q5b3m")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1389942923]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_gwvuo")
+autoplay = "default"

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://djggebt5dh4b5"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_u02kg"]
+[ext_resource type="Texture2D" uid="uid://b6sou5cvog572" path="res://Assets/CozyVillageFarm/03_Buildings/chicken_coop.png" id="2_dnsql"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_gc7i0"]
+size = Vector2(28.16, 8.96)
+
+[node name="chicken_coop" type="StaticBody2D" unique_id=432436276]
+collision_layer = 2
+script = ExtResource("1_u02kg")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1148113712]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_dnsql")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2132983654]
+position = Vector2(0, -4.48)
+shape = SubResource("RectangleShape2D_gc7i0")

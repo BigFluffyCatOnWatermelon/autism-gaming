@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://b8647d2v0ovk1"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_1cubc"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_uodjr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wuptm"]
+size = Vector2(11.52, 5.12)
+
+[node name="crab_walk_anim_2f" type="StaticBody2D" unique_id=1063467538]
+collision_layer = 2
+script = ExtResource("1_1cubc")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1010363244]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_uodjr")
+autoplay = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1688920061]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_wuptm")

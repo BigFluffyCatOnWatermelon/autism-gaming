@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://bctxf0cfwra1o"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_l8gsf"]
+[ext_resource type="Texture2D" uid="uid://cuc6mi5alxic0" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_blue.png" id="2_bwnhx"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_c52jj"]
+size = Vector2(13.12, 7.68)
+
+[node name="crystal_blue" type="StaticBody2D" unique_id=2042027367]
+collision_layer = 2
+script = ExtResource("1_l8gsf")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2072949328]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_bwnhx")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=235977793]
+position = Vector2(0, -7.68)
+shape = SubResource("RectangleShape2D_c52jj")

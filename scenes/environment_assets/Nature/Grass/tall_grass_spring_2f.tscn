@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://b2mis63v78hwv"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_xk83o"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_nvp7t"]
+
+[node name="tall_grass_spring_2f" type="StaticBody2D" unique_id=1227006365]
+collision_layer = 2
+script = ExtResource("1_xk83o")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=181241707]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_nvp7t")
+autoplay = "default"

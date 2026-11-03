@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://c68cvt162jqnc"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_yrcks"]
+[ext_resource type="Texture2D" uid="uid://c7dvc3xgjoc0u" path="res://Assets/CozyVillageFarm/04_Props/notice_board.png" id="2_tu4t5"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1lgc1"]
+size = Vector2(23.04, 10.24)
+
+[node name="notice_board" type="StaticBody2D" unique_id=131486855]
+collision_layer = 2
+script = ExtResource("1_yrcks")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1821131149]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_tu4t5")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2113831649]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_1lgc1")

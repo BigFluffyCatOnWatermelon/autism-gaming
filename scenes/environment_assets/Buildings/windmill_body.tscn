@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bef37v5cnp5lj"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_14u3g"]
+[ext_resource type="Texture2D" uid="uid://dnlbwnr68vp3x" path="res://Assets/CozyVillageFarm/03_Buildings/windmill_body.png" id="2_rdc0w"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ghqeh"]
+size = Vector2(42.24, 20.16)
+
+[node name="windmill_body" type="StaticBody2D" unique_id=1869826132]
+collision_layer = 2
+script = ExtResource("1_14u3g")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1199609647]
+texture_filter = 1
+position = Vector2(0, -36)
+texture = ExtResource("2_rdc0w")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=626337432]
+position = Vector2(0, -10.08)
+shape = SubResource("RectangleShape2D_ghqeh")

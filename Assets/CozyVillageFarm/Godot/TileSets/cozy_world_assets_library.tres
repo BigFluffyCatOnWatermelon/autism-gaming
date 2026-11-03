@@ -1,5 +1,1600 @@
-[gd_resource type="TileSet" format=3]
+[gd_resource type="TileSet" format=3 uid="uid://dv8dnqyamcqfm"]
+
+[ext_resource type="Texture2D" uid="uid://dswcc4v86ycvn" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_autumn.png" id="1_blewh"]
+[ext_resource type="Texture2D" uid="uid://c2ah2r8pprin1" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_berry_blue.png" id="2_rxw40"]
+[ext_resource type="Texture2D" uid="uid://nm6e5lbl6xnw" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_purple.png" id="3_3flik"]
+[ext_resource type="Texture2D" uid="uid://cqgofry26620w" path="res://Assets/CozyVillageFarm/04_Props/beehive.png" id="4_nx1es"]
+[ext_resource type="Texture2D" uid="uid://cksdvhudrcvh6" path="res://Assets/CozyVillageFarm/04_Props/bench.png" id="5_8vf3c"]
+[ext_resource type="Texture2D" uid="uid://t463k2f7hj7i" path="res://Assets/CozyVillageFarm/04_Props/campfire_anim_3f.png" id="6_u2c17"]
+[ext_resource type="Texture2D" uid="uid://cfaj353es8srf" path="res://Assets/CozyVillageFarm/04_Props/cart_produce.png" id="7_oq6ub"]
+[ext_resource type="Texture2D" uid="uid://dcdc2m15b6sqf" path="res://Assets/CozyVillageFarm/04_Props/chest_closed.png" id="8_511hb"]
+[ext_resource type="Texture2D" uid="uid://bf5cyssn6etdj" path="res://Assets/CozyVillageFarm/04_Props/chest_open.png" id="9_nlptn"]
+[ext_resource type="Texture2D" uid="uid://cjm28u3jr33eq" path="res://Assets/CozyVillageFarm/04_Props/crate.png" id="10_ofwm7"]
+[ext_resource type="Texture2D" uid="uid://dr5oag6mu0jgu" path="res://Assets/CozyVillageFarm/04_Props/Fences/gate_closed.png" id="11_d3xny"]
+[ext_resource type="Texture2D" uid="uid://b5td4wu8cfc1j" path="res://Assets/CozyVillageFarm/04_Props/Fences/gate_open.png" id="12_pclch"]
+[ext_resource type="Texture2D" uid="uid://dvu7b2op60a5e" path="res://Assets/CozyVillageFarm/04_Props/flowerpot_blue.png" id="13_i1k13"]
+[ext_resource type="Texture2D" uid="uid://dba0hbtpk5cpu" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_red.png" id="14_n4wml"]
+[ext_resource type="Texture2D" uid="uid://bjgnoyg27t3ul" path="res://Assets/CozyVillageFarm/04_Props/flowerpot_red.png" id="15_oipm3"]
+[ext_resource type="Texture2D" uid="uid://bnskg7yxv8nwa" path="res://Assets/CozyVillageFarm/04_Props/fountain_anim_3f.png" id="16_ym75e"]
+[ext_resource type="Texture2D" uid="uid://brufr81dmy05y" path="res://Assets/CozyVillageFarm/04_Props/hay_bale.png" id="17_i4knm"]
+[ext_resource type="Texture2D" uid="uid://cj3y408rp8jxk" path="res://Assets/CozyVillageFarm/04_Props/lamp_post_off.png" id="18_w6pch"]
+[ext_resource type="Texture2D" uid="uid://brrtef3r3tbdo" path="res://Assets/CozyVillageFarm/04_Props/lamp_post_on.png" id="19_mpeex"]
+[ext_resource type="Texture2D" uid="uid://stikhnob8sbn" path="res://Assets/CozyVillageFarm/04_Props/log_pile.png" id="20_iim5s"]
+[ext_resource type="Texture2D" uid="uid://dv66dnaamsf02" path="res://Assets/CozyVillageFarm/04_Props/mailbox.png" id="21_kqds6"]
+[ext_resource type="Texture2D" uid="uid://b3jmqplj6s3eb" path="res://Assets/CozyVillageFarm/04_Props/milk_can.png" id="22_tfut5"]
+[ext_resource type="Texture2D" uid="uid://c7dvc3xgjoc0u" path="res://Assets/CozyVillageFarm/04_Props/notice_board.png" id="23_n8ilu"]
+[ext_resource type="Texture2D" uid="uid://cojrc4xt71ygv" path="res://Assets/CozyVillageFarm/04_Props/picnic_table.png" id="24_mg2fn"]
+[ext_resource type="Texture2D" uid="uid://ceo31yqkv71d0" path="res://Assets/CozyVillageFarm/02_Nature/Decor/pebbles.png" id="25_hd633"]
+[ext_resource type="Texture2D" uid="uid://deskeq8ak88pq" path="res://Assets/CozyVillageFarm/04_Props/planter_box.png" id="26_yvd7h"]
+[ext_resource type="Texture2D" uid="uid://cdcimmyw31sco" path="res://Assets/CozyVillageFarm/04_Props/sack.png" id="27_wt1is"]
+[ext_resource type="Texture2D" uid="uid://0aajobri1bm8" path="res://Assets/CozyVillageFarm/04_Props/scarecrow.png" id="28_g15la"]
+[ext_resource type="Texture2D" uid="uid://cjm0ttr5opjfy" path="res://Assets/CozyVillageFarm/04_Props/signpost.png" id="29_gmrjb"]
+[ext_resource type="Texture2D" uid="uid://cjs8w6gbcmdh" path="res://Assets/CozyVillageFarm/04_Props/water_trough.png" id="30_r886f"]
+[ext_resource type="Texture2D" uid="uid://w6i78levld46" path="res://Assets/CozyVillageFarm/04_Props/wheelbarrow.png" id="31_xfxbj"]
+[ext_resource type="Texture2D" uid="uid://c42idsdosxb8j" path="res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_carpet_blue.png" id="32_t1ikt"]
+[ext_resource type="Texture2D" uid="uid://0wyx8k4sgc7l" path="res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_carpet_red.png" id="33_o4e3q"]
+[ext_resource type="Texture2D" uid="uid://db8is08vlg76l" path="res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_checker.png" id="34_t0vvn"]
+[ext_resource type="Texture2D" uid="uid://bmgivaf146kqh" path="res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_stone.png" id="35_l56wv"]
+[ext_resource type="Texture2D" uid="uid://ckcx75anr84h1" path="res://Assets/CozyVillageFarm/02_Nature/Decor/reeds.png" id="36_7q6er"]
+[ext_resource type="Texture2D" uid="uid://bbcsv1qarwhfe" path="res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_straw.png" id="37_mj3e0"]
+[ext_resource type="Texture2D" uid="uid://p03lvncspr8r" path="res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_tile_terracotta.png" id="38_m72jj"]
+[ext_resource type="Texture2D" uid="uid://cejwqy6xfvcgh" path="res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_wood_dark.png" id="39_wp2wq"]
+[ext_resource type="Texture2D" uid="uid://daodtngg12122" path="res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_wood_light.png" id="40_3ser0"]
+[ext_resource type="Texture2D" uid="uid://csg68mtxyb33w" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/bathtub.png" id="41_f2ih0"]
+[ext_resource type="Texture2D" uid="uid://cpxqj4gvos3jx" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/bed_double_green.png" id="42_yi03v"]
+[ext_resource type="Texture2D" uid="uid://dnd662287xxb5" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/bed_single_blue.png" id="43_q6oho"]
+[ext_resource type="Texture2D" uid="uid://dpowbwmyhqihr" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/bed_single_red.png" id="44_6dbl1"]
+[ext_resource type="Texture2D" uid="uid://bgejc5vjfh7rg" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/bookshelf_large.png" id="45_jqcfh"]
+[ext_resource type="Texture2D" uid="uid://bennmf03if2bc" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/bookshelf_small.png" id="46_cb05w"]
+[ext_resource type="Texture2D" uid="uid://khmvy0f5s4dx" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/candle_anim_2f.png" id="47_gxbcq"]
+[ext_resource type="Texture2D" uid="uid://vda8vakcj1su" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/chair_back.png" id="48_25iap"]
+[ext_resource type="Texture2D" uid="uid://cefevnt32odbp" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/chair_front.png" id="49_twa3a"]
+[ext_resource type="Texture2D" uid="uid://0yuis4f2kedb" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/chair_side.png" id="50_uwgf7"]
+[ext_resource type="Texture2D" uid="uid://bxqsi67l43ldl" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter.png" id="51_3j1xs"]
+[ext_resource type="Texture2D" uid="uid://dcdpycwt5qkln" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter_cutting_board.png" id="52_8rmh0"]
+[ext_resource type="Texture2D" uid="uid://c8bwd1k8fneve" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter_sink.png" id="53_5usy1"]
+[ext_resource type="Texture2D" uid="uid://cxwb2pl677sqc" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/door_interior.png" id="54_7xv8c"]
+[ext_resource type="Texture2D" uid="uid://b7o08blwfm76s" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/dresser.png" id="55_yq0ld"]
+[ext_resource type="Texture2D" uid="uid://8xbg3n3mq8k5" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/fireplace_anim_3f.png" id="56_o0acw"]
+[ext_resource type="Texture2D" uid="uid://claqp10k0n4x7" path="res://Assets/CozyVillageFarm/02_Nature/Decor/snowman.png" id="57_jv4dc"]
+[ext_resource type="Texture2D" uid="uid://y3rp0y1idwk3" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/painting.png" id="58_ocxo1"]
+[ext_resource type="Texture2D" uid="uid://dkn3q1phlyoxo" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/plant_big.png" id="59_yxmck"]
+[ext_resource type="Texture2D" uid="uid://d24v4e546x2sk" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/plant_small.png" id="60_lkd0b"]
+[ext_resource type="Texture2D" uid="uid://cn2ogles3rlll" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/rug_blue.png" id="61_bqv5h"]
+[ext_resource type="Texture2D" uid="uid://deh2v841exr3g" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/rug_long_green.png" id="62_ddjuh"]
+[ext_resource type="Texture2D" uid="uid://bwh14mt0p57fr" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/rug_red.png" id="63_n46na"]
+[ext_resource type="Texture2D" uid="uid://d0m10loei48b5" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/shop_counter.png" id="64_4rhkw"]
+[ext_resource type="Texture2D" uid="uid://ctd7etlk8umga" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/shop_shelf.png" id="65_buicf"]
+[ext_resource type="Texture2D" uid="uid://c80ntuuvgo82q" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/stool.png" id="66_88ife"]
+[ext_resource type="Texture2D" uid="uid://bdpmpq1ck05ed" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/stove_anim_2f.png" id="67_t83c8"]
+[ext_resource type="Texture2D" uid="uid://bdy1e1na2s8v7" path="res://Assets/CozyVillageFarm/02_Nature/Decor/twigs.png" id="68_u4pv7"]
+[ext_resource type="Texture2D" uid="uid://c6j5fxp6dfow3" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/table_lamp.png" id="69_a4pji"]
+[ext_resource type="Texture2D" uid="uid://dk06wfj2f011w" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/table_round.png" id="70_otbhe"]
+[ext_resource type="Texture2D" uid="uid://lgdvdqhv0q44" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/table_square.png" id="71_kr2ue"]
+[ext_resource type="Texture2D" uid="uid://crcveenmsui0h" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/wall_clock.png" id="72_860d3"]
+[ext_resource type="Texture2D" uid="uid://2q23jx6dweq6" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/wardrobe.png" id="73_33i57"]
+[ext_resource type="Texture2D" uid="uid://vfryv6e88dd7" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/window_curtains.png" id="74_x2wtf"]
+[ext_resource type="Texture2D" uid="uid://cftukn4xhulpq" path="res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_blue_top_mid_bottom.png" id="75_6iibj"]
+[ext_resource type="Texture2D" uid="uid://b17qp35kobtl2" path="res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_cream_top_mid_bottom.png" id="76_ctwue"]
+[ext_resource type="Texture2D" uid="uid://dwdtktikk4p0j" path="res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_green_stripe_top_mid_bottom.png" id="77_kgce4"]
+[ext_resource type="Texture2D" uid="uid://drguag1ccktkh" path="res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_pink_floral_top_mid_bottom.png" id="78_3a3vq"]
+[ext_resource type="Texture2D" uid="uid://btx6icv4ku3rp" path="res://Assets/CozyVillageFarm/02_Nature/Decor/weeds.png" id="79_ls5pr"]
+[ext_resource type="Texture2D" uid="uid://gglo7ip52mbd" path="res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_stone_top_mid_bottom.png" id="80_cvqir"]
+[ext_resource type="Texture2D" uid="uid://1owm6svqbbdx" path="res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_wood_panel_top_mid_bottom.png" id="81_lehbp"]
+[ext_resource type="Texture2D" uid="uid://d2h14nfe3iw8k" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_blue.png" id="82_1klmd"]
+[ext_resource type="Texture2D" uid="uid://dlli627bvj5n8" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_mixed.png" id="83_anytw"]
+[ext_resource type="Texture2D" uid="uid://6w48e48qim3f" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_berry_red.png" id="84_rhvcc"]
+[ext_resource type="Texture2D" uid="uid://bms1hqo2i1ypo" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_pink.png" id="85_ffq6t"]
+[ext_resource type="Texture2D" uid="uid://ooh3nwxcrysy" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_purple.png" id="86_s3syd"]
+[ext_resource type="Texture2D" uid="uid://de8tqghuqrm76" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_white.png" id="87_o2hj5"]
+[ext_resource type="Texture2D" uid="uid://scx1mv3u5ddp" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_yellow.png" id="88_3y8ff"]
+[ext_resource type="Texture2D" uid="uid://wdevi6amqdec" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/lily_pad_flower.png" id="89_ycqe0"]
+[ext_resource type="Texture2D" uid="uid://2jwy1lbjc21w" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/sunflower.png" id="90_xxycg"]
+[ext_resource type="Texture2D" uid="uid://p8v3nunna35v" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_pink.png" id="91_ok6wl"]
+[ext_resource type="Texture2D" uid="uid://d14k0mtpcjhof" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_red.png" id="92_05hai"]
+[ext_resource type="Texture2D" uid="uid://dkfvsy5yp7ful" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_yellow.png" id="93_84th1"]
+[ext_resource type="Texture2D" uid="uid://lg7xjgx4pd6y" path="res://Assets/CozyVillageFarm/02_Nature/Grass/grass_tuft_autumn_2f.png" id="94_2eg86"]
+[ext_resource type="Texture2D" uid="uid://cf5u48lg144ki" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_flowering.png" id="95_70esl"]
+[ext_resource type="Texture2D" uid="uid://c84n7rmlvv4wt" path="res://Assets/CozyVillageFarm/02_Nature/Grass/grass_tuft_spring_2f.png" id="96_x2m00"]
+[ext_resource type="Texture2D" uid="uid://cxlyxlodrl6i1" path="res://Assets/CozyVillageFarm/02_Nature/Grass/grass_tuft_summer_2f.png" id="97_h4gqb"]
+[ext_resource type="Texture2D" uid="uid://dlr43t6j0vwvp" path="res://Assets/CozyVillageFarm/02_Nature/Grass/grass_tuft_winter_2f.png" id="98_npr8t"]
+[ext_resource type="Texture2D" uid="uid://scc74dgenuvy" path="res://Assets/CozyVillageFarm/02_Nature/Grass/tall_grass_autumn_2f.png" id="99_0yil1"]
+[ext_resource type="Texture2D" uid="uid://dm1uqv3ea71" path="res://Assets/CozyVillageFarm/02_Nature/Grass/tall_grass_spring_2f.png" id="100_fnm68"]
+[ext_resource type="Texture2D" uid="uid://c0gv0gaw438fm" path="res://Assets/CozyVillageFarm/02_Nature/Grass/tall_grass_summer_2f.png" id="101_ks4aq"]
+[ext_resource type="Texture2D" uid="uid://ck3chc73iifcq" path="res://Assets/CozyVillageFarm/02_Nature/Grass/tall_grass_winter_2f.png" id="102_pjcby"]
+[ext_resource type="Texture2D" uid="uid://cuc6mi5alxic0" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_blue.png" id="103_kr5bx"]
+[ext_resource type="Texture2D" uid="uid://bpmbl67c3vhgl" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_pink.png" id="104_03x2v"]
+[ext_resource type="Texture2D" uid="uid://clnr7hxecjbja" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_teal.png" id="105_pdbug"]
+[ext_resource type="Texture2D" uid="uid://cgw8vj2g1ayx3" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_spring.png" id="106_b6xes"]
+[ext_resource type="Texture2D" uid="uid://duuo4q747nogy" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_emerald_large.png" id="107_38qdc"]
+[ext_resource type="Texture2D" uid="uid://cdk2nd02e8sse" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_gold_large.png" id="108_27nr0"]
+[ext_resource type="Texture2D" uid="uid://dw3k57k4pmf8n" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_large.png" id="109_ul17n"]
+[ext_resource type="Texture2D" uid="uid://cqhe4rw2eed7n" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_summer.png" id="110_o553a"]
+[ext_resource type="Texture2D" uid="uid://bdge2kentvwe7" path="res://Assets/CozyVillageFarm/02_Nature/Trees/autumn/oak_autumn.png" id="111_ogr1o"]
+[ext_resource type="Texture2D" uid="uid://iox6qutijkpd" path="res://Assets/CozyVillageFarm/02_Nature/Trees/autumn/pine_autumn.png" id="112_2kvon"]
+[ext_resource type="Texture2D" uid="uid://cs5nle1fglh5b" path="res://Assets/CozyVillageFarm/02_Nature/Trees/autumn/sapling_autumn.png" id="113_vnlp1"]
+[ext_resource type="Texture2D" uid="uid://bxfjuqa3qbhik" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/apple_tree.png" id="114_h0lyd"]
+[ext_resource type="Texture2D" uid="uid://dsrnegrq66yvd" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/cherry_blossom.png" id="115_yp0w5"]
+[ext_resource type="Texture2D" uid="uid://dpc051jlgykck" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/lemon_tree.png" id="116_6km2k"]
+[ext_resource type="Texture2D" uid="uid://c4yw4f52p4ru0" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/log_fallen.png" id="117_flmjh"]
+[ext_resource type="Texture2D" uid="uid://bdf03h6n3q41e" path="res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_winter.png" id="118_354a4"]
+[ext_resource type="Texture2D" uid="uid://ci7cil8u33xei" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/maple_red_autumn.png" id="119_8vldj"]
+[ext_resource type="Texture2D" uid="uid://b5yhpfl2gfh8c" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/orange_tree.png" id="120_rhs8l"]
+[ext_resource type="Texture2D" uid="uid://cqrq8idrrtaq0" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/palm_tree.png" id="121_accoe"]
+[ext_resource type="Texture2D" uid="uid://bvkxuu1601ygr" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/peach_tree.png" id="122_xihdt"]
+[ext_resource type="Texture2D" uid="uid://cvtsdyv85f26c" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/stump.png" id="123_k015j"]
+[ext_resource type="Texture2D" uid="uid://bdn56kgo6rjhy" path="res://Assets/CozyVillageFarm/02_Nature/Trees/spring/oak_spring.png" id="124_r28vo"]
+[ext_resource type="Texture2D" uid="uid://c80xo3wu1bxjl" path="res://Assets/CozyVillageFarm/02_Nature/Trees/spring/pine_spring.png" id="125_lqpal"]
+[ext_resource type="Texture2D" uid="uid://71oh4vasyrrx" path="res://Assets/CozyVillageFarm/02_Nature/Trees/spring/sapling_spring.png" id="126_7u7k5"]
+[ext_resource type="Texture2D" uid="uid://b6dp415i7n15l" path="res://Assets/CozyVillageFarm/02_Nature/Trees/summer/oak_summer.png" id="127_020oy"]
+[ext_resource type="Texture2D" uid="uid://dvuvh3q7ki84u" path="res://Assets/CozyVillageFarm/02_Nature/Trees/summer/pine_summer.png" id="128_ucj12"]
+[ext_resource type="Texture2D" uid="uid://bxsr45ieto51d" path="res://Assets/CozyVillageFarm/02_Nature/Decor/leaf_pile.png" id="129_r2xsv"]
+[ext_resource type="Texture2D" uid="uid://bm1egwtu1xsf8" path="res://Assets/CozyVillageFarm/02_Nature/Trees/summer/sapling_summer.png" id="130_c3sjc"]
+[ext_resource type="Texture2D" uid="uid://dfwhyvy51a0tt" path="res://Assets/CozyVillageFarm/02_Nature/Trees/winter/oak_winter.png" id="131_vasrp"]
+[ext_resource type="Texture2D" uid="uid://c0qi7eyo1m7eu" path="res://Assets/CozyVillageFarm/02_Nature/Trees/winter/pine_winter.png" id="132_xlldd"]
+[ext_resource type="Texture2D" uid="uid://dgatw2h1u283b" path="res://Assets/CozyVillageFarm/02_Nature/Trees/winter/sapling_winter.png" id="133_pq046"]
+[ext_resource type="Texture2D" uid="uid://n5cggeceg0nj" path="res://Assets/CozyVillageFarm/03_Buildings/bakery.png" id="134_h0cbg"]
+[ext_resource type="Texture2D" uid="uid://bh3yrwryx7243" path="res://Assets/CozyVillageFarm/03_Buildings/barn.png" id="135_omqt5"]
+[ext_resource type="Texture2D" uid="uid://c5rvvnu3l6yu2" path="res://Assets/CozyVillageFarm/03_Buildings/blacksmith.png" id="136_xc7c6"]
+[ext_resource type="Texture2D" uid="uid://b6sou5cvog572" path="res://Assets/CozyVillageFarm/03_Buildings/chicken_coop.png" id="137_jluqw"]
+[ext_resource type="Texture2D" uid="uid://cvqlehyy7qhkp" path="res://Assets/CozyVillageFarm/03_Buildings/fish_shop.png" id="138_mlnct"]
+[ext_resource type="Texture2D" uid="uid://bjuq035yrc7ly" path="res://Assets/CozyVillageFarm/03_Buildings/greenhouse.png" id="139_b5ir5"]
+[ext_resource type="Texture2D" uid="uid://bplsxnxsb1dmm" path="res://Assets/CozyVillageFarm/02_Nature/Decor/lily_pad.png" id="140_l14e6"]
+[ext_resource type="Texture2D" uid="uid://dyj41a5uqt0if" path="res://Assets/CozyVillageFarm/03_Buildings/house_blue_stone.png" id="141_1tjin"]
+[ext_resource type="Texture2D" uid="uid://cakl4ms25onlb" path="res://Assets/CozyVillageFarm/03_Buildings/house_green_plaster.png" id="142_57m13"]
+[ext_resource type="Texture2D" uid="uid://ceh74xlce2wly" path="res://Assets/CozyVillageFarm/03_Buildings/house_large_blue.png" id="143_61dyp"]
+[ext_resource type="Texture2D" uid="uid://c0jo2hp5gt8og" path="res://Assets/CozyVillageFarm/03_Buildings/house_large_red.png" id="144_wiukc"]
+[ext_resource type="Texture2D" uid="uid://fxn73fomsajj" path="res://Assets/CozyVillageFarm/03_Buildings/house_orange_brick.png" id="145_vb8dx"]
+[ext_resource type="Texture2D" uid="uid://b8txja50raxf" path="res://Assets/CozyVillageFarm/03_Buildings/house_purple_wood.png" id="146_genxs"]
+[ext_resource type="Texture2D" uid="uid://p3w88n8kpxhe" path="res://Assets/CozyVillageFarm/03_Buildings/house_red_wood.png" id="147_5igwk"]
+[ext_resource type="Texture2D" uid="uid://dmgfu0xdjdeiq" path="res://Assets/CozyVillageFarm/03_Buildings/house_slate_plaster.png" id="148_wfrxp"]
+[ext_resource type="Texture2D" uid="uid://cqngrfhdq5j0v" path="res://Assets/CozyVillageFarm/03_Buildings/inn.png" id="149_nkqet"]
+[ext_resource type="Texture2D" uid="uid://cxt6hm6buform" path="res://Assets/CozyVillageFarm/03_Buildings/market_stall_blue.png" id="150_j47lq"]
+[ext_resource type="Texture2D" uid="uid://cn5vexfg27akn" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_brown.png" id="151_utexj"]
+[ext_resource type="Texture2D" uid="uid://b8anwmfnrp3gh" path="res://Assets/CozyVillageFarm/03_Buildings/market_stall_green.png" id="152_1aaqm"]
+[ext_resource type="Texture2D" uid="uid://dhnqa2xh21bol" path="res://Assets/CozyVillageFarm/03_Buildings/market_stall_red.png" id="153_dytms"]
+[ext_resource type="Texture2D" uid="uid://dbbyk71ip7f1n" path="res://Assets/CozyVillageFarm/03_Buildings/shop_general.png" id="154_01iu1"]
+[ext_resource type="Texture2D" uid="uid://d0n8cbq1tkxlw" path="res://Assets/CozyVillageFarm/03_Buildings/well.png" id="155_yh4hg"]
+[ext_resource type="Texture2D" uid="uid://8628fj7vh5qh" path="res://Assets/CozyVillageFarm/03_Buildings/windmill_blades_anim_4f.png" id="156_cshn6"]
+[ext_resource type="Texture2D" uid="uid://dnlbwnr68vp3x" path="res://Assets/CozyVillageFarm/03_Buildings/windmill_body.png" id="157_qpcfy"]
+[ext_resource type="Texture2D" uid="uid://bh87liceiq65l" path="res://Assets/CozyVillageFarm/04_Props/anvil.png" id="158_kban1"]
+[ext_resource type="Texture2D" uid="uid://ydx4ybcwc5uh" path="res://Assets/CozyVillageFarm/04_Props/banner_blue.png" id="159_lronb"]
+[ext_resource type="Texture2D" uid="uid://caiv66q1ts1at" path="res://Assets/CozyVillageFarm/04_Props/banner_red.png" id="160_fdybe"]
+[ext_resource type="Texture2D" uid="uid://cs1ro248grvm0" path="res://Assets/CozyVillageFarm/04_Props/barrel.png" id="161_x5g03"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_so5gr"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_autumn.png"
+texture = ExtResource("1_blewh")
+texture_region_size = Vector2i(18, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.12, -6, 6.12, -6, 6.12, 0, -6.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bvugx"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_berry_blue.png"
+texture = ExtResource("2_rxw40")
+texture_region_size = Vector2i(18, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.12, -6, 6.12, -6, 6.12, 0, -6.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xkq0y"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_purple.png"
+texture = ExtResource("3_3flik")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_j5dbd"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/beehive.png"
+texture = ExtResource("4_nx1es")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2cy3q"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/bench.png"
+texture = ExtResource("5_8vf3c")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5, 11.52, -5, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ybbcn"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/campfire_anim_3f.png"
+texture = ExtResource("6_u2c17")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_783ld"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/cart_produce.png"
+texture = ExtResource("7_oq6ub")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_s00v6"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/chest_closed.png"
+texture = ExtResource("8_511hb")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ak00o"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/chest_open.png"
+texture = ExtResource("9_nlptn")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_f7l00"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/crate.png"
+texture = ExtResource("10_ofwm7")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_orda6"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/Fences/gate_closed.png"
+texture = ExtResource("11_d3xny")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hac1e"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/Fences/gate_open.png"
+texture = ExtResource("12_pclch")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_m0vtg"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/flowerpot_blue.png"
+texture = ExtResource("13_i1k13")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3ikn6"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_red.png"
+texture = ExtResource("14_n4wml")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ssjqt"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/flowerpot_red.png"
+texture = ExtResource("15_oipm3")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jwjg2"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/fountain_anim_3f.png"
+texture = ExtResource("16_ym75e")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-17.28, -11.52, 17.28, -11.52, 17.28, 0, -17.28, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_sxhtd"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/hay_bale.png"
+texture = ExtResource("17_i4knm")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1e2r1"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/lamp_post_off.png"
+texture = ExtResource("18_w6pch")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3wr7k"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/lamp_post_on.png"
+texture = ExtResource("19_mpeex")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6k0n4"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/log_pile.png"
+texture = ExtResource("20_iim5s")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5, 11.52, -5, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_v23s0"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/mailbox.png"
+texture = ExtResource("21_kqds6")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bjeek"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/milk_can.png"
+texture = ExtResource("22_tfut5")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4cd7w"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/notice_board.png"
+texture = ExtResource("23_n8ilu")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8l4nq"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/picnic_table.png"
+texture = ExtResource("24_mg2fn")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_acoqt"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/pebbles.png"
+texture = ExtResource("25_hd633")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_whagg"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/planter_box.png"
+texture = ExtResource("26_yvd7h")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5, 11.52, -5, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ogrn0"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/sack.png"
+texture = ExtResource("27_wt1is")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4urfr"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/scarecrow.png"
+texture = ExtResource("28_g15la")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_muf77"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/signpost.png"
+texture = ExtResource("29_gmrjb")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k11o8"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/water_trough.png"
+texture = ExtResource("30_r886f")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5, 11.52, -5, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xneny"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/wheelbarrow.png"
+texture = ExtResource("31_xfxbj")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5, 11.52, -5, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_73tw1"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_carpet_blue.png"
+texture = ExtResource("32_t1ikt")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_o6bcc"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_carpet_red.png"
+texture = ExtResource("33_o4e3q")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_unaxf"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_checker.png"
+texture = ExtResource("34_t0vvn")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4ugey"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_stone.png"
+texture = ExtResource("35_l56wv")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bbyns"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/reeds.png"
+texture = ExtResource("36_7q6er")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dkkiw"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_straw.png"
+texture = ExtResource("37_mj3e0")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7bk5i"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_tile_terracotta.png"
+texture = ExtResource("38_m72jj")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_77kdb"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_wood_dark.png"
+texture = ExtResource("39_wp2wq")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d57xh"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Floors/floor_wood_light.png"
+texture = ExtResource("40_3ser0")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ov367"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/bathtub.png"
+texture = ExtResource("41_f2ih0")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5, 11.52, -5, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d3yff"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/bed_double_green.png"
+texture = ExtResource("42_yi03v")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5d8t7"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/bed_single_blue.png"
+texture = ExtResource("43_q6oho")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lvtwn"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/bed_single_red.png"
+texture = ExtResource("44_6dbl1")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_em06e"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/bookshelf_large.png"
+texture = ExtResource("45_jqcfh")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7mqgu"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/bookshelf_small.png"
+texture = ExtResource("46_cb05w")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="Image" id="Image_blewh"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 255, 255, 255, 255, 255, 255, 255, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 255, 255, 255, 255, 255, 255, 255, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 255, 255, 255, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 223, 226, 232, 255, 223, 226, 232, 255, 255, 255, 255, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 255, 255, 255, 255, 223, 226, 232, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 223, 226, 232, 255, 255, 255, 255, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_pex8u"]
+image = SubResource("Image_blewh")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_x41hj"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/rock_snowy.png"
+texture = SubResource("ImageTexture_pex8u")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_s87ye"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/candle_anim_2f.png"
+texture = ExtResource("47_gxbcq")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kun8j"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/chair_back.png"
+texture = ExtResource("48_25iap")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_646pl"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/chair_front.png"
+texture = ExtResource("49_twa3a")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8espd"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/chair_side.png"
+texture = ExtResource("50_uwgf7")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4h47n"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter.png"
+texture = ExtResource("51_3j1xs")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ieflq"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter_cutting_board.png"
+texture = ExtResource("52_8rmh0")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d8c3j"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter_sink.png"
+texture = ExtResource("53_5usy1")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1usg3"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/door_interior.png"
+texture = ExtResource("54_7xv8c")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ujeki"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/dresser.png"
+texture = ExtResource("55_yq0ld")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2nuky"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/fireplace_anim_3f.png"
+texture = ExtResource("56_o0acw")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xor37"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/snowman.png"
+texture = ExtResource("57_jv4dc")
+texture_region_size = Vector2i(16, 24)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ujqa6"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/painting.png"
+texture = ExtResource("58_ocxo1")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5, 11.52, -5, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vpmbk"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/plant_big.png"
+texture = ExtResource("59_yxmck")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_j468v"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/plant_small.png"
+texture = ExtResource("60_lkd0b")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_n5w53"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/rug_blue.png"
+texture = ExtResource("61_bqv5h")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_n7hc1"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/rug_long_green.png"
+texture = ExtResource("62_ddjuh")
+0:0/size_in_atlas = Vector2i(3, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hiw4t"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/rug_red.png"
+texture = ExtResource("63_n46na")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_v63ch"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/shop_counter.png"
+texture = ExtResource("64_4rhkw")
+texture_region_size = Vector2i(48, 24)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-17.28, -5.76, 17.28, -5.76, 17.28, 0, -17.28, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1bi4c"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/shop_shelf.png"
+texture = ExtResource("65_buicf")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3r6eh"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/stool.png"
+texture = ExtResource("66_88ife")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4rglh"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/stove_anim_2f.png"
+texture = ExtResource("67_t83c8")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_w5lhq"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/twigs.png"
+texture = ExtResource("68_u4pv7")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_t2v7u"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/table_lamp.png"
+texture = ExtResource("69_a4pji")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ve5eu"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/table_round.png"
+texture = ExtResource("70_otbhe")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -7.68, 11.52, -7.68, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_e4s5a"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/table_square.png"
+texture = ExtResource("71_kr2ue")
+texture_region_size = Vector2i(32, 24)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-11.52, -5.76, 11.52, -5.76, 11.52, 0, -11.52, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qt0no"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/wall_clock.png"
+texture = ExtResource("72_860d3")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8oude"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/wardrobe.png"
+texture = ExtResource("73_33i57")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -7.68, 5.76, -7.68, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hjgto"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Furniture/window_curtains.png"
+texture = ExtResource("74_x2wtf")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_m3ey2"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_blue_top_mid_bottom.png"
+texture = ExtResource("75_6iibj")
+0:0/0 = 0
+0:1/0 = 0
+0:2/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cvpl0"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_cream_top_mid_bottom.png"
+texture = ExtResource("76_ctwue")
+0:0/0 = 0
+0:1/0 = 0
+0:2/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ghgra"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_green_stripe_top_mid_bottom.png"
+texture = ExtResource("77_kgce4")
+0:0/0 = 0
+0:1/0 = 0
+0:2/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_livo2"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_pink_floral_top_mid_bottom.png"
+texture = ExtResource("78_3a3vq")
+0:0/0 = 0
+0:1/0 = 0
+0:2/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ps7md"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/weeds.png"
+texture = ExtResource("79_ls5pr")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_wm842"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_stone_top_mid_bottom.png"
+texture = ExtResource("80_cvqir")
+0:0/0 = 0
+0:1/0 = 0
+0:2/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_b4ugk"]
+resource_name = "res://Assets/CozyVillageFarm/05_Interiors/Walls/wall_wood_panel_top_mid_bottom.png"
+texture = ExtResource("81_lehbp")
+0:0/0 = 0
+0:1/0 = 0
+0:2/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k3mvw"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_blue.png"
+texture = ExtResource("82_1klmd")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_moq4e"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_mixed.png"
+texture = ExtResource("83_anytw")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vrm0m"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_berry_red.png"
+texture = ExtResource("84_rhvcc")
+texture_region_size = Vector2i(18, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.12, -6, 6.12, -6, 6.12, 0, -6.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vtkuu"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_pink.png"
+texture = ExtResource("85_ffq6t")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tcxi5"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_purple.png"
+texture = ExtResource("86_s3syd")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5xle5"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_white.png"
+texture = ExtResource("87_o2hj5")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d0qpo"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_yellow.png"
+texture = ExtResource("88_3y8ff")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2cpja"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/lily_pad_flower.png"
+texture = ExtResource("89_ycqe0")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_q7i5u"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/sunflower.png"
+texture = ExtResource("90_xxycg")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ksvux"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_pink.png"
+texture = ExtResource("91_ok6wl")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ww01p"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_red.png"
+texture = ExtResource("92_05hai")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mqgxt"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_yellow.png"
+texture = ExtResource("93_84th1")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vqd0p"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Grass/grass_tuft_autumn_2f.png"
+texture = ExtResource("94_2eg86")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_idu35"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_flowering.png"
+texture = ExtResource("95_70esl")
+texture_region_size = Vector2i(18, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.12, -6, 6.12, -6, 6.12, 0, -6.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_oemmg"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Grass/grass_tuft_spring_2f.png"
+texture = ExtResource("96_x2m00")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5xdxp"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Grass/grass_tuft_summer_2f.png"
+texture = ExtResource("97_h4gqb")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6xcwt"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Grass/grass_tuft_winter_2f.png"
+texture = ExtResource("98_npr8t")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jogsn"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Grass/tall_grass_autumn_2f.png"
+texture = ExtResource("99_0yil1")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8lemg"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Grass/tall_grass_spring_2f.png"
+texture = ExtResource("100_fnm68")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ub3ff"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Grass/tall_grass_summer_2f.png"
+texture = ExtResource("101_ks4aq")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2ouuj"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Grass/tall_grass_winter_2f.png"
+texture = ExtResource("102_pjcby")
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2blnr"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_blue.png"
+texture = ExtResource("103_kr5bx")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -7.68, 6.56, -7.68, 6.56, 0, -6.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_n2slp"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_pink.png"
+texture = ExtResource("104_03x2v")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -7.68, 6.56, -7.68, 6.56, 0, -6.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8318y"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_teal.png"
+texture = ExtResource("105_pdbug")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -7.68, 6.56, -7.68, 6.56, 0, -6.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cyy5n"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_spring.png"
+texture = ExtResource("106_b6xes")
+texture_region_size = Vector2i(18, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.12, -6, 6.12, -6, 6.12, 0, -6.12, 0)
+
+[sub_resource type="Image" id="Image_rxw40"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 255, 255, 255, 255, 232, 138, 194, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 255, 255, 255, 255, 232, 138, 194, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 143, 79, 168, 255, 143, 79, 168, 255, 107, 111, 128, 255, 107, 111, 128, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 143, 79, 168, 255, 143, 79, 168, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 255, 255, 255, 255, 232, 138, 194, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 143, 79, 168, 255, 143, 79, 168, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_lwjr6"]
+image = SubResource("Image_rxw40")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dha8d"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_amethyst.png"
+texture = SubResource("ImageTexture_lwjr6")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="Image" id="Image_3flik"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 61, 61, 79, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 43, 30, 47, 255, 43, 30, 47, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_uw16q"]
+image = SubResource("Image_3flik")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2tc5y"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_coal.png"
+texture = SubResource("ImageTexture_uw16q")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="Image" id="Image_nx1es"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 184, 106, 40, 255, 184, 106, 40, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 184, 106, 40, 255, 184, 106, 40, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 232, 162, 58, 255, 232, 162, 58, 255, 107, 111, 128, 255, 107, 111, 128, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 232, 162, 58, 255, 232, 162, 58, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 184, 106, 40, 255, 184, 106, 40, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 232, 162, 58, 255, 232, 162, 58, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_oxdeq"]
+image = SubResource("Image_nx1es")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6lb7x"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_copper.png"
+texture = SubResource("ImageTexture_oxdeq")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="Image" id="Image_8vf3c"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 255, 255, 255, 255, 62, 201, 168, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 255, 255, 255, 255, 62, 201, 168, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 31, 138, 122, 255, 31, 138, 122, 255, 107, 111, 128, 255, 107, 111, 128, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 31, 138, 122, 255, 31, 138, 122, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 255, 255, 255, 255, 62, 201, 168, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 31, 138, 122, 255, 31, 138, 122, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_7qg00"]
+image = SubResource("Image_8vf3c")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xf5ib"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_emerald.png"
+texture = SubResource("ImageTexture_7qg00")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gfsr8"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_emerald_large.png"
+texture = ExtResource("107_38qdc")
+texture_region_size = Vector2i(24, 20)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-9.84, -9.6, 9.84, -9.6, 9.84, 0, -9.84, 0)
+
+[sub_resource type="Image" id="Image_u2c17"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 247, 214, 90, 255, 247, 214, 90, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 247, 214, 90, 255, 247, 214, 90, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 232, 162, 58, 255, 232, 162, 58, 255, 107, 111, 128, 255, 107, 111, 128, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 232, 162, 58, 255, 232, 162, 58, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 247, 214, 90, 255, 247, 214, 90, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 232, 162, 58, 255, 232, 162, 58, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_un30p"]
+image = SubResource("Image_u2c17")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rjps6"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_gold.png"
+texture = SubResource("ImageTexture_un30p")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nksyr"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_gold_large.png"
+texture = ExtResource("108_27nr0")
+texture_region_size = Vector2i(24, 20)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-9.84, -9.6, 9.84, -9.6, 9.84, 0, -9.84, 0)
+
+[sub_resource type="Image" id="Image_oq6ub"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 242, 138, 107, 255, 242, 138, 107, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 242, 138, 107, 255, 242, 138, 107, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 201, 138, 107, 255, 201, 138, 107, 255, 107, 111, 128, 255, 107, 111, 128, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 201, 138, 107, 255, 201, 138, 107, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 242, 138, 107, 255, 242, 138, 107, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 201, 138, 107, 255, 201, 138, 107, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_mai26"]
+image = SubResource("Image_oq6ub")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_t2pxs"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_iron.png"
+texture = SubResource("ImageTexture_mai26")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="Image" id="Image_511hb"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 255, 255, 255, 255, 90, 184, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 255, 255, 255, 255, 90, 184, 232, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 58, 111, 184, 255, 58, 111, 184, 255, 107, 111, 128, 255, 107, 111, 128, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 58, 111, 184, 255, 58, 111, 184, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 255, 255, 255, 255, 90, 184, 232, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 58, 111, 184, 255, 58, 111, 184, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_8cj0w"]
+image = SubResource("Image_511hb")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dnp26"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_sapphire.png"
+texture = SubResource("ImageTexture_8cj0w")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ex6os"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_large.png"
+texture = ExtResource("109_ul17n")
+texture_region_size = Vector2i(24, 20)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-9.84, -9.6, 9.84, -9.6, 9.84, 0, -9.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_71bbv"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_summer.png"
+texture = ExtResource("110_o553a")
+texture_region_size = Vector2i(18, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.12, -6, 6.12, -6, 6.12, 0, -6.12, 0)
+
+[sub_resource type="Image" id="Image_nlptn"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_v67k4"]
+image = SubResource("Image_nlptn")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1kstn"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_medium.png"
+texture = SubResource("ImageTexture_v67k4")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="Image" id="Image_ofwm7"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 43, 30, 47, 255, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_l5c8i"]
+image = SubResource("Image_ofwm7")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rkjta"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_small.png"
+texture = SubResource("ImageTexture_l5c8i")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-4.92, -5.4, 4.92, -5.4, 4.92, 0.6, -4.92, 0.6)
+
+[sub_resource type="Image" id="Image_d3xny"]
+data = {
+"data": PackedByteArray(43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 255, 255, 255, 255, 255, 255, 255, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 223, 226, 232, 255, 255, 255, 255, 255, 255, 255, 255, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 255, 255, 255, 255, 223, 226, 232, 255, 223, 226, 232, 255, 162, 167, 181, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 223, 226, 232, 255, 223, 226, 232, 255, 255, 255, 255, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 255, 255, 255, 255, 223, 226, 232, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 223, 226, 232, 255, 255, 255, 255, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 223, 226, 232, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 223, 226, 232, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 255, 162, 167, 181, 255, 162, 167, 181, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 107, 111, 128, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 61, 61, 79, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 255, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 43, 30, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+"format": "RGBA8",
+"height": 16,
+"mipmaps": false,
+"width": 16
+}
+
+[sub_resource type="ImageTexture" id="ImageTexture_00k3b"]
+image = SubResource("Image_d3xny")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ifrtr"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_winter.png"
+texture = SubResource("ImageTexture_00k3b")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.56, -6.72, 6.56, -6.72, 6.56, 0, -6.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rt5wx"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/autumn/oak_autumn.png"
+texture = ExtResource("111_ogr1o")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_piu7a"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/autumn/pine_autumn.png"
+texture = ExtResource("112_2kvon")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_06ncg"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/autumn/sapling_autumn.png"
+texture = ExtResource("113_vnlp1")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-2.5, -7, 2.5, -7, 2.5, 0, -2.5, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nhkw5"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/apple_tree.png"
+texture = ExtResource("114_h0lyd")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1mfdp"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/cherry_blossom.png"
+texture = ExtResource("115_yp0w5")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3sxwv"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/lemon_tree.png"
+texture = ExtResource("116_6km2k")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gbe8m"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/log_fallen.png"
+texture = ExtResource("117_flmjh")
+0:0/size_in_atlas = Vector2i(2, 1)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -7, 3.84, -7, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_p85ld"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Bushes/bush_winter.png"
+texture = ExtResource("118_354a4")
+texture_region_size = Vector2i(18, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-6.12, -6, 6.12, -6, 6.12, 0, -6.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_e6ltx"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/maple_red_autumn.png"
+texture = ExtResource("119_8vldj")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_stwgy"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/orange_tree.png"
+texture = ExtResource("120_rhs8l")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mqjtl"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/palm_tree.png"
+texture = ExtResource("121_accoe")
+0:0/size_in_atlas = Vector2i(2, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -10.56, 3.84, -10.56, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8mh1i"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/peach_tree.png"
+texture = ExtResource("122_xihdt")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_le2by"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/stump.png"
+texture = ExtResource("123_k015j")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-2.5, -7, 2.5, -7, 2.5, 0, -2.5, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bjbcg"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/spring/oak_spring.png"
+texture = ExtResource("124_r28vo")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8n2f3"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/spring/pine_spring.png"
+texture = ExtResource("125_lqpal")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k5m56"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/spring/sapling_spring.png"
+texture = ExtResource("126_7u7k5")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-2.5, -7, 2.5, -7, 2.5, 0, -2.5, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_362yc"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/summer/oak_summer.png"
+texture = ExtResource("127_020oy")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ob0of"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/summer/pine_summer.png"
+texture = ExtResource("128_ucj12")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vb6dp"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/leaf_pile.png"
+texture = ExtResource("129_r2xsv")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_m05t6"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/summer/sapling_summer.png"
+texture = ExtResource("130_c3sjc")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-2.5, -7, 2.5, -7, 2.5, 0, -2.5, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3kl56"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/winter/oak_winter.png"
+texture = ExtResource("131_vasrp")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_oceqh"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/winter/pine_winter.png"
+texture = ExtResource("132_xlldd")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-3.84, -8.8, 3.84, -8.8, 3.84, 0, -3.84, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ih8xo"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Trees/winter/sapling_winter.png"
+texture = ExtResource("133_pq046")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-2.5, -7, 2.5, -7, 2.5, 0, -2.5, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_y2frw"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/bakery.png"
+texture = ExtResource("134_h0cbg")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4r4tb"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/barn.png"
+texture = ExtResource("135_omqt5")
+texture_region_size = Vector2i(64, 56)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-28.16, -15.68, 28.16, -15.68, 28.16, 0, -28.16, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pde4h"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/blacksmith.png"
+texture = ExtResource("136_xc7c6")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_b227g"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/chicken_coop.png"
+texture = ExtResource("137_jluqw")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-14.08, -8.96, 14.08, -8.96, 14.08, 0, -14.08, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ndecf"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/fish_shop.png"
+texture = ExtResource("138_mlnct")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_noh6c"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/greenhouse.png"
+texture = ExtResource("139_b5ir5")
+0:0/size_in_atlas = Vector2i(4, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-28.16, -13.44, 28.16, -13.44, 28.16, 0, -28.16, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hodkb"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/lily_pad.png"
+texture = ExtResource("140_l14e6")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k02wd"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/house_blue_stone.png"
+texture = ExtResource("141_1tjin")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_g1m57"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/house_green_plaster.png"
+texture = ExtResource("142_57m13")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mf2lk"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/house_large_blue.png"
+texture = ExtResource("143_61dyp")
+0:0/size_in_atlas = Vector2i(4, 4)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-28.16, -17.92, 28.16, -17.92, 28.16, 0, -28.16, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_yk3ec"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/house_large_red.png"
+texture = ExtResource("144_wiukc")
+0:0/size_in_atlas = Vector2i(4, 4)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-28.16, -17.92, 28.16, -17.92, 28.16, 0, -28.16, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hgjtx"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/house_orange_brick.png"
+texture = ExtResource("145_vb8dx")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_w1dxs"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/house_purple_wood.png"
+texture = ExtResource("146_genxs")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bso06"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/house_red_wood.png"
+texture = ExtResource("147_5igwk")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_o6udl"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/house_slate_plaster.png"
+texture = ExtResource("148_wfrxp")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ypc0t"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/inn.png"
+texture = ExtResource("149_nkqet")
+0:0/size_in_atlas = Vector2i(5, 4)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-35.2, -17.92, 35.2, -17.92, 35.2, 0, -35.2, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_n7o4h"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/market_stall_blue.png"
+texture = ExtResource("150_j47lq")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-14.08, -8.96, 14.08, -8.96, 14.08, 0, -14.08, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2wgwv"]
+resource_name = "res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_brown.png"
+texture = ExtResource("151_utexj")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_aepa5"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/market_stall_green.png"
+texture = ExtResource("152_1aaqm")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-14.08, -8.96, 14.08, -8.96, 14.08, 0, -14.08, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_euanl"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/market_stall_red.png"
+texture = ExtResource("153_dytms")
+0:0/size_in_atlas = Vector2i(2, 2)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-14.08, -8.96, 14.08, -8.96, 14.08, 0, -14.08, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1q2h5"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/shop_general.png"
+texture = ExtResource("154_01iu1")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1v2ml"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/well.png"
+texture = ExtResource("155_yh4hg")
+texture_region_size = Vector2i(32, 40)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-14.08, -11.2, 14.08, -11.2, 14.08, 0, -14.08, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_285px"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/windmill_blades_anim_4f.png"
+texture = ExtResource("156_cshn6")
+0:0/size_in_atlas = Vector2i(3, 3)
+0:0/animation_speed = 6.0
+0:0/animation_frame_0/duration = 1.0
+0:0/animation_frame_1/duration = 1.0
+0:0/animation_frame_2/duration = 1.0
+0:0/animation_frame_3/duration = 1.0
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -13.44, 21.12, -13.44, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4detr"]
+resource_name = "res://Assets/CozyVillageFarm/03_Buildings/windmill_body.png"
+texture = ExtResource("157_qpcfy")
+texture_region_size = Vector2i(48, 72)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-21.12, -20.16, 21.12, -20.16, 21.12, 0, -21.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ypxp3"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/anvil.png"
+texture = ExtResource("158_kban1")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_solof"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/banner_blue.png"
+texture = ExtResource("159_lronb")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dli13"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/banner_red.png"
+texture = ExtResource("160_fdybe")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3r3kj"]
+resource_name = "res://Assets/CozyVillageFarm/04_Props/barrel.png"
+texture = ExtResource("161_x5g03")
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-5.76, -5, 5.76, -5, 5.76, 0, -5.76, 0)
 
 [resource]
-tile_size = Vector2i(16, 16)
-resource_name = "Мир: природа, здания, пропсы и интерьеры"
+resource_name = "World Assets"
+physics_layer_0/collision_layer = 2
+sources/0 = SubResource("TileSetAtlasSource_so5gr")
+sources/1 = SubResource("TileSetAtlasSource_bvugx")
+sources/2 = SubResource("TileSetAtlasSource_vrm0m")
+sources/3 = SubResource("TileSetAtlasSource_idu35")
+sources/4 = SubResource("TileSetAtlasSource_cyy5n")
+sources/5 = SubResource("TileSetAtlasSource_71bbv")
+sources/6 = SubResource("TileSetAtlasSource_p85ld")
+sources/7 = SubResource("TileSetAtlasSource_vb6dp")
+sources/8 = SubResource("TileSetAtlasSource_hodkb")
+sources/9 = SubResource("TileSetAtlasSource_2wgwv")
+sources/10 = SubResource("TileSetAtlasSource_xkq0y")
+sources/11 = SubResource("TileSetAtlasSource_3ikn6")
+sources/12 = SubResource("TileSetAtlasSource_acoqt")
+sources/13 = SubResource("TileSetAtlasSource_bbyns")
+sources/14 = SubResource("TileSetAtlasSource_x41hj")
+sources/15 = SubResource("TileSetAtlasSource_xor37")
+sources/16 = SubResource("TileSetAtlasSource_w5lhq")
+sources/17 = SubResource("TileSetAtlasSource_ps7md")
+sources/18 = SubResource("TileSetAtlasSource_k3mvw")
+sources/19 = SubResource("TileSetAtlasSource_moq4e")
+sources/20 = SubResource("TileSetAtlasSource_vtkuu")
+sources/21 = SubResource("TileSetAtlasSource_tcxi5")
+sources/22 = SubResource("TileSetAtlasSource_5xle5")
+sources/23 = SubResource("TileSetAtlasSource_d0qpo")
+sources/24 = SubResource("TileSetAtlasSource_2cpja")
+sources/25 = SubResource("TileSetAtlasSource_q7i5u")
+sources/26 = SubResource("TileSetAtlasSource_ksvux")
+sources/27 = SubResource("TileSetAtlasSource_ww01p")
+sources/28 = SubResource("TileSetAtlasSource_mqgxt")
+sources/29 = SubResource("TileSetAtlasSource_vqd0p")
+sources/30 = SubResource("TileSetAtlasSource_oemmg")
+sources/31 = SubResource("TileSetAtlasSource_5xdxp")
+sources/32 = SubResource("TileSetAtlasSource_6xcwt")
+sources/33 = SubResource("TileSetAtlasSource_jogsn")
+sources/34 = SubResource("TileSetAtlasSource_8lemg")
+sources/35 = SubResource("TileSetAtlasSource_ub3ff")
+sources/36 = SubResource("TileSetAtlasSource_2ouuj")
+sources/37 = SubResource("TileSetAtlasSource_2blnr")
+sources/38 = SubResource("TileSetAtlasSource_n2slp")
+sources/39 = SubResource("TileSetAtlasSource_8318y")
+sources/40 = SubResource("TileSetAtlasSource_dha8d")
+sources/41 = SubResource("TileSetAtlasSource_2tc5y")
+sources/42 = SubResource("TileSetAtlasSource_6lb7x")
+sources/43 = SubResource("TileSetAtlasSource_xf5ib")
+sources/44 = SubResource("TileSetAtlasSource_gfsr8")
+sources/45 = SubResource("TileSetAtlasSource_rjps6")
+sources/46 = SubResource("TileSetAtlasSource_nksyr")
+sources/47 = SubResource("TileSetAtlasSource_t2pxs")
+sources/48 = SubResource("TileSetAtlasSource_dnp26")
+sources/49 = SubResource("TileSetAtlasSource_ex6os")
+sources/50 = SubResource("TileSetAtlasSource_1kstn")
+sources/51 = SubResource("TileSetAtlasSource_rkjta")
+sources/52 = SubResource("TileSetAtlasSource_ifrtr")
+sources/53 = SubResource("TileSetAtlasSource_rt5wx")
+sources/54 = SubResource("TileSetAtlasSource_piu7a")
+sources/55 = SubResource("TileSetAtlasSource_06ncg")
+sources/56 = SubResource("TileSetAtlasSource_nhkw5")
+sources/57 = SubResource("TileSetAtlasSource_1mfdp")
+sources/58 = SubResource("TileSetAtlasSource_3sxwv")
+sources/59 = SubResource("TileSetAtlasSource_gbe8m")
+sources/60 = SubResource("TileSetAtlasSource_e6ltx")
+sources/61 = SubResource("TileSetAtlasSource_stwgy")
+sources/62 = SubResource("TileSetAtlasSource_mqjtl")
+sources/63 = SubResource("TileSetAtlasSource_8mh1i")
+sources/64 = SubResource("TileSetAtlasSource_le2by")
+sources/65 = SubResource("TileSetAtlasSource_bjbcg")
+sources/66 = SubResource("TileSetAtlasSource_8n2f3")
+sources/67 = SubResource("TileSetAtlasSource_k5m56")
+sources/68 = SubResource("TileSetAtlasSource_362yc")
+sources/69 = SubResource("TileSetAtlasSource_ob0of")
+sources/70 = SubResource("TileSetAtlasSource_m05t6")
+sources/71 = SubResource("TileSetAtlasSource_3kl56")
+sources/72 = SubResource("TileSetAtlasSource_oceqh")
+sources/73 = SubResource("TileSetAtlasSource_ih8xo")
+sources/74 = SubResource("TileSetAtlasSource_y2frw")
+sources/75 = SubResource("TileSetAtlasSource_4r4tb")
+sources/76 = SubResource("TileSetAtlasSource_pde4h")
+sources/77 = SubResource("TileSetAtlasSource_b227g")
+sources/78 = SubResource("TileSetAtlasSource_ndecf")
+sources/79 = SubResource("TileSetAtlasSource_noh6c")
+sources/80 = SubResource("TileSetAtlasSource_k02wd")
+sources/81 = SubResource("TileSetAtlasSource_g1m57")
+sources/82 = SubResource("TileSetAtlasSource_mf2lk")
+sources/83 = SubResource("TileSetAtlasSource_yk3ec")
+sources/84 = SubResource("TileSetAtlasSource_hgjtx")
+sources/85 = SubResource("TileSetAtlasSource_w1dxs")
+sources/86 = SubResource("TileSetAtlasSource_bso06")
+sources/87 = SubResource("TileSetAtlasSource_o6udl")
+sources/88 = SubResource("TileSetAtlasSource_ypc0t")
+sources/89 = SubResource("TileSetAtlasSource_n7o4h")
+sources/90 = SubResource("TileSetAtlasSource_aepa5")
+sources/91 = SubResource("TileSetAtlasSource_euanl")
+sources/92 = SubResource("TileSetAtlasSource_1q2h5")
+sources/93 = SubResource("TileSetAtlasSource_1v2ml")
+sources/94 = SubResource("TileSetAtlasSource_285px")
+sources/95 = SubResource("TileSetAtlasSource_4detr")
+sources/96 = SubResource("TileSetAtlasSource_ypxp3")
+sources/97 = SubResource("TileSetAtlasSource_solof")
+sources/98 = SubResource("TileSetAtlasSource_dli13")
+sources/99 = SubResource("TileSetAtlasSource_3r3kj")
+sources/100 = SubResource("TileSetAtlasSource_j5dbd")
+sources/101 = SubResource("TileSetAtlasSource_2cy3q")
+sources/102 = SubResource("TileSetAtlasSource_ybbcn")
+sources/103 = SubResource("TileSetAtlasSource_783ld")
+sources/104 = SubResource("TileSetAtlasSource_s00v6")
+sources/105 = SubResource("TileSetAtlasSource_ak00o")
+sources/106 = SubResource("TileSetAtlasSource_f7l00")
+sources/107 = SubResource("TileSetAtlasSource_orda6")
+sources/108 = SubResource("TileSetAtlasSource_hac1e")
+sources/109 = SubResource("TileSetAtlasSource_m0vtg")
+sources/110 = SubResource("TileSetAtlasSource_ssjqt")
+sources/111 = SubResource("TileSetAtlasSource_jwjg2")
+sources/112 = SubResource("TileSetAtlasSource_sxhtd")
+sources/113 = SubResource("TileSetAtlasSource_1e2r1")
+sources/114 = SubResource("TileSetAtlasSource_3wr7k")
+sources/115 = SubResource("TileSetAtlasSource_6k0n4")
+sources/116 = SubResource("TileSetAtlasSource_v23s0")
+sources/117 = SubResource("TileSetAtlasSource_bjeek")
+sources/118 = SubResource("TileSetAtlasSource_4cd7w")
+sources/119 = SubResource("TileSetAtlasSource_8l4nq")
+sources/120 = SubResource("TileSetAtlasSource_whagg")
+sources/121 = SubResource("TileSetAtlasSource_ogrn0")
+sources/122 = SubResource("TileSetAtlasSource_4urfr")
+sources/123 = SubResource("TileSetAtlasSource_muf77")
+sources/124 = SubResource("TileSetAtlasSource_k11o8")
+sources/125 = SubResource("TileSetAtlasSource_xneny")
+sources/126 = SubResource("TileSetAtlasSource_73tw1")
+sources/127 = SubResource("TileSetAtlasSource_o6bcc")
+sources/128 = SubResource("TileSetAtlasSource_unaxf")
+sources/129 = SubResource("TileSetAtlasSource_4ugey")
+sources/130 = SubResource("TileSetAtlasSource_dkkiw")
+sources/131 = SubResource("TileSetAtlasSource_7bk5i")
+sources/132 = SubResource("TileSetAtlasSource_77kdb")
+sources/133 = SubResource("TileSetAtlasSource_d57xh")
+sources/134 = SubResource("TileSetAtlasSource_ov367")
+sources/135 = SubResource("TileSetAtlasSource_d3yff")
+sources/136 = SubResource("TileSetAtlasSource_5d8t7")
+sources/137 = SubResource("TileSetAtlasSource_lvtwn")
+sources/138 = SubResource("TileSetAtlasSource_em06e")
+sources/139 = SubResource("TileSetAtlasSource_7mqgu")
+sources/140 = SubResource("TileSetAtlasSource_s87ye")
+sources/141 = SubResource("TileSetAtlasSource_kun8j")
+sources/142 = SubResource("TileSetAtlasSource_646pl")
+sources/143 = SubResource("TileSetAtlasSource_8espd")
+sources/144 = SubResource("TileSetAtlasSource_4h47n")
+sources/145 = SubResource("TileSetAtlasSource_ieflq")
+sources/146 = SubResource("TileSetAtlasSource_d8c3j")
+sources/147 = SubResource("TileSetAtlasSource_1usg3")
+sources/148 = SubResource("TileSetAtlasSource_ujeki")
+sources/149 = SubResource("TileSetAtlasSource_2nuky")
+sources/150 = SubResource("TileSetAtlasSource_ujqa6")
+sources/151 = SubResource("TileSetAtlasSource_vpmbk")
+sources/152 = SubResource("TileSetAtlasSource_j468v")
+sources/153 = SubResource("TileSetAtlasSource_n5w53")
+sources/154 = SubResource("TileSetAtlasSource_n7hc1")
+sources/155 = SubResource("TileSetAtlasSource_hiw4t")
+sources/156 = SubResource("TileSetAtlasSource_v63ch")
+sources/157 = SubResource("TileSetAtlasSource_1bi4c")
+sources/158 = SubResource("TileSetAtlasSource_3r6eh")
+sources/159 = SubResource("TileSetAtlasSource_4rglh")
+sources/160 = SubResource("TileSetAtlasSource_t2v7u")
+sources/161 = SubResource("TileSetAtlasSource_ve5eu")
+sources/162 = SubResource("TileSetAtlasSource_e4s5a")
+sources/163 = SubResource("TileSetAtlasSource_qt0no")
+sources/164 = SubResource("TileSetAtlasSource_8oude")
+sources/165 = SubResource("TileSetAtlasSource_hjgto")
+sources/166 = SubResource("TileSetAtlasSource_m3ey2")
+sources/167 = SubResource("TileSetAtlasSource_cvpl0")
+sources/168 = SubResource("TileSetAtlasSource_ghgra")
+sources/169 = SubResource("TileSetAtlasSource_livo2")
+sources/170 = SubResource("TileSetAtlasSource_wm842")
+sources/171 = SubResource("TileSetAtlasSource_b4ugk")

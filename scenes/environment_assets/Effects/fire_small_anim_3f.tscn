@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://3x57r855fa88"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_t6ik2"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_irlua"]
+
+[node name="fire_small_anim_3f" type="StaticBody2D" unique_id=1041259383]
+collision_layer = 2
+script = ExtResource("1_t6ik2")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=659027746]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_irlua")
+autoplay = "default"

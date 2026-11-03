@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://dbdonqrj77jfq"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_6nxfg"]
+[ext_resource type="Texture2D" uid="uid://cdk2nd02e8sse" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_gold_large.png" id="2_16cnv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_u2m0h"]
+size = Vector2(19.68, 9.6)
+
+[node name="ore_gold_large" type="StaticBody2D" unique_id=1885491176]
+collision_layer = 2
+script = ExtResource("1_6nxfg")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2098097416]
+texture_filter = 1
+position = Vector2(0, -10)
+texture = ExtResource("2_16cnv")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1139916048]
+position = Vector2(0, -9.6)
+shape = SubResource("RectangleShape2D_u2m0h")

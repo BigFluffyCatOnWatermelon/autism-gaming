@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://cjg6g3dy7pp0c"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_t2xyo"]
+[ext_resource type="Texture2D" uid="uid://bcfpefbcqw7rp" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/granny/granny_walk_left.png" id="2_i6km5"]
+
+[node name="granny_walk_left" type="StaticBody2D" unique_id=559189044]
+collision_layer = 2
+script = ExtResource("1_t2xyo")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=934963698]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_i6km5")

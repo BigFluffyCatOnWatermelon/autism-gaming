@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bipu21f4kurj6"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_xtcjh"]
+[ext_resource type="Texture2D" uid="uid://dnd662287xxb5" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/bed_single_blue.png" id="2_yxoct"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bhtj4"]
+size = Vector2(11.52, 10.24)
+
+[node name="bed_single_blue" type="StaticBody2D" unique_id=339172622]
+collision_layer = 2
+script = ExtResource("1_xtcjh")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1428787719]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_yxoct")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1297745607]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_bhtj4")

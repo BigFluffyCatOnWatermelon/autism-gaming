@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://d1rmx8f2cbg2c"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_0pkvk"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_2lhdr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tb8n7"]
+size = Vector2(23.04, 10.24)
+
+[node name="fireplace_anim_3f" type="StaticBody2D" unique_id=405634746]
+collision_layer = 2
+script = ExtResource("1_0pkvk")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1476344683]
+texture_filter = 1
+position = Vector2(0, -16)
+sprite_frames = SubResource("SpriteFrames_2lhdr")
+autoplay = "default"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1276074292]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_tb8n7")

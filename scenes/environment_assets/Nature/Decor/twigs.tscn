@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://c428hd00ef4mt"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_1ymij"]
+[ext_resource type="Texture2D" uid="uid://bdy1e1na2s8v7" path="res://Assets/CozyVillageFarm/02_Nature/Decor/twigs.png" id="2_0y2uf"]
+
+[node name="twigs" type="StaticBody2D" unique_id=327397865]
+collision_layer = 2
+script = ExtResource("1_1ymij")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=895934961]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_0y2uf")

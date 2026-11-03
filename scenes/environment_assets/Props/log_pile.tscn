@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cb8hrkit7fqyk"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_jsbku"]
+[ext_resource type="Texture2D" uid="uid://stikhnob8sbn" path="res://Assets/CozyVillageFarm/04_Props/log_pile.png" id="2_s6le2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4pf6m"]
+size = Vector2(23.04, 5.12)
+
+[node name="log_pile" type="StaticBody2D" unique_id=1524913697]
+collision_layer = 2
+script = ExtResource("1_jsbku")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=808357893]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_s6le2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=40458614]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_4pf6m")

@@ -1,5 +1,1148 @@
-[gd_resource type="TileSet" format=3]
+[gd_resource type="TileSet" format=3 uid="uid://jeiw065dblvb"]
+
+[ext_resource type="Texture2D" uid="uid://bo67dbypfcca0" path="res://Assets/CozyVillageFarm/06_Farming/Crops/crop_withered.png" id="1_4vbk7"]
+[ext_resource type="Texture2D" uid="uid://dla1ipuk0w301" path="res://Assets/CozyVillageFarm/06_Farming/Produce/beetroot.png" id="2_dg003"]
+[ext_resource type="Texture2D" uid="uid://b6t86fltqrcyl" path="res://Assets/CozyVillageFarm/06_Farming/Produce/pumpkin.png" id="3_t2b2b"]
+[ext_resource type="Texture2D" uid="uid://bq5tg0s80mm4a" path="res://Assets/CozyVillageFarm/10_Items/Food/bread.png" id="4_6ghwd"]
+[ext_resource type="Texture2D" uid="uid://8ravoy6bn6vb" path="res://Assets/CozyVillageFarm/10_Items/Food/cake_slice.png" id="5_ghwlj"]
+[ext_resource type="Texture2D" uid="uid://ccaqer76k6gn8" path="res://Assets/CozyVillageFarm/10_Items/Food/cheese.png" id="6_sjr25"]
+[ext_resource type="Texture2D" uid="uid://k5wn5l3sa4d4" path="res://Assets/CozyVillageFarm/10_Items/Food/coffee.png" id="7_mpf1q"]
+[ext_resource type="Texture2D" uid="uid://ci8d30ljbbwhd" path="res://Assets/CozyVillageFarm/10_Items/Food/cookie.png" id="8_ernle"]
+[ext_resource type="Texture2D" uid="uid://rbshpbahpxkt" path="res://Assets/CozyVillageFarm/10_Items/Food/fried_egg.png" id="9_upnqv"]
+[ext_resource type="Texture2D" uid="uid://ch8ejlqdjf8je" path="res://Assets/CozyVillageFarm/10_Items/Food/grilled_fish.png" id="10_muh2i"]
+[ext_resource type="Texture2D" uid="uid://ca58ery71ckh4" path="res://Assets/CozyVillageFarm/10_Items/Food/honey.png" id="11_vpcco"]
+[ext_resource type="Texture2D" uid="uid://bx01xk1hk2q11" path="res://Assets/CozyVillageFarm/10_Items/Food/jam_strawberry.png" id="12_16k3l"]
+[ext_resource type="Texture2D" uid="uid://crvhpfii082ld" path="res://Assets/CozyVillageFarm/10_Items/Food/juice_orange.png" id="13_iu7af"]
+[ext_resource type="Texture2D" uid="uid://byk4yndokont1" path="res://Assets/CozyVillageFarm/06_Farming/Produce/strawberry.png" id="14_82hml"]
+[ext_resource type="Texture2D" uid="uid://bjbe55cx4dqua" path="res://Assets/CozyVillageFarm/10_Items/Food/milk.png" id="15_r5tqe"]
+[ext_resource type="Texture2D" uid="uid://w08bg68ik7pv" path="res://Assets/CozyVillageFarm/10_Items/Food/pancakes.png" id="16_tq4cs"]
+[ext_resource type="Texture2D" uid="uid://b3u1c2uk5vmtq" path="res://Assets/CozyVillageFarm/10_Items/Food/pickles.png" id="17_dcyku"]
+[ext_resource type="Texture2D" uid="uid://ceiwy2qss5e7u" path="res://Assets/CozyVillageFarm/10_Items/Food/pie.png" id="18_a8pyh"]
+[ext_resource type="Texture2D" uid="uid://i1wwb6koixyh" path="res://Assets/CozyVillageFarm/10_Items/Food/porridge.png" id="19_q6uxf"]
+[ext_resource type="Texture2D" uid="uid://bvjcng4ecsugx" path="res://Assets/CozyVillageFarm/10_Items/Food/ramen.png" id="20_snf1y"]
+[ext_resource type="Texture2D" uid="uid://cevomgw2iyufo" path="res://Assets/CozyVillageFarm/10_Items/Food/salad.png" id="21_m7n8m"]
+[ext_resource type="Texture2D" uid="uid://djfmqjrmyr8yd" path="res://Assets/CozyVillageFarm/10_Items/Food/soup_pumpkin.png" id="22_eb0rd"]
+[ext_resource type="Texture2D" uid="uid://dgljgukj2prly" path="res://Assets/CozyVillageFarm/10_Items/Food/soup_tomato.png" id="23_hhc53"]
+[ext_resource type="Texture2D" uid="uid://chi8ogh5yx6w2" path="res://Assets/CozyVillageFarm/10_Items/Food/stew.png" id="24_n8kfc"]
+[ext_resource type="Texture2D" uid="uid://ce8oc3uc71iwc" path="res://Assets/CozyVillageFarm/06_Farming/Produce/sunflower.png" id="25_8elpp"]
+[ext_resource type="Texture2D" uid="uid://c7xxyphjlcghp" path="res://Assets/CozyVillageFarm/10_Items/Food/sushi.png" id="26_pyyxa"]
+[ext_resource type="Texture2D" uid="uid://fe66kiptpmv6" path="res://Assets/CozyVillageFarm/10_Items/Food/tea.png" id="27_nerqo"]
+[ext_resource type="Texture2D" uid="uid://duf1jkt724afb" path="res://Assets/CozyVillageFarm/10_Items/Misc/backpack.png" id="28_xmaqr"]
+[ext_resource type="Texture2D" uid="uid://6ybk4q3tmdyq" path="res://Assets/CozyVillageFarm/10_Items/Misc/book.png" id="29_kimmo"]
+[ext_resource type="Texture2D" uid="uid://c538h8mnaxrkk" path="res://Assets/CozyVillageFarm/10_Items/Misc/coin_gold.png" id="30_74n1s"]
+[ext_resource type="Texture2D" uid="uid://cn0hb15j2xqul" path="res://Assets/CozyVillageFarm/10_Items/Misc/coin_silver.png" id="31_m5c6g"]
+[ext_resource type="Texture2D" uid="uid://butxlvos4ulvh" path="res://Assets/CozyVillageFarm/10_Items/Misc/coin_stack.png" id="32_th2r5"]
+[ext_resource type="Texture2D" uid="uid://bv7dwtcle7b6e" path="res://Assets/CozyVillageFarm/10_Items/Misc/gem_currency.png" id="33_0gl87"]
+[ext_resource type="Texture2D" uid="uid://cyxxj7mdawtj" path="res://Assets/CozyVillageFarm/10_Items/Misc/gift_box.png" id="34_s75wo"]
+[ext_resource type="Texture2D" uid="uid://bmt4373hxsv3l" path="res://Assets/CozyVillageFarm/10_Items/Misc/heart.png" id="35_oojcy"]
+[ext_resource type="Texture2D" uid="uid://dmhcf7q8sden0" path="res://Assets/CozyVillageFarm/06_Farming/Produce/tomato.png" id="36_mmtyb"]
+[ext_resource type="Texture2D" uid="uid://bytdtf0dpq56r" path="res://Assets/CozyVillageFarm/10_Items/Misc/key.png" id="37_4xf2a"]
+[ext_resource type="Texture2D" uid="uid://hut75nddfuj7" path="res://Assets/CozyVillageFarm/10_Items/Misc/lantern.png" id="38_xnb6u"]
+[ext_resource type="Texture2D" uid="uid://bfe5gm7qb00yo" path="res://Assets/CozyVillageFarm/10_Items/Misc/letter.png" id="39_ewy5m"]
+[ext_resource type="Texture2D" uid="uid://diw5ytpayo8op" path="res://Assets/CozyVillageFarm/10_Items/Misc/map_scroll.png" id="40_a8mpe"]
+[ext_resource type="Texture2D" uid="uid://cde88c6uc464i" path="res://Assets/CozyVillageFarm/10_Items/Misc/star.png" id="41_gkt52"]
+[ext_resource type="Texture2D" uid="uid://cv0hgvj06tshg" path="res://Assets/CozyVillageFarm/10_Items/Misc/trophy.png" id="42_gmlii"]
+[ext_resource type="Texture2D" uid="uid://bfkx3goaayw2t" path="res://Assets/CozyVillageFarm/10_Items/Potions/potion_energy.png" id="43_1vbly"]
+[ext_resource type="Texture2D" uid="uid://c02x4wbfijo46" path="res://Assets/CozyVillageFarm/10_Items/Potions/potion_health.png" id="44_4n7yc"]
+[ext_resource type="Texture2D" uid="uid://b6plvur345oot" path="res://Assets/CozyVillageFarm/10_Items/Potions/potion_love.png" id="45_hp8fc"]
+[ext_resource type="Texture2D" uid="uid://cxf7dgvwm0ltm" path="res://Assets/CozyVillageFarm/10_Items/Potions/potion_luck.png" id="46_b5wvl"]
+[ext_resource type="Texture2D" uid="uid://ctbi5avn76qtf" path="res://Assets/CozyVillageFarm/06_Farming/Produce/turnip.png" id="47_w6as5"]
+[ext_resource type="Texture2D" uid="uid://dut4be84owf38" path="res://Assets/CozyVillageFarm/10_Items/Potions/potion_mana.png" id="48_gexsx"]
+[ext_resource type="Texture2D" uid="uid://dllcb41xba4w7" path="res://Assets/CozyVillageFarm/10_Items/Potions/potion_speed.png" id="49_ueq1n"]
+[ext_resource type="Texture2D" uid="uid://dtyty2hq24vwf" path="res://Assets/CozyVillageFarm/10_Items/Resources/amethyst.png" id="50_x3u0g"]
+[ext_resource type="Texture2D" uid="uid://dho5pn7f5jsgb" path="res://Assets/CozyVillageFarm/10_Items/Resources/clay.png" id="51_vmwjp"]
+[ext_resource type="Texture2D" uid="uid://526gpv2rdawo" path="res://Assets/CozyVillageFarm/10_Items/Resources/coal.png" id="52_gxg6x"]
+[ext_resource type="Texture2D" uid="uid://dl7so6qe5pfp8" path="res://Assets/CozyVillageFarm/10_Items/Resources/copper_bar.png" id="53_cbdwy"]
+[ext_resource type="Texture2D" uid="uid://bc4gl4d6qr5aw" path="res://Assets/CozyVillageFarm/10_Items/Resources/copper_ore.png" id="54_v3m4u"]
+[ext_resource type="Texture2D" uid="uid://cgyefkcvfk0rp" path="res://Assets/CozyVillageFarm/10_Items/Resources/crystal_bar.png" id="55_hy0ca"]
+[ext_resource type="Texture2D" uid="uid://drrf7y43gnxtc" path="res://Assets/CozyVillageFarm/10_Items/Resources/diamond.png" id="56_bkl2h"]
+[ext_resource type="Texture2D" uid="uid://cntbhhonqtmsm" path="res://Assets/CozyVillageFarm/10_Items/Resources/emerald.png" id="57_tfmx8"]
+[ext_resource type="Texture2D" uid="uid://djj8g73nkfl5y" path="res://Assets/CozyVillageFarm/06_Farming/Produce/watermelon.png" id="58_asppw"]
+[ext_resource type="Texture2D" uid="uid://iocgvtg6x81h" path="res://Assets/CozyVillageFarm/10_Items/Resources/fiber.png" id="59_qxlhh"]
+[ext_resource type="Texture2D" uid="uid://bpwu7qp4i135o" path="res://Assets/CozyVillageFarm/10_Items/Resources/gold_bar.png" id="60_gwqkd"]
+[ext_resource type="Texture2D" uid="uid://oh7koiruk6b3" path="res://Assets/CozyVillageFarm/10_Items/Resources/gold_ore.png" id="61_rfu26"]
+[ext_resource type="Texture2D" uid="uid://psd31i1cdiml" path="res://Assets/CozyVillageFarm/10_Items/Resources/hardwood.png" id="62_htsq8"]
+[ext_resource type="Texture2D" uid="uid://b6p8rtlkfgf0g" path="res://Assets/CozyVillageFarm/10_Items/Resources/iron_bar.png" id="63_cidwr"]
+[ext_resource type="Texture2D" uid="uid://biuyv3raqaudx" path="res://Assets/CozyVillageFarm/10_Items/Resources/iron_ore.png" id="64_ryfg6"]
+[ext_resource type="Texture2D" uid="uid://dcfywxuliwpxf" path="res://Assets/CozyVillageFarm/10_Items/Resources/quartz.png" id="65_fnhyj"]
+[ext_resource type="Texture2D" uid="uid://bckspnlvjfvv0" path="res://Assets/CozyVillageFarm/10_Items/Resources/ruby.png" id="66_a3ubs"]
+[ext_resource type="Texture2D" uid="uid://n6dd6hm73v5d" path="res://Assets/CozyVillageFarm/10_Items/Resources/sap.png" id="67_gfvfe"]
+[ext_resource type="Texture2D" uid="uid://d2a3exj7gp4vl" path="res://Assets/CozyVillageFarm/10_Items/Resources/sapphire.png" id="68_diwlf"]
+[ext_resource type="Texture2D" uid="uid://blr55267hu42n" path="res://Assets/CozyVillageFarm/06_Farming/Produce/wheat.png" id="69_wdkht"]
+[ext_resource type="Texture2D" uid="uid://ibs82sut3qwy" path="res://Assets/CozyVillageFarm/10_Items/Resources/stone.png" id="70_6yx1j"]
+[ext_resource type="Texture2D" uid="uid://bl1iovt253orq" path="res://Assets/CozyVillageFarm/10_Items/Resources/topaz.png" id="71_mf8ap"]
+[ext_resource type="Texture2D" uid="uid://b3atybtbmq13n" path="res://Assets/CozyVillageFarm/10_Items/Resources/wood.png" id="72_yehw0"]
+[ext_resource type="Texture2D" uid="uid://cdn6ouh5rb7cu" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_beetroot.png" id="73_xh35o"]
+[ext_resource type="Texture2D" uid="uid://ces31bqfrch6l" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_blueberry.png" id="74_mvnps"]
+[ext_resource type="Texture2D" uid="uid://dkgwoijy2ppq2" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_cabbage.png" id="75_7binw"]
+[ext_resource type="Texture2D" uid="uid://caemmc2qool83" path="res://Assets/CozyVillageFarm/06_Farming/Produce/blueberry.png" id="76_k54om"]
+[ext_resource type="Texture2D" uid="uid://d4f5ytsqpgdpc" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_carrot.png" id="77_yqam5"]
+[ext_resource type="Texture2D" uid="uid://bvqqfuw1qyad1" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_chili.png" id="78_acvsm"]
+[ext_resource type="Texture2D" uid="uid://cd0q8ivwwtqmn" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_corn.png" id="79_1eqnu"]
+[ext_resource type="Texture2D" uid="uid://237twasc01m5" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_eggplant.png" id="80_f88ed"]
+[ext_resource type="Texture2D" uid="uid://cj7bmpbo3issb" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_onion.png" id="81_0hd0v"]
+[ext_resource type="Texture2D" uid="uid://c3d7uxe0cr8w7" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_potato.png" id="82_g5nnv"]
+[ext_resource type="Texture2D" uid="uid://c55cudqv247vt" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_pumpkin.png" id="83_70j17"]
+[ext_resource type="Texture2D" uid="uid://c51bbrg2tpg81" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_strawberry.png" id="84_2mi4q"]
+[ext_resource type="Texture2D" uid="uid://dwjko4tlos508" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_sunflower.png" id="85_swbrk"]
+[ext_resource type="Texture2D" uid="uid://b8wi7y3jqnqt0" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_tomato.png" id="86_ox8jg"]
+[ext_resource type="Texture2D" uid="uid://dj2mcleied4gs" path="res://Assets/CozyVillageFarm/06_Farming/Produce/cabbage.png" id="87_1ab35"]
+[ext_resource type="Texture2D" uid="uid://bqlup7vgk1em1" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_turnip.png" id="88_y8r47"]
+[ext_resource type="Texture2D" uid="uid://bm0ysx75xlrvh" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_watermelon.png" id="89_c8bet"]
+[ext_resource type="Texture2D" uid="uid://bvds72tbaxilr" path="res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_wheat.png" id="90_thjwf"]
+[ext_resource type="Texture2D" uid="uid://bhfjxak1tqwv1" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/axe_basic.png" id="91_w1jwx"]
+[ext_resource type="Texture2D" uid="uid://vo46ue71fvya" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/fishing_rod_basic.png" id="92_437ys"]
+[ext_resource type="Texture2D" uid="uid://dxnlgc0yo5yql" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/hammer_basic.png" id="93_8b8j2"]
+[ext_resource type="Texture2D" uid="uid://c8oooaq4teae7" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/hoe_basic.png" id="94_q5et4"]
+[ext_resource type="Texture2D" uid="uid://yn6g50812r24" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/pickaxe_basic.png" id="95_ocnqd"]
+[ext_resource type="Texture2D" uid="uid://11m2yeghanvo" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/scythe_basic.png" id="96_clekl"]
+[ext_resource type="Texture2D" uid="uid://cu8kvv88c2a5o" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/shovel_basic.png" id="97_xk7w6"]
+[ext_resource type="Texture2D" uid="uid://bsrrc8rkgvndx" path="res://Assets/CozyVillageFarm/06_Farming/Produce/carrot.png" id="98_36pkp"]
+[ext_resource type="Texture2D" uid="uid://bjxavh624volf" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png" id="99_pm11j"]
+[ext_resource type="Texture2D" uid="uid://cc7w4g1jygdqm" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/watering_can_basic.png" id="100_krdoo"]
+[ext_resource type="Texture2D" uid="uid://5m7sjt6etpqm" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/axe_copper.png" id="101_63ge1"]
+[ext_resource type="Texture2D" uid="uid://ndxrclnv5eb6" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/fishing_rod_copper.png" id="102_ya2lc"]
+[ext_resource type="Texture2D" uid="uid://bca3v3q565g2c" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/hammer_copper.png" id="103_mya7u"]
+[ext_resource type="Texture2D" uid="uid://cptdk7fcqd5pn" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/hoe_copper.png" id="104_2tter"]
+[ext_resource type="Texture2D" uid="uid://dqh30fsl56uyo" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/pickaxe_copper.png" id="105_qg0r3"]
+[ext_resource type="Texture2D" uid="uid://bn31adpgptxx" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/scythe_copper.png" id="106_h5v4u"]
+[ext_resource type="Texture2D" uid="uid://dx50twsxso5pe" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/shovel_copper.png" id="107_edc65"]
+[ext_resource type="Texture2D" uid="uid://ddkugvyjyhd1l" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/sword_copper.png" id="108_yy4id"]
+[ext_resource type="Texture2D" uid="uid://ykd67gf4d40p" path="res://Assets/CozyVillageFarm/06_Farming/Produce/chili.png" id="109_uidoh"]
+[ext_resource type="Texture2D" uid="uid://mo7dqyo1ssup" path="res://Assets/CozyVillageFarm/06_Farming/Tools/copper/watering_can_copper.png" id="110_5oo1e"]
+[ext_resource type="Texture2D" uid="uid://b2dq3xprc2bih" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/axe_crystal.png" id="111_7a4k4"]
+[ext_resource type="Texture2D" uid="uid://bqgdcb6olatmk" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/fishing_rod_crystal.png" id="112_u8dnx"]
+[ext_resource type="Texture2D" uid="uid://b17vy6c7hlic4" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/hammer_crystal.png" id="113_t2wg3"]
+[ext_resource type="Texture2D" uid="uid://bwri7wqd1ywwg" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/hoe_crystal.png" id="114_y43dj"]
+[ext_resource type="Texture2D" uid="uid://8xq8ybg6i2gs" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/pickaxe_crystal.png" id="115_q8t3e"]
+[ext_resource type="Texture2D" uid="uid://b2jduynh5o07j" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/scythe_crystal.png" id="116_5pldb"]
+[ext_resource type="Texture2D" uid="uid://boohq6xqcgsbp" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/shovel_crystal.png" id="117_g2p44"]
+[ext_resource type="Texture2D" uid="uid://cfxgex4glhy8l" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/sword_crystal.png" id="118_sa1ds"]
+[ext_resource type="Texture2D" uid="uid://ceka0fssq6dcc" path="res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/watering_can_crystal.png" id="119_dj8ax"]
+[ext_resource type="Texture2D" uid="uid://dhfounkth2x87" path="res://Assets/CozyVillageFarm/06_Farming/Produce/corn.png" id="120_37jbd"]
+[ext_resource type="Texture2D" uid="uid://dantll3g3jabw" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/axe_gold.png" id="121_pvuy4"]
+[ext_resource type="Texture2D" uid="uid://igffctnnsfcn" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/fishing_rod_gold.png" id="122_bt7xi"]
+[ext_resource type="Texture2D" uid="uid://dtjc5l607waha" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/hammer_gold.png" id="123_t46te"]
+[ext_resource type="Texture2D" uid="uid://d25lis3c2j1cw" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/hoe_gold.png" id="124_rynf5"]
+[ext_resource type="Texture2D" uid="uid://d0ttlrx2mgbnm" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/pickaxe_gold.png" id="125_q0ex8"]
+[ext_resource type="Texture2D" uid="uid://gm60g1vjcna4" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/scythe_gold.png" id="126_58chm"]
+[ext_resource type="Texture2D" uid="uid://boae8gfu2wetx" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/shovel_gold.png" id="127_744s6"]
+[ext_resource type="Texture2D" uid="uid://c2bjv070jqmdh" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/sword_gold.png" id="128_cha8o"]
+[ext_resource type="Texture2D" uid="uid://dtmuqkpqhmfyt" path="res://Assets/CozyVillageFarm/06_Farming/Tools/gold/watering_can_gold.png" id="129_qf0yr"]
+[ext_resource type="Texture2D" uid="uid://dpg1cf3yxfcxo" path="res://Assets/CozyVillageFarm/10_Items/Animal_Products/butter.png" id="130_vnyc2"]
+[ext_resource type="Texture2D" uid="uid://bmc2vlkrpg6ki" path="res://Assets/CozyVillageFarm/06_Farming/Produce/eggplant.png" id="131_6htby"]
+[ext_resource type="Texture2D" uid="uid://8l5erqhx1d6o" path="res://Assets/CozyVillageFarm/10_Items/Animal_Products/egg_brown.png" id="132_m76tf"]
+[ext_resource type="Texture2D" uid="uid://cyhqhhvf7jriv" path="res://Assets/CozyVillageFarm/10_Items/Animal_Products/egg_duck.png" id="133_md5ey"]
+[ext_resource type="Texture2D" uid="uid://cv2xrmcjn21v3" path="res://Assets/CozyVillageFarm/10_Items/Animal_Products/egg_golden.png" id="134_nbmbt"]
+[ext_resource type="Texture2D" uid="uid://cv653kl2lornk" path="res://Assets/CozyVillageFarm/10_Items/Animal_Products/egg_white.png" id="135_1h5ot"]
+[ext_resource type="Texture2D" uid="uid://bkiehhj2p2rkm" path="res://Assets/CozyVillageFarm/10_Items/Animal_Products/feather.png" id="136_2t772"]
+[ext_resource type="Texture2D" uid="uid://dipys030gub5y" path="res://Assets/CozyVillageFarm/10_Items/Animal_Products/truffle.png" id="137_h66g8"]
+[ext_resource type="Texture2D" uid="uid://c83al5vax3rjj" path="res://Assets/CozyVillageFarm/10_Items/Animal_Products/wool.png" id="138_bhylv"]
+[ext_resource type="Texture2D" uid="uid://bl6kubkh44cl1" path="res://Assets/CozyVillageFarm/10_Items/Fish/anchovy.png" id="139_oqrcm"]
+[ext_resource type="Texture2D" uid="uid://4jo4g1klwwit" path="res://Assets/CozyVillageFarm/10_Items/Fish/bass.png" id="140_3k0rj"]
+[ext_resource type="Texture2D" uid="uid://ukuwgrr17xh1" path="res://Assets/CozyVillageFarm/10_Items/Fish/carp_golden.png" id="141_cpp08"]
+[ext_resource type="Texture2D" uid="uid://4tjkauakb1ou" path="res://Assets/CozyVillageFarm/06_Farming/Produce/onion.png" id="142_ebhgh"]
+[ext_resource type="Texture2D" uid="uid://d1b6mxqubkj3o" path="res://Assets/CozyVillageFarm/10_Items/Fish/catfish.png" id="143_o2i4q"]
+[ext_resource type="Texture2D" uid="uid://btaoyfg2ssxs4" path="res://Assets/CozyVillageFarm/10_Items/Fish/clownfish.png" id="144_mbrxm"]
+[ext_resource type="Texture2D" uid="uid://btk1souh6bmqc" path="res://Assets/CozyVillageFarm/10_Items/Fish/eel.png" id="145_hr5kf"]
+[ext_resource type="Texture2D" uid="uid://d1jl5f375dtp5" path="res://Assets/CozyVillageFarm/10_Items/Fish/ghost_fish.png" id="146_781j1"]
+[ext_resource type="Texture2D" uid="uid://b6bhix0o24md7" path="res://Assets/CozyVillageFarm/10_Items/Fish/jellyfish.png" id="147_5f318"]
+[ext_resource type="Texture2D" uid="uid://blxenvvbl4b8l" path="res://Assets/CozyVillageFarm/10_Items/Fish/koi.png" id="148_ckurd"]
+[ext_resource type="Texture2D" uid="uid://dsscysnv0binl" path="res://Assets/CozyVillageFarm/10_Items/Fish/octopus.png" id="149_oi8n0"]
+[ext_resource type="Texture2D" uid="uid://cy5qvbtbym2h4" path="res://Assets/CozyVillageFarm/10_Items/Fish/perch.png" id="150_eo338"]
+[ext_resource type="Texture2D" uid="uid://cqpc3a7jkuytb" path="res://Assets/CozyVillageFarm/10_Items/Fish/pike.png" id="151_rj4vr"]
+[ext_resource type="Texture2D" uid="uid://c0bkfxcy5tyg7" path="res://Assets/CozyVillageFarm/10_Items/Fish/pufferfish.png" id="152_yseo3"]
+[ext_resource type="Texture2D" uid="uid://csyfnrbe4hcj" path="res://Assets/CozyVillageFarm/06_Farming/Produce/potato.png" id="153_jn1su"]
+[ext_resource type="Texture2D" uid="uid://y7cqt5160dpl" path="res://Assets/CozyVillageFarm/10_Items/Fish/red_snapper.png" id="154_v6glk"]
+[ext_resource type="Texture2D" uid="uid://chqmskk3sr1m2" path="res://Assets/CozyVillageFarm/10_Items/Fish/salmon.png" id="155_duecy"]
+[ext_resource type="Texture2D" uid="uid://ctlq81b276ppr" path="res://Assets/CozyVillageFarm/10_Items/Fish/sardine.png" id="156_bnsvx"]
+[ext_resource type="Texture2D" uid="uid://dpupcjfxrat3c" path="res://Assets/CozyVillageFarm/10_Items/Fish/shrimp.png" id="157_ly1j6"]
+[ext_resource type="Texture2D" uid="uid://c45711odxggpu" path="res://Assets/CozyVillageFarm/10_Items/Fish/squid.png" id="158_gdxqm"]
+[ext_resource type="Texture2D" uid="uid://balj0ur3cvew" path="res://Assets/CozyVillageFarm/10_Items/Fish/swordfish.png" id="159_7u8xc"]
+[ext_resource type="Texture2D" uid="uid://bpoadwpys1ygd" path="res://Assets/CozyVillageFarm/10_Items/Fish/tropical_blue.png" id="160_5qewt"]
+[ext_resource type="Texture2D" uid="uid://dgc5ttdwv74s7" path="res://Assets/CozyVillageFarm/10_Items/Fish/trout.png" id="161_q67wx"]
+[ext_resource type="Texture2D" uid="uid://dyxbfgymylomo" path="res://Assets/CozyVillageFarm/10_Items/Fish/tuna.png" id="162_hir35"]
+[ext_resource type="Texture2D" uid="uid://dabgmqgqu3qaa" path="res://Assets/CozyVillageFarm/10_Items/Food/baguette.png" id="163_b7dhh"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_70clu"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Crops/crop_withered.png"
+texture = ExtResource("1_4vbk7")
+0:0/size_in_atlas = Vector2i(1, 2)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hq7yn"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/beetroot.png"
+texture = ExtResource("2_dg003")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1xj1s"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/pumpkin.png"
+texture = ExtResource("3_t2b2b")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_uvpwh"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/bread.png"
+texture = ExtResource("4_6ghwd")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_irsph"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/cake_slice.png"
+texture = ExtResource("5_ghwlj")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_654mt"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/cheese.png"
+texture = ExtResource("6_sjr25")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rcyc7"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/coffee.png"
+texture = ExtResource("7_mpf1q")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ytcc1"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/cookie.png"
+texture = ExtResource("8_ernle")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d2yby"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/fried_egg.png"
+texture = ExtResource("9_upnqv")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_idlrf"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/grilled_fish.png"
+texture = ExtResource("10_muh2i")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6osf5"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/honey.png"
+texture = ExtResource("11_vpcco")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_yl1dj"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/jam_strawberry.png"
+texture = ExtResource("12_16k3l")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_31xn7"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/juice_orange.png"
+texture = ExtResource("13_iu7af")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3np7v"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/strawberry.png"
+texture = ExtResource("14_82hml")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tfiji"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/milk.png"
+texture = ExtResource("15_r5tqe")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ak65e"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/pancakes.png"
+texture = ExtResource("16_tq4cs")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_j5nkh"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/pickles.png"
+texture = ExtResource("17_dcyku")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dk511"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/pie.png"
+texture = ExtResource("18_a8pyh")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lvhlx"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/porridge.png"
+texture = ExtResource("19_q6uxf")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8ijgc"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/ramen.png"
+texture = ExtResource("20_snf1y")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7r22c"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/salad.png"
+texture = ExtResource("21_m7n8m")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3fxki"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/soup_pumpkin.png"
+texture = ExtResource("22_eb0rd")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vaa5p"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/soup_tomato.png"
+texture = ExtResource("23_hhc53")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_i0jd6"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/stew.png"
+texture = ExtResource("24_n8kfc")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gegq4"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/sunflower.png"
+texture = ExtResource("25_8elpp")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_n8plh"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/sushi.png"
+texture = ExtResource("26_pyyxa")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2n152"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/tea.png"
+texture = ExtResource("27_nerqo")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_acixe"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/backpack.png"
+texture = ExtResource("28_xmaqr")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4cai7"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/book.png"
+texture = ExtResource("29_kimmo")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pip1g"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/coin_gold.png"
+texture = ExtResource("30_74n1s")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_82hh5"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/coin_silver.png"
+texture = ExtResource("31_m5c6g")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_84chh"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/coin_stack.png"
+texture = ExtResource("32_th2r5")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4xhqn"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/gem_currency.png"
+texture = ExtResource("33_0gl87")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_l6los"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/gift_box.png"
+texture = ExtResource("34_s75wo")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4w1pv"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/heart.png"
+texture = ExtResource("35_oojcy")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nsgro"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/tomato.png"
+texture = ExtResource("36_mmtyb")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mfpcp"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/key.png"
+texture = ExtResource("37_4xf2a")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8md20"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/lantern.png"
+texture = ExtResource("38_xnb6u")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_plg6i"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/letter.png"
+texture = ExtResource("39_ewy5m")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_h5ni6"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/map_scroll.png"
+texture = ExtResource("40_a8mpe")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_n3anj"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/star.png"
+texture = ExtResource("41_gkt52")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vsteg"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Misc/trophy.png"
+texture = ExtResource("42_gmlii")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_e6r2f"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Potions/potion_energy.png"
+texture = ExtResource("43_1vbly")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_updig"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Potions/potion_health.png"
+texture = ExtResource("44_4n7yc")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hk0qs"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Potions/potion_love.png"
+texture = ExtResource("45_hp8fc")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_j5600"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Potions/potion_luck.png"
+texture = ExtResource("46_b5wvl")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_b5s4r"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/turnip.png"
+texture = ExtResource("47_w6as5")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1v57l"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Potions/potion_mana.png"
+texture = ExtResource("48_gexsx")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rei6n"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Potions/potion_speed.png"
+texture = ExtResource("49_ueq1n")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xvma0"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/amethyst.png"
+texture = ExtResource("50_x3u0g")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_i2ytp"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/clay.png"
+texture = ExtResource("51_vmwjp")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_w05he"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/coal.png"
+texture = ExtResource("52_gxg6x")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lbad0"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/copper_bar.png"
+texture = ExtResource("53_cbdwy")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pubgt"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/copper_ore.png"
+texture = ExtResource("54_v3m4u")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cxmnk"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/crystal_bar.png"
+texture = ExtResource("55_hy0ca")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6eics"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/diamond.png"
+texture = ExtResource("56_bkl2h")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7yvex"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/emerald.png"
+texture = ExtResource("57_tfmx8")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_uvd14"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/watermelon.png"
+texture = ExtResource("58_asppw")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cs3hs"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/fiber.png"
+texture = ExtResource("59_qxlhh")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7gl8n"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/gold_bar.png"
+texture = ExtResource("60_gwqkd")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ti4u5"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/gold_ore.png"
+texture = ExtResource("61_rfu26")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ovjhd"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/hardwood.png"
+texture = ExtResource("62_htsq8")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_arxvx"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/iron_bar.png"
+texture = ExtResource("63_cidwr")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_oveos"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/iron_ore.png"
+texture = ExtResource("64_ryfg6")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_34gjr"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/quartz.png"
+texture = ExtResource("65_fnhyj")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mneeo"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/ruby.png"
+texture = ExtResource("66_a3ubs")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6g0ef"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/sap.png"
+texture = ExtResource("67_gfvfe")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_81nwr"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/sapphire.png"
+texture = ExtResource("68_diwlf")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qi3lr"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/wheat.png"
+texture = ExtResource("69_wdkht")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bfw72"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/stone.png"
+texture = ExtResource("70_6yx1j")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dau81"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/topaz.png"
+texture = ExtResource("71_mf8ap")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bx5k3"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Resources/wood.png"
+texture = ExtResource("72_yehw0")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k3axh"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_beetroot.png"
+texture = ExtResource("73_xh35o")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_y7nk1"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_blueberry.png"
+texture = ExtResource("74_mvnps")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_v53aq"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_cabbage.png"
+texture = ExtResource("75_7binw")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_yu132"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/blueberry.png"
+texture = ExtResource("76_k54om")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qjoxd"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_carrot.png"
+texture = ExtResource("77_yqam5")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kw8qo"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_chili.png"
+texture = ExtResource("78_acvsm")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tfsh8"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_corn.png"
+texture = ExtResource("79_1eqnu")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ubbaq"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_eggplant.png"
+texture = ExtResource("80_f88ed")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_mpcxw"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_onion.png"
+texture = ExtResource("81_0hd0v")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1rjbw"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_potato.png"
+texture = ExtResource("82_g5nnv")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nwnyx"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_pumpkin.png"
+texture = ExtResource("83_70j17")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ssr2u"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_strawberry.png"
+texture = ExtResource("84_2mi4q")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_prhj1"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_sunflower.png"
+texture = ExtResource("85_swbrk")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4t7ko"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_tomato.png"
+texture = ExtResource("86_ox8jg")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ak4y7"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/cabbage.png"
+texture = ExtResource("87_1ab35")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_y3p16"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_turnip.png"
+texture = ExtResource("88_y8r47")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_f487t"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_watermelon.png"
+texture = ExtResource("89_c8bet")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ce5s4"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Seeds/seeds_wheat.png"
+texture = ExtResource("90_thjwf")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8v2ev"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/axe_basic.png"
+texture = ExtResource("91_w1jwx")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pe0ao"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/fishing_rod_basic.png"
+texture = ExtResource("92_437ys")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_83b7n"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/hammer_basic.png"
+texture = ExtResource("93_8b8j2")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_067dq"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/hoe_basic.png"
+texture = ExtResource("94_q5et4")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4ji7g"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/pickaxe_basic.png"
+texture = ExtResource("95_ocnqd")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_opvw2"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/scythe_basic.png"
+texture = ExtResource("96_clekl")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_svdkx"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/shovel_basic.png"
+texture = ExtResource("97_xk7w6")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0xxa7"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/carrot.png"
+texture = ExtResource("98_36pkp")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_o84lo"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png"
+texture = ExtResource("99_pm11j")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_egkoo"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/watering_can_basic.png"
+texture = ExtResource("100_krdoo")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8j4um"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/axe_copper.png"
+texture = ExtResource("101_63ge1")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qqak7"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/fishing_rod_copper.png"
+texture = ExtResource("102_ya2lc")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5nauf"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/hammer_copper.png"
+texture = ExtResource("103_mya7u")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ro0wk"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/hoe_copper.png"
+texture = ExtResource("104_2tter")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jh8a3"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/pickaxe_copper.png"
+texture = ExtResource("105_qg0r3")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_g5ynm"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/scythe_copper.png"
+texture = ExtResource("106_h5v4u")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_in5nm"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/shovel_copper.png"
+texture = ExtResource("107_edc65")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_h4r80"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/sword_copper.png"
+texture = ExtResource("108_yy4id")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_25tp3"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/chili.png"
+texture = ExtResource("109_uidoh")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rr3u1"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/copper/watering_can_copper.png"
+texture = ExtResource("110_5oo1e")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_a2wtn"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/axe_crystal.png"
+texture = ExtResource("111_7a4k4")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3kcq8"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/fishing_rod_crystal.png"
+texture = ExtResource("112_u8dnx")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_83dh8"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/hammer_crystal.png"
+texture = ExtResource("113_t2wg3")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2urqi"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/hoe_crystal.png"
+texture = ExtResource("114_y43dj")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_bijfo"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/pickaxe_crystal.png"
+texture = ExtResource("115_q8t3e")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rr0x8"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/scythe_crystal.png"
+texture = ExtResource("116_5pldb")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gl1x4"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/shovel_crystal.png"
+texture = ExtResource("117_g2p44")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vqgjg"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/sword_crystal.png"
+texture = ExtResource("118_sa1ds")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xeely"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/crystal/watering_can_crystal.png"
+texture = ExtResource("119_dj8ax")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_sotgx"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/corn.png"
+texture = ExtResource("120_37jbd")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_15fgi"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/axe_gold.png"
+texture = ExtResource("121_pvuy4")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_v17rg"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/fishing_rod_gold.png"
+texture = ExtResource("122_bt7xi")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_c1usn"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/hammer_gold.png"
+texture = ExtResource("123_t46te")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0c5pf"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/hoe_gold.png"
+texture = ExtResource("124_rynf5")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_lxkp7"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/pickaxe_gold.png"
+texture = ExtResource("125_q0ex8")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5xax4"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/scythe_gold.png"
+texture = ExtResource("126_58chm")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3kfse"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/shovel_gold.png"
+texture = ExtResource("127_744s6")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dvfwr"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/sword_gold.png"
+texture = ExtResource("128_cha8o")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hnwxb"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Tools/gold/watering_can_gold.png"
+texture = ExtResource("129_qf0yr")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iu7io"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Animal_Products/butter.png"
+texture = ExtResource("130_vnyc2")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4tnb0"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/eggplant.png"
+texture = ExtResource("131_6htby")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ssrfj"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Animal_Products/egg_brown.png"
+texture = ExtResource("132_m76tf")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_e0jcy"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Animal_Products/egg_duck.png"
+texture = ExtResource("133_md5ey")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3svnv"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Animal_Products/egg_golden.png"
+texture = ExtResource("134_nbmbt")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_t8wfx"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Animal_Products/egg_white.png"
+texture = ExtResource("135_1h5ot")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_a3ya3"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Animal_Products/feather.png"
+texture = ExtResource("136_2t772")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kncsm"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Animal_Products/truffle.png"
+texture = ExtResource("137_h66g8")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_rbwgw"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Animal_Products/wool.png"
+texture = ExtResource("138_bhylv")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_uxvs0"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/anchovy.png"
+texture = ExtResource("139_oqrcm")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8x18a"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/bass.png"
+texture = ExtResource("140_3k0rj")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4p3fk"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/carp_golden.png"
+texture = ExtResource("141_cpp08")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_601j1"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/onion.png"
+texture = ExtResource("142_ebhgh")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hb3lq"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/catfish.png"
+texture = ExtResource("143_o2i4q")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_im4fg"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/clownfish.png"
+texture = ExtResource("144_mbrxm")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gbe2u"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/eel.png"
+texture = ExtResource("145_hr5kf")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tuyq3"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/ghost_fish.png"
+texture = ExtResource("146_781j1")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6xg7e"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/jellyfish.png"
+texture = ExtResource("147_5f318")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vxqbq"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/koi.png"
+texture = ExtResource("148_ckurd")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_myv3o"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/octopus.png"
+texture = ExtResource("149_oi8n0")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d08uj"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/perch.png"
+texture = ExtResource("150_eo338")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_2vhiv"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/pike.png"
+texture = ExtResource("151_rj4vr")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dcdk7"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/pufferfish.png"
+texture = ExtResource("152_yseo3")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_n1803"]
+resource_name = "res://Assets/CozyVillageFarm/06_Farming/Produce/potato.png"
+texture = ExtResource("153_jn1su")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7x0oc"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/red_snapper.png"
+texture = ExtResource("154_v6glk")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cwrsx"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/salmon.png"
+texture = ExtResource("155_duecy")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pe4li"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/sardine.png"
+texture = ExtResource("156_bnsvx")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_padtn"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/shrimp.png"
+texture = ExtResource("157_ly1j6")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jmuh0"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/squid.png"
+texture = ExtResource("158_gdxqm")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_k4ihq"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/swordfish.png"
+texture = ExtResource("159_7u8xc")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_v1kas"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/tropical_blue.png"
+texture = ExtResource("160_5qewt")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fes88"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/trout.png"
+texture = ExtResource("161_q67wx")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_enta4"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Fish/tuna.png"
+texture = ExtResource("162_hir35")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_42hg1"]
+resource_name = "res://Assets/CozyVillageFarm/10_Items/Food/baguette.png"
+texture = ExtResource("163_b7dhh")
+0:0/0 = 0
 
 [resource]
-tile_size = Vector2i(16, 16)
-resource_name = "Фермерство и предметы"
+resource_name = "Farming and Items"
+physics_layer_0/collision_layer = 2
+sources/0 = SubResource("TileSetAtlasSource_70clu")
+sources/1 = SubResource("TileSetAtlasSource_hq7yn")
+sources/2 = SubResource("TileSetAtlasSource_yu132")
+sources/3 = SubResource("TileSetAtlasSource_ak4y7")
+sources/4 = SubResource("TileSetAtlasSource_0xxa7")
+sources/5 = SubResource("TileSetAtlasSource_25tp3")
+sources/6 = SubResource("TileSetAtlasSource_sotgx")
+sources/7 = SubResource("TileSetAtlasSource_4tnb0")
+sources/8 = SubResource("TileSetAtlasSource_601j1")
+sources/9 = SubResource("TileSetAtlasSource_n1803")
+sources/10 = SubResource("TileSetAtlasSource_1xj1s")
+sources/11 = SubResource("TileSetAtlasSource_3np7v")
+sources/12 = SubResource("TileSetAtlasSource_gegq4")
+sources/13 = SubResource("TileSetAtlasSource_nsgro")
+sources/14 = SubResource("TileSetAtlasSource_b5s4r")
+sources/15 = SubResource("TileSetAtlasSource_uvd14")
+sources/16 = SubResource("TileSetAtlasSource_qi3lr")
+sources/17 = SubResource("TileSetAtlasSource_k3axh")
+sources/18 = SubResource("TileSetAtlasSource_y7nk1")
+sources/19 = SubResource("TileSetAtlasSource_v53aq")
+sources/20 = SubResource("TileSetAtlasSource_qjoxd")
+sources/21 = SubResource("TileSetAtlasSource_kw8qo")
+sources/22 = SubResource("TileSetAtlasSource_tfsh8")
+sources/23 = SubResource("TileSetAtlasSource_ubbaq")
+sources/24 = SubResource("TileSetAtlasSource_mpcxw")
+sources/25 = SubResource("TileSetAtlasSource_1rjbw")
+sources/26 = SubResource("TileSetAtlasSource_nwnyx")
+sources/27 = SubResource("TileSetAtlasSource_ssr2u")
+sources/28 = SubResource("TileSetAtlasSource_prhj1")
+sources/29 = SubResource("TileSetAtlasSource_4t7ko")
+sources/30 = SubResource("TileSetAtlasSource_y3p16")
+sources/31 = SubResource("TileSetAtlasSource_f487t")
+sources/32 = SubResource("TileSetAtlasSource_ce5s4")
+sources/33 = SubResource("TileSetAtlasSource_8v2ev")
+sources/34 = SubResource("TileSetAtlasSource_pe0ao")
+sources/35 = SubResource("TileSetAtlasSource_83b7n")
+sources/36 = SubResource("TileSetAtlasSource_067dq")
+sources/37 = SubResource("TileSetAtlasSource_4ji7g")
+sources/38 = SubResource("TileSetAtlasSource_opvw2")
+sources/39 = SubResource("TileSetAtlasSource_svdkx")
+sources/40 = SubResource("TileSetAtlasSource_o84lo")
+sources/41 = SubResource("TileSetAtlasSource_egkoo")
+sources/42 = SubResource("TileSetAtlasSource_8j4um")
+sources/43 = SubResource("TileSetAtlasSource_qqak7")
+sources/44 = SubResource("TileSetAtlasSource_5nauf")
+sources/45 = SubResource("TileSetAtlasSource_ro0wk")
+sources/46 = SubResource("TileSetAtlasSource_jh8a3")
+sources/47 = SubResource("TileSetAtlasSource_g5ynm")
+sources/48 = SubResource("TileSetAtlasSource_in5nm")
+sources/49 = SubResource("TileSetAtlasSource_h4r80")
+sources/50 = SubResource("TileSetAtlasSource_rr3u1")
+sources/51 = SubResource("TileSetAtlasSource_a2wtn")
+sources/52 = SubResource("TileSetAtlasSource_3kcq8")
+sources/53 = SubResource("TileSetAtlasSource_83dh8")
+sources/54 = SubResource("TileSetAtlasSource_2urqi")
+sources/55 = SubResource("TileSetAtlasSource_bijfo")
+sources/56 = SubResource("TileSetAtlasSource_rr0x8")
+sources/57 = SubResource("TileSetAtlasSource_gl1x4")
+sources/58 = SubResource("TileSetAtlasSource_vqgjg")
+sources/59 = SubResource("TileSetAtlasSource_xeely")
+sources/60 = SubResource("TileSetAtlasSource_15fgi")
+sources/61 = SubResource("TileSetAtlasSource_v17rg")
+sources/62 = SubResource("TileSetAtlasSource_c1usn")
+sources/63 = SubResource("TileSetAtlasSource_0c5pf")
+sources/64 = SubResource("TileSetAtlasSource_lxkp7")
+sources/65 = SubResource("TileSetAtlasSource_5xax4")
+sources/66 = SubResource("TileSetAtlasSource_3kfse")
+sources/67 = SubResource("TileSetAtlasSource_dvfwr")
+sources/68 = SubResource("TileSetAtlasSource_hnwxb")
+sources/69 = SubResource("TileSetAtlasSource_iu7io")
+sources/70 = SubResource("TileSetAtlasSource_ssrfj")
+sources/71 = SubResource("TileSetAtlasSource_e0jcy")
+sources/72 = SubResource("TileSetAtlasSource_3svnv")
+sources/73 = SubResource("TileSetAtlasSource_t8wfx")
+sources/74 = SubResource("TileSetAtlasSource_a3ya3")
+sources/75 = SubResource("TileSetAtlasSource_kncsm")
+sources/76 = SubResource("TileSetAtlasSource_rbwgw")
+sources/77 = SubResource("TileSetAtlasSource_uxvs0")
+sources/78 = SubResource("TileSetAtlasSource_8x18a")
+sources/79 = SubResource("TileSetAtlasSource_4p3fk")
+sources/80 = SubResource("TileSetAtlasSource_hb3lq")
+sources/81 = SubResource("TileSetAtlasSource_im4fg")
+sources/82 = SubResource("TileSetAtlasSource_gbe2u")
+sources/83 = SubResource("TileSetAtlasSource_tuyq3")
+sources/84 = SubResource("TileSetAtlasSource_6xg7e")
+sources/85 = SubResource("TileSetAtlasSource_vxqbq")
+sources/86 = SubResource("TileSetAtlasSource_myv3o")
+sources/87 = SubResource("TileSetAtlasSource_d08uj")
+sources/88 = SubResource("TileSetAtlasSource_2vhiv")
+sources/89 = SubResource("TileSetAtlasSource_dcdk7")
+sources/90 = SubResource("TileSetAtlasSource_7x0oc")
+sources/91 = SubResource("TileSetAtlasSource_cwrsx")
+sources/92 = SubResource("TileSetAtlasSource_pe4li")
+sources/93 = SubResource("TileSetAtlasSource_padtn")
+sources/94 = SubResource("TileSetAtlasSource_jmuh0")
+sources/95 = SubResource("TileSetAtlasSource_k4ihq")
+sources/96 = SubResource("TileSetAtlasSource_v1kas")
+sources/97 = SubResource("TileSetAtlasSource_fes88")
+sources/98 = SubResource("TileSetAtlasSource_enta4")
+sources/99 = SubResource("TileSetAtlasSource_42hg1")
+sources/100 = SubResource("TileSetAtlasSource_uvpwh")
+sources/101 = SubResource("TileSetAtlasSource_irsph")
+sources/102 = SubResource("TileSetAtlasSource_654mt")
+sources/103 = SubResource("TileSetAtlasSource_rcyc7")
+sources/104 = SubResource("TileSetAtlasSource_ytcc1")
+sources/105 = SubResource("TileSetAtlasSource_d2yby")
+sources/106 = SubResource("TileSetAtlasSource_idlrf")
+sources/107 = SubResource("TileSetAtlasSource_6osf5")
+sources/108 = SubResource("TileSetAtlasSource_yl1dj")
+sources/109 = SubResource("TileSetAtlasSource_31xn7")
+sources/110 = SubResource("TileSetAtlasSource_tfiji")
+sources/111 = SubResource("TileSetAtlasSource_ak65e")
+sources/112 = SubResource("TileSetAtlasSource_j5nkh")
+sources/113 = SubResource("TileSetAtlasSource_dk511")
+sources/114 = SubResource("TileSetAtlasSource_lvhlx")
+sources/115 = SubResource("TileSetAtlasSource_8ijgc")
+sources/116 = SubResource("TileSetAtlasSource_7r22c")
+sources/117 = SubResource("TileSetAtlasSource_3fxki")
+sources/118 = SubResource("TileSetAtlasSource_vaa5p")
+sources/119 = SubResource("TileSetAtlasSource_i0jd6")
+sources/120 = SubResource("TileSetAtlasSource_n8plh")
+sources/121 = SubResource("TileSetAtlasSource_2n152")
+sources/122 = SubResource("TileSetAtlasSource_acixe")
+sources/123 = SubResource("TileSetAtlasSource_4cai7")
+sources/124 = SubResource("TileSetAtlasSource_pip1g")
+sources/125 = SubResource("TileSetAtlasSource_82hh5")
+sources/126 = SubResource("TileSetAtlasSource_84chh")
+sources/127 = SubResource("TileSetAtlasSource_4xhqn")
+sources/128 = SubResource("TileSetAtlasSource_l6los")
+sources/129 = SubResource("TileSetAtlasSource_4w1pv")
+sources/130 = SubResource("TileSetAtlasSource_mfpcp")
+sources/131 = SubResource("TileSetAtlasSource_8md20")
+sources/132 = SubResource("TileSetAtlasSource_plg6i")
+sources/133 = SubResource("TileSetAtlasSource_h5ni6")
+sources/134 = SubResource("TileSetAtlasSource_n3anj")
+sources/135 = SubResource("TileSetAtlasSource_vsteg")
+sources/136 = SubResource("TileSetAtlasSource_e6r2f")
+sources/137 = SubResource("TileSetAtlasSource_updig")
+sources/138 = SubResource("TileSetAtlasSource_hk0qs")
+sources/139 = SubResource("TileSetAtlasSource_j5600")
+sources/140 = SubResource("TileSetAtlasSource_1v57l")
+sources/141 = SubResource("TileSetAtlasSource_rei6n")
+sources/142 = SubResource("TileSetAtlasSource_xvma0")
+sources/143 = SubResource("TileSetAtlasSource_i2ytp")
+sources/144 = SubResource("TileSetAtlasSource_w05he")
+sources/145 = SubResource("TileSetAtlasSource_lbad0")
+sources/146 = SubResource("TileSetAtlasSource_pubgt")
+sources/147 = SubResource("TileSetAtlasSource_cxmnk")
+sources/148 = SubResource("TileSetAtlasSource_6eics")
+sources/149 = SubResource("TileSetAtlasSource_7yvex")
+sources/150 = SubResource("TileSetAtlasSource_cs3hs")
+sources/151 = SubResource("TileSetAtlasSource_7gl8n")
+sources/152 = SubResource("TileSetAtlasSource_ti4u5")
+sources/153 = SubResource("TileSetAtlasSource_ovjhd")
+sources/154 = SubResource("TileSetAtlasSource_arxvx")
+sources/155 = SubResource("TileSetAtlasSource_oveos")
+sources/156 = SubResource("TileSetAtlasSource_34gjr")
+sources/157 = SubResource("TileSetAtlasSource_mneeo")
+sources/158 = SubResource("TileSetAtlasSource_6g0ef")
+sources/159 = SubResource("TileSetAtlasSource_81nwr")
+sources/160 = SubResource("TileSetAtlasSource_bfw72")
+sources/161 = SubResource("TileSetAtlasSource_dau81")
+sources/162 = SubResource("TileSetAtlasSource_bx5k3")

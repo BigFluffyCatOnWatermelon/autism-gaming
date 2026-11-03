@@ -1,140 +1,117 @@
-[gd_resource type="TileSet" format=3]
+[gd_resource type="TileSet" format=3 uid="uid://dmswgm07y44f1"]
 
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/leaf_pile.png" id="tex_0"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/lily_pad.png" id="tex_1"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_brown.png" id="tex_2"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_purple.png" id="tex_3"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_red.png" id="tex_4"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/pebbles.png" id="tex_5"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/reeds.png" id="tex_6"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/twigs.png" id="tex_7"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/weeds.png" id="tex_8"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_blue.png" id="tex_9"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_mixed.png" id="tex_10"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_pink.png" id="tex_11"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_purple.png" id="tex_12"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_white.png" id="tex_13"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_yellow.png" id="tex_14"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/lily_pad_flower.png" id="tex_15"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_pink.png" id="tex_16"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_red.png" id="tex_17"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_yellow.png" id="tex_18"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_blue.png" id="tex_19"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_pink.png" id="tex_20"]
-[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_teal.png" id="tex_21"]
+[ext_resource type="Texture2D" uid="uid://bxsr45ieto51d" path="res://Assets/CozyVillageFarm/02_Nature/Decor/leaf_pile.png" id="tex_0"]
+[ext_resource type="Texture2D" uid="uid://bplsxnxsb1dmm" path="res://Assets/CozyVillageFarm/02_Nature/Decor/lily_pad.png" id="tex_1"]
+[ext_resource type="Texture2D" uid="uid://cn5vexfg27akn" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_brown.png" id="tex_2"]
+[ext_resource type="Texture2D" uid="uid://nm6e5lbl6xnw" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_purple.png" id="tex_3"]
+[ext_resource type="Texture2D" uid="uid://dba0hbtpk5cpu" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_red.png" id="tex_4"]
+[ext_resource type="Texture2D" uid="uid://ceo31yqkv71d0" path="res://Assets/CozyVillageFarm/02_Nature/Decor/pebbles.png" id="tex_5"]
+[ext_resource type="Texture2D" uid="uid://ckcx75anr84h1" path="res://Assets/CozyVillageFarm/02_Nature/Decor/reeds.png" id="tex_6"]
+[ext_resource type="Texture2D" uid="uid://bdy1e1na2s8v7" path="res://Assets/CozyVillageFarm/02_Nature/Decor/twigs.png" id="tex_7"]
+[ext_resource type="Texture2D" uid="uid://btx6icv4ku3rp" path="res://Assets/CozyVillageFarm/02_Nature/Decor/weeds.png" id="tex_8"]
+[ext_resource type="Texture2D" uid="uid://d2h14nfe3iw8k" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_blue.png" id="tex_9"]
+[ext_resource type="Texture2D" uid="uid://dlli627bvj5n8" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_mixed.png" id="tex_10"]
+[ext_resource type="Texture2D" uid="uid://bms1hqo2i1ypo" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_pink.png" id="tex_11"]
+[ext_resource type="Texture2D" uid="uid://ooh3nwxcrysy" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_purple.png" id="tex_12"]
+[ext_resource type="Texture2D" uid="uid://de8tqghuqrm76" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_white.png" id="tex_13"]
+[ext_resource type="Texture2D" uid="uid://scx1mv3u5ddp" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_yellow.png" id="tex_14"]
+[ext_resource type="Texture2D" uid="uid://wdevi6amqdec" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/lily_pad_flower.png" id="tex_15"]
+[ext_resource type="Texture2D" uid="uid://p8v3nunna35v" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_pink.png" id="tex_16"]
+[ext_resource type="Texture2D" uid="uid://d14k0mtpcjhof" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_red.png" id="tex_17"]
+[ext_resource type="Texture2D" uid="uid://dkfvsy5yp7ful" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_yellow.png" id="tex_18"]
+[ext_resource type="Texture2D" uid="uid://cuc6mi5alxic0" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_blue.png" id="tex_19"]
+[ext_resource type="Texture2D" uid="uid://bpmbl67c3vhgl" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_pink.png" id="tex_20"]
+[ext_resource type="Texture2D" uid="uid://clnr7hxecjbja" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_teal.png" id="tex_21"]
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_0"]
 texture = ExtResource("tex_0")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_1"]
 texture = ExtResource("tex_1")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="Atlas_2"]
-texture = ExtResource("tex_2")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="Atlas_3"]
-texture = ExtResource("tex_3")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="Atlas_4"]
-texture = ExtResource("tex_4")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="Atlas_5"]
-texture = ExtResource("tex_5")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="Atlas_6"]
-texture = ExtResource("tex_6")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="Atlas_7"]
-texture = ExtResource("tex_7")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="Atlas_8"]
-texture = ExtResource("tex_8")
-texture_region_size = Vector2i(16, 16)
-0:0/0 = 0
-
-[sub_resource type="TileSetAtlasSource" id="Atlas_9"]
-texture = ExtResource("tex_9")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_10"]
 texture = ExtResource("tex_10")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_11"]
 texture = ExtResource("tex_11")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_12"]
 texture = ExtResource("tex_12")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_13"]
 texture = ExtResource("tex_13")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_14"]
 texture = ExtResource("tex_14")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_15"]
 texture = ExtResource("tex_15")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_16"]
 texture = ExtResource("tex_16")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_17"]
 texture = ExtResource("tex_17")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_18"]
 texture = ExtResource("tex_18")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_19"]
 texture = ExtResource("tex_19")
-texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_2"]
+texture = ExtResource("tex_2")
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_20"]
 texture = ExtResource("tex_20")
-texture_region_size = Vector2i(16, 16)
 0:0/0 = 0
 
 [sub_resource type="TileSetAtlasSource" id="Atlas_21"]
 texture = ExtResource("tex_21")
-texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_3"]
+texture = ExtResource("tex_3")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_4"]
+texture = ExtResource("tex_4")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_5"]
+texture = ExtResource("tex_5")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_6"]
+texture = ExtResource("tex_6")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_7"]
+texture = ExtResource("tex_7")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_8"]
+texture = ExtResource("tex_8")
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_9"]
+texture = ExtResource("tex_9")
 0:0/0 = 0
 
 [resource]
-tile_size = Vector2i(16, 16)
 resource_name = "Cozy Village Decorations"
 sources/0 = SubResource("Atlas_0")
 sources/1 = SubResource("Atlas_1")

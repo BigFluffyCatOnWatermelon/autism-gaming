@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://citax1hiniool"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_kxmmu"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_em545"]
+
+[node name="grass_tuft_winter_2f" type="StaticBody2D" unique_id=451952534]
+collision_layer = 2
+script = ExtResource("1_kxmmu")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1975420906]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_em545")
+autoplay = "default"

@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://d3b3mtjj65eu6"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_pm2an"]
+[ext_resource type="Texture2D" uid="uid://cd0ky63d5oqb2" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/mayor/mayor_idle_right.png" id="2_wjbs0"]
+
+[node name="mayor_idle_right" type="StaticBody2D" unique_id=1048411515]
+collision_layer = 2
+script = ExtResource("1_pm2an")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1336067531]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_wjbs0")

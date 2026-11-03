@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cfj1feqqwsihu"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_fqy8e"]
+[ext_resource type="Texture2D" uid="uid://cqnb8tefakiet" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/coral_pink.png" id="2_7sxa2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8tavt"]
+size = Vector2(11.52, 5.12)
+
+[node name="coral_pink" type="StaticBody2D" unique_id=618550042]
+collision_layer = 2
+script = ExtResource("1_fqy8e")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1124320610]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_7sxa2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1733105772]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_8tavt")

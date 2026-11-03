@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ItemCatalog" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="ItemCatalog" format=3]
 
 [ext_resource type="Script" path="res://scripts/item_catalog.gd" id="1_catalog"]
 [ext_resource type="Script" path="res://scripts/item_definition.gd" id="2_definition"]
@@ -14,20 +14,20 @@ category = "tools"
 stack_limit = 1
 icon = ExtResource("3_axe_icon")
 properties = {
-"damage": 5.0,
-"damage_type": "режущий",
 "attack_type": "Удар по сектору",
-"stamina_cost": 7.0,
-"efficiency": "Добывает дерево"
+"damage": 20.0,
+"damage_type": "режущий",
+"efficiency": "Добывает дерево",
+"stamina_cost": 7.0
 }
 combat_stats = {
-"damage": 5.0,
-"damage_type": "cutting",
+"arc_degrees": 100.0,
 "cooldown": 0.56,
-"reach": 72.0,
-"arc_degrees": 148.0,
-"width": 36.0,
-"effect_width": 36.0
+"damage": 25.0,
+"damage_type": "cutting",
+"effect_width": 10.0,
+"reach": 40.0,
+"width": 36.0
 }
 
 [sub_resource type="Resource" id="Pickaxe"]
@@ -39,19 +39,19 @@ category = "tools"
 stack_limit = 1
 icon = ExtResource("4_pickaxe_icon")
 properties = {
+"attack_type": "Удар по одной цели",
 "damage": 5.0,
 "damage_type": "колющий",
-"attack_type": "Удар по одной цели",
-"stamina_cost": 7.0,
-"efficiency": "Добывает камень"
+"efficiency": "Добывает камень",
+"stamina_cost": 7.0
 }
 combat_stats = {
-"damage": 5.0,
-"damage_type": "piercing",
 "cooldown": 0.61,
-"reach": 66.0,
-"width": 18.0,
-"effect_width": 18.0
+"damage": 10.0,
+"damage_type": "piercing",
+"effect_width": 10.0,
+"reach": 25.0,
+"width": 18.0
 }
 
 [resource]

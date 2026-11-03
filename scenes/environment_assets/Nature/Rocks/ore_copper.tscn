@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://b1ovb55g40ivd"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_c44h2"]
+[ext_resource type="Texture2D" uid="uid://us5uqkfvswot" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/ore_copper.png" id="2_4qddq"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_7o624"]
+size = Vector2(13.12, 6.72)
+
+[node name="ore_copper" type="StaticBody2D" unique_id=421283720]
+collision_layer = 2
+script = ExtResource("1_c44h2")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=500435334]
+texture_filter = 1
+position = Vector2(0, -7)
+texture = ExtResource("2_4qddq")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=174739977]
+position = Vector2(0, -6.72)
+shape = SubResource("RectangleShape2D_7o624")

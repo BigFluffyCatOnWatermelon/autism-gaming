@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://ygo51qq8lnk5"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_8fw74"]
+[ext_resource type="Texture2D" uid="uid://dr5oag6mu0jgu" path="res://Assets/CozyVillageFarm/04_Props/Fences/gate_closed.png" id="2_oa0ev"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_d27e7"]
+size = Vector2(11.52, 5.12)
+
+[node name="gate_closed" type="StaticBody2D" unique_id=1652277282]
+collision_layer = 2
+script = ExtResource("1_8fw74")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=813630828]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_oa0ev")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2003406104]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_d27e7")

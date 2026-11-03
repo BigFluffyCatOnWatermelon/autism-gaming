@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://crc5ve0j84m22"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_at6gq"]
+[ext_resource type="Texture2D" uid="uid://cqgofry26620w" path="res://Assets/CozyVillageFarm/04_Props/beehive.png" id="2_75tdo"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sgy6b"]
+size = Vector2(11.52, 5.12)
+
+[node name="beehive" type="StaticBody2D" unique_id=1536628653]
+collision_layer = 2
+script = ExtResource("1_at6gq")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=275944482]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_75tdo")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=922397597]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_sgy6b")

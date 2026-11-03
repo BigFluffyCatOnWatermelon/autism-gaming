@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dfdfdw8wncemy"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_q6525"]
+[ext_resource type="Texture2D" uid="uid://c80ntuuvgo82q" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/stool.png" id="2_y4aah"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mid31"]
+size = Vector2(11.52, 5.12)
+
+[node name="stool" type="StaticBody2D" unique_id=1175616669]
+collision_layer = 2
+script = ExtResource("1_q6525")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=120105479]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_y4aah")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=691396170]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_mid31")

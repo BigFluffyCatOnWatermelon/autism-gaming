@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://cpjuak2j3ahko"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_ykguh"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_c0e4t"]
+
+[node name="water_ripple_anim_4f" type="StaticBody2D" unique_id=1541373245]
+collision_layer = 2
+script = ExtResource("1_ykguh")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1550474956]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_c0e4t")
+autoplay = "default"

@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://dsu2u7rviv61l"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_is82i"]
+[ext_resource type="Texture2D" uid="uid://de8tqghuqrm76" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_white.png" id="2_dt654"]
+
+[node name="flowers_white" type="StaticBody2D" unique_id=1020357733]
+collision_layer = 2
+script = ExtResource("1_is82i")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=866128996]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_dt654")

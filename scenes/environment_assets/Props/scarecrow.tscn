@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dslfxde32cypc"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_yo6pi"]
+[ext_resource type="Texture2D" uid="uid://0aajobri1bm8" path="res://Assets/CozyVillageFarm/04_Props/scarecrow.png" id="2_nyfab"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rb685"]
+size = Vector2(11.52, 10.24)
+
+[node name="scarecrow" type="StaticBody2D" unique_id=1352869169]
+collision_layer = 2
+script = ExtResource("1_yo6pi")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=189508728]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_nyfab")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=820299034]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_rb685")

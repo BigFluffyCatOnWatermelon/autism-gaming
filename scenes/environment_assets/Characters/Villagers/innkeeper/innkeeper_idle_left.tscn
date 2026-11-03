@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://c8pxtn7coo4up"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_cximt"]
+[ext_resource type="Texture2D" uid="uid://8sf0khtal35j" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/innkeeper/innkeeper_idle_left.png" id="2_4o6fc"]
+
+[node name="innkeeper_idle_left" type="StaticBody2D" unique_id=1812181494]
+collision_layer = 2
+script = ExtResource("1_cximt")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2124352489]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_4o6fc")

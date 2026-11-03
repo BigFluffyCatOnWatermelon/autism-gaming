@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cux0puaqte8lt"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_wd75h"]
+[ext_resource type="Texture2D" uid="uid://c5rvvnu3l6yu2" path="res://Assets/CozyVillageFarm/03_Buildings/blacksmith.png" id="2_y5f2x"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_rnr1a"]
+size = Vector2(42.24, 13.44)
+
+[node name="blacksmith" type="StaticBody2D" unique_id=82912426]
+collision_layer = 2
+script = ExtResource("1_wd75h")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=867650064]
+texture_filter = 1
+position = Vector2(0, -24)
+texture = ExtResource("2_y5f2x")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1061974339]
+position = Vector2(0, -6.72)
+shape = SubResource("RectangleShape2D_rnr1a")

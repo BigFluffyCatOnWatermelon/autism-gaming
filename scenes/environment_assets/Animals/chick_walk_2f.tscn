@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://xil8mwfk1brl"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_saok5"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_b1p7o"]
+
+[node name="chick_walk_2f" type="StaticBody2D" unique_id=566119391]
+collision_layer = 2
+script = ExtResource("1_saok5")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1893985337]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_b1p7o")
+autoplay = "default"

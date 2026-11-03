@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://qj2dxhv06gun"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_juqg4"]
+[ext_resource type="Texture2D" uid="uid://dmgfu0xdjdeiq" path="res://Assets/CozyVillageFarm/03_Buildings/house_slate_plaster.png" id="2_qlijt"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xau2p"]
+size = Vector2(42.24, 13.44)
+
+[node name="house_slate_plaster" type="StaticBody2D" unique_id=1475414733]
+collision_layer = 2
+script = ExtResource("1_juqg4")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1903475151]
+texture_filter = 1
+position = Vector2(0, -24)
+texture = ExtResource("2_qlijt")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1166852192]
+position = Vector2(0, -6.72)
+shape = SubResource("RectangleShape2D_xau2p")

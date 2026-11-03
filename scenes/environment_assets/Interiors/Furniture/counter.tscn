@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://4crhydfys3sl"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_cbuw5"]
+[ext_resource type="Texture2D" uid="uid://bxqsi67l43ldl" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter.png" id="2_c2wai"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_x321m"]
+size = Vector2(11.52, 10.24)
+
+[node name="counter" type="StaticBody2D" unique_id=1632336271]
+collision_layer = 2
+script = ExtResource("1_cbuw5")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=65198082]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_c2wai")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=760819729]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_x321m")

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://cifqm1b4ii472"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_pyrk2"]
+[ext_resource type="Texture2D" uid="uid://cojrc4xt71ygv" path="res://Assets/CozyVillageFarm/04_Props/picnic_table.png" id="2_8m681"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8yrr8"]
+size = Vector2(23.04, 10.24)
+
+[node name="picnic_table" type="StaticBody2D" unique_id=1826370503]
+collision_layer = 2
+script = ExtResource("1_pyrk2")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1506364336]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_8m681")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=882254863]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_8yrr8")

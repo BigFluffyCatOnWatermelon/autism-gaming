@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://f1uacrlw4hms"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_crn7c"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_fri7n"]
+
+[node name="grass_tuft_autumn_2f" type="StaticBody2D" unique_id=601945608]
+collision_layer = 2
+script = ExtResource("1_crn7c")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1223012653]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_fri7n")
+autoplay = "default"

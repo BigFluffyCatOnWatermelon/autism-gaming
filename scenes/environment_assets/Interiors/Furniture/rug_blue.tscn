@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://b12spyeb32lxm"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_eynbd"]
+[ext_resource type="Texture2D" uid="uid://cn2ogles3rlll" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/rug_blue.png" id="2_ko0sw"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vaqw8"]
+size = Vector2(23.04, 10.24)
+
+[node name="rug_blue" type="StaticBody2D" unique_id=1379189835]
+collision_layer = 2
+script = ExtResource("1_eynbd")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=505480615]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_ko0sw")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1600890627]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_vaqw8")

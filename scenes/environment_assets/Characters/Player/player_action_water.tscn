@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://c8mgiqso0rqv8"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_khp5n"]
+[ext_resource type="Texture2D" uid="uid://ds1qvdrnjxk5a" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_action_water.png" id="2_sh3f5"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yogkt"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nd172"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yg5e1"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o26li"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(0, 96, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_igguk"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(32, 96, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ctec2"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(64, 96, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nccnh"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(0, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gsg1d"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(32, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p3180"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(64, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3trfq"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t1thd"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qkc24"]
+atlas = ExtResource("2_sh3f5")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_neug3"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yogkt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nd172")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yg5e1")
+}],
+"loop": 1,
+"name": &"action_down",
+"speed": 9.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o26li")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_igguk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ctec2")
+}],
+"loop": 1,
+"name": &"action_left",
+"speed": 9.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nccnh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gsg1d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p3180")
+}],
+"loop": 1,
+"name": &"action_right",
+"speed": 9.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3trfq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_t1thd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qkc24")
+}],
+"loop": 1,
+"name": &"action_up",
+"speed": 9.0
+}, {
+"frames": [],
+"loop": 1,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="player_action_water" type="StaticBody2D" unique_id=618094069]
+collision_layer = 2
+script = ExtResource("1_khp5n")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1879294993]
+texture_filter = 1
+position = Vector2(0, -16)
+sprite_frames = SubResource("SpriteFrames_neug3")
+animation = &"action_down"
+autoplay = "action_down"

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bynfnhomficcc"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_atn68"]
+[ext_resource type="Texture2D" uid="uid://dci3oa4v43o3g" path="res://Assets/CozyVillageFarm/09_Beach_Fishing/coral_orange.png" id="2_gd3p2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2uwji"]
+size = Vector2(11.52, 5.12)
+
+[node name="coral_orange" type="StaticBody2D" unique_id=1011620978]
+collision_layer = 2
+script = ExtResource("1_atn68")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=66250275]
+texture_filter = 1
+position = Vector2(0, -8)
+texture = ExtResource("2_gd3p2")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1833035119]
+position = Vector2(0, -2.56)
+shape = SubResource("RectangleShape2D_2uwji")

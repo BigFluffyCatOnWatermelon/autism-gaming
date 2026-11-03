@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://ryxe41d58p6d"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_8763g"]
+[ext_resource type="Texture2D" uid="uid://dfa1b7n3m3vlm" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/fisherman/fisherman_idle_up.png" id="2_ngjaj"]
+
+[node name="fisherman_idle_up" type="StaticBody2D" unique_id=1567253541]
+collision_layer = 2
+script = ExtResource("1_8763g")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1336757852]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_ngjaj")

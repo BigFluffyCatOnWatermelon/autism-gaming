@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://uwusl56otbeq"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_er8mv"]
+[ext_resource type="Texture2D" uid="uid://c8bwd1k8fneve" path="res://Assets/CozyVillageFarm/05_Interiors/Furniture/counter_sink.png" id="2_ftgt0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8puy2"]
+size = Vector2(11.52, 10.24)
+
+[node name="counter_sink" type="StaticBody2D" unique_id=1708591861]
+collision_layer = 2
+script = ExtResource("1_er8mv")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1962078984]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_ftgt0")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1541449104]
+position = Vector2(0, -5.12)
+shape = SubResource("RectangleShape2D_8puy2")

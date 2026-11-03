@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://c2k7navq7ebhg"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_uitci"]
+[ext_resource type="Texture2D" uid="uid://c0jo2hp5gt8og" path="res://Assets/CozyVillageFarm/03_Buildings/house_large_red.png" id="2_1gs5r"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ymcmn"]
+size = Vector2(56.32, 17.92)
+
+[node name="house_large_red" type="StaticBody2D" unique_id=2043983619]
+collision_layer = 2
+script = ExtResource("1_uitci")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=2009789265]
+texture_filter = 1
+position = Vector2(0, -32)
+texture = ExtResource("2_1gs5r")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1477188740]
+position = Vector2(0, -8.96)
+shape = SubResource("RectangleShape2D_ymcmn")

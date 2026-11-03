@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://b27bv1swokmhd"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_u2whl"]
+[ext_resource type="Texture2D" uid="uid://cqrq8idrrtaq0" path="res://Assets/CozyVillageFarm/02_Nature/Trees/special/palm_tree.png" id="2_kyebl"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g1jlo"]
+size = Vector2(7.68, 10.56)
+
+[node name="palm_tree" type="StaticBody2D" unique_id=420233280]
+collision_layer = 2
+script = ExtResource("1_u2whl")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1257275388]
+texture_filter = 1
+position = Vector2(0, -24)
+texture = ExtResource("2_kyebl")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1109082944]
+position = Vector2(0, -5.28)
+shape = SubResource("RectangleShape2D_g1jlo")

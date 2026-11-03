@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://b2m8cw2opfl18"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_1oac6"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_qfyt5"]
+
+[node name="sparkle_anim_4f" type="StaticBody2D" unique_id=2036424450]
+collision_layer = 2
+script = ExtResource("1_1oac6")
+
+[node name="Visual" type="AnimatedSprite2D" parent="." unique_id=1048499203]
+texture_filter = 1
+position = Vector2(0, -8)
+sprite_frames = SubResource("SpriteFrames_qfyt5")
+autoplay = "default"

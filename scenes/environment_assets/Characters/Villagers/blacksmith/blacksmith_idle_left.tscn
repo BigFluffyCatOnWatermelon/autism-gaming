@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://w5wncxtyqou1"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_d3cqw"]
+[ext_resource type="Texture2D" uid="uid://bm6rwivn3g12l" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/blacksmith/blacksmith_idle_left.png" id="2_2ccxy"]
+
+[node name="blacksmith_idle_left" type="StaticBody2D" unique_id=1556011036]
+collision_layer = 2
+script = ExtResource("1_d3cqw")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=526285322]
+texture_filter = 1
+position = Vector2(0, -16)
+texture = ExtResource("2_2ccxy")

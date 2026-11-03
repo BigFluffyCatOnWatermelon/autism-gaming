@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://dydsm40l2pjn4"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_4ocsi"]
+[ext_resource type="Texture2D" uid="uid://c6ei3thfyfg3q" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_winter.png" id="2_2evtq"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_4bhfu"]
+size = Vector2(13.12, 6.72)
+
+[node name="rock_winter" type="StaticBody2D" unique_id=1920910522]
+collision_layer = 2
+script = ExtResource("1_4ocsi")
+resource_type = "rock"
+max_health = 110.0
+health = 110.0
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=951270157]
+texture_filter = 1
+position = Vector2(0, -7)
+texture = ExtResource("2_2evtq")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=129783856]
+position = Vector2(0, -6.72)
+shape = SubResource("RectangleShape2D_4bhfu")
