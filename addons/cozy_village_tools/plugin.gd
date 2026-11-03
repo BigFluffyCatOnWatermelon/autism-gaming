@@ -28,6 +28,7 @@ const PLACEABLE_ROOTS := [
 var _generation_done := false
 var _generated_scenes := 0
 var _generated_tiles := 0
+var _force_refresh := false
 
 func _enter_tree() -> void:
 	add_tool_menu_item(MENU_ITEM, _refresh_assets)
@@ -47,6 +48,7 @@ func _on_filesystem_changed() -> void:
 		call_deferred("_generate_all")
 
 func _refresh_assets() -> void:
+	_force_refresh = true
 	_generation_done = false
 	_generate_all()
 
@@ -66,12 +68,15 @@ func _generate_all() -> void:
 		_scan_placeables(str(mapping.source), str(mapping.destination))
 	_configure_ground_collision()
 	print("Cozy Village & Farm: создано атласов TileSet: ", _generated_tiles, "; сцен объектов: ", _generated_scenes)
+	_force_refresh = false
 	if _generated_scenes > 0 or _generated_tiles > 0:
 		filesystem.scan()
 
 func _generate_catalog(catalog: Dictionary) -> void:
 	var output_path := str(catalog.path)
 	var tile_set := ResourceLoader.load(output_path) as TileSet
+	if tile_set != null and tile_set.get_source_count() > 0 and not _force_refresh:
+		return
 	if tile_set == null:
 		tile_set = TileSet.new()
 	tile_set.tile_size = Vector2i(16, 16)

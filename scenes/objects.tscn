@@ -9,3 +9,11 @@
 [node name="Props" type="Node2D" parent="."]
 
 [node name="Interiors" type="Node2D" parent="."]
+
+[node name="Animals" type="Node2D" parent="."]
+
+[node name="Characters" type="Node2D" parent="."]
+
+[node name="Beach_Fishing" type="Node2D" parent="."]
+
+[node name="Effects" type="Node2D" parent="."]
