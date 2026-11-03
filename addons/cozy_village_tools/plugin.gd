@@ -348,7 +348,7 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 				continue
 			if is_corner_sheet:
 				data.set_terrain_set(0)
-				data.set_terrain(0, upper_terrain)
+				data.set_terrain(upper_terrain)
 				var bits := [
 					["top_left_corner", TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER],
 					["top_right_corner", TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER],
@@ -360,7 +360,7 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 					data.set_terrain_peering_bit(int(bits[bit_index][1]), upper_terrain if upper else lower_terrain)
 			else:
 				data.set_terrain_set(0)
-				data.set_terrain(0, upper_terrain)
+				data.set_terrain(upper_terrain)
 				for side in [TileSet.CELL_NEIGHBOR_TOP_SIDE, TileSet.CELL_NEIGHBOR_RIGHT_SIDE, TileSet.CELL_NEIGHBOR_BOTTOM_SIDE, TileSet.CELL_NEIGHBOR_LEFT_SIDE]:
 					data.set_terrain_peering_bit(int(side), upper_terrain)
 			if (not is_corner_sheet) or upper_terrain == 5:
@@ -523,7 +523,7 @@ func _build_animations(texture: Texture2D, path: String) -> Dictionary:
 	if kind == "walk_idle":
 		var directions := ["down", "up", "right", "left"] if rows == 4 else ["right", "left"]
 		for row in range(rows):
-			var walk := "walk_" + directions[row]
+			var walk: String = "walk_" + str(directions[row])
 			_add_animation(frames, walk, texture, size, row, 0, 4, 7.0)
 			if first.is_empty():
 				first = walk
@@ -532,7 +532,7 @@ func _build_animations(texture: Texture2D, path: String) -> Dictionary:
 	elif kind == "action":
 		var directions := ["down", "up", "right", "left"]
 		for row in range(rows):
-			var action := "action_" + directions[row]
+			var action: String = "action_" + str(directions[row])
 			_add_animation(frames, action, texture, size, row, 0, columns, 9.0)
 			if first.is_empty():
 				first = action
