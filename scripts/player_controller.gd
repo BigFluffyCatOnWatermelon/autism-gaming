@@ -69,8 +69,6 @@ func configure(settings: Dictionary) -> void:
 func _ready() -> void:
 	if game_config.is_empty():
 		game_config = GameConfigScript.make_default()
-	# Never shift the physics root pivot to fix visual depth sorting.
-	pivot_offset = Vector2.ZERO
 	z_as_relative = false
 	collision_layer = 1
 	collision_mask = 2
@@ -97,7 +95,6 @@ func _ready() -> void:
 		add_child(shadow)
 	shadow.centered = true
 	shadow.offset = Vector2.ZERO
-	shadow.pivot_offset = Vector2.ZERO
 	shadow.position = SHADOW_POSITION
 	shadow.scale = Vector2(1.15, 1.0)
 	shadow.z_as_relative = true
@@ -112,7 +109,6 @@ func _ready() -> void:
 	sprite.texture = load(PLAYER_SHEET_PATH) as Texture2D
 	sprite.centered = true
 	sprite.offset = Vector2.ZERO
-	sprite.pivot_offset = Vector2.ZERO
 	sprite.hframes = 6
 	sprite.vframes = 4
 	sprite.scale = Vector2.ONE * float(game_config.player.sprite_scale)
@@ -126,7 +122,6 @@ func _ready() -> void:
 		add_child(held_item_sprite)
 	held_item_sprite.centered = true
 	held_item_sprite.offset = Vector2.ZERO
-	held_item_sprite.pivot_offset = Vector2.ZERO
 	held_item_sprite.scale = Vector2(0.72, 0.72)
 	held_item_sprite.z_as_relative = true
 	held_item_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
