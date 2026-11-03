@@ -871,6 +871,37 @@ func _ensure_debug_panel_features() -> void:
 		debug_nearby_toggle.tooltip_text = "Показывать ближайшие объекты и сортировать их по расстоянию до игрока"
 		debug_filter_row.add_child(debug_nearby_toggle)
 
+	var object_list_parent := debug_object_list.get_parent() as HBoxContainer if debug_object_list != null else null
+	var properties_scroll := debug_properties.get_parent() as ScrollContainer if debug_properties != null else null
+	if object_list_parent != null and properties_scroll != null and not object_list_parent.has_meta("debug_columns_ready"):
+		object_list_parent.remove_child(debug_object_list)
+		object_list_parent.remove_child(properties_scroll)
+		object_list_parent.add_theme_constant_override("separation", 12)
+		var object_column := VBoxContainer.new()
+		object_column.name = "DebugObjectColumn"
+		object_column.custom_minimum_size.x = 220
+		object_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		object_column.add_theme_constant_override("separation", 4)
+		var object_heading := _make_label("ОБЪЕКТЫ", 10, Color("#a9bd9e"))
+		object_column.add_child(object_heading)
+		debug_object_list.custom_minimum_size = Vector2(220, 220)
+		debug_object_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		debug_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		object_column.add_child(debug_object_list)
+		var inspector_column := VBoxContainer.new()
+		inspector_column.name = "DebugInspectorColumn"
+		inspector_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		inspector_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		inspector_column.add_child(_make_label("ПАРАМЕТРЫ ВЫБРАННОГО ОБЪЕКТА", 10, Color("#a9bd9e")))
+		properties_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		properties_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		properties_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		inspector_column.add_child(properties_scroll)
+		object_list_parent.add_child(object_column)
+		object_list_parent.add_child(inspector_column)
+		object_list_parent.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		object_list_parent.set_meta("debug_columns_ready", true)
+
 	var selection_row := panel.find_child("DebugSelectionRow", true, false) as HBoxContainer
 	if selection_row == null:
 		selection_row = HBoxContainer.new()

@@ -967,6 +967,37 @@ func _load_settings() -> void:
 		config.camera.base_zoom = float(save.get_value("camera", "base_zoom", config.camera.base_zoom))
 	ui.set_settings(screen_shake_enabled, float(config.camera.base_zoom))
 
+func _get_generic_world_objects() -> Array[Node2D]:
+	var result: Array[Node2D] = []
+	if world_objects == null:
+		return result
+	for category_node in world_objects.get_children():
+		if not category_node is Node2D:
+			continue
+		for object in category_node.get_children():
+			if object is Node2D and not object is ResourceNode and not object is ResourceDrop:
+				result.append(object as Node2D)
+	return result
+
+func _debug_object_contains_point(object: Node, world_position: Vector2) -> bool:
+	if object is Node2D and object is CanvasItem and object.has_method("get_rect"):
+		var visual := object as CanvasItem
+		var visual_node := object as Node2D
+		if visual.is_visible_in_tree():
+			var visual_rect: Variant = object.call("get_rect")
+			if visual_rect is Rect2 and visual_rect.has_point(visual_node.to_local(world_position)):
+				return true
+	if object is CollisionShape2D:
+		var collision := object as CollisionShape2D
+		if not collision.disabled and collision.shape != null:
+			if collision.shape.get_rect().has_point(collision.to_local(world_position)):
+				return true
+	for child in object.get_children():
+		if _debug_object_contains_point(child, world_position):
+			return true
+	return false
+
+
 func _refresh_debug_entries() -> void:
 	if ui == null:
 		return
@@ -991,6 +1022,23 @@ func _refresh_debug_entries() -> void:
 				"node": resource,
 				"distance": distance
 			})
+	for object in _get_generic_world_objects():
+		var category_label := str(object.get_parent().name).replace("_", " ")
+		var object_label := str(object.name).replace("_", " ").capitalize()
+		var distance: float = object.global_position.distance_to(player.global_position) if is_instance_valid(player) else 0.0
+		if not object.has_meta("debug_original_transform"):
+			object.set_meta("debug_original_transform", {
+				"position": object.position,
+				"scale": object.scale,
+				"rotation": object.rotation
+			})
+		debug_entries.append({
+			"id": str(object.get_instance_id()),
+			"kind": "world_object",
+			"label": "%s · %s" % [category_label, object_label],
+			"node": object,
+			"distance": distance
+		})
 	for drop in drops:
 		if is_instance_valid(drop):
 			var item_kind := str(drop.category)
@@ -1044,6 +1092,12 @@ func _select_debug_target(world_position: Vector2) -> void:
 			var distance: float = world_position.distance_to(drop.global_position)
 			if distance <= 20.0 and distance < nearest_distance:
 				nearest_id = str(drop.get_instance_id())
+				nearest_distance = distance
+	for object in _get_generic_world_objects():
+		if _debug_object_contains_point(object, world_position):
+			var distance: float = object.global_position.distance_to(world_position)
+			if nearest_id.is_empty() or distance < nearest_distance:
+				nearest_id = str(object.get_instance_id())
 				nearest_distance = distance
 	if nearest_id.is_empty():
 		return
@@ -1350,6 +1404,16 @@ func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 		var definition := config.item_definitions.get(str(node.item_id)) as ItemDefinition
 		if definition != null:
 			_append_item_definition_debug_properties(result, definition)
+	elif is_instance_valid(node) and node is Node2D:
+		result.append({"path": "object.name", "label": "Имя объекта", "value": str(node.name), "readonly": true})
+		result.append({"path": "object.type", "label": "Тип узла", "value": node.get_class(), "readonly": true})
+		result.append(_debug_property("transform.x", "Координата X", node.global_position.x, -5000.0, 5000.0, 1.0))
+		result.append(_debug_property("transform.y", "Координата Y", node.global_position.y, -5000.0, 5000.0, 1.0))
+		result.append(_debug_property("transform.scale_x", "Масштаб X (%)", node.scale.x * 100.0, 10.0, 500.0, 5.0))
+		result.append(_debug_property("transform.scale_y", "Масштаб Y (%)", node.scale.y * 100.0, 10.0, 500.0, 5.0))
+		result.append(_debug_property("transform.rotation", "Вращение", rad_to_deg(node.rotation), -360.0, 360.0, 1.0))
+		if node is CanvasItem:
+			result.append(_debug_property("transform.z_index", "Z-слой", node.z_index, -4096.0, 4096.0, 1.0))
 	elif kind == "inventory_item":
 		var item_id := str(entry.get("item_id", ""))
 		var definition := config.item_definitions.get(item_id) as ItemDefinition
@@ -1385,6 +1449,9 @@ func _on_debug_value_changed(path: String, value: float) -> void:
 				node.scale = scale_y
 			"transform.rotation":
 				node.rotation = deg_to_rad(value)
+			"transform.z_index":
+				if node is CanvasItem:
+					node.z_index = roundi(value)
 	elif kind == "player" and is_instance_valid(node):
 		match path:
 			"player.current_health":
@@ -1587,6 +1654,11 @@ func _reset_debug_selection() -> void:
 		node.friction = float(config.drops.horizontal_friction)
 		node.bounce_factor = float(config.drops.bounce_factor)
 		node.pickup_radius = float(config.drops.pickup_distance)
+	elif is_instance_valid(node) and node is Node2D and node.has_meta("debug_original_transform"):
+		var original: Dictionary = node.get_meta("debug_original_transform")
+		node.position = original.get("position", node.position)
+		node.scale = original.get("scale", node.scale)
+		node.rotation = float(original.get("rotation", node.rotation))
 	_refresh_debug_entries()
 	_update_debug_inspector()
 	_log("Параметры выбранного объекта сброшены.")
