@@ -172,25 +172,43 @@ func set_held_item(item_id: String, aim_direction: Vector2) -> void:
 	held_item_sprite.rotation = item_rotation
 	held_item_sprite.z_index = -2 if direction.y < -0.25 else 2
 
-func play_attack_animation(item_id: String, aim_direction: Vector2, duration: float) -> void:
+func play_attack_animation(item_id: String, aim_direction: Vector2, duration: float, animation_id: String = "") -> void:
 	if sprite == null:
 		return
 	var direction := aim_direction.normalized()
 	if direction.length_squared() < 0.001:
 		direction = Vector2.RIGHT
+
+	# item_id identifies the equipped item (used to hide its hand sprite).
+	# animation_id selects the actual action sheet. For example, sword slashes
+	# use the axe swing sheet and sword thrusts use the pickaxe strike sheet.
+	var sheet_id := animation_id if not animation_id.is_empty() else item_id
+	if not ATTACK_SHEET_PATHS.has(sheet_id):
+		attack_animation_time = 0.0
+		attack_animation_uses_sheet = false
+		attack_animation_item = item_id
+		return
+
+	var action_texture := load(str(ATTACK_SHEET_PATHS[sheet_id])) as Texture2D
+	if action_texture == null:
+		push_warning("Не удалось загрузить анимацию удара: " + str(ATTACK_SHEET_PATHS[sheet_id]))
+		return
+
 	attack_animation_item = item_id
-	attack_animation_duration = maxf(0.16, duration)
+	attack_animation_duration = maxf(0.24, duration)
 	attack_animation_time = attack_animation_duration
-	attack_animation_uses_sheet = ATTACK_SHEET_PATHS.has(item_id)
+	attack_animation_uses_sheet = true
+
 	if absf(direction.x) > absf(direction.y):
 		attack_animation_row = 2 if direction.x > 0.0 else 3
 	else:
 		attack_animation_row = 1 if direction.y < 0.0 else 0
-	if attack_animation_uses_sheet:
-		sprite.texture = load(ATTACK_SHEET_PATHS[item_id]) as Texture2D
-		sprite.hframes = 3
-		sprite.vframes = 4
-		sprite.frame_coords = Vector2i(0, attack_animation_row)
+
+	# All action sheets in this asset set are 3 columns × 4 direction rows.
+	sprite.texture = action_texture
+	sprite.hframes = 3
+	sprite.vframes = 4
+	sprite.frame_coords = Vector2i(0, attack_animation_row)
 
 func _restore_player_sheet() -> void:
 	if sprite == null:
