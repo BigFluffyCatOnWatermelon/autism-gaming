@@ -1,55 +1,55 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://ca0q16pcobqy3"]
 
-[ext_resource type="Script" path="res://scripts/world_controller.gd" id="1_world"]
-[ext_resource type="PackedScene" path="res://scenes/objects.tscn" id="2_objects"]
-[ext_resource type="PackedScene" path="res://scenes/ui.tscn" id="3_ui"]
-[ext_resource type="Script" path="res://scripts/player_controller.gd" id="4_player"]
-[ext_resource type="Texture2D" path="res://Assets/Creatures/player.png" id="5_player_texture"]
-[ext_resource type="Texture2D" path="res://Assets/Effects/shadow.png" id="6_shadow_texture"]
-[ext_resource type="PackedScene" path="res://scenes/terrain.tscn" id="7_terrain"]
+[ext_resource type="Script" uid="uid://dyihyj51dk126" path="res://scripts/world_controller.gd" id="1_world"]
+[ext_resource type="PackedScene" uid="uid://i8jntgy3lww7" path="res://scenes/objects.tscn" id="2_objects"]
+[ext_resource type="PackedScene" uid="uid://dumfefyt6fha4" path="res://scenes/ui.tscn" id="3_ui"]
+[ext_resource type="Script" uid="uid://pueheorbixg" path="res://scripts/player_controller.gd" id="4_player"]
+[ext_resource type="Texture2D" uid="uid://c5cgq0ofjh7cr" path="res://Assets/Creatures/player.png" id="5_player_texture"]
+[ext_resource type="Texture2D" uid="uid://ch5s216cd63rb" path="res://Assets/Effects/shadow.png" id="6_shadow_texture"]
+[ext_resource type="PackedScene" uid="uid://d1shj0jdi064a" path="res://scenes/terrain.tscn" id="7_terrain"]
 
 [sub_resource type="CapsuleShape2D" id="PlayerCollision"]
 radius = 8.0
 height = 28.0
 
-[node name="World" type="Node2D"]
+[node name="World" type="Node2D" unique_id=7108458]
 script = ExtResource("1_world")
 
-[node name="Terrain" parent="." instance=ExtResource("7_terrain")]
+[node name="Terrain" parent="." unique_id=268832498 instance=ExtResource("7_terrain")]
+position = Vector2(-13, 15)
 
-[node name="Player" type="CharacterBody2D" parent="."]
+[node name="Player" type="CharacterBody2D" parent="." unique_id=1571520921]
 script = ExtResource("4_player")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=583635825]
 position = Vector2(0, 4)
 shape = SubResource("PlayerCollision")
 
-[node name="Shadow" type="Sprite2D" parent="Player"]
-texture = ExtResource("6_shadow_texture")
-position = Vector2(0, 15)
-scale = Vector2(1.15, 1)
+[node name="Shadow" type="Sprite2D" parent="Player" unique_id=98215389]
 z_index = -1
 texture_filter = 1
+position = Vector2(0, 15)
+scale = Vector2(1.15, 1)
+texture = ExtResource("6_shadow_texture")
 
-[node name="Sprite" type="Sprite2D" parent="Player"]
-texture = ExtResource("5_player_texture")
+[node name="Sprite" type="Sprite2D" parent="Player" unique_id=1588598864]
+texture_filter = 1
 position = Vector2(0, -3)
 scale = Vector2(1.25, 1.25)
+texture = ExtResource("5_player_texture")
 hframes = 4
 vframes = 5
-texture_filter = 1
 
-[node name="HeldItem" type="Sprite2D" parent="Player"]
+[node name="HeldItem" type="Sprite2D" parent="Player" unique_id=690079888]
 visible = false
-scale = Vector2(0.72, 0.72)
 z_index = 2
 texture_filter = 1
+scale = Vector2(0.72, 0.72)
 
-[node name="Camera2D" type="Camera2D" parent="Player"]
-position_smoothing_enabled = false
-position_smoothing_speed = 8.0
+[node name="Camera2D" type="Camera2D" parent="Player" unique_id=752304100]
 zoom = Vector2(1.85, 1.85)
+position_smoothing_speed = 8.0
 
-[node name="Objects" parent="." instance=ExtResource("2_objects")]
+[node name="Objects" parent="." unique_id=1700838550 instance=ExtResource("2_objects")]
 
-[node name="UI" parent="." instance=ExtResource("3_ui")]
+[node name="UI" parent="." unique_id=1558874100 instance=ExtResource("3_ui")]
