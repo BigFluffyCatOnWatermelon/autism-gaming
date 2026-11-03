@@ -107,14 +107,32 @@ func _create_resources() -> void:
 		world_objects.name = "Objects"
 		add_child(world_objects)
 
-	# Ресурсы появляются только если их вручную разместили в сцене.
-	# Никакого случайного спавна деревьев или камней при запуске.
+	# Objects uses nested category folders, so discover all ResourceNodes recursively.
 	resources.clear()
-	for child in world_objects.get_children():
+	_register_resources_recursive(world_objects)
+
+
+func _register_resources_recursive(root: Node) -> void:
+	for child in root.get_children():
 		var resource := child as ResourceNode
-		if resource == null or resource.resource_type == "stump":
-			continue
-		_register_resource(resource)
+		if resource != null and resource.resource_type != "stump":
+			_register_resource(resource)
+		_register_resources_recursive(child)
+
+
+func _get_resource_nodes() -> Array[ResourceNode]:
+	var result: Array[ResourceNode] = []
+	if world_objects != null:
+		_collect_resource_nodes(world_objects, result)
+	return result
+
+
+func _collect_resource_nodes(root: Node, result: Array[ResourceNode]) -> void:
+	for child in root.get_children():
+		var resource := child as ResourceNode
+		if resource != null:
+			result.append(resource)
+		_collect_resource_nodes(child, result)
 
 
 func _create_player() -> void:
@@ -510,6 +528,8 @@ func _attack(secondary: bool) -> void:
 
 	var aim_direction: Vector2 = aim_vector.normalized()
 	var aim_angle := aim_vector.angle()
+	if player.has_method("play_attack_animation"):
+		player.play_attack_animation(weapon_id, aim_direction, maxf(0.2, float(attack.get("cooldown", 0.4)) * 0.78))
 	var agility := float(config.player.get("agility", 10.0))
 	var skill_scale := clampf(1.0 + (agility - 10.0) * float(config.combat.effect_width_skill_scale), 0.65, 1.65)
 	var attack_arc := clampf(float(attack.get("arc_degrees", config.combat.slash_arc_degrees)) + (agility - 10.0) * float(config.combat.arc_skill_bonus), 60.0, 175.0)
@@ -589,6 +609,8 @@ func _fire_arrow(weapon: Dictionary) -> void:
 		player.current_stamina = maxf(0.0, player.current_stamina - stamina_cost)
 	attack_cooldowns["bow"] = float(weapon.get("cooldown", 0.5))
 	var direction := aim_vector.normalized()
+	if player.has_method("play_attack_animation"):
+		player.play_attack_animation("bow", direction, maxf(0.24, float(weapon.get("cooldown", 0.5)) * 0.9))
 	var arrow := ArrowProjectileScript.new() as Node2D
 	arrow.name = "ArrowProjectile"
 	arrow.rotation = direction.angle()
@@ -724,9 +746,8 @@ func _count_nearby_resources() -> int:
 	var total := 0
 	if world_objects == null or player == null:
 		return total
-	for child in world_objects.get_children():
-		var resource := child as ResourceNode
-		if resource != null and resource.global_position.distance_to(player.global_position) <= 240.0:
+	for resource in _get_resource_nodes():
+		if resource.resource_type != "stump" and resource.global_position.distance_to(player.global_position) <= 240.0:
 			total += 1
 	return total
 
@@ -779,10 +800,7 @@ func _refresh_debug_entries() -> void:
 	if is_instance_valid(player):
 		debug_entries.append({"id": str(player.get_instance_id()), "kind": "player", "label": "Игрок", "node": player})
 	if world_objects != null:
-		for child in world_objects.get_children():
-			var resource := child as ResourceNode
-			if resource == null:
-				continue
+		for resource in _get_resource_nodes():
 			var kind := str(resource.resource_type)
 			var label := "Пень" if kind == "stump" else ("Дерево" if kind == "tree" else "Камень")
 			debug_entries.append({"id": str(resource.get_instance_id()), "kind": kind, "label": "%s · %s" % [label, resource.name], "node": resource})
@@ -811,10 +829,7 @@ func _select_debug_target(world_position: Vector2) -> void:
 		nearest_id = str(player.get_instance_id())
 		nearest_distance = world_position.distance_to(player.global_position)
 	if world_objects != null:
-		for child in world_objects.get_children():
-			var resource := child as ResourceNode
-			if resource == null:
-				continue
+		for resource in _get_resource_nodes():
 			var selection_center: Vector2 = resource.global_position + Vector2(0, -8)
 			var distance: float = world_position.distance_to(selection_center)
 			var selection_radius: float = resource.hit_radius + 20.0
@@ -844,9 +859,8 @@ func _update_debug_selection_highlight() -> void:
 	if is_instance_valid(player):
 		player.set_debug_selected(debug_selected_id == str(player.get_instance_id()))
 	if world_objects != null:
-		for child in world_objects.get_children():
-			if child is ResourceNode:
-				child.set_debug_selected(debug_selected_id == str(child.get_instance_id()))
+		for resource in _get_resource_nodes():
+			resource.set_debug_selected(debug_selected_id == str(resource.get_instance_id()))
 	for drop in drops:
 		if is_instance_valid(drop):
 			drop.set_debug_selected(debug_selected_id == str(drop.get_instance_id()))

@@ -57,11 +57,13 @@ const ITEM_LABELS := {
 	"arrows": "Стрелы · боеприпас",
 }
 const ITEM_TEXTURE_PATHS := {
-	"sword": "res://Assets/Weapons/sword.svg",
-	"pickaxe": "res://Assets/Tools/pickaxe.png",
-	"axe": "res://Assets/Tools/axe.png",
+	"sword": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png",
+	"pickaxe": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/pickaxe_basic.png",
+	"axe": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/axe_basic.png",
 	"bow": "res://Assets/Weapons/bow.png",
 	"arrows": "res://Assets/Items/arrows.png",
+	"wood": "res://Assets/CozyVillageFarm/10_Items/Resources/wood.png",
+	"stone": "res://Assets/CozyVillageFarm/10_Items/Resources/stone.png",
 }
 
 func _ready() -> void:
@@ -791,33 +793,6 @@ func _refresh_item_icons() -> void:
 			var count := 30 if item_id == "arrows" else 0
 			_set_slot_icon(inventory_grid.get_child(index) as Button, item_id, count)
 
-func _get_resource_icon(item_id: String) -> Texture2D:
-	if resource_icon_cache.has(item_id):
-		return resource_icon_cache[item_id] as Texture2D
-	var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
-	image.fill(Color(0, 0, 0, 0))
-	if item_id == "wood":
-		image.fill_rect(Rect2i(5, 9, 22, 14), Color("#82512f"))
-		image.fill_rect(Rect2i(4, 12, 24, 8), Color("#a96f3e"))
-		image.fill_rect(Rect2i(6, 8, 20, 3), Color("#c28b54"))
-		image.fill_rect(Rect2i(7, 21, 18, 3), Color("#5b3926"))
-		image.fill_rect(Rect2i(8, 12, 3, 8), Color("#d5a36a"))
-		image.fill_rect(Rect2i(20, 12, 2, 8), Color("#6e452b"))
-		image.fill_rect(Rect2i(4, 11, 3, 10), Color("#d1a06a"))
-		image.fill_rect(Rect2i(25, 11, 3, 10), Color("#5b3926"))
-	else:
-		image.fill_rect(Rect2i(9, 5, 14, 3), Color("#aebbb1"))
-		image.fill_rect(Rect2i(5, 8, 22, 4), Color("#8c9992"))
-		image.fill_rect(Rect2i(3, 12, 26, 11), Color("#697874"))
-		image.fill_rect(Rect2i(7, 23, 17, 4), Color("#4d5d59"))
-		image.fill_rect(Rect2i(6, 12, 5, 3), Color("#c0c9bd"))
-		image.fill_rect(Rect2i(16, 9, 5, 3), Color("#bdc7ba"))
-		image.fill_rect(Rect2i(13, 17, 4, 3), Color("#4c5a57"))
-		image.fill_rect(Rect2i(22, 14, 4, 5), Color("#899891"))
-	var texture := ImageTexture.create_from_image(image)
-	resource_icon_cache[item_id] = texture
-	return texture
-
 func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String = "") -> void:
 	if button == null:
 		return
@@ -826,11 +801,7 @@ func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String
 	if icon_rect != null:
 		if ITEM_TEXTURE_PATHS.has(item_id):
 			icon_rect.texture = load(ITEM_TEXTURE_PATHS[item_id]) as Texture2D
-			icon_rect.visible = true
-			button.text = ""
-		elif item_id == "wood" or item_id == "stone":
-			icon_rect.texture = _get_resource_icon(item_id)
-			icon_rect.visible = true
+			icon_rect.visible = icon_rect.texture != null
 			button.text = ""
 		else:
 			icon_rect.texture = null

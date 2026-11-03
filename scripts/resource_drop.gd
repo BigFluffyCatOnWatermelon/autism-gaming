@@ -2,11 +2,13 @@ extends Node2D
 class_name ResourceDrop
 
 const ITEM_TEXTURES := {
-	"sword": preload("res://Assets/Weapons/sword.svg"),
-	"pickaxe": preload("res://Assets/Tools/pickaxe.png"),
-	"axe": preload("res://Assets/Tools/axe.png"),
+	"sword": preload("res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png"),
+	"pickaxe": preload("res://Assets/CozyVillageFarm/06_Farming/Tools/basic/pickaxe_basic.png"),
+	"axe": preload("res://Assets/CozyVillageFarm/06_Farming/Tools/basic/axe_basic.png"),
 	"bow": preload("res://Assets/Weapons/bow.png"),
 	"arrows": preload("res://Assets/Items/arrows.png"),
+	"wood": preload("res://Assets/CozyVillageFarm/10_Items/Resources/wood.png"),
+	"stone": preload("res://Assets/CozyVillageFarm/10_Items/Resources/stone.png"),
 }
 
 var item_id := "wood"
@@ -29,6 +31,50 @@ var debug_selected := false
 var player_drop_protected := false
 var player_drop_origin := Vector2.ZERO
 var player_drop_exclusion_radius := 0.0
+var player_nearby := false
+
+var visual: Sprite2D
+var shadow: Sprite2D
+var pickup_area: Area2D
+
+func _ready() -> void:
+	shadow = get_node_or_null("Shadow") as Sprite2D
+	if shadow == null:
+		shadow = Sprite2D.new()
+		shadow.name = "Shadow"
+		shadow.texture = load("res://Assets/Effects/shadow.png") as Texture2D
+		shadow.position = Vector2(0, 6)
+		shadow.scale = Vector2(0.5, 0.28)
+		shadow.z_index = -1
+		shadow.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		add_child(shadow)
+
+	visual = get_node_or_null("Visual") as Sprite2D
+	if visual == null:
+		visual = Sprite2D.new()
+		visual.name = "Visual"
+		visual.centered = true
+		visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		add_child(visual)
+
+	pickup_area = get_node_or_null("PickupArea") as Area2D
+	if pickup_area == null:
+		pickup_area = Area2D.new()
+		pickup_area.name = "PickupArea"
+		pickup_area.collision_layer = 0
+		pickup_area.collision_mask = 1
+		pickup_area.monitoring = true
+		pickup_area.monitorable = false
+		add_child(pickup_area)
+		var shape_node := CollisionShape2D.new()
+		shape_node.name = "CollisionShape2D"
+		var circle := CircleShape2D.new()
+		circle.radius = maxf(pickup_radius, 24.0)
+		shape_node.shape = circle
+		pickup_area.add_child(shape_node)
+		pickup_area.body_entered.connect(_on_pickup_body_entered)
+		pickup_area.body_exited.connect(_on_pickup_body_exited)
+	_refresh_visual()
 
 func configure(kind: String, quantity: int, launch_velocity: Vector2, settings: Dictionary) -> void:
 	item_id = kind
@@ -43,7 +89,25 @@ func configure(kind: String, quantity: int, launch_velocity: Vector2, settings: 
 	bounce_factor = float(settings.get("bounce_factor", bounce_factor))
 	magnet_speed = float(settings.get("magnet_speed", magnet_speed))
 	vertical_velocity = randf_range(120.0, 220.0)
+	if is_inside_tree():
+		_refresh_visual()
 	queue_redraw()
+
+func _refresh_visual() -> void:
+	if visual == null:
+		return
+	visual.texture = ITEM_TEXTURES.get(item_id) as Texture2D
+	visual.visible = visual.texture != null
+	visual.scale = Vector2.ONE if item_id == "wood" or item_id == "stone" else Vector2.ONE * 0.9
+	visual.position = Vector2(0, -vertical_offset)
+
+func _on_pickup_body_entered(body: Node2D) -> void:
+	if body.name == "Player":
+		player_nearby = true
+
+func _on_pickup_body_exited(body: Node2D) -> void:
+	if body.name == "Player":
+		player_nearby = false
 
 func set_magnet_target(target: Node2D) -> void:
 	magnet_target = target
@@ -68,7 +132,7 @@ func is_protected_from_player() -> bool:
 	return player_drop_protected
 
 func can_collect() -> bool:
-	return not picked and vertical_offset <= 4.0
+	return not picked and vertical_offset <= 4.0 and player_nearby
 
 func collect() -> int:
 	if picked:
@@ -80,7 +144,7 @@ func _physics_process(delta: float) -> void:
 	if picked:
 		return
 	if is_instance_valid(magnet_target):
-		var direction := (magnet_target.global_position - global_position)
+		var direction := magnet_target.global_position - global_position
 		if direction.length_squared() > 0.01:
 			velocity = velocity.move_toward(direction.normalized() * magnet_speed, 1500.0 * delta)
 	else:
@@ -98,30 +162,13 @@ func _physics_process(delta: float) -> void:
 				bounce_count -= 1
 			else:
 				vertical_velocity = 0.0
+	if visual != null:
+		visual.position.y = -vertical_offset
 	z_index = int(global_position.y / 16.0) + 3
 	queue_redraw()
 
 func _draw() -> void:
 	if debug_selected:
-		draw_arc(Vector2(0, -4), 15.0, 0.0, TAU, 32, Color("#8ee6ff"), 2.0, true)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	draw_set_transform(Vector2(0, 6), 0.0, Vector2(1.25, 0.55))
-	draw_circle(Vector2.ZERO, 6.0, Color(0.02, 0.03, 0.02, 0.30))
-	var lift := Vector2(0, -vertical_offset)
-	if item_id == "wood":
-		draw_set_transform(lift + Vector2(0, -2), deg_to_rad(18.0), Vector2.ONE)
-		draw_rect(Rect2(-7, -4, 14, 8), Color("#8b5a32"))
-		draw_rect(Rect2(-5, -3, 10, 2), Color("#c48a4c"))
-		draw_line(Vector2(-4, 1), Vector2(4, 1), Color("#5f3d27"), 1.0)
-	elif item_id == "stone":
-		draw_set_transform(lift, deg_to_rad(-8.0), Vector2.ONE)
-		var points := PackedVector2Array([Vector2(-7, 2), Vector2(-5, -5), Vector2(2, -7), Vector2(8, -1), Vector2(5, 5), Vector2(-3, 6)])
-		draw_colored_polygon(points, Color("#818d8b"))
-		draw_line(Vector2(-3, -3), Vector2(3, -5), Color("#c1c9bd"), 1.0)
-	elif ITEM_TEXTURES.has(item_id):
-		draw_set_transform(lift, 0.0, Vector2.ONE * 0.72)
-		draw_texture_rect(ITEM_TEXTURES[item_id], Rect2(-16, -16, 32, 32), false)
+		draw_arc(Vector2.ZERO, 15.0, 0.0, TAU, 32, Color("#8ee6ff"), 2.0, true)
 	if amount > 1:
-		draw_set_transform(lift, 0.0, Vector2.ONE)
-		draw_string(ThemeDB.fallback_font, Vector2(8, -4), str(amount), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 9, Color.WHITE)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		draw_string(ThemeDB.fallback_font, Vector2(8, -vertical_offset - 5), str(amount), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 9, Color.WHITE)

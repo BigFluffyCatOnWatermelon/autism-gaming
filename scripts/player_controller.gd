@@ -1,10 +1,15 @@
 extends CharacterBody2D
 
 const GameConfigScript = preload("res://scripts/game_config.gd")
+const PLAYER_SHEET_PATH := "res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png"
+const ATTACK_SHEET_PATHS := {
+	"axe": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png",
+	"pickaxe": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png",
+}
 const ITEM_TEXTURE_PATHS := {
-	"sword": "res://Assets/Weapons/sword.svg",
-	"pickaxe": "res://Assets/Tools/pickaxe.png",
-	"axe": "res://Assets/Tools/axe.png",
+	"sword": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png",
+	"pickaxe": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/pickaxe_basic.png",
+	"axe": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/axe_basic.png",
 	"bow": "res://Assets/Weapons/bow.png",
 	"arrows": "res://Assets/Items/arrows.png",
 }
@@ -28,6 +33,11 @@ var roll_cooldown_timer := 0.0
 var invulnerability_timer := 0.0
 var walk_animation_time := 0.0
 var idle_animation_time := 0.0
+var attack_animation_time := 0.0
+var attack_animation_duration := 0.0
+var attack_animation_item := ""
+var attack_animation_row := 0
+var attack_animation_uses_sheet := false
 var current_held_item := ""
 
 var sprite: Sprite2D
@@ -80,7 +90,7 @@ func _ready() -> void:
 		sprite = Sprite2D.new()
 		sprite.name = "Sprite"
 		add_child(sprite)
-	sprite.texture = load("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png") as Texture2D
+	sprite.texture = load(PLAYER_SHEET_PATH) as Texture2D
 	sprite.hframes = 6
 	sprite.vframes = 4
 	sprite.scale = Vector2.ONE * float(game_config.player.sprite_scale)
@@ -121,10 +131,47 @@ func set_held_item(item_id: String, aim_direction: Vector2) -> void:
 	var direction := aim_direction.normalized()
 	if direction.length_squared() < 0.001:
 		direction = Vector2.RIGHT
-	held_item_sprite.visible = true
-	held_item_sprite.position = direction * 13.0 + Vector2(0, 3)
-	held_item_sprite.rotation = direction.angle()
+	var action_sheet_active := attack_animation_time > 0.0 and attack_animation_uses_sheet and attack_animation_item == item_id
+	held_item_sprite.visible = not action_sheet_active
+	if not held_item_sprite.visible:
+		return
+	var item_position := direction * 13.0 + Vector2(0, 3)
+	var item_rotation := direction.angle()
+	if attack_animation_time > 0.0 and attack_animation_item == item_id:
+		var progress := 1.0 - attack_animation_time / maxf(attack_animation_duration, 0.001)
+		var swing := sin(progress * PI)
+		item_position += Vector2(-direction.y, direction.x) * swing * 7.0
+		item_rotation += lerpf(-0.85, 0.55, progress)
+	held_item_sprite.position = item_position
+	held_item_sprite.rotation = item_rotation
 	held_item_sprite.z_index = -2 if direction.y < -0.25 else 2
+
+func play_attack_animation(item_id: String, aim_direction: Vector2, duration: float) -> void:
+	if sprite == null:
+		return
+	var direction := aim_direction.normalized()
+	if direction.length_squared() < 0.001:
+		direction = Vector2.RIGHT
+	attack_animation_item = item_id
+	attack_animation_duration = maxf(0.16, duration)
+	attack_animation_time = attack_animation_duration
+	attack_animation_uses_sheet = ATTACK_SHEET_PATHS.has(item_id)
+	if absf(direction.x) > absf(direction.y):
+		attack_animation_row = 2 if direction.x > 0.0 else 3
+	else:
+		attack_animation_row = 1 if direction.y < 0.0 else 0
+	if attack_animation_uses_sheet:
+		sprite.texture = load(ATTACK_SHEET_PATHS[item_id]) as Texture2D
+		sprite.hframes = 3
+		sprite.vframes = 4
+		sprite.frame_coords = Vector2i(0, attack_animation_row)
+
+func _restore_player_sheet() -> void:
+	if sprite == null:
+		return
+	sprite.texture = load(PLAYER_SHEET_PATH) as Texture2D
+	sprite.hframes = 6
+	sprite.vframes = 4
 
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint():
@@ -216,15 +263,22 @@ func _update_facing(input_vector: Vector2) -> void:
 func _update_visuals(delta: float) -> void:
 	sprite.position = Vector2(0, -3)
 
-	# В CozyVillageFarm строки листа идут в порядке: вниз, вверх, вправо, влево.
-	# Внутренние facing_row сохранены: вниз, вверх, влево, вправо.
+	attack_animation_time = maxf(0.0, attack_animation_time - delta)
+	if attack_animation_time <= 0.0 and attack_animation_uses_sheet:
+		attack_animation_uses_sheet = false
+		_restore_player_sheet()
+
 	var sheet_row := facing_row
 	if facing_row == 2:
 		sheet_row = 3
 	elif facing_row == 3:
 		sheet_row = 2
 
-	if moving and not rolling:
+	if attack_animation_time > 0.0 and attack_animation_uses_sheet:
+		var progress := 1.0 - attack_animation_time / maxf(attack_animation_duration, 0.001)
+		var action_frame := mini(2, int(floor(progress * 3.0)))
+		sprite.frame_coords = Vector2i(action_frame, attack_animation_row)
+	elif moving and not rolling:
 		walk_animation_time += delta
 		idle_animation_time = 0.0
 		var interval := 0.085 if running else 0.145
@@ -233,7 +287,6 @@ func _update_visuals(delta: float) -> void:
 	else:
 		walk_animation_time = 0.0
 		idle_animation_time += delta
-		# Последние два столбца листа — чередующиеся кадры ожидания.
 		var idle_frame := 4 + (int(floor(idle_animation_time / 0.35)) % 2)
 		sprite.frame_coords = Vector2i(idle_frame, sheet_row)
 

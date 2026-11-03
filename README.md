@@ -16,7 +16,7 @@
 | Decorations | Мелкий декор |
 | AssetLibraries | Остальные библиотеки ассетов |
 
-У забора один Terrain и четыре AtlasSource: дерево, тёмный, белый, камень. У каждого 16 соединений. Выбирай стиль во вкладке Tiles слоя Fences, автосоединение — через Terrains → Connect.
+У забора один TileSet и четыре независимых Terrain Set: дерево, тёмный, белый и камень. Каждый стиль использует собственный AtlasSource с 16 соединениями. Выбирай нужный Terrain Set в слое Fences, автосоединение — через Terrains → Connect.
 
 Размер клетки — 16×16. Сезон меняется параметром Season корневого узла Terrain. Для рисования отключи Scene Paint Mode (B), выбери TileMapLayer и пользуйся нижней панелью TileMap: Paint, Line, Rectangle, Bucket Fill, Select, Picker.
 

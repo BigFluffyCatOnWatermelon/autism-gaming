@@ -19,6 +19,7 @@ signal resource_broken(kind: String, drop_position: Vector2, amount: int)
 @export var swing_strength := 1.0
 @export var destruction_duration := 0.48
 @export var fall_angle_degrees := 78.0
+@export var preserve_visual_texture := false
 @export var damage_resistances: Dictionary = {
 	"cutting": 1.0,
 	"piercing": 1.0,
@@ -26,7 +27,9 @@ signal resource_broken(kind: String, drop_position: Vector2, amount: int)
 }
 
 var visual: Sprite2D
+var crack_overlay: Node2D
 var flash_timer := 0.0
+var fall_direction := 1.0
 var sway_velocity := 0.0
 var destroying := false
 var debug_selected := false
@@ -55,6 +58,12 @@ func _ready() -> void:
 		visual = Sprite2D.new()
 		visual.name = "Visual"
 		add_child(visual)
+	crack_overlay = get_node_or_null("CrackOverlay") as Node2D
+	if crack_overlay == null:
+		crack_overlay = Node2D.new()
+		crack_overlay.name = "CrackOverlay"
+		crack_overlay.z_index = 1
+		add_child(crack_overlay)
 	_update_visual()
 
 	if get_node_or_null("CollisionShape2D") == null:
@@ -73,20 +82,66 @@ func _ready() -> void:
 func _update_visual() -> void:
 	if visual == null:
 		return
+	if preserve_visual_texture and resource_type != "stump" and visual.texture != null:
+		visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		visual.z_index = -1
+		_update_crack_overlay()
+		return
+
 	var texture_path := "res://Assets/Resources/Trees/tree.svg"
 	match resource_type:
 		"rock":
 			texture_path = "res://Assets/Resources/Rocks/rock.svg"
 			visual.position = Vector2(0, -28)
 		"stump":
-			texture_path = "res://Assets/Resources/Stumps/stump.svg"
+			texture_path = "res://Assets/CozyVillageFarm/02_Nature/Trees/special/stump.png" if preserve_visual_texture else "res://Assets/Resources/Stumps/stump.svg"
 			visual.position = Vector2(0, -20)
 		_:
 			texture_path = "res://Assets/Resources/Trees/tree.svg"
 			visual.position = Vector2(0, -48)
 	visual.texture = load(texture_path) as Texture2D
+	if preserve_visual_texture and visual.texture != null:
+		visual.position = Vector2(0, -float(visual.texture.get_height()) * 0.5)
 	visual.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	visual.z_index = -1
+	_update_crack_overlay()
+
+func _update_crack_overlay() -> void:
+	if crack_overlay == null:
+		return
+	for child in crack_overlay.get_children():
+		child.queue_free()
+	if resource_type != "rock" or visual == null or visual.texture == null:
+		return
+	var damage_ratio := 1.0 - clampf(health / maxf(max_health, 1.0), 0.0, 1.0)
+	var crack_count := 0
+	if damage_ratio >= 0.12:
+		crack_count = 1
+	if damage_ratio >= 0.38:
+		crack_count = 2
+	if damage_ratio >= 0.66:
+		crack_count = 3
+	if crack_count == 0:
+		return
+	var texture_size := visual.texture.get_size()
+	var scale_factor := minf(texture_size.x, texture_size.y) / 32.0
+	var half_width := texture_size.x * 0.34
+	var half_height := texture_size.y * 0.34
+	var crack_paths := [
+		PackedVector2Array([Vector2(-half_width * 0.55, -half_height), Vector2(-half_width * 0.12, -half_height * 0.22), Vector2(-half_width * 0.42, half_height * 0.15)]),
+		PackedVector2Array([Vector2(half_width * 0.65, -half_height * 0.76), Vector2(half_width * 0.12, -half_height * 0.08), Vector2(half_width * 0.48, half_height * 0.68)]),
+		PackedVector2Array([Vector2(-half_width, half_height * 0.38), Vector2(-half_width * 0.12, half_height * 0.12), Vector2(half_width * 0.08, half_height * 0.62)])
+	]
+	crack_overlay.position = visual.position
+	for index in range(crack_count):
+		var crack := Line2D.new()
+		crack.name = "Crack_%d" % index
+		crack.points = crack_paths[index]
+		crack.width = maxf(1.0, scale_factor)
+		crack.default_color = Color("#343b39")
+		crack.begin_cap_mode = Line2D.LINE_CAP_ROUND
+		crack.end_cap_mode = Line2D.LINE_CAP_ROUND
+		crack_overlay.add_child(crack)
 
 func apply_damage(amount: float, damage_type: String = "crushing") -> bool:
 	if amount <= 0.0 or destroying or resource_type == "stump":
@@ -95,11 +150,13 @@ func apply_damage(amount: float, damage_type: String = "crushing") -> bool:
 	var final_damage := maxf(0.0, amount * resistance)
 	health = maxf(0.0, health - final_damage)
 	flash_timer = 0.13
-	var direction := -1.0 if randf() < 0.5 else 1.0
-	rotation += direction * deg_to_rad(4.0) * swing_strength
-	sway_velocity += direction * deg_to_rad(38.0) * swing_strength
+	if resource_type == "tree":
+		var direction := -1.0 if randf() < 0.5 else 1.0
+		rotation += direction * deg_to_rad(4.0) * swing_strength
+		sway_velocity += direction * deg_to_rad(38.0) * swing_strength
 	if visual != null:
 		visual.modulate = Color(1.55, 1.55, 1.55, 1.0)
+	_update_crack_overlay()
 	queue_redraw()
 	return health <= 0.0
 
@@ -115,10 +172,11 @@ func begin_destroy() -> void:
 	if collision != null:
 		collision.set_deferred("disabled", true)
 	if resource_type == "tree":
+		fall_direction = -1.0 if randf() < 0.5 else 1.0
 		var tween := create_tween()
 		tween.set_trans(Tween.TRANS_QUAD)
 		tween.set_ease(Tween.EASE_IN)
-		tween.tween_property(self, "rotation", deg_to_rad(fall_angle_degrees), destruction_duration)
+		tween.tween_property(self, "rotation", deg_to_rad(fall_angle_degrees) * fall_direction, destruction_duration)
 		tween.tween_callback(_finish_tree_fall)
 	else:
 		var tween := create_tween()
@@ -145,6 +203,7 @@ func _finish_rock_break() -> void:
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
+		z_index = int(global_position.y / 16.0) + 1
 		return
 	if flash_timer > 0.0:
 		flash_timer = maxf(0.0, flash_timer - delta)
@@ -154,7 +213,7 @@ func _process(delta: float) -> void:
 		sway_velocity -= rotation * 26.0 * delta
 		sway_velocity *= exp(-7.5 * delta)
 		rotation += sway_velocity * delta
-	z_index = int(global_position.y / 16.0)
+	z_index = int(global_position.y / 16.0) + 1
 
 func _draw() -> void:
 	if debug_selected:
@@ -162,5 +221,7 @@ func _draw() -> void:
 	if resource_type != "stump" and health < max_health:
 		var width := 46.0
 		var top := -100.0 if resource_type == "tree" else -58.0
+		if visual != null and visual.texture != null:
+			top = visual.position.y - float(visual.texture.get_height()) * 0.5 - 7.0
 		draw_rect(Rect2(-width * 0.5, top, width, 5), Color("#252525"))
 		draw_rect(Rect2(-width * 0.5, top, width * clampf(health / maxf(max_health, 1.0), 0.0, 1.0), 5), Color("#d85a4f"))

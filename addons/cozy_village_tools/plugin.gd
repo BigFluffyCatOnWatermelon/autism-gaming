@@ -3,6 +3,7 @@ extends EditorPlugin
 
 const MENU_ITEM := "Cozy Village & Farm: обновить каталоги и сцены"
 const PLACEABLE_SCRIPT: Script = preload("res://scripts/placeable_art.gd")
+const RESOURCE_NODE_SCRIPT: Script = preload("res://scripts/resource_node.gd")
 
 const TILESET_CATALOGS := [
 	{"name":"World Assets","path":"res://Assets/CozyVillageFarm/Godot/TileSets/cozy_world_assets_library.tres","roots":["res://Assets/CozyVillageFarm/02_Nature","res://Assets/CozyVillageFarm/03_Buildings","res://Assets/CozyVillageFarm/04_Props","res://Assets/CozyVillageFarm/05_Interiors"],"kind":"world"},
@@ -462,9 +463,22 @@ func _is_placeable(path: String) -> bool:
 		return lower.contains("/07_animals/") or lower.contains("/08_characters/")
 	return true
 
+func _get_destructible_resource_type(path: String) -> String:
+	var lower := path.to_lower()
+	var file_name := lower.get_file()
+	if lower.contains("/02_nature/trees/"):
+		if file_name in ["stump.png", "log_fallen.png"]:
+			return ""
+		return "tree"
+	if lower.contains("/02_nature/rocks/"):
+		return "rock"
+	return ""
+
 func _create_placeable_scene(path: String, output_directory: String) -> void:
 	var output_path := output_directory.path_join(path.get_file().get_basename() + ".tscn")
-	if FileAccess.file_exists(output_path):
+	var resource_kind := _get_destructible_resource_type(path)
+	# Regenerate only tree/rock scenes when their gameplay script changes.
+	if FileAccess.file_exists(output_path) and resource_kind.is_empty():
 		return
 	var texture := ResourceLoader.load(path) as Texture2D
 	if texture == null:
@@ -473,9 +487,17 @@ func _create_placeable_scene(path: String, output_directory: String) -> void:
 	var animation := _build_animations(texture, path)
 	var body := StaticBody2D.new()
 	body.name = path.get_file().get_basename().replace(" ", "_")
-	body.set_script(PLACEABLE_SCRIPT)
+	body.set_script(RESOURCE_NODE_SCRIPT if not resource_kind.is_empty() else PLACEABLE_SCRIPT)
 	body.collision_layer = 2
 	body.collision_mask = 1
+	if not resource_kind.is_empty():
+		body.set("resource_type", resource_kind)
+		body.set("preserve_visual_texture", true)
+		var starting_health := 90.0 if resource_kind == "tree" else 110.0
+		body.set("max_health", starting_health)
+		body.set("health", starting_health)
+		body.set("wood_drop_amount", 5)
+		body.set("stone_drop_amount", 4)
 	if not animation.is_empty():
 		var animated := AnimatedSprite2D.new()
 		animated.name = "Visual"
