@@ -34,7 +34,18 @@ func _enter_tree() -> void:
 	var filesystem := EditorInterface.get_resource_filesystem()
 	if not filesystem.filesystem_changed.is_connected(_on_filesystem_changed):
 		filesystem.filesystem_changed.connect(_on_filesystem_changed)
+	# The first filesystem scan may still be running when the plugin enters the
+	# tree. Poll until it finishes; a single deferred call can otherwise miss it.
+	set_process(true)
 	call_deferred("_generate_all")
+
+func _process(_delta: float) -> void:
+	if _generation_done:
+		set_process(false)
+		return
+	var filesystem := EditorInterface.get_resource_filesystem()
+	if not filesystem.is_scanning():
+		_generate_all()
 
 func _exit_tree() -> void:
 	remove_tool_menu_item(MENU_ITEM)
@@ -48,6 +59,7 @@ func _on_filesystem_changed() -> void:
 
 func _refresh_assets() -> void:
 	_generation_done = false
+	set_process(true)
 	_generate_all()
 
 func _generate_all() -> void:
@@ -55,6 +67,7 @@ func _generate_all() -> void:
 		return
 	var filesystem := EditorInterface.get_resource_filesystem()
 	if filesystem.is_scanning():
+		set_process(true)
 		return
 
 	_generation_done = true
