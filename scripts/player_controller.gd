@@ -2,10 +2,21 @@ extends CharacterBody2D
 
 const GameConfigScript = preload("res://scripts/game_config.gd")
 const WORLD_Z_SORT_OFFSET := 2048
+# Keep the physics root at the body center; use dedicated local anchors for ground work.
+const BODY_COLLISION_POSITION := Vector2(0.0, 4.0)
+const BODY_COLLISION_HEIGHT := 28.0
+const SHADOW_POSITION := Vector2(0.0, 15.0)
+const PLAYER_SPRITE_POSITION := Vector2(0.0, -3.0)
+const FOOT_LOCAL_POSITION := Vector2(0.0, 18.0)
+const HELD_ITEM_HAND_OFFSET := Vector2(0.0, 3.0)
+const HELD_ITEM_HAND_DISTANCE := 13.0
 const PLAYER_SHEET_PATH := "res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png"
 const ATTACK_SHEET_PATHS := {
 	"axe": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png",
 	"pickaxe": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png",
+	# There is no sword-specific action sheet in the pack; reuse the closest melee swing.
+	"sword": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png",
+	"hoe": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_hoe.png",
 }
 const ITEM_TEXTURE_PATHS := {
 	"sword": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png",
@@ -58,6 +69,9 @@ func configure(settings: Dictionary) -> void:
 func _ready() -> void:
 	if game_config.is_empty():
 		game_config = GameConfigScript.make_default()
+	# Never shift the physics root pivot to fix visual depth sorting.
+	pivot_offset = Vector2.ZERO
+	z_as_relative = false
 	collision_layer = 1
 	collision_mask = 2
 	queue_redraw()
@@ -72,8 +86,8 @@ func _ready() -> void:
 		capsule = CapsuleShape2D.new()
 		body_shape.shape = capsule
 	capsule.radius = float(game_config.player.collision_radius)
-	capsule.height = 28.0
-	body_shape.position = Vector2(0, 4)
+	capsule.height = BODY_COLLISION_HEIGHT
+	body_shape.position = BODY_COLLISION_POSITION
 
 	shadow = get_node_or_null("Shadow") as Sprite2D
 	if shadow == null:
@@ -81,8 +95,12 @@ func _ready() -> void:
 		shadow.name = "Shadow"
 		shadow.texture = load("res://Assets/Effects/shadow.png")
 		add_child(shadow)
-	shadow.position = Vector2(0, 15)
+	shadow.centered = true
+	shadow.offset = Vector2.ZERO
+	shadow.pivot_offset = Vector2.ZERO
+	shadow.position = SHADOW_POSITION
 	shadow.scale = Vector2(1.15, 1.0)
+	shadow.z_as_relative = true
 	shadow.z_index = -1
 	shadow.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
@@ -92,10 +110,13 @@ func _ready() -> void:
 		sprite.name = "Sprite"
 		add_child(sprite)
 	sprite.texture = load(PLAYER_SHEET_PATH) as Texture2D
+	sprite.centered = true
+	sprite.offset = Vector2.ZERO
+	sprite.pivot_offset = Vector2.ZERO
 	sprite.hframes = 6
 	sprite.vframes = 4
 	sprite.scale = Vector2.ONE * float(game_config.player.sprite_scale)
-	sprite.position = Vector2(0, -3)
+	sprite.position = PLAYER_SPRITE_POSITION
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 	held_item_sprite = get_node_or_null("HeldItem") as Sprite2D
@@ -103,7 +124,11 @@ func _ready() -> void:
 		held_item_sprite = Sprite2D.new()
 		held_item_sprite.name = "HeldItem"
 		add_child(held_item_sprite)
+	held_item_sprite.centered = true
+	held_item_sprite.offset = Vector2.ZERO
+	held_item_sprite.pivot_offset = Vector2.ZERO
 	held_item_sprite.scale = Vector2(0.72, 0.72)
+	held_item_sprite.z_as_relative = true
 	held_item_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	held_item_sprite.z_index = 2
 	held_item_sprite.visible = false
@@ -118,6 +143,26 @@ func _ready() -> void:
 	camera.zoom = Vector2.ONE * float(game_config.camera.base_zoom)
 	if not Engine.is_editor_hint():
 		camera.make_current()
+
+# Ground point at the bottom of the collision capsule. This is used only for
+# sorting and ground interactions; it does not move the physics body.
+func get_ground_position() -> Vector2:
+	return to_global(FOOT_LOCAL_POSITION)
+
+func get_foot_sort_y() -> float:
+	return get_ground_position().y
+
+func get_aim_position() -> Vector2:
+	return to_global(PLAYER_SPRITE_POSITION)
+
+func get_hand_local_position(aim_direction: Vector2) -> Vector2:
+	var direction := aim_direction.normalized()
+	if direction.length_squared() < 0.001:
+		direction = Vector2.RIGHT
+	return direction * HELD_ITEM_HAND_DISTANCE + HELD_ITEM_HAND_OFFSET
+
+func get_hand_position(aim_direction: Vector2) -> Vector2:
+	return to_global(get_hand_local_position(aim_direction))
 
 func set_held_item(item_id: String, aim_direction: Vector2) -> void:
 	if held_item_sprite == null:
@@ -136,7 +181,7 @@ func set_held_item(item_id: String, aim_direction: Vector2) -> void:
 	held_item_sprite.visible = not action_sheet_active
 	if not held_item_sprite.visible:
 		return
-	var item_position := direction * 13.0 + Vector2(0, 3)
+	var item_position := get_hand_local_position(direction)
 	var item_rotation := direction.angle()
 	if attack_animation_time > 0.0 and attack_animation_item == item_id:
 		var progress := 1.0 - attack_animation_time / maxf(attack_animation_duration, 0.001)
@@ -262,7 +307,7 @@ func _update_facing(input_vector: Vector2) -> void:
 		facing_row = 1 if direction.y < 0.0 else 0
 
 func _update_visuals(delta: float) -> void:
-	sprite.position = Vector2(0, -3)
+	sprite.position = PLAYER_SPRITE_POSITION
 
 	attack_animation_time = maxf(0.0, attack_animation_time - delta)
 	if attack_animation_time <= 0.0 and attack_animation_uses_sheet:
@@ -299,7 +344,7 @@ func _update_visuals(delta: float) -> void:
 		sprite.rotation = 0.0
 	shadow.scale = Vector2(0.9, 0.82) if crouching else Vector2(1.15, 1.0)
 	z_as_relative = false
-	z_index = clampi(floori(global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
+	z_index = clampi(floori(get_foot_sort_y()) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 
 func apply_damage(amount: float) -> bool:
 	if amount <= 0.0 or debug_invulnerable or invulnerability_timer > 0.0:
