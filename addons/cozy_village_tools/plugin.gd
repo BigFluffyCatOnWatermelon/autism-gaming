@@ -228,10 +228,10 @@ func _configure_ground_collision() -> void:
 					if data != null:
 						data.set_collision_polygons_count(0, 1)
 						data.set_collision_polygon_points(0, 0, _rectangle_polygon(16.0, 16.0, 0.0))
+				if source_id == 21:
+					_configure_animated_atlas(source, 5.0, Vector2i(3, 0))
 			elif source_id == 17 or source_id == 20:
 				_apply_water_corner_collision(source)
-			elif source_id == 21:
-				_configure_animated_atlas(source, 4, 5.0)
 		_add_water_animation_source(tile_set, "res://Assets/CozyVillageFarm/01_Terrain/Base_Tiles/common/water_anim_4f.png", 5, 0, 5.0)
 		_add_water_animation_source(tile_set, "res://Assets/CozyVillageFarm/01_Terrain/Base_Tiles/common/deep_water_anim_4f.png", 6, 0, 5.0)
 		_add_water_animation_source(tile_set, "res://Assets/CozyVillageFarm/01_Terrain/Autotiles/%s/grass_over_water_anim_4f.png" % season, 0, 5, 5.0)
@@ -275,7 +275,7 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 		var existing := tile_set.get_source(source_id) as TileSetAtlasSource
 		if existing != null and existing.texture != null and existing.texture.resource_path == texture_path:
 			if texture.get_width() > 64:
-				_configure_animated_atlas(existing, 4, speed)
+				_configure_animated_atlas(existing, speed, Vector2i(3, 0))
 				_apply_water_corner_collision(existing)
 			else:
 				_configure_animated_atlas(existing, speed, Vector2i.ZERO)
@@ -297,7 +297,8 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 		for x in range(count_x):
 			var coords := Vector2i(x, y)
 			source.create_tile(coords)
-			source.set_tile_animation_columns(coords, 4 if is_corner_sheet else 0)
+			source.set_tile_animation_columns(coords, 0)
+			source.set_tile_animation_separation(coords, Vector2i(3, 0) if is_corner_sheet else Vector2i.ZERO)
 			source.set_tile_animation_frames_count(coords, 4)
 			source.set_tile_animation_speed(coords, speed)
 			var data := source.get_tile_data(coords, 0)
