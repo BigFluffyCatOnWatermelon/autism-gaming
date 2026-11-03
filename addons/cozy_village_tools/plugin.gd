@@ -2,6 +2,7 @@
 extends EditorPlugin
 
 const PLACEABLE_SCRIPT: Script = preload("res://scripts/placeable_art.gd")
+const MENU_ITEM := "Cozy Village & Farm: обновить сцены объектов"
 const ASSET_ROOTS := [
 	{
 		"source": "res://Assets/CozyVillageFarm/02_Nature",
@@ -21,25 +22,45 @@ const ASSET_ROOTS := [
 	},
 ]
 
+var _generation_done := false
 var _generated_count := 0
 
 func _enter_tree() -> void:
-	add_tool_menu_item("Cozy Village & Farm: обновить сцены объектов", _generate_placeable_scenes)
+	add_tool_menu_item(MENU_ITEM, _refresh_placeable_scenes)
+	var filesystem := EditorInterface.get_resource_filesystem()
+	if not filesystem.filesystem_changed.is_connected(_on_filesystem_changed):
+		filesystem.filesystem_changed.connect(_on_filesystem_changed)
 	call_deferred("_generate_placeable_scenes")
 
 func _exit_tree() -> void:
-	remove_tool_menu_item("Cozy Village & Farm: обновить сцены объектов")
+	remove_tool_menu_item(MENU_ITEM)
+	var filesystem := EditorInterface.get_resource_filesystem()
+	if filesystem.filesystem_changed.is_connected(_on_filesystem_changed):
+		filesystem.filesystem_changed.disconnect(_on_filesystem_changed)
+
+func _on_filesystem_changed() -> void:
+	if not _generation_done:
+		call_deferred("_generate_placeable_scenes")
+
+func _refresh_placeable_scenes() -> void:
+	_generation_done = false
+	_generate_placeable_scenes()
 
 func _generate_placeable_scenes() -> void:
+	if _generation_done:
+		return
 	var filesystem := EditorInterface.get_resource_filesystem()
+	# The initial project scan must finish before imported textures are loaded.
+	# filesystem_changed will call this method again after that scan.
 	if filesystem.is_scanning():
-		call_deferred("_generate_placeable_scenes")
 		return
 
+	_generation_done = true
 	_generated_count = 0
 	for mapping in ASSET_ROOTS:
 		_scan_assets(str(mapping.source), str(mapping.destination))
-	filesystem.scan()
+	if _generated_count > 0:
+		filesystem.scan()
 	print("Cozy Village & Farm: создано сцен объектов: ", _generated_count)
 
 func _scan_assets(source_path: String, destination_path: String) -> void:
