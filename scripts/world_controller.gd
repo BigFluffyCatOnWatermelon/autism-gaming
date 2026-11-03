@@ -714,7 +714,17 @@ func _attack(secondary: bool) -> void:
 	var aim_direction: Vector2 = aim_vector.normalized()
 	var aim_angle := aim_vector.angle()
 	if player.has_method("play_attack_animation"):
-		player.play_attack_animation(weapon_id, aim_direction, maxf(0.2, float(attack.get("cooldown", 0.4)) * 0.78))
+		var animation_id := weapon_id
+		if weapon_id == "sword":
+			# Reuse the closest matching supplied action animations:
+			# slash = axe swing, thrust = pickaxe jab.
+			animation_id = "pickaxe" if mode == "thrust" else "axe"
+		player.play_attack_animation(
+			weapon_id,
+			aim_direction,
+			maxf(0.24, float(attack.get("cooldown", 0.4)) * 0.9),
+			animation_id
+		)
 	var agility := float(config.player.get("agility", 10.0))
 	var skill_scale := clampf(1.0 + (agility - 10.0) * float(config.combat.effect_width_skill_scale), 0.65, 1.65)
 	var attack_arc := clampf(float(attack.get("arc_degrees", config.combat.slash_arc_degrees)) + (agility - 10.0) * float(config.combat.arc_skill_bonus), 60.0, 175.0)
