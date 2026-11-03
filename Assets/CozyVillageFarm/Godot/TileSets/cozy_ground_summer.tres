@@ -1107,6 +1107,7 @@ texture_region_size = Vector2i(16, 16)
 
 [resource]
 tile_size = Vector2i(16, 16)
+terrain_set_0/mode = 0
 terrain_set_0/terrain_0/name = "Трава"
 terrain_set_0/terrain_0/color = Color(0.38, 0.70, 0.34, 1)
 terrain_set_0/terrain_1/name = "Земля"

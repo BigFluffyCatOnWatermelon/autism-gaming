@@ -58,9 +58,34 @@ func _generate_placeable_scenes() -> void:
 	_generated_count = 0
 	for mapping in ASSET_ROOTS:
 		_scan_assets(str(mapping.source), str(mapping.destination))
+	_validate_tilesets()
 	if _generated_count > 0:
 		filesystem.scan()
 	print("Cozy Village & Farm: создано сцен объектов: ", _generated_count)
+
+func _validate_tilesets() -> void:
+	var ground := ResourceLoader.load("res://Assets/CozyVillageFarm/Godot/TileSets/cozy_ground_spring.tres") as TileSet
+	if ground == null:
+		push_error("Cozy Village: не загружен сезонный TileSet.")
+		return
+	if ground.get_terrain_sets_count() != 1:
+		push_error("Cozy Village: Ground должен содержать один набор Terrain.")
+	if ground.get_terrains_count(0) != 10:
+		push_error("Cozy Village: ожидалось 10 типов поверхности, получено %d." % ground.get_terrains_count(0))
+	if int(ground.get_terrain_set_mode(0)) != 0:
+		push_error("Cozy Village: Ground должен работать в режиме Match Corners.")
+	var crops := ResourceLoader.load("res://Assets/CozyVillageFarm/Godot/TileSets/cozy_crops.tres") as TileSet
+	var fences := ResourceLoader.load("res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fences.tres") as TileSet
+	var details := ResourceLoader.load("res://Assets/CozyVillageFarm/Godot/TileSets/cozy_decorations.tres") as TileSet
+	if crops == null or crops.get_source_count() != 17:
+		push_error("Cozy Village: TileSet культур должен содержать 16 культур и засохший росток.")
+	if fences == null or fences.get_source_count() != 4:
+		push_error("Cozy Village: TileSet заборов должен содержать четыре атласа.")
+	if details == null or details.get_source_count() != 22:
+		push_error("Cozy Village: TileSet декораций неполон.")
+	if fences != null and (fences.get_terrain_sets_count() != 1 or int(fences.get_terrain_set_mode(0)) != 1):
+		push_error("Cozy Village: заборы должны использовать Terrain Match Sides.")
+	print("Cozy Village TileSets: terrains=", ground.get_terrains_count(0), ", ground_sources=", ground.get_source_count(), ", crops=", crops.get_source_count() if crops != null else 0, ", fences=", fences.get_source_count() if fences != null else 0, ", details=", details.get_source_count() if details != null else 0)
 
 func _scan_assets(source_path: String, destination_path: String) -> void:
 	var directory := DirAccess.open(source_path)

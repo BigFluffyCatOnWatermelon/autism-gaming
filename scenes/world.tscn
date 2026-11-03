@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://ca0q16pcobqy3"]
 
 [ext_resource type="Script" uid="uid://dyihyj51dk126" path="res://scripts/world_controller.gd" id="1_world"]
-[ext_resource type="PackedScene" uid="uid://i8jntgy3lww7" path="res://scenes/objects.tscn" id="2_objects"]
+[ext_resource type="PackedScene" path="res://scenes/objects.tscn" id="2_objects"]
 [ext_resource type="PackedScene" uid="uid://dumfefyt6fha4" path="res://scenes/ui.tscn" id="3_ui"]
 [ext_resource type="Script" uid="uid://pueheorbixg" path="res://scripts/player_controller.gd" id="4_player"]
 [ext_resource type="Texture2D" uid="uid://c5cgq0ofjh7cr" path="res://Assets/Creatures/player.png" id="5_player_texture"]
 [ext_resource type="Texture2D" uid="uid://ch5s216cd63rb" path="res://Assets/Effects/shadow.png" id="6_shadow_texture"]
-[ext_resource type="PackedScene" uid="uid://d1shj0jdi064a" path="res://scenes/terrain.tscn" id="7_terrain"]
+[ext_resource type="PackedScene" path="res://scenes/terrain.tscn" id="7_terrain"]
 
 [sub_resource type="CapsuleShape2D" id="PlayerCollision"]
 radius = 8.0
