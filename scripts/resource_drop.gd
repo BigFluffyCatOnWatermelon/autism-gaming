@@ -12,6 +12,10 @@ const ITEM_TEXTURES := {
 }
 
 var item_id := "wood"
+var category := "materials"
+var stack_limit := 99
+var item_definition: Resource
+var default_definition: Resource
 var amount := 1
 var default_item_id := "wood"
 var default_amount := 1
@@ -77,13 +81,13 @@ func _ready() -> void:
 		pickup_area.body_exited.connect(_on_pickup_body_exited)
 	_refresh_visual()
 
-func configure(kind: String, quantity: int, launch_velocity: Vector2, settings: Dictionary) -> void:
-	item_id = kind
-	amount = maxi(1, quantity)
+func configure(kind: String, quantity: int, launch_velocity: Vector2, settings: Dictionary, definition: Resource = null) -> void:
+	set_item_definition(kind, definition, quantity)
 	velocity = launch_velocity
 	default_item_id = kind
 	default_amount = amount
 	default_velocity = launch_velocity
+	default_definition = definition.duplicate(true) if definition != null else null
 	gravity = float(settings.get("gravity", gravity))
 	pickup_radius = float(settings.get("pickup_distance", pickup_radius))
 	friction = float(settings.get("horizontal_friction", friction))
@@ -94,12 +98,27 @@ func configure(kind: String, quantity: int, launch_velocity: Vector2, settings: 
 		_refresh_visual()
 	queue_redraw()
 
+
+func set_item_definition(kind: String, definition: Resource, quantity: int = -1) -> void:
+	item_id = kind
+	item_definition = definition
+	category = str(definition.get("category")) if definition != null else "materials"
+	stack_limit = 1 if category in ["tools", "weapons"] else (maxi(1, int(definition.get("stack_limit"))) if definition != null else 99)
+	var desired_amount := amount if quantity < 0 else quantity
+	amount = clampi(desired_amount, 1, stack_limit)
+	_refresh_visual()
+	queue_redraw()
+
+
 func _refresh_visual() -> void:
 	if visual == null:
 		return
-	visual.texture = ITEM_TEXTURES.get(item_id) as Texture2D
+	var definition_icon: Texture2D
+	if item_definition != null:
+		definition_icon = item_definition.get("icon") as Texture2D
+	visual.texture = definition_icon if definition_icon != null else ITEM_TEXTURES.get(item_id) as Texture2D
 	visual.visible = visual.texture != null
-	visual.scale = Vector2.ONE if item_id == "wood" or item_id == "stone" else Vector2.ONE * 0.9
+	visual.scale = Vector2.ONE if category == "materials" or category == "ammunition" else Vector2.ONE * 0.9
 	visual.position = Vector2(0, -vertical_offset)
 
 func _on_pickup_body_entered(body: Node2D) -> void:

@@ -1,0 +1,62 @@
+[gd_resource type="Resource" script_class="ItemCatalog" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/item_catalog.gd" id="1_catalog"]
+[ext_resource type="Script" path="res://scripts/item_definition.gd" id="2_definition"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/axe_basic.png" id="3_axe_icon"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/pickaxe_basic.png" id="4_pickaxe_icon"]
+
+[sub_resource type="Resource" id="Axe"]
+script = ExtResource("2_definition")
+item_id = "axe"
+display_name = "Топор"
+description = "Инструмент для рубки деревьев. Наносит режущий урон по сектору."
+category = "tools"
+stack_limit = 1
+icon = ExtResource("3_axe_icon")
+properties = {
+"damage": 5.0,
+"damage_type": "режущий",
+"attack_type": "Удар по сектору",
+"stamina_cost": 7.0,
+"efficiency": "Добывает дерево"
+}
+combat_stats = {
+"damage": 5.0,
+"damage_type": "cutting",
+"cooldown": 0.56,
+"reach": 72.0,
+"arc_degrees": 148.0,
+"width": 36.0,
+"effect_width": 36.0
+}
+
+[sub_resource type="Resource" id="Pickaxe"]
+script = ExtResource("2_definition")
+item_id = "pickaxe"
+display_name = "Кирка"
+description = "Инструмент для добычи камня. Наносит колющий урон одной цели."
+category = "tools"
+stack_limit = 1
+icon = ExtResource("4_pickaxe_icon")
+properties = {
+"damage": 5.0,
+"damage_type": "колющий",
+"attack_type": "Удар по одной цели",
+"stamina_cost": 7.0,
+"efficiency": "Добывает камень"
+}
+combat_stats = {
+"damage": 5.0,
+"damage_type": "piercing",
+"cooldown": 0.61,
+"reach": 66.0,
+"width": 18.0,
+"effect_width": 18.0
+}
+
+[resource]
+script = ExtResource("1_catalog")
+category = "tools"
+display_name = "Инструменты"
+description = "Инструменты не складываются в стопки: каждый предмет является отдельным объектом."
+items = Array[ExtResource("2_definition")]([SubResource("Axe"), SubResource("Pickaxe")])

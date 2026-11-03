@@ -1,7 +1,7 @@
 extends RefCounted
 class_name GameConfig
 
-const DebugDefaultsScript = preload("res://scripts/debug_defaults.gd")
+const ItemCatalogServiceScript = preload("res://scripts/item_catalog_service.gd")
 
 # Centralized gameplay balance. WorldController keeps an editable runtime copy.
 static func make_default() -> Dictionary:
@@ -57,27 +57,7 @@ static func make_default() -> Dictionary:
 			"arrow_range": 620.0,
 			"attack_stamina_cost": 7.0,
 		},
-		"weapons": {
-			"sword": {
-				"damage": 10.0,
-				"damage_type": "cutting",
-				"cooldown": 0.42,
-				"slash": {"damage": 10.0, "damage_type": "cutting", "cooldown": 0.52, "stamina_cost": 9.0, "reach": 76.0, "arc_degrees": 118.0, "effect_width": 13.0},
-				"thrust": {"damage": 10.0, "damage_type": "piercing", "cooldown": 0.31, "stamina_cost": 6.0, "reach": 116.0, "width": 24.0, "effect_width": 10.0},
-			},
-			"pickaxe": {
-				"damage": 5.0, "damage_type": "piercing", "cooldown": 0.61, "reach": 66.0,
-				"width": 18.0, "effect_width": 18.0,
-			},
-			"axe": {
-				"damage": 5.0, "damage_type": "cutting", "cooldown": 0.56, "reach": 72.0,
-				"arc_degrees": 148.0, "width": 36.0, "effect_width": 36.0,
-			},
-			"bow": {
-				"damage": 18.0, "damage_type": "piercing", "cooldown": 0.52,
-				"projectile_speed": 620.0, "projectile_range": 620.0, "stamina_cost": 3.0,
-			},
-		},
+		"weapons": {},
 		"resources": {
 			"tree_health": 90.0,
 			"rock_health": 110.0,
@@ -109,22 +89,17 @@ static func make_default() -> Dictionary:
 			"max_stack": 99,
 			"starting_arrows": 30,
 		},
-		"items": {
-			"sword": {"label": "Меч", "damage": 10.0, "damage_type": "режущий", "attack_type": "Рубящий удар / укол", "stamina_cost": 9.0, "efficiency": "Не добывает ресурсы"},
-			"pickaxe": {"label": "Кирка", "damage": 5.0, "damage_type": "колющий", "attack_type": "Удар по одной цели", "stamina_cost": 7.0, "efficiency": "Добывает камень"},
-			"axe": {"label": "Топор", "damage": 5.0, "damage_type": "режущий", "attack_type": "Удар по сектору", "stamina_cost": 7.0, "efficiency": "Добывает дерево"},
-			"bow": {"label": "Лук", "damage": 18.0, "damage_type": "колющий", "attack_type": "Дальний одиночный выстрел", "stamina_cost": 3.0, "efficiency": "Требует стрелы"},
-			"arrows": {"label": "Стрелы", "damage": 18.0, "damage_type": "колющий", "attack_type": "Боеприпас для лука", "stamina_cost": 0.0, "efficiency": "Расходуются при выстреле"},
-			"wood": {"label": "Древесина", "damage": 0.0, "damage_type": "—", "attack_type": "Материал", "stamina_cost": 0.0, "efficiency": "Ресурс для крафта"},
-			"stone": {"label": "Камень", "damage": 0.0, "damage_type": "—", "attack_type": "Материал", "stamina_cost": 0.0, "efficiency": "Ресурс для крафта"},
-		},
+		"items": {},
 		"settings": {
 			"screen_shake": true,
 			"show_fps": false,
 		},
 	}
-	return DebugDefaultsScript.apply(config)
-
-
-static func get_debug_default_overrides() -> Dictionary:
-	return DebugDefaultsScript.get_overrides()
+	var catalog_data: Dictionary = ItemCatalogServiceScript.load_all()
+	config["items"] = catalog_data.get("items", config["items"])
+	config["weapons"] = catalog_data.get("weapons", config["weapons"])
+	config["item_definitions"] = catalog_data.get("definitions", {})
+	config["item_categories"] = catalog_data.get("categories", {})
+	config["item_catalog_by_id"] = catalog_data.get("catalog_by_id", {})
+	config["item_catalogs"] = catalog_data.get("catalogs", {})
+	return config

@@ -1,0 +1,76 @@
+[gd_resource type="Resource" script_class="ItemCatalog" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/item_catalog.gd" id="1_catalog"]
+[ext_resource type="Script" path="res://scripts/item_definition.gd" id="2_definition"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png" id="3_sword_icon"]
+[ext_resource type="Texture2D" path="res://Assets/Weapons/bow.png" id="4_bow_icon"]
+
+[sub_resource type="Resource" id="Sword"]
+script = ExtResource("2_definition")
+item_id = "sword"
+display_name = "Меч"
+description = "Оружие ближнего боя: рубящий удар и выпад."
+category = "weapons"
+stack_limit = 1
+icon = ExtResource("3_sword_icon")
+properties = {
+"damage": 10.0,
+"damage_type": "режущий",
+"attack_type": "Рубящий удар / укол",
+"stamina_cost": 9.0,
+"efficiency": "Не добывает ресурсы"
+}
+combat_stats = {
+"damage": 10.0,
+"damage_type": "cutting",
+"cooldown": 0.42,
+"slash": {
+"damage": 10.0,
+"damage_type": "cutting",
+"cooldown": 0.52,
+"stamina_cost": 9.0,
+"reach": 76.0,
+"arc_degrees": 118.0,
+"effect_width": 13.0
+},
+"thrust": {
+"damage": 10.0,
+"damage_type": "piercing",
+"cooldown": 0.31,
+"stamina_cost": 6.0,
+"reach": 116.0,
+"width": 24.0,
+"effect_width": 10.0
+}
+}
+
+[sub_resource type="Resource" id="Bow"]
+script = ExtResource("2_definition")
+item_id = "bow"
+display_name = "Лук"
+description = "Оружие дальнего боя. Для выстрела нужны стрелы."
+category = "weapons"
+stack_limit = 1
+icon = ExtResource("4_bow_icon")
+properties = {
+"damage": 18.0,
+"damage_type": "колющий",
+"attack_type": "Дальний одиночный выстрел",
+"stamina_cost": 3.0,
+"efficiency": "Требует стрелы"
+}
+combat_stats = {
+"damage": 18.0,
+"damage_type": "piercing",
+"cooldown": 0.52,
+"projectile_speed": 620.0,
+"projectile_range": 620.0,
+"stamina_cost": 3.0
+}
+
+[resource]
+script = ExtResource("1_catalog")
+category = "weapons"
+display_name = "Оружие"
+description = "Оружие ближнего и дальнего боя. Каждый экземпляр создаётся отдельным объектом."
+items = Array[ExtResource("2_definition")]([SubResource("Sword"), SubResource("Bow")])

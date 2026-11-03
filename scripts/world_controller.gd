@@ -1,6 +1,7 @@
 extends Node2D
 
 const GameConfigScript = preload("res://scripts/game_config.gd")
+const ItemCatalogServiceScript = preload("res://scripts/item_catalog_service.gd")
 const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const PlayerControllerScript = preload("res://scripts/player_controller.gd")
 const ResourceDropScript = preload("res://scripts/resource_drop.gd")
@@ -37,13 +38,11 @@ var rng := RandomNumberGenerator.new()
 var debug_entries: Array[Dictionary] = []
 var debug_selected_id := ""
 var debug_refresh_timer := 0.0
-var debug_default_overrides: Dictionary = {}
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	config = GameConfigScript.make_default()
-	_load_saved_debug_defaults()
 	defaults_config = config.duplicate(true)
 	backpack_slots = int(config.inventory.base_backpack_slots)
 	rng.seed = int(config.world.seed)
@@ -54,127 +53,6 @@ func _ready() -> void:
 	_create_ui()
 	_load_settings()
 	_log("Мир загружен. Добро пожаловать!")
-
-func _load_saved_debug_defaults() -> void:
-	debug_default_overrides = GameConfigScript.get_debug_default_overrides()
-	var save := ConfigFile.new()
-	if save.load("user://debug_defaults.cfg") == OK:
-		for key in save.get_section_keys("defaults"):
-			debug_default_overrides[str(key)] = save.get_value("defaults", key)
-	for key in debug_default_overrides:
-		_set_config_path_value(str(key), debug_default_overrides[key])
-	defaults_config = config.duplicate(true)
-
-
-func _set_config_path_value(path: String, value: Variant) -> bool:
-	var parts := path.split(".")
-	if parts.size() < 2:
-		return false
-	var current: Dictionary = config
-	for index in range(parts.size() - 1):
-		var next_value: Variant = current.get(parts[index])
-		if not next_value is Dictionary:
-			return false
-		current = next_value
-	current[parts[parts.size() - 1]] = value
-	return true
-
-
-func _get_debug_default_config_path(path: String, entry: Dictionary) -> String:
-	var kind := str(entry.get("kind", ""))
-	if kind == "player":
-		if path in ["player.max_health", "player.max_stamina", "player.walk_speed", "player.run_multiplier", "player.strength", "player.magnet", "player.pickup_base_radius", "player.pickup_magnet_per_level"]:
-			return path
-	elif kind == "weapon":
-		var weapon_id := debug_selected_id.trim_prefix("weapon:")
-		if weapon_id in config.weapons and path.begins_with("weapon."):
-			return "weapons.%s.%s" % [weapon_id, path.trim_prefix("weapon.")]
-	elif kind == "tree" or kind == "rock" or kind == "stump":
-		var resource_kind := "tree" if kind == "tree" or kind == "stump" else "rock"
-		match path:
-			"resource.max_health":
-				return "resources.%s_health" % resource_kind
-			"resource.wood_drop_amount":
-				return "resources.tree_wood_drop" if resource_kind == "tree" else ""
-			"resource.stone_drop_amount":
-				return "resources.rock_stone_drop" if resource_kind == "rock" else ""
-			"resource.hit_radius":
-				return "resources.%s_hit_radius" % resource_kind
-			"resource.swing_strength":
-				return "resources.swing_strength"
-			"resource.destruction_duration":
-				return "resources.destruction_duration"
-			"resource.fall_angle_degrees":
-				return "resources.fall_angle_degrees"
-			"resource.resistance_cutting":
-				return "resources.resistance_cutting"
-			"resource.resistance_piercing":
-				return "resources.resistance_piercing"
-			"resource.resistance_crushing":
-				return "resources.resistance_crushing"
-	elif kind == "drop":
-		match path:
-			"drop.gravity":
-				return "drops.gravity"
-			"drop.friction":
-				return "drops.horizontal_friction"
-			"drop.bounce_factor":
-				return "drops.bounce_factor"
-			"drop.pickup_radius":
-				return "drops.pickup_distance"
-	return ""
-
-
-func _save_debug_default(path: String, value: Variant) -> void:
-	var entry := _find_debug_entry()
-	if entry.is_empty():
-		return
-	var config_path := _get_debug_default_config_path(path, entry)
-	if config_path.is_empty():
-		_log("Для этого параметра нельзя задать базовое значение.")
-		return
-	debug_default_overrides[config_path] = value
-	if not _set_config_path_value(config_path, value):
-		_log("Не удалось применить базовое значение: %s." % config_path)
-		return
-	defaults_config = config.duplicate(true)
-
-	var save := ConfigFile.new()
-	for key in debug_default_overrides:
-		save.set_value("defaults", str(key), debug_default_overrides[key])
-	var save_error := save.save("user://debug_defaults.cfg")
-	var code_saved := _write_debug_defaults_source()
-	if code_saved:
-		_log("Базовое значение сохранено в scripts/debug_defaults.gd.")
-	elif save_error == OK:
-		_log("Папка проекта недоступна для записи; значение сохранено в user://debug_defaults.cfg.")
-	else:
-		_log("Не удалось сохранить базовое значение. Код: %s." % save_error)
-	_update_debug_inspector()
-
-
-func _write_debug_defaults_source() -> bool:
-	const source_path := "res://scripts/debug_defaults.gd"
-	var source := FileAccess.get_file_as_string(source_path)
-	var begin_marker := "# BEGIN GENERATED VALUES"
-	var end_marker := "# END GENERATED VALUES"
-	var begin_index := source.find(begin_marker)
-	var end_index := source.find(end_marker, begin_index)
-	if begin_index < 0 or end_index < 0:
-		return false
-	var generated := "\n"
-	var keys: Array = debug_default_overrides.keys()
-	keys.sort()
-	for key in keys:
-		generated += "\t%s: %s,\n" % [JSON.stringify(str(key)), var_to_str(debug_default_overrides[key])]
-	var updated_source := source.substr(0, begin_index + begin_marker.length()) + generated + source.substr(end_index)
-	var file := FileAccess.open(source_path, FileAccess.WRITE)
-	if file == null:
-		return false
-	file.store_string(updated_source)
-	file.close()
-	return true
-
 
 func _initialize_inventory() -> void:
 	inventory.clear()
@@ -241,35 +119,9 @@ func _create_resources() -> void:
 func _register_resources_recursive(root: Node) -> void:
 	var resource := root as ResourceNode
 	if resource != null and resource.resource_type != "stump":
-		_apply_saved_resource_defaults(resource)
 		_register_resource(resource)
 	for child in root.get_children():
 		_register_resources_recursive(child)
-
-
-func _apply_saved_resource_defaults(resource: ResourceNode) -> void:
-	var resource_kind := "tree" if resource.resource_type == "tree" else "rock"
-	var health_key := "resources.%s_health" % resource_kind
-	var hit_radius_key := "resources.%s_hit_radius" % resource_kind
-	if debug_default_overrides.has(health_key):
-		resource.max_health = float(config.resources.get("%s_health" % resource_kind, resource.max_health))
-		resource.health = resource.max_health
-	if debug_default_overrides.has("resources.tree_wood_drop"):
-		resource.wood_drop_amount = int(config.resources.tree_wood_drop)
-	if debug_default_overrides.has("resources.rock_stone_drop"):
-		resource.stone_drop_amount = int(config.resources.rock_stone_drop)
-	if debug_default_overrides.has(hit_radius_key):
-		resource.hit_radius = float(config.resources.get("%s_hit_radius" % resource_kind, resource.hit_radius))
-	if debug_default_overrides.has("resources.swing_strength"):
-		resource.swing_strength = float(config.resources.swing_strength)
-	if debug_default_overrides.has("resources.destruction_duration"):
-		resource.destruction_duration = float(config.resources.destruction_duration)
-	if debug_default_overrides.has("resources.fall_angle_degrees"):
-		resource.fall_angle_degrees = float(config.resources.fall_angle_degrees)
-	for damage_type in ["cutting", "piercing", "crushing"]:
-		var resistance_key := "resources.resistance_%s" % damage_type
-		if debug_default_overrides.has(resistance_key):
-			resource.damage_resistances[damage_type] = float(config.resources.get("resistance_%s" % damage_type, 1.0))
 
 
 func _watch_resource_tree(root: Node) -> void:
@@ -343,9 +195,9 @@ func _create_ui() -> void:
 	ui.debug_delete_requested.connect(_delete_debug_selection)
 	ui.debug_reset_requested.connect(_reset_debug_selection)
 	ui.debug_cheats_changed.connect(_on_debug_cheats_changed)
-	ui.debug_default_requested.connect(_save_debug_default)
+	ui.debug_default_requested.connect(_save_item_catalog_default)
 	ui.debug_spawn_item_requested.connect(_spawn_debug_item)
-	ui.set_debug_item_catalog(config.items)
+	ui.set_debug_item_catalog(config.items, config.item_categories)
 	ui.set_backpack_slots(backpack_slots, int(config.inventory.max_backpack_slots))
 	ui.set_hotbar_selection(selected_slot)
 	ui.set_inventory_data(inventory, backpack_slots, int(config.inventory.max_backpack_slots), config.items)
@@ -558,7 +410,8 @@ func _drop_inventory_item(slot_index: int, drop_position: Vector2) -> void:
 	drop_position = player.global_position + direction * 8.0
 	var dropped := ResourceDropScript.new() as ResourceDrop
 	dropped.name = "Dropped_%s_%03d" % [item_id, drops.size() + 1]
-	dropped.configure(item_id, amount, direction * 220.0, config.drops)
+	var definition := config.item_definitions.get(item_id) as ItemDefinition
+	dropped.configure(item_id, amount, direction * 220.0, config.drops, definition)
 	world_objects.add_child(dropped)
 	dropped.global_position = drop_position
 	dropped.protect_from_player(player.global_position, 14.0)
@@ -569,28 +422,109 @@ func _drop_inventory_item(slot_index: int, drop_position: Vector2) -> void:
 	_log("Выброшено: %s ×%d." % [str(config.items.get(item_id, {}).get("label", item_id)), amount])
 
 func _spawn_debug_item(item_id: String, amount: int) -> void:
-	if not config.items.has(item_id) or player == null:
+	var definition := config.item_definitions.get(item_id) as ItemDefinition
+	if definition == null or player == null:
 		_log("Неизвестный предмет: %s." % item_id)
 		return
 	if world_objects == null:
 		world_objects = self
 	var spawn_position: Vector2 = get_global_mouse_position()
-	var player_position: Vector2 = player.global_position
-	var direction: Vector2 = spawn_position - player_position
+	var direction: Vector2 = spawn_position - player.global_position
 	if direction.length_squared() < 0.001:
 		direction = Vector2.RIGHT
-	var spawned := ResourceDropScript.new() as ResourceDrop
-	spawned.name = "DebugSpawn_%s_%03d" % [item_id, drops.size() + 1]
-	spawned.configure(item_id, maxi(1, amount), direction.normalized() * 70.0, config.drops)
-	world_objects.add_child(spawned)
-	spawned.global_position = spawn_position
-	spawned.protect_from_player(player.global_position, 14.0)
-	drops.append(spawned)
-	debug_selected_id = str(spawned.get_instance_id())
+	direction = direction.normalized()
+
+	var remaining := maxi(1, amount)
+	var spawned_nodes: Array[ResourceDrop] = []
+	var stack_limit := maxi(1, definition.stack_limit)
+	while remaining > 0:
+		var stack_amount := mini(stack_limit, remaining)
+		var spawned := ResourceDropScript.new() as ResourceDrop
+		spawned.name = "DebugSpawn_%s_%03d" % [item_id, drops.size() + 1]
+		spawned.configure(item_id, stack_amount, direction * 70.0, config.drops, definition)
+		world_objects.add_child(spawned)
+		var offset_index := spawned_nodes.size()
+		spawned.global_position = spawn_position + Vector2(offset_index * 10.0, offset_index * 6.0)
+		spawned.protect_from_player(player.global_position, 14.0)
+		drops.append(spawned)
+		spawned_nodes.append(spawned)
+		remaining -= stack_amount
+
+	if not spawned_nodes.is_empty():
+		debug_selected_id = str(spawned_nodes.back().get_instance_id())
 	_refresh_debug_entries()
 	_update_debug_selection_highlight()
 	_update_debug_inspector()
-	_log("В мир добавлено: %s ×%d." % [str(config.items[item_id].get("label", item_id)), amount])
+	var object_count := spawned_nodes.size()
+	_log("В мир добавлено: %s ×%d (%d отдельных объектов)." % [definition.display_name, amount, object_count])
+
+
+func _save_item_catalog_default(path: String, value: Variant) -> void:
+	var entry := _find_debug_entry()
+	var node = entry.get("node")
+	if not is_instance_valid(node) or not node is ResourceDrop:
+		_log("Выбери предмет в мире, чтобы сохранить его базовые характеристики.")
+		return
+	var item_id := str(node.item_id)
+	var definition := config.item_definitions.get(item_id) as ItemDefinition
+	var catalog := config.item_catalog_by_id.get(item_id) as ItemCatalog
+	if definition == null or catalog == null or catalog.resource_path.is_empty():
+		_log("Для этого предмета не найден файл каталога.")
+		return
+
+	var old_combat := definition.combat_stats.duplicate(true)
+	var old_properties := definition.properties.duplicate(true)
+	var old_stack_limit := definition.stack_limit
+	if path == "item.stack_limit":
+		definition.stack_limit = maxi(1, roundi(float(value)))
+	elif path.begins_with("item.combat."):
+		var parts := path.trim_prefix("item.combat.").split(".")
+		if not _set_nested_item_dictionary(definition.combat_stats, parts, value):
+			_log("Неизвестная характеристика: %s." % path)
+			return
+	elif path.begins_with("item.properties."):
+		var parts := path.trim_prefix("item.properties.").split(".")
+		if not _set_nested_item_dictionary(definition.properties, parts, value):
+			_log("Неизвестная характеристика: %s." % path)
+			return
+	else:
+		_log("Этот параметр не хранится в каталоге предметов.")
+		return
+
+	var save_error := ResourceSaver.save(catalog, catalog.resource_path)
+	if save_error != OK:
+		definition.combat_stats = old_combat
+		definition.properties = old_properties
+		definition.stack_limit = old_stack_limit
+		config.items[item_id] = ItemCatalogServiceScript.rebuild_item_data(definition)
+		if not definition.combat_stats.is_empty():
+			config.weapons[item_id] = definition.combat_stats.duplicate(true)
+		_log("Не удалось записать %s (код %d)." % [catalog.resource_path, save_error])
+		return
+
+	config.items[item_id] = ItemCatalogServiceScript.rebuild_item_data(definition)
+	if not definition.combat_stats.is_empty():
+		config.weapons[item_id] = definition.combat_stats.duplicate(true)
+	node.set_item_definition(item_id, definition)
+	node.default_definition = definition.duplicate(true)
+	node.default_item_id = item_id
+	defaults_config = config.duplicate(true)
+	_log("Базовая характеристика сохранена в %s." % catalog.resource_path)
+	_refresh_debug_entries()
+	_update_debug_inspector()
+
+
+func _set_nested_item_dictionary(target: Dictionary, path_parts: PackedStringArray, value: Variant) -> bool:
+	if path_parts.is_empty():
+		return false
+	var current: Dictionary = target
+	for index in range(path_parts.size() - 1):
+		var next_value: Variant = current.get(path_parts[index])
+		if not next_value is Dictionary:
+			return false
+		current = next_value
+	current[path_parts[path_parts.size() - 1]] = value
+	return true
 
 
 func _inventory_slot_unlocked(index: int) -> bool:
@@ -602,7 +536,7 @@ func _inventory_add(item_id: String, quantity: int) -> int:
 	var remaining := maxi(0, quantity)
 	if item_id.is_empty() or remaining == 0:
 		return remaining
-	var max_stack := int(config.inventory.max_stack)
+	var max_stack := maxi(1, int(config.items.get(item_id, {}).get("max_stack", config.inventory.max_stack)))
 	for index in range(inventory.size()):
 		if not _inventory_slot_unlocked(index):
 			continue
@@ -901,7 +835,8 @@ func _on_resource_broken(kind: String, drop_position: Vector2, amount: int, reso
 		var speed := rng.randf_range(float(config.drops.scatter_speed_min), float(config.drops.scatter_speed_max))
 		var drop := ResourceDropScript.new() as ResourceDrop
 		drop.name = "Drop_%s_%03d" % [item_id, drops.size() + 1]
-		drop.configure(item_id, 1, direction * speed, config.drops)
+		var definition := config.item_definitions.get(item_id) as ItemDefinition
+		drop.configure(item_id, 1, direction * speed, config.drops, definition)
 		world_objects.add_child(drop)
 		drop.global_position = drop_position + Vector2(rng.randf_range(-7.0, 7.0), rng.randf_range(-7.0, 7.0))
 		drops.append(drop)
@@ -1008,9 +943,14 @@ func _refresh_debug_entries() -> void:
 			debug_entries.append({"id": str(resource.get_instance_id()), "kind": kind, "label": "%s · %s" % [label, resource.name], "node": resource})
 	for drop in drops:
 		if is_instance_valid(drop):
-			debug_entries.append({"id": str(drop.get_instance_id()), "kind": "drop", "label": "Предмет · %s ×%d" % [str(config.items.get(str(drop.item_id), {}).get("label", drop.item_id)), int(drop.amount)], "node": drop})
-	for weapon_id in config.weapons.keys():
-		debug_entries.append({"id": "weapon:" + str(weapon_id), "kind": "weapon", "label": "Оружие · " + str(weapon_id), "node": null})
+			var item_kind := str(drop.category)
+			var item_label := str(config.items.get(str(drop.item_id), {}).get("label", drop.item_id))
+			debug_entries.append({
+				"id": str(drop.get_instance_id()),
+				"kind": item_kind,
+				"label": "%s · %s ×%d" % [item_label, _item_category_label(item_kind), int(drop.amount)],
+				"node": drop
+			})
 	var ui_entries: Array[Dictionary] = []
 	var selected_found := false
 	for entry in debug_entries:
@@ -1096,22 +1036,120 @@ func _update_debug_inspector() -> void:
 		ui.set_debug_target("Игрок", node.current_health, float(config.player.max_health))
 	elif (kind == "tree" or kind == "rock" or kind == "stump") and is_instance_valid(node):
 		ui.set_debug_target(str(entry.get("label", kind)), node.health, node.max_health)
-	elif kind == "drop" and is_instance_valid(node):
-		ui.set_debug_target("Ресурс · %s ×%d" % [node.item_id, node.amount])
+	elif is_instance_valid(node) and node is ResourceDrop:
+		var item_data: Dictionary = config.items.get(str(node.item_id), {})
+		ui.set_debug_target("%s ×%d" % [str(item_data.get("label", node.item_id)), node.amount])
 	else:
 		ui.set_debug_target(str(entry.get("label", kind)))
 	ui.set_debug_properties(_build_debug_properties(entry))
 
 func _debug_property(path: String, label: String, value: float, minimum: float = -100000.0, maximum: float = 100000.0, step: float = 0.1) -> Dictionary:
-	var save_default := path in [
-		"player.max_health", "player.max_stamina", "player.walk_speed", "player.run_multiplier",
-		"player.strength", "player.magnet", "player.pickup_base_radius", "player.pickup_magnet_per_level",
-		"resource.max_health", "resource.wood_drop_amount", "resource.stone_drop_amount", "resource.hit_radius",
-		"resource.swing_strength", "resource.destruction_duration", "resource.fall_angle_degrees",
-		"resource.resistance_cutting", "resource.resistance_piercing", "resource.resistance_crushing",
-		"drop.gravity", "drop.friction", "drop.bounce_factor", "drop.pickup_radius"
-	] or path.begins_with("weapon.")
-	return {"path": path, "label": label, "value": value, "min": minimum, "max": maximum, "step": step, "save_default": save_default}
+	return {"path": path, "label": label, "value": value, "min": minimum, "max": maximum, "step": step}
+
+
+func _item_category_label(category: String) -> String:
+	match category:
+		"tools":
+			return "Инструменты"
+		"weapons":
+			return "Оружие"
+		"food":
+			return "Еда"
+		"materials":
+			return "Материалы"
+		"ammunition":
+			return "Боеприпасы"
+	return category
+
+
+func _item_property_label(property_key: String) -> String:
+	var labels := {
+		"damage": "Урон / сила",
+		"damage_type": "Тип урона",
+		"attack_type": "Тип атаки",
+		"stamina_cost": "Расход выносливости",
+		"efficiency": "Эффективность",
+		"cooldown": "Перезарядка / задержка",
+		"reach": "Дальность",
+		"projectile_speed": "Скорость снаряда",
+		"projectile_range": "Дальность снаряда",
+		"arc_degrees": "Угол удара",
+		"width": "Ширина удара",
+		"effect_width": "Ширина эффекта",
+		"max_health": "Максимальное здоровье",
+		"heal": "Восстановление здоровья",
+		"restore_health": "Восстановление здоровья",
+		"restore_stamina": "Восстановление выносливости"
+	}
+	return str(labels.get(property_key, property_key.capitalize()))
+
+
+func _append_debug_item_combat_properties(result: Array[Dictionary], stats: Dictionary, prefix: String) -> void:
+	var keys: Array = stats.keys()
+	keys.sort()
+	for key_value in keys:
+		var key := str(key_value)
+		var value: Variant = stats[key_value]
+		var property_path := prefix + "." + key
+		if value is Dictionary:
+			result.append({"path": property_path, "label": _item_property_label(key), "value": "", "readonly": true})
+			_append_debug_item_combat_properties(result, value, property_path)
+		elif key == "damage_type":
+			var damage_types := ["cutting", "piercing", "crushing"]
+			var data := {
+				"path": property_path,
+				"label": _item_property_label(key),
+				"value": maxi(0, damage_types.find(str(value))),
+				"options": damage_types,
+				"save_default": true
+			}
+			result.append(data)
+		elif value is int or value is float:
+			var minimum := 0.0
+			var maximum := 5000.0
+			var step := 1.0
+			if key == "cooldown":
+				minimum = 0.01
+				maximum = 10.0
+				step = 0.01
+			elif key in ["arc_degrees"]:
+				maximum = 360.0
+				step = 1.0
+			elif key in ["projectile_speed", "projectile_range"]:
+				maximum = 5000.0
+				step = 10.0
+			else:
+				maximum = 2000.0
+				step = 0.1 if value is float else 1.0
+			var data := _debug_property(property_path, _item_property_label(key), float(value), minimum, maximum, step)
+			data["save_default"] = true
+			result.append(data)
+		else:
+			result.append({"path": property_path, "label": _item_property_label(key), "value": str(value), "readonly": true})
+
+
+func _apply_item_definition_value(node: ResourceDrop, path: String, value: float) -> void:
+	var definition := config.item_definitions.get(str(node.item_id)) as ItemDefinition
+	if definition == null:
+		return
+	if path == "item.stack_limit":
+		definition.stack_limit = maxi(1, roundi(value))
+	elif path.begins_with("item.combat."):
+		var parts := path.trim_prefix("item.combat.").split(".")
+		var stored_value: Variant = value
+		if parts.size() > 0 and parts[parts.size() - 1] == "damage_type":
+			var damage_types := ["cutting", "piercing", "crushing"]
+			stored_value = damage_types[clampi(roundi(value), 0, damage_types.size() - 1)]
+		_set_nested_item_dictionary(definition.combat_stats, parts, stored_value)
+		config.weapons[str(node.item_id)] = definition.combat_stats.duplicate(true)
+	elif path.begins_with("item.properties."):
+		var parts := path.trim_prefix("item.properties.").split(".")
+		_set_nested_item_dictionary(definition.properties, parts, value)
+	else:
+		return
+	config.items[str(node.item_id)] = ItemCatalogServiceScript.rebuild_item_data(definition)
+	node.set_item_definition(str(node.item_id), definition)
+
 
 func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
@@ -1150,47 +1188,48 @@ func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 		result.append(_debug_property("transform.scale_x", "Масштаб X", node.scale.x, 0.1, 5.0, 0.05))
 		result.append(_debug_property("transform.scale_y", "Масштаб Y", node.scale.y, 0.1, 5.0, 0.05))
 		result.append(_debug_property("transform.rotation", "Вращение", rad_to_deg(node.rotation), -360.0, 360.0, 1.0))
-	elif kind == "drop" and is_instance_valid(node):
-		result.append(_debug_property("drop.amount", "Количество", node.amount, 1.0, 9999.0, 1.0))
+	elif is_instance_valid(node) and node is ResourceDrop:
+		if node.stack_limit > 1:
+			result.append(_debug_property("drop.amount", "Количество в стопке", node.amount, 1.0, float(node.stack_limit), 1.0))
 		result.append(_debug_property("drop.velocity_x", "Скорость X", node.velocity.x, -2000.0, 2000.0, 5.0))
 		result.append(_debug_property("drop.velocity_y", "Скорость Y", node.velocity.y, -2000.0, 2000.0, 5.0))
 		result.append(_debug_property("drop.gravity", "Гравитация прыжка", node.gravity, 0.0, 3000.0, 10.0))
 		result.append(_debug_property("drop.friction", "Затухание движения", node.friction, 0.0, 3000.0, 10.0))
 		result.append(_debug_property("drop.bounce_factor", "Сила отскока", node.bounce_factor, 0.0, 1.5, 0.01))
-		result.append({"path": "drop.item_id", "label": "Тип ресурса", "value": 0 if node.item_id == "wood" else 1, "options": ["wood", "stone"]})
+		var item_ids: Array = config.item_definitions.keys()
+		item_ids.sort()
+		result.append({
+			"path": "drop.item_id",
+			"label": "Тип предмета",
+			"value": maxi(0, item_ids.find(str(node.item_id))),
+			"options": item_ids
+		})
 		result.append(_debug_property("drop.pickup_radius", "Радиус подбора", node.pickup_radius, 1.0, 200.0, 1.0))
 		result.append(_debug_property("transform.x", "Координата X", node.global_position.x, -5000.0, 5000.0, 1.0))
 		result.append(_debug_property("transform.y", "Координата Y", node.global_position.y, -5000.0, 5000.0, 1.0))
-	elif kind == "weapon":
-		var weapon_id := str(debug_selected_id.trim_prefix("weapon:"))
-		var weapon: Dictionary = config.weapons.get(weapon_id, {})
-		var damage_types := ["cutting", "piercing", "crushing"]
-		if weapon_id == "sword":
-			var slash: Dictionary = weapon.get("slash", {})
-			var thrust: Dictionary = weapon.get("thrust", {})
-			result.append(_debug_property("weapon.slash.damage", "Урон рубящего удара", slash.get("damage", 0.0), 0.0, 5000.0, 1.0))
-			result.append(_debug_property("weapon.slash.cooldown", "Скорость рубящего удара", slash.get("cooldown", 0.5), 0.01, 10.0, 0.01))
-			result.append(_debug_property("weapon.slash.reach", "Дальность рубящего удара", slash.get("reach", 0.0), 1.0, 500.0, 1.0))
-			result.append(_debug_property("weapon.slash.stamina_cost", "Выносливость рубящего удара", slash.get("stamina_cost", 0.0), 0.0, 500.0, 1.0))
-			result.append({"path": "weapon.slash.damage_type", "label": "Тип урона рубящего", "value": maxi(0, damage_types.find(str(slash.get("damage_type", "cutting")))), "options": damage_types, "save_default": true})
-			result.append(_debug_property("weapon.thrust.damage", "Урон выпада", thrust.get("damage", 0.0), 0.0, 5000.0, 1.0))
-			result.append(_debug_property("weapon.thrust.cooldown", "Скорость выпада", thrust.get("cooldown", 0.31), 0.01, 10.0, 0.01))
-			result.append(_debug_property("weapon.thrust.reach", "Дальность выпада", thrust.get("reach", 0.0), 1.0, 500.0, 1.0))
-			result.append(_debug_property("weapon.thrust.stamina_cost", "Выносливость выпада", thrust.get("stamina_cost", 0.0), 0.0, 500.0, 1.0))
-			result.append({"path": "weapon.thrust.damage_type", "label": "Тип урона выпада", "value": maxi(0, damage_types.find(str(thrust.get("damage_type", "piercing")))), "options": damage_types, "save_default": true})
-		else:
-			result.append(_debug_property("weapon.damage", "Урон", weapon.get("damage", 0.0), 0.0, 5000.0, 1.0))
-			result.append(_debug_property("weapon.cooldown", "Скорость атаки", weapon.get("cooldown", 0.5), 0.01, 10.0, 0.01))
-			result.append({"path": "weapon.damage_type", "label": "Тип урона", "value": maxi(0, damage_types.find(str(weapon.get("damage_type", "crushing")))), "options": damage_types, "save_default": true})
-			result.append(_debug_property("weapon.reach", "Дальность атаки", weapon.get("reach", 0.0), 0.0, 1000.0, 1.0))
-			result.append(_debug_property("weapon.stamina_cost", "Расход выносливости", weapon.get("stamina_cost", config.combat.attack_stamina_cost), 0.0, 500.0, 1.0))
-			if weapon_id == "axe":
-				result.append(_debug_property("weapon.wood_multiplier", "Эффективность по дереву", weapon.get("wood_multiplier", 0.0), 0.0, 10.0, 0.1))
-			elif weapon_id == "pickaxe":
-				result.append(_debug_property("weapon.stone_multiplier", "Эффективность по камню", weapon.get("stone_multiplier", 0.0), 0.0, 10.0, 0.1))
-			elif weapon_id == "bow":
-				result.append(_debug_property("weapon.projectile_speed", "Скорость стрелы", weapon.get("projectile_speed", 0.0), 1.0, 5000.0, 10.0))
-				result.append(_debug_property("weapon.projectile_range", "Дальность стрелы", weapon.get("projectile_range", 0.0), 1.0, 5000.0, 10.0))
+		var definition := config.item_definitions.get(str(node.item_id)) as ItemDefinition
+		if definition != null:
+			result.append({"path": "item.description", "label": "Описание", "value": definition.description, "readonly": true})
+			result.append({"path": "item.category", "label": "Категория", "value": _item_category_label(definition.category), "readonly": true})
+			if definition.category in ["tools", "weapons"]:
+				result.append({"path": "item.stack_limit", "label": "Хранение", "value": "Отдельный объект · без стопки", "readonly": true})
+			else:
+				var stack_property := _debug_property("item.stack_limit", "Максимум в стопке", definition.stack_limit, 1.0, 9999.0, 1.0)
+				stack_property["save_default"] = true
+				result.append(stack_property)
+			for property_key in definition.properties:
+				var property_value: Variant = definition.properties[property_key]
+				var property_label := _item_property_label(str(property_key))
+				if property_value is int or property_value is float:
+					var data := _debug_property("item.properties." + str(property_key), property_label, float(property_value), -5000.0, 5000.0, 0.1)
+					if definition.category == "food":
+						data["save_default"] = true
+					else:
+						data["readonly"] = true
+					result.append(data)
+				else:
+					result.append({"path": "item.properties." + str(property_key), "label": property_label, "value": str(property_value), "readonly": true})
+			_append_debug_item_combat_properties(result, definition.combat_stats, "item.combat")
 	return result
 
 func _on_debug_value_changed(path: String, value: float) -> void:
@@ -1273,46 +1312,38 @@ func _on_debug_value_changed(path: String, value: float) -> void:
 			"resource.resistance_crushing":
 				node.damage_resistances["crushing"] = value
 		node.queue_redraw()
-	elif kind == "drop" and is_instance_valid(node):
-		match path:
-			"drop.amount":
-				node.amount = maxi(1, roundi(value))
-			"drop.velocity_x":
-				var drop_velocity_x: Vector2 = node.velocity
-				drop_velocity_x.x = value
-				node.velocity = drop_velocity_x
-			"drop.velocity_y":
-				var drop_velocity_y: Vector2 = node.velocity
-				drop_velocity_y.y = value
-			"drop.item_id":
-				node.item_id = "wood" if value < 0.5 else "stone"
-			"drop.gravity":
-				node.gravity = value
-			"drop.friction":
-				node.friction = value
-			"drop.bounce_factor":
-				node.bounce_factor = value
-			"drop.pickup_radius":
-				node.pickup_radius = value
-	elif kind == "weapon":
-		var weapon_id := str(debug_selected_id.trim_prefix("weapon:"))
-		var weapon: Dictionary = config.weapons.get(weapon_id, {})
-		var parts := path.split(".")
-		if parts.size() == 2:
-			if parts[1] == "damage_type":
-				var damage_types := ["cutting", "piercing", "crushing"]
-				weapon[parts[1]] = damage_types[clampi(roundi(value), 0, damage_types.size() - 1)]
-			else:
-				weapon[parts[1]] = value
-		elif parts.size() == 3:
-			var nested: Dictionary = weapon.get(parts[1], {})
-			if parts[2] == "damage_type":
-				var nested_types := ["cutting", "piercing", "crushing"]
-				nested[parts[2]] = nested_types[clampi(roundi(value), 0, nested_types.size() - 1)]
-			else:
-				nested[parts[2]] = value
-			weapon[parts[1]] = nested
-		config.weapons[weapon_id] = weapon
+	elif is_instance_valid(node) and node is ResourceDrop:
+		if path.begins_with("item."):
+			_apply_item_definition_value(node, path, value)
+		else:
+			match path:
+				"drop.amount":
+					node.amount = clampi(roundi(value), 1, node.stack_limit)
+				"drop.velocity_x":
+					var drop_velocity_x: Vector2 = node.velocity
+					drop_velocity_x.x = value
+					node.velocity = drop_velocity_x
+				"drop.velocity_y":
+					var drop_velocity_y: Vector2 = node.velocity
+					drop_velocity_y.y = value
+					node.velocity = drop_velocity_y
+				"drop.item_id":
+					var item_ids: Array = config.item_definitions.keys()
+					item_ids.sort()
+					var next_index := clampi(roundi(value), 0, maxi(0, item_ids.size() - 1))
+					if not item_ids.is_empty():
+						var next_item_id := str(item_ids[next_index])
+						var next_definition := config.item_definitions.get(next_item_id) as ItemDefinition
+						node.set_item_definition(next_item_id, next_definition)
+						_refresh_debug_entries()
+				"drop.gravity":
+					node.gravity = value
+				"drop.friction":
+					node.friction = value
+				"drop.bounce_factor":
+					node.bounce_factor = value
+				"drop.pickup_radius":
+					node.pickup_radius = value
 	if node is CanvasItem:
 		node.queue_redraw()
 	_update_resource_counts()
@@ -1414,17 +1445,12 @@ func _reset_debug_selection() -> void:
 		var collision := node.get_node_or_null("CollisionShape2D") as CollisionShape2D
 		if collision != null:
 			collision.set_deferred("disabled", false)
-	elif kind == "drop" and is_instance_valid(node):
-		node.item_id = node.default_item_id
-		node.amount = node.default_amount
-		node.velocity = node.default_velocity
+	elif is_instance_valid(node) and node is ResourceDrop:
+		node.configure(node.default_item_id, node.default_amount, node.default_velocity, config.drops, node.default_definition)
 		node.gravity = float(config.drops.gravity)
 		node.friction = float(config.drops.horizontal_friction)
 		node.bounce_factor = float(config.drops.bounce_factor)
 		node.pickup_radius = float(config.drops.pickup_distance)
-	elif kind == "weapon":
-		var weapon_id := str(debug_selected_id.trim_prefix("weapon:"))
-		config.weapons[weapon_id] = defaults_config.weapons[weapon_id].duplicate(true)
 	_refresh_debug_entries()
 	_update_debug_inspector()
 	_log("Параметры выбранного объекта сброшены.")

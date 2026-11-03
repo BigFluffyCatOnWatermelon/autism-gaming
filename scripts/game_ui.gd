@@ -34,6 +34,7 @@ var settings_shake: CheckBox
 var settings_zoom: HSlider
 var settings_debug: CheckBox
 var resource_icon_cache: Dictionary = {}
+var item_definitions_cache: Dictionary = {}
 var debug_target_text: Label
 var debug_walk_speed: SpinBox
 var debug_strength: SpinBox
@@ -60,10 +61,12 @@ var debug_panel_opacity_slider: HSlider
 var debug_panel_reset_position_button: Button
 var debug_spawn_toggle: Button
 var debug_spawn_menu: VBoxContainer
+var debug_spawn_category: OptionButton
 var debug_spawn_option: OptionButton
 var debug_spawn_amount: SpinBox
 var debug_spawn_confirm: Button
 var debug_spawn_catalog: Dictionary = {}
+var debug_spawn_categories: Dictionary = {}
 var backpack_slots := 12
 var max_backpack_slots := 24
 
@@ -263,6 +266,8 @@ func _wire_controls() -> void:
 		debug_panel_reset_position_button.pressed.connect(_reset_debug_panel_position)
 	if debug_spawn_toggle != null and not debug_spawn_toggle.pressed.is_connected(_toggle_debug_spawn_menu):
 		debug_spawn_toggle.pressed.connect(_toggle_debug_spawn_menu)
+	if debug_spawn_category != null and not debug_spawn_category.item_selected.is_connected(_on_debug_spawn_category_changed):
+		debug_spawn_category.item_selected.connect(_on_debug_spawn_category_changed)
 	if debug_spawn_confirm != null and not debug_spawn_confirm.pressed.is_connected(_on_debug_spawn_confirmed):
 		debug_spawn_confirm.pressed.connect(_on_debug_spawn_confirmed)
 	for panel_value in panels.values():
@@ -635,7 +640,15 @@ func _create_debug() -> void:
 	debug_filter.add_item("Предметы")
 	debug_filter.set_item_metadata(4, "drop")
 	debug_filter.add_item("Оружие")
-	debug_filter.set_item_metadata(5, "weapon")
+	debug_filter.set_item_metadata(5, "weapons")
+	debug_filter.add_item("Инструменты")
+	debug_filter.set_item_metadata(6, "tools")
+	debug_filter.add_item("Еда")
+	debug_filter.set_item_metadata(7, "food")
+	debug_filter.add_item("Материалы")
+	debug_filter.set_item_metadata(8, "materials")
+	debug_filter.add_item("Боеприпасы")
+	debug_filter.set_item_metadata(9, "ammunition")
 	filter_row.add_child(debug_filter)
 	box.add_child(filter_row)
 
@@ -814,6 +827,25 @@ func _ensure_debug_panel_features() -> void:
 		content.move_child(debug_window_settings, 0)
 
 	var filter := _find_node("DebugFilter") as OptionButton
+	if filter != null:
+		var legacy_filter_ids := ["all", "player", "tree", "rock", "drop", "weapons"]
+		for legacy_index in range(mini(filter.item_count, legacy_filter_ids.size())):
+			filter.set_item_metadata(legacy_index, legacy_filter_ids[legacy_index])
+		var extra_filters := [
+			["Инструменты", "tools"],
+			["Еда", "food"],
+			["Материалы", "materials"],
+			["Боеприпасы", "ammunition"]
+		]
+		for filter_data in extra_filters:
+			var found := false
+			for filter_index in range(filter.item_count):
+				if str(filter.get_item_metadata(filter_index)) == str(filter_data[1]):
+					found = true
+					break
+			if not found:
+				filter.add_item(str(filter_data[0]))
+				filter.set_item_metadata(filter.item_count - 1, str(filter_data[1]))
 	var filter_row := filter.get_parent() as HBoxContainer if filter != null else null
 	if filter_row != null and debug_spawn_toggle == null:
 		debug_spawn_toggle = Button.new()
@@ -829,6 +861,13 @@ func _ensure_debug_panel_features() -> void:
 		debug_spawn_menu.add_theme_constant_override("separation", 4)
 		debug_spawn_menu.add_child(_make_label("Добавление предмета в мир", 12, Color("#b8d49f")))
 		var spawn_row := HBoxContainer.new()
+		spawn_row.add_child(_make_label("Тип", 11))
+		debug_spawn_category = OptionButton.new()
+		debug_spawn_category.name = "DebugSpawnCategory"
+		debug_spawn_category.add_item("Все типы")
+		debug_spawn_category.set_item_metadata(0, "all")
+		debug_spawn_category.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		spawn_row.add_child(debug_spawn_category)
 		spawn_row.add_child(_make_label("Предмет", 11))
 		debug_spawn_option = OptionButton.new()
 		debug_spawn_option.name = "DebugSpawnItem"
@@ -994,19 +1033,68 @@ func _on_debug_spawn_confirmed() -> void:
 	debug_spawn_item_requested.emit(item_id, amount)
 
 
-func set_debug_item_catalog(definitions: Dictionary) -> void:
+func set_debug_item_catalog(definitions: Dictionary, categories: Dictionary) -> void:
 	debug_spawn_catalog = definitions.duplicate(true)
+	debug_spawn_categories = categories.duplicate(true)
+	if debug_spawn_category != null:
+		debug_spawn_category.clear()
+		debug_spawn_category.add_item("Все типы")
+		debug_spawn_category.set_item_metadata(0, "all")
+		var category_ids: Array = []
+		for category_value in debug_spawn_categories.values():
+			var category_name := str(category_value)
+			if not category_ids.has(category_name):
+				category_ids.append(category_name)
+		category_ids.sort()
+		for category_name in category_ids:
+			debug_spawn_category.add_item(_debug_category_label(category_name))
+			debug_spawn_category.set_item_metadata(debug_spawn_category.item_count - 1, category_name)
+		debug_spawn_category.select(0)
+	_refresh_debug_spawn_options()
+
+
+func _debug_category_label(category: String) -> String:
+	match category:
+		"tools":
+			return "Инструменты"
+		"weapons":
+			return "Оружие"
+		"food":
+			return "Еда"
+		"materials":
+			return "Материалы"
+		"ammunition":
+			return "Боеприпасы"
+	return category
+
+
+func _on_debug_spawn_category_changed(_index: int) -> void:
+	_refresh_debug_spawn_options()
+
+
+func _refresh_debug_spawn_options() -> void:
 	if debug_spawn_option == null:
 		return
+	var previous_id := ""
+	if debug_spawn_option.selected >= 0:
+		previous_id = str(debug_spawn_option.get_item_metadata(debug_spawn_option.selected))
 	debug_spawn_option.clear()
+	var selected_category := "all"
+	if debug_spawn_category != null and debug_spawn_category.selected >= 0:
+		selected_category = str(debug_spawn_category.get_item_metadata(debug_spawn_category.selected))
 	var item_ids: Array = debug_spawn_catalog.keys()
 	item_ids.sort()
 	for item_id_value in item_ids:
 		var item_id := str(item_id_value)
+		var category := str(debug_spawn_categories.get(item_id, "materials"))
+		if selected_category != "all" and category != selected_category:
+			continue
 		var definition: Dictionary = debug_spawn_catalog[item_id]
 		debug_spawn_option.add_item(str(definition.get("label", item_id)))
 		debug_spawn_option.set_item_metadata(debug_spawn_option.item_count - 1, item_id)
-	if debug_spawn_option.item_count > 0:
+		if item_id == previous_id:
+			debug_spawn_option.select(debug_spawn_option.item_count - 1)
+	if debug_spawn_option.item_count > 0 and debug_spawn_option.selected < 0:
 		debug_spawn_option.select(0)
 
 
@@ -1063,9 +1151,9 @@ func _render_debug_object_list() -> void:
 				continue
 			elif filter_value == "rock" and kind != "rock":
 				continue
-			elif filter_value == "drop" and kind != "drop":
+			elif filter_value == "drop" and kind not in ["drop", "tools", "weapons", "food", "materials", "ammunition"]:
 				continue
-			elif filter_value == "weapon" and kind != "weapon":
+			elif filter_value in ["tools", "weapons", "food", "materials", "ammunition"] and kind != filter_value:
 				continue
 			elif filter_value == "player" and kind != "player":
 				continue
@@ -1095,6 +1183,13 @@ func set_debug_properties(properties: Array[Dictionary]) -> void:
 		title.custom_minimum_size.x = 142
 		row.add_child(title)
 		var property_path := str(property_data.get("path", ""))
+		if bool(property_data.get("readonly", false)):
+			var value_label := _make_label(str(property_data.get("value", "")), 11, Color("#c3cfb8"))
+			value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			value_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			row.add_child(value_label)
+			debug_properties.add_child(row)
+			continue
 		var editor: Control
 		if property_data.has("options"):
 			var option_editor := OptionButton.new()
@@ -1121,7 +1216,7 @@ func set_debug_properties(properties: Array[Dictionary]) -> void:
 			var save_button := Button.new()
 			save_button.text = "База"
 			save_button.custom_minimum_size = Vector2(54, 26)
-			save_button.tooltip_text = "Сохранить текущее значение как базовое в scripts/debug_defaults.gd"
+			save_button.tooltip_text = "Сохранить значение в .tres-файл категории этого предмета"
 			save_button.pressed.connect(_on_save_debug_default_pressed.bind(property_path, editor))
 			row.add_child(save_button)
 
@@ -1175,14 +1270,16 @@ func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String
 	var icon_rect := button.get_node_or_null("Icon") as TextureRect
 	var count_label := button.get_node_or_null("StackCount") as Label
 	if icon_rect != null:
-		if ITEM_TEXTURE_PATHS.has(item_id):
+		var item_definition: Dictionary = item_definitions_cache.get(item_id, {})
+		var definition_icon := item_definition.get("icon") as Texture2D
+		if definition_icon != null:
+			icon_rect.texture = definition_icon
+		elif ITEM_TEXTURE_PATHS.has(item_id):
 			icon_rect.texture = load(ITEM_TEXTURE_PATHS[item_id]) as Texture2D
-			icon_rect.visible = icon_rect.texture != null
-			button.text = ""
 		else:
 			icon_rect.texture = null
-			icon_rect.visible = false
-			button.text = ""
+		icon_rect.visible = icon_rect.texture != null
+		button.text = ""
 	button.set_meta("item_id", item_id)
 	if count_label != null:
 		count_label.text = str(count) if count > 1 else ""
@@ -1192,6 +1289,7 @@ func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String
 		button.tooltip_text = str(ITEM_LABELS.get(item_id, "Пустая ячейка"))
 
 func set_inventory_data(items: Array[Dictionary], open_slots: int, maximum_slots: int, definitions: Dictionary) -> void:
+	item_definitions_cache = definitions
 	set_backpack_slots(open_slots, maximum_slots)
 	for index in range(hotbar_buttons.size()):
 		var stack: Dictionary = items[index] if index < items.size() else {}
@@ -1214,6 +1312,10 @@ func _build_item_tooltip(item_id: String, definitions: Dictionary) -> String:
 	var definition: Dictionary = definitions.get(item_id, {})
 	var lines := PackedStringArray()
 	lines.append(str(definition.get("label", ITEM_LABELS.get(item_id, item_id.capitalize()))))
+	if definition.has("description"):
+		lines.append(str(definition["description"]))
+	if definition.has("category"):
+		lines.append("Категория: %s" % _debug_category_label(str(definition["category"])))
 	if definition.has("damage"):
 		lines.append("Урон: %s" % str(definition["damage"]))
 	if definition.has("damage_type"):
