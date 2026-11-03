@@ -3,10 +3,7 @@
 [ext_resource type="Script" path="res://scripts/terrain_editor.gd" id="1_terrain"]
 [ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_ground_spring.tres" id="2_ground"]
 [ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_crops.tres" id="3_crops"]
-[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fence_wood.tres" id="6_fence_wood"]
-[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fence_dark.tres" id="7_fence_dark"]
-[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fence_white.tres" id="8_fence_white"]
-[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_stone_wall.tres" id="9_stone_wall"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fences.tres" id="6_fences"]
 [ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_world_assets_library.tres" id="10_world_assets"]
 [ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_creatures_library.tres" id="11_creatures"]
 [ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_farming_items_library.tres" id="12_farming_items"]
@@ -29,25 +26,10 @@ z_index = -120
 texture_filter = 1
 tile_set = ExtResource("3_crops")
 
-[node name="Fence_Wood" type="TileMapLayer" parent="."]
+[node name="Fences" type="TileMapLayer" parent="."]
 z_index = -116
 texture_filter = 1
-tile_set = ExtResource("6_fence_wood")
-
-[node name="Fence_Dark" type="TileMapLayer" parent="."]
-z_index = -116
-texture_filter = 1
-tile_set = ExtResource("7_fence_dark")
-
-[node name="Fence_White" type="TileMapLayer" parent="."]
-z_index = -116
-texture_filter = 1
-tile_set = ExtResource("8_fence_white")
-
-[node name="Stone_Wall" type="TileMapLayer" parent="."]
-z_index = -116
-texture_filter = 1
-tile_set = ExtResource("9_stone_wall")
+tile_set = ExtResource("6_fences")
 
 [node name="Decorations" type="TileMapLayer" parent="."]
 z_index = -112
