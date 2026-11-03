@@ -28,20 +28,24 @@ const PLACEABLE_ROOTS := [
 var _generation_done := false
 var _generated_scenes := 0
 var _generated_tiles := 0
+var _startup_delay := 0.75
 
 func _enter_tree() -> void:
 	add_tool_menu_item(MENU_ITEM, _refresh_assets)
 	var filesystem := EditorInterface.get_resource_filesystem()
 	if not filesystem.filesystem_changed.is_connected(_on_filesystem_changed):
 		filesystem.filesystem_changed.connect(_on_filesystem_changed)
-	# The first filesystem scan may still be running when the plugin enters the
-	# tree. Poll until it finishes; a single deferred call can otherwise miss it.
+	# Allow the editor's initial resource import to start before checking its
+	# scan state. Then wait until the scan has finished before loading PNGs.
+	_startup_delay = 0.75
 	set_process(true)
-	call_deferred("_generate_all")
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _generation_done:
 		set_process(false)
+		return
+	if _startup_delay > 0.0:
+		_startup_delay = maxf(0.0, _startup_delay - delta)
 		return
 	var filesystem := EditorInterface.get_resource_filesystem()
 	if not filesystem.is_scanning():
@@ -55,10 +59,12 @@ func _exit_tree() -> void:
 
 func _on_filesystem_changed() -> void:
 	if not _generation_done:
-		call_deferred("_generate_all")
+		_startup_delay = 0.0
+		set_process(true)
 
 func _refresh_assets() -> void:
 	_generation_done = false
+	_startup_delay = 0.0
 	set_process(true)
 	_generate_all()
 
