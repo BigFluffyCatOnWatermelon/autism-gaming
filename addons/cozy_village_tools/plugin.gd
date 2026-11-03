@@ -127,7 +127,7 @@ func _add_texture_to_catalog(tile_set: TileSet, path: String, kind: String) -> v
 		return
 	var width := texture.get_width()
 	var height := texture.get_height()
-	if width < 16 or height < 16 or width % 16 != 0 or height % 16 != 0:
+	if width <= 0 or height <= 0:
 		return
 	var source := TileSetAtlasSource.new()
 	source.resource_name = path.get_file().get_basename()
@@ -253,9 +253,12 @@ func _apply_water_corner_collision(source: TileSetAtlasSource) -> void:
 		for index in range(polygons.size()):
 			data.set_collision_polygon_points(0, index, polygons[index])
 
-func _configure_animated_atlas(source: TileSetAtlasSource, frame_columns: int, speed: float) -> void:
+func _configure_animated_atlas(source: TileSetAtlasSource, speed: float, frame_separation: Vector2i) -> void:
 	for coords in _get_tile_coords(source):
-		source.set_tile_animation_columns(coords, frame_columns)
+		# Each 64x64 autotile frame is four tiles wide. Frames are separated
+		# by three atlas cells so the same corner tile animates across frames.
+		source.set_tile_animation_columns(coords, 0)
+		source.set_tile_animation_separation(coords, frame_separation)
 		source.set_tile_animation_frames_count(coords, 4)
 		source.set_tile_animation_speed(coords, speed)
 
@@ -270,7 +273,7 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 				_configure_animated_atlas(existing, 4, speed)
 				_apply_water_corner_collision(existing)
 			else:
-				_configure_animated_atlas(existing, 0, speed)
+				_configure_animated_atlas(existing, speed, Vector2i.ZERO)
 				for coords in _get_tile_coords(existing):
 					var data := existing.get_tile_data(coords, 0)
 					if data != null:
@@ -282,7 +285,6 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 	source.texture = texture
 	source.texture_region_size = Vector2i(16, 16)
 	source.resource_name = texture_path.get_file().get_basename()
-	var grid := source.get_atlas_grid_size()
 	var is_corner_sheet := texture.get_width() >= 256
 	var count_x := 4 if is_corner_sheet else 1
 	var count_y := 4 if is_corner_sheet else 1
@@ -331,7 +333,7 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 	if added_id >= 0:
 		print("Cozy Village: добавлена анимация воды ", texture_path)
 
-func _water_corner_pattern(coords: Vector2i) -> Array[bool]:
+func _water_corner_pattern(coords: Vector2i) -> Array:
 	var patterns := [
 		[false, false, false, true], [false, false, true, true],
 		[false, false, true, false], [true, true, true, false],
