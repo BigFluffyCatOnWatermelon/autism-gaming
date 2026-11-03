@@ -56,6 +56,12 @@ var debug_panel_opacity := 0.92
 var debug_panel_scale := 1.0
 var debug_panel_dragging := false
 var debug_panel_drag_offset := Vector2.ZERO
+var debug_resize_handles: Dictionary = {}
+var debug_panel_resizing := false
+var debug_resize_edge := ""
+var debug_resize_start_mouse := Vector2.ZERO
+var debug_resize_start_position := Vector2.ZERO
+var debug_resize_start_size := Vector2.ZERO
 var debug_window_settings: VBoxContainer
 var debug_panel_settings_button: Button
 var debug_item_save_button: Button
@@ -1066,6 +1072,7 @@ func _ensure_debug_panel_features() -> void:
 	if debug_object_list != null:
 		debug_object_list.custom_minimum_size = Vector2(220, 220)
 	_apply_debug_panel_appearance()
+	_ensure_debug_resize_handles()
 
 
 func _load_debug_panel_settings() -> void:
@@ -1252,6 +1259,7 @@ func _fit_debug_panel_to_viewport() -> void:
 	panel.offset_right = target_position.x + panel_width / scale_factor
 	panel.offset_bottom = target_position.y + panel_height / scale_factor
 	panel.custom_minimum_size = Vector2.ZERO
+	_update_debug_resize_handles(target_position, target_size)
 	panel.clip_contents = true
 	if debug_object_list != null:
 		debug_object_list.custom_minimum_size = Vector2(
@@ -1259,6 +1267,111 @@ func _fit_debug_panel_to_viewport() -> void:
 			minf(260.0, maxf(180.0, panel_height * 0.34))
 		)
 
+
+
+func _ensure_debug_resize_handles() -> void:
+	if root == null or not debug_resize_handles.is_empty():
+		return
+	var handle_specs := {
+		"left": Control.CURSOR_HSIZE, "right": Control.CURSOR_HSIZE,
+		"top": Control.CURSOR_VSIZE, "bottom": Control.CURSOR_VSIZE,
+		"top_left": Control.CURSOR_FDIAGSIZE, "top_right": Control.CURSOR_BDIAGSIZE,
+		"bottom_left": Control.CURSOR_BDIAGSIZE, "bottom_right": Control.CURSOR_FDIAGSIZE
+	}
+	for edge in handle_specs:
+		var handle := ColorRect.new()
+		handle.name = "DebugResize_" + edge
+		handle.color = Color("#a9bd9e")
+		handle.color.a = 0.72
+		handle.mouse_filter = Control.MOUSE_FILTER_STOP
+		handle.mouse_default_cursor_shape = handle_specs[edge]
+		handle.z_index = 100
+		handle.visible = false
+		handle.gui_input.connect(_on_debug_resize_handle_gui_input.bind(str(edge)))
+		root.add_child(handle)
+		debug_resize_handles[edge] = handle
+
+
+func _update_debug_resize_handles(position: Vector2, size: Vector2) -> void:
+	if debug_resize_handles.is_empty():
+		return
+	var panel := panels.get("debug") as Control
+	var handles_visible := panel != null and panel.visible
+	var grip := 8.0
+	var corner := 14.0
+	var rects := {
+		"left": Rect2(position.x - grip * 0.5, position.y + corner, grip, maxf(0.0, size.y - corner * 2.0)),
+		"right": Rect2(position.x + size.x - grip * 0.5, position.y + corner, grip, maxf(0.0, size.y - corner * 2.0)),
+		"top": Rect2(position.x + corner, position.y - grip * 0.5, maxf(0.0, size.x - corner * 2.0), grip),
+		"bottom": Rect2(position.x + corner, position.y + size.y - grip * 0.5, maxf(0.0, size.x - corner * 2.0), grip),
+		"top_left": Rect2(position.x - grip * 0.5, position.y - grip * 0.5, corner, corner),
+		"top_right": Rect2(position.x + size.x - corner + grip * 0.5, position.y - grip * 0.5, corner, corner),
+		"bottom_left": Rect2(position.x - grip * 0.5, position.y + size.y - corner + grip * 0.5, corner, corner),
+		"bottom_right": Rect2(position.x + size.x - corner + grip * 0.5, position.y + size.y - corner + grip * 0.5, corner, corner)
+	}
+	for edge in rects:
+		var handle := debug_resize_handles[edge] as Control
+		handle.position = rects[edge].position
+		handle.size = rects[edge].size
+		handle.visible = handles_visible
+
+
+func _on_debug_resize_handle_gui_input(event: InputEvent, edge: String) -> void:
+	if not event is InputEventMouseButton:
+		return
+	var mouse_button := event as InputEventMouseButton
+	if mouse_button.button_index != MOUSE_BUTTON_LEFT or not mouse_button.pressed:
+		return
+	debug_panel_resizing = true
+	debug_resize_edge = edge
+	debug_resize_start_mouse = mouse_button.global_position
+	debug_resize_start_position = debug_panel_position
+	debug_resize_start_size = debug_panel_size
+	get_viewport().set_input_as_handled()
+
+
+func _input(event: InputEvent) -> void:
+	if not debug_panel_resizing:
+		return
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		var delta := motion.global_position - debug_resize_start_mouse
+		var viewport_size := root.size
+		var min_width := 620.0
+		var min_height := 420.0
+		var max_width := maxf(min_width, viewport_size.x - 20.0)
+		var max_height := maxf(min_height, viewport_size.y - 20.0)
+		var new_position := debug_resize_start_position
+		var new_size := debug_resize_start_size
+		if "left" in debug_resize_edge:
+			var fixed_right := debug_resize_start_position.x + debug_resize_start_size.x
+			var max_left_width := maxf(min_width, fixed_right - 10.0)
+			new_size.x = clampf(debug_resize_start_size.x - delta.x, min_width, minf(max_width, max_left_width))
+			new_position.x = fixed_right - new_size.x
+		elif "right" in debug_resize_edge:
+			new_size.x = clampf(debug_resize_start_size.x + delta.x, min_width, maxf(min_width, viewport_size.x - debug_resize_start_position.x - 10.0))
+		if "top" in debug_resize_edge:
+			var fixed_bottom := debug_resize_start_position.y + debug_resize_start_size.y
+			var max_top_height := maxf(min_height, fixed_bottom - 10.0)
+			new_size.y = clampf(debug_resize_start_size.y - delta.y, min_height, minf(max_height, max_top_height))
+			new_position.y = fixed_bottom - new_size.y
+		elif "bottom" in debug_resize_edge:
+			new_size.y = clampf(debug_resize_start_size.y + delta.y, min_height, maxf(min_height, viewport_size.y - debug_resize_start_position.y - 10.0))
+		debug_panel_size = new_size
+		debug_panel_position = new_position
+		_fit_debug_panel_to_viewport()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton:
+		var mouse_button := event as InputEventMouseButton
+		if mouse_button.button_index == MOUSE_BUTTON_LEFT and not mouse_button.pressed:
+			debug_panel_resizing = false
+			debug_resize_edge = ""
+			if debug_panel_width_slider != null:
+				debug_panel_width_slider.set_value_no_signal(debug_panel_size.x)
+			if debug_panel_height_slider != null:
+				debug_panel_height_slider.set_value_no_signal(debug_panel_size.y)
+			_save_debug_panel_settings()
+			get_viewport().set_input_as_handled()
 
 func _toggle_debug_window_settings() -> void:
 	if debug_window_settings != null:
@@ -1771,9 +1884,9 @@ func toggle_panel(panel_name: String) -> void:
 	close_panels()
 	var panel: Control = panels.get(panel_name)
 	if panel != null:
+		panel.visible = true
 		if panel_name == "debug":
 			_fit_debug_panel_to_viewport()
-		panel.visible = true
 		current_panel = panel_name
 
 func close_panels() -> void:
@@ -1782,6 +1895,7 @@ func close_panels() -> void:
 		if panel is Control:
 			(panel as Control).visible = false
 	current_panel = ""
+	_update_debug_resize_handles(debug_panel_position, debug_panel_size)
 	if closing_debug:
 		set_debug_mode_enabled(false)
 		debug_mode_requested.emit(false)
