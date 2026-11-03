@@ -107,23 +107,39 @@ func _create_resources() -> void:
 		world_objects.name = "Objects"
 		add_child(world_objects)
 
-	# Objects uses nested category folders, so discover all ResourceNodes recursively.
+	# Resource scenes can be dropped into Objects, Terrain or directly into World.
+	# Search the complete world subtree so their parent node does not affect combat.
 	resources.clear()
-	_register_resources_recursive(world_objects)
+	_register_resources_recursive(self)
+	_watch_resource_tree(self)
+	print("Разрушаемые объекты зарегистрированы: ", resources.size())
 
 
 func _register_resources_recursive(root: Node) -> void:
+	var resource := root as ResourceNode
+	if resource != null and resource.resource_type != "stump":
+		_register_resource(resource)
 	for child in root.get_children():
-		var resource := child as ResourceNode
-		if resource != null and resource.resource_type != "stump":
-			_register_resource(resource)
 		_register_resources_recursive(child)
+
+
+func _watch_resource_tree(root: Node) -> void:
+	var callback := Callable(self, "_on_resource_child_entered_tree")
+	if not root.child_entered_tree.is_connected(callback):
+		root.child_entered_tree.connect(callback)
+	for child in root.get_children():
+		_watch_resource_tree(child)
+
+
+func _on_resource_child_entered_tree(child: Node) -> void:
+	# Also support scenes instantiated after the world has already started.
+	_register_resources_recursive(child)
+	_watch_resource_tree(child)
 
 
 func _get_resource_nodes() -> Array[ResourceNode]:
 	var result: Array[ResourceNode] = []
-	if world_objects != null:
-		_collect_resource_nodes(world_objects, result)
+	_collect_resource_nodes(self, result)
 	return result
 
 
