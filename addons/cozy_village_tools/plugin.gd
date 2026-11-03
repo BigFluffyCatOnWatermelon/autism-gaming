@@ -156,7 +156,7 @@ func _add_texture_to_catalog(tile_set: TileSet, path: String, kind: String) -> v
 	var height := texture.get_height()
 	if width <= 0 or height <= 0:
 		return
-	for source_id in tile_set.get_source_ids():
+	for source_id in _get_tile_set_source_ids(tile_set):
 		var existing := tile_set.get_source(source_id) as TileSetAtlasSource
 		if existing != null and (existing.resource_name == path or (existing.texture != null and existing.texture.resource_path == path)):
 			return
@@ -260,7 +260,7 @@ func _configure_ground_collision() -> void:
 			tile_set.add_physics_layer()
 		tile_set.set_physics_layer_collision_layer(0, 2)
 		tile_set.set_physics_layer_collision_mask(0, 1)
-		for source_id in tile_set.get_source_ids():
+		for source_id in _get_tile_set_source_ids(tile_set):
 			var source := tile_set.get_source(source_id) as TileSetAtlasSource
 			if source == null:
 				continue
@@ -313,7 +313,7 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 	var texture := ResourceLoader.load(texture_path) as Texture2D
 	if texture == null:
 		return
-	for source_id in tile_set.get_source_ids():
+	for source_id in _get_tile_set_source_ids(tile_set):
 		var existing := tile_set.get_source(source_id) as TileSetAtlasSource
 		if existing != null and existing.texture != null and existing.texture.resource_path == texture_path:
 			if texture.get_width() > 64:
@@ -393,6 +393,12 @@ func _water_corner_pattern(coords: Vector2i) -> Array:
 		[true, false, false, true], [false, true, true, true]
 	]
 	return patterns[coords.y * 4 + coords.x]
+
+func _get_tile_set_source_ids(tile_set: TileSet) -> Array[int]:
+	var source_ids: Array[int] = []
+	for index in range(tile_set.get_source_count()):
+		source_ids.append(tile_set.get_source_id(index))
+	return source_ids
 
 func _get_tile_coords(source: TileSetAtlasSource) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
