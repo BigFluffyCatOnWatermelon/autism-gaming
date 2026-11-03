@@ -1,0 +1,160 @@
+[gd_resource type="TileSet" format=3]
+
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/leaf_pile.png" id="tex_0"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/lily_pad.png" id="tex_1"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_brown.png" id="tex_2"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_purple.png" id="tex_3"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/mushroom_red.png" id="tex_4"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/pebbles.png" id="tex_5"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/reeds.png" id="tex_6"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/twigs.png" id="tex_7"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Decor/weeds.png" id="tex_8"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_blue.png" id="tex_9"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_mixed.png" id="tex_10"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_pink.png" id="tex_11"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_purple.png" id="tex_12"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_white.png" id="tex_13"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/flowers_yellow.png" id="tex_14"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/lily_pad_flower.png" id="tex_15"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_pink.png" id="tex_16"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_red.png" id="tex_17"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Flowers/tulips_yellow.png" id="tex_18"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_blue.png" id="tex_19"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_pink.png" id="tex_20"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/crystal_teal.png" id="tex_21"]
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_0"]
+texture = ExtResource("tex_0")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_1"]
+texture = ExtResource("tex_1")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_2"]
+texture = ExtResource("tex_2")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_3"]
+texture = ExtResource("tex_3")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_4"]
+texture = ExtResource("tex_4")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_5"]
+texture = ExtResource("tex_5")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_6"]
+texture = ExtResource("tex_6")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_7"]
+texture = ExtResource("tex_7")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_8"]
+texture = ExtResource("tex_8")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_9"]
+texture = ExtResource("tex_9")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_10"]
+texture = ExtResource("tex_10")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_11"]
+texture = ExtResource("tex_11")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_12"]
+texture = ExtResource("tex_12")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_13"]
+texture = ExtResource("tex_13")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_14"]
+texture = ExtResource("tex_14")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_15"]
+texture = ExtResource("tex_15")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_16"]
+texture = ExtResource("tex_16")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_17"]
+texture = ExtResource("tex_17")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_18"]
+texture = ExtResource("tex_18")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_19"]
+texture = ExtResource("tex_19")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_20"]
+texture = ExtResource("tex_20")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="Atlas_21"]
+texture = ExtResource("tex_21")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[resource]
+tile_size = Vector2i(16, 16)
+resource_name = "Cozy Village Decorations"
+sources/0 = SubResource("Atlas_0")
+sources/1 = SubResource("Atlas_1")
+sources/2 = SubResource("Atlas_2")
+sources/3 = SubResource("Atlas_3")
+sources/4 = SubResource("Atlas_4")
+sources/5 = SubResource("Atlas_5")
+sources/6 = SubResource("Atlas_6")
+sources/7 = SubResource("Atlas_7")
+sources/8 = SubResource("Atlas_8")
+sources/9 = SubResource("Atlas_9")
+sources/10 = SubResource("Atlas_10")
+sources/11 = SubResource("Atlas_11")
+sources/12 = SubResource("Atlas_12")
+sources/13 = SubResource("Atlas_13")
+sources/14 = SubResource("Atlas_14")
+sources/15 = SubResource("Atlas_15")
+sources/16 = SubResource("Atlas_16")
+sources/17 = SubResource("Atlas_17")
+sources/18 = SubResource("Atlas_18")
+sources/19 = SubResource("Atlas_19")
+sources/20 = SubResource("Atlas_20")
+sources/21 = SubResource("Atlas_21")

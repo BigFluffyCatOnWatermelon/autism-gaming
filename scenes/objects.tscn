@@ -1,3 +1,11 @@
-[gd_scene format=3 uid="uid://i8jntgy3lww7"]
+[gd_scene format=3]
 
 [node name="Objects" type="Node2D"]
+
+[node name="Nature" type="Node2D" parent="."]
+
+[node name="Buildings" type="Node2D" parent="."]
+
+[node name="Props" type="Node2D" parent="."]
+
+[node name="Interiors" type="Node2D" parent="."]
