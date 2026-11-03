@@ -130,15 +130,34 @@ func _add_texture_to_catalog(tile_set: TileSet, path: String, kind: String) -> v
 	if width < 16 or height < 16 or width % 16 != 0 or height % 16 != 0:
 		return
 	var source := TileSetAtlasSource.new()
-	source.texture = texture
-	source.texture_region_size = Vector2i(16, 16)
 	source.resource_name = path.get_file().get_basename()
-	if path.to_lower().contains("/walls/") and width == 16 and height >= 32:
-		for y in range(height / 16):
-			source.create_tile(Vector2i(0, y))
-			_apply_tile_collision(source.get_tile_data(Vector2i(0, y), 0), kind, path, 16, 16)
+	var grid_aligned := width % 16 == 0 and height % 16 == 0
+	if grid_aligned:
+		source.texture = texture
+		source.texture_region_size = Vector2i(16, 16)
+		if path.to_lower().contains("/walls/") and width == 16 and height >= 32:
+			for y in range(height / 16):
+				source.create_tile(Vector2i(0, y))
+				_apply_tile_collision(source.get_tile_data(Vector2i(0, y), 0), kind, path, 16, 16)
+		else:
+			source.create_tile(Vector2i.ZERO, Vector2i(width / 16, height / 16))
+			_apply_tile_collision(source.get_tile_data(Vector2i.ZERO, 0), kind, path, width, height)
 	else:
-		source.create_tile(Vector2i.ZERO, Vector2i(width / 16, height / 16))
+		# Keep irregular-sized UI, icon and prop textures as one complete atlas tile
+		# instead of dropping them from the editor library.
+		var region := Vector2i(maxi(16, width), maxi(16, height))
+		if width < 16 or height < 16:
+			var source_image := texture.get_image()
+			if source_image == null:
+				return
+			var padded := Image.create(region.x, region.y, false, source_image.get_format())
+			padded.fill(Color(0, 0, 0, 0))
+			padded.blit_rect(source_image, Rect2i(Vector2i.ZERO, Vector2i(width, height)), Vector2i.ZERO)
+			source.texture = ImageTexture.create_from_image(padded)
+		else:
+			source.texture = texture
+		source.texture_region_size = region
+		source.create_tile(Vector2i.ZERO)
 		_apply_tile_collision(source.get_tile_data(Vector2i.ZERO, 0), kind, path, width, height)
 	if tile_set.add_source(source) >= 0:
 		_generated_tiles += 1
@@ -205,25 +224,125 @@ func _configure_ground_collision() -> void:
 						data.set_collision_polygons_count(0, 1)
 						data.set_collision_polygon_points(0, 0, _rectangle_polygon(16.0, 16.0, 0.0))
 			elif source_id == 17 or source_id == 20:
-				for coords in _get_tile_coords(source):
-					var data := source.get_tile_data(coords, 0)
-					if data == null:
-						continue
-					var polygons: Array[PackedVector2Array] = []
-					var corners := [
-						[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER, Vector2(-8, -8)],
-						[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER, Vector2(0, -8)],
-						[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER, Vector2(-8, 0)],
-						[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER, Vector2(0, 0)]
-					]
-					for corner in corners:
-						if data.get_terrain_peering_bit(int(corner[0])) == 5:
-							var p: Vector2 = corner[1]
-							polygons.append(PackedVector2Array([p, p + Vector2(8, 0), p + Vector2(8, 8), p + Vector2(0, 8)]))
-					data.set_collision_polygons_count(0, polygons.size())
-					for i in range(polygons.size()):
-						data.set_collision_polygon_points(0, i, polygons[i])
+				_apply_water_corner_collision(source)
+			elif source_id == 21:
+				_configure_animated_atlas(source, 4, 5.0)
+		_add_water_animation_source(tile_set, "res://Assets/CozyVillageFarm/01_Terrain/Base_Tiles/common/water_anim_4f.png", 5, 0, 5.0)
+		_add_water_animation_source(tile_set, "res://Assets/CozyVillageFarm/01_Terrain/Base_Tiles/common/deep_water_anim_4f.png", 6, 0, 5.0)
+		_add_water_animation_source(tile_set, "res://Assets/CozyVillageFarm/01_Terrain/Autotiles/%s/grass_over_water_anim_4f.png" % season, 0, 5, 5.0)
+		_add_water_animation_source(tile_set, "res://Assets/CozyVillageFarm/01_Terrain/Autotiles/common/sand_over_water_anim_4f.png", 2, 5, 5.0)
 		ResourceSaver.save(tile_set, path)
+
+func _apply_water_corner_collision(source: TileSetAtlasSource) -> void:
+	for coords in _get_tile_coords(source):
+		var data := source.get_tile_data(coords, 0)
+		if data == null:
+			continue
+		var polygons: Array[PackedVector2Array] = []
+		var corners := [
+			[TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER, Vector2(-8, -8)],
+			[TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER, Vector2(0, -8)],
+			[TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER, Vector2(-8, 0)],
+			[TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER, Vector2(0, 0)]
+		]
+		for corner in corners:
+			if data.get_terrain_peering_bit(int(corner[0])) == 5:
+				var origin: Vector2 = corner[1]
+				polygons.append(PackedVector2Array([origin, origin + Vector2(8, 0), origin + Vector2(8, 8), origin + Vector2(0, 8)]))
+		data.set_collision_polygons_count(0, polygons.size())
+		for index in range(polygons.size()):
+			data.set_collision_polygon_points(0, index, polygons[index])
+
+func _configure_animated_atlas(source: TileSetAtlasSource, frame_columns: int, speed: float) -> void:
+	for coords in _get_tile_coords(source):
+		source.set_tile_animation_columns(coords, frame_columns)
+		source.set_tile_animation_frames_count(coords, 4)
+		source.set_tile_animation_speed(coords, speed)
+
+func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_terrain: int, lower_terrain: int, speed: float) -> void:
+	var texture := ResourceLoader.load(texture_path) as Texture2D
+	if texture == null:
+		return
+	for source_id in tile_set.get_source_ids():
+		var existing := tile_set.get_source(source_id) as TileSetAtlasSource
+		if existing != null and existing.texture != null and existing.texture.resource_path == texture_path:
+			if texture.get_width() > 64:
+				_configure_animated_atlas(existing, 4, speed)
+				_apply_water_corner_collision(existing)
+			else:
+				_configure_animated_atlas(existing, 0, speed)
+				for coords in _get_tile_coords(existing):
+					var data := existing.get_tile_data(coords, 0)
+					if data != null:
+						data.set_collision_polygons_count(0, 1)
+						data.set_collision_polygon_points(0, 0, _rectangle_polygon(16.0, 16.0, 0.0))
+			return
+
+	var source := TileSetAtlasSource.new()
+	source.texture = texture
+	source.texture_region_size = Vector2i(16, 16)
+	source.resource_name = texture_path.get_file().get_basename()
+	var grid := source.get_atlas_grid_size()
+	var is_corner_sheet := texture.get_width() >= 256
+	var count_x := 4 if is_corner_sheet else 1
+	var count_y := 4 if is_corner_sheet else 1
+	for y in range(count_y):
+		for x in range(count_x):
+			var coords := Vector2i(x, y)
+			source.create_tile(coords)
+			source.set_tile_animation_columns(coords, 4 if is_corner_sheet else 0)
+			source.set_tile_animation_frames_count(coords, 4)
+			source.set_tile_animation_speed(coords, speed)
+			var data := source.get_tile_data(coords, 0)
+			if data == null:
+				continue
+			if is_corner_sheet:
+				data.set_terrain_set(0)
+				data.set_terrain(0, upper_terrain)
+				var bits := [
+					["top_left_corner", TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER],
+					["top_right_corner", TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER],
+					["bottom_left_corner", TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER],
+					["bottom_right_corner", TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER]
+				]
+				for bit_index in range(bits.size()):
+					var upper := _water_corner_pattern(coords)[bit_index]
+					data.set_terrain_peering_bit(int(bits[bit_index][1]), upper_terrain if upper else lower_terrain)
+			else:
+				data.set_terrain_set(0)
+				data.set_terrain(0, upper_terrain)
+				for side in [TileSet.CELL_NEIGHBOR_TOP_SIDE, TileSet.CELL_NEIGHBOR_RIGHT_SIDE, TileSet.CELL_NEIGHBOR_BOTTOM_SIDE, TileSet.CELL_NEIGHBOR_LEFT_SIDE]:
+					data.set_terrain_peering_bit(side, upper_terrain)
+			if (not is_corner_sheet) or upper_terrain == 5:
+				data.set_collision_polygons_count(0, 1)
+				data.set_collision_polygon_points(0, 0, _rectangle_polygon(16.0, 16.0, 0.0))
+			elif lower_terrain == 5:
+				var polygons: Array[PackedVector2Array] = []
+				var pattern := _water_corner_pattern(coords)
+				var positions := [Vector2(-8, -8), Vector2(0, -8), Vector2(-8, 0), Vector2(0, 0)]
+				for bit_index in range(4):
+					if not pattern[bit_index]:
+						var origin: Vector2 = positions[bit_index]
+						polygons.append(PackedVector2Array([origin, origin + Vector2(8, 0), origin + Vector2(8, 8), origin + Vector2(0, 8)]))
+				data.set_collision_polygons_count(0, polygons.size())
+				for index in range(polygons.size()):
+					data.set_collision_polygon_points(0, index, polygons[index])
+	var added_id := tile_set.add_source(source)
+	if added_id >= 0:
+		print("Cozy Village: добавлена анимация воды ", texture_path)
+
+func _water_corner_pattern(coords: Vector2i) -> Array[bool]:
+	var patterns := [
+		[false, false, false, true], [false, false, true, true],
+		[false, false, true, false], [true, true, true, false],
+		[false, true, false, true], [true, true, true, true],
+		[true, false, true, false], [true, true, false, true],
+		[false, true, false, false], [true, true, false, false],
+		[true, false, false, false], [true, false, true, true],
+		[false, false, false, false], [false, true, true, false],
+		[true, false, false, true], [false, true, true, true]
+	]
+	return patterns[coords.y * 4 + coords.x]
 
 func _get_tile_coords(source: TileSetAtlasSource) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
