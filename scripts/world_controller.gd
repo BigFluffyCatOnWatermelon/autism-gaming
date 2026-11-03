@@ -983,7 +983,7 @@ func _refresh_debug_entries() -> void:
 		for resource in _get_resource_nodes():
 			var kind := str(resource.resource_type)
 			var label := "Пень" if kind == "stump" else ("Дерево" if kind == "tree" else "Камень")
-			var distance := resource.global_position.distance_to(player.global_position) if is_instance_valid(player) else 0.0
+			var distance: float = resource.global_position.distance_to(player.global_position) if is_instance_valid(player) else 0.0
 			debug_entries.append({
 				"id": str(resource.get_instance_id()),
 				"kind": kind,
@@ -995,7 +995,7 @@ func _refresh_debug_entries() -> void:
 		if is_instance_valid(drop):
 			var item_kind := str(drop.category)
 			var item_label := str(config.items.get(str(drop.item_id), {}).get("label", drop.item_id))
-			var distance := drop.global_position.distance_to(player.global_position) if is_instance_valid(player) else 0.0
+			var distance: float = drop.global_position.distance_to(player.global_position) if is_instance_valid(player) else 0.0
 			debug_entries.append({
 				"id": str(drop.get_instance_id()),
 				"kind": item_kind,
