@@ -168,7 +168,7 @@ func _add_texture_to_catalog(tile_set: TileSet, path: String, kind: String) -> v
 	if frame_count > 1 and width % frame_count == 0 and frame_width % 16 == 0 and height % 16 == 0:
 		source.texture = texture
 		source.texture_region_size = Vector2i(16, 16)
-		var frame_size := Vector2i(frame_width / 16, height / 16)
+		var frame_size := Vector2i(int(frame_width / 16), int(height / 16))
 		source.create_tile(Vector2i.ZERO, frame_size)
 		source.set_tile_animation_columns(Vector2i.ZERO, 0)
 		source.set_tile_animation_separation(Vector2i.ZERO, Vector2i.ZERO)
@@ -179,11 +179,11 @@ func _add_texture_to_catalog(tile_set: TileSet, path: String, kind: String) -> v
 		source.texture = texture
 		source.texture_region_size = Vector2i(16, 16)
 		if path.to_lower().contains("/walls/") and width == 16 and height >= 32:
-			for y in range(height / 16):
+			for y in range(int(height / 16)):
 				source.create_tile(Vector2i(0, y))
 				_apply_tile_collision(source.get_tile_data(Vector2i(0, y), 0), kind, path, 16, 16)
 		else:
-			source.create_tile(Vector2i.ZERO, Vector2i(width / 16, height / 16))
+			source.create_tile(Vector2i.ZERO, Vector2i(int(width / 16), int(height / 16)))
 			_apply_tile_collision(source.get_tile_data(Vector2i.ZERO, 0), kind, path, width, height)
 	else:
 		# Keep irregular-sized UI, icon and prop textures as one complete atlas tile
@@ -516,7 +516,7 @@ func _build_animations(texture: Texture2D, path: String) -> Dictionary:
 			return {}
 	if columns < 2 or texture.get_width() % columns != 0 or texture.get_height() % rows != 0:
 		return {}
-	var size := Vector2i(texture.get_width() / columns, texture.get_height() / rows)
+	var size := Vector2i(int(texture.get_width() / columns), int(texture.get_height() / rows))
 	var frames := SpriteFrames.new()
 	frames.clear_all()
 	var first := ""
