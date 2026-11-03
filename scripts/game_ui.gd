@@ -723,14 +723,14 @@ func _create_debug() -> void:
 
 	var object_column := VBoxContainer.new()
 	object_column.name = "DebugObjectColumn"
-	object_column.custom_minimum_size.x = 220
+	object_column.custom_minimum_size = Vector2.ZERO
 	object_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	object_column.add_theme_constant_override("separation", 4)
 	body.add_child(object_column)
 	object_column.add_child(_make_label("ОБЪЕКТЫ", 10, Color("#a9bd9e")))
 	debug_object_list = ItemList.new()
 	debug_object_list.name = "DebugObjectList"
-	debug_object_list.custom_minimum_size = Vector2(220, 220)
+	debug_object_list.custom_minimum_size = Vector2.ZERO
 	debug_object_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	debug_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	debug_object_list.allow_reselect = true
@@ -885,12 +885,12 @@ func _ensure_debug_panel_features() -> void:
 		object_list_parent.add_theme_constant_override("separation", 12)
 		var object_column := VBoxContainer.new()
 		object_column.name = "DebugObjectColumn"
-		object_column.custom_minimum_size.x = 220
+		object_column.custom_minimum_size = Vector2.ZERO
 		object_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		object_column.add_theme_constant_override("separation", 4)
 		var object_heading := _make_label("ОБЪЕКТЫ", 10, Color("#a9bd9e"))
 		object_column.add_child(object_heading)
-		debug_object_list.custom_minimum_size = Vector2(220, 220)
+		debug_object_list.custom_minimum_size = Vector2.ZERO
 		debug_object_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		debug_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		object_column.add_child(debug_object_list)
@@ -951,9 +951,9 @@ func _ensure_debug_panel_features() -> void:
 		width_row.add_child(_make_label("Ширина", 11))
 		debug_panel_width_slider = HSlider.new()
 		debug_panel_width_slider.name = "DebugPanelWidth"
-		debug_panel_width_slider.min_value = 620.0
+		debug_panel_width_slider.min_value = 0.0
 		debug_panel_width_slider.max_value = 1200.0
-		debug_panel_width_slider.step = 20.0
+		debug_panel_width_slider.step = 1.0
 		debug_panel_width_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		width_row.add_child(debug_panel_width_slider)
 		debug_window_settings.add_child(width_row)
@@ -962,9 +962,9 @@ func _ensure_debug_panel_features() -> void:
 		height_row.add_child(_make_label("Высота", 11))
 		debug_panel_height_slider = HSlider.new()
 		debug_panel_height_slider.name = "DebugPanelHeight"
-		debug_panel_height_slider.min_value = 420.0
+		debug_panel_height_slider.min_value = 0.0
 		debug_panel_height_slider.max_value = 1000.0
-		debug_panel_height_slider.step = 20.0
+		debug_panel_height_slider.step = 1.0
 		debug_panel_height_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		height_row.add_child(debug_panel_height_slider)
 		debug_window_settings.add_child(height_row)
@@ -1070,7 +1070,7 @@ func _ensure_debug_panel_features() -> void:
 			content.add_child(debug_spawn_menu)
 
 	if debug_object_list != null:
-		debug_object_list.custom_minimum_size = Vector2(220, 220)
+		debug_object_list.custom_minimum_size = Vector2.ZERO
 	_apply_debug_panel_appearance()
 	_ensure_debug_resize_handles()
 
@@ -1078,8 +1078,8 @@ func _ensure_debug_panel_features() -> void:
 func _load_debug_panel_settings() -> void:
 	var save := ConfigFile.new()
 	if save.load("user://debug_panel.cfg") == OK:
-		debug_panel_size.x = maxf(820.0, float(save.get_value("window", "width", debug_panel_size.x)))
-		debug_panel_size.y = maxf(520.0, float(save.get_value("window", "height", debug_panel_size.y)))
+		debug_panel_size.x = maxf(0.0, float(save.get_value("window", "width", debug_panel_size.x)))
+		debug_panel_size.y = maxf(0.0, float(save.get_value("window", "height", debug_panel_size.y)))
 		debug_panel_opacity = clampf(float(save.get_value("window", "opacity", debug_panel_opacity)), 0.25, 1.0)
 		debug_panel_scale = clampf(float(save.get_value("window", "scale", debug_panel_scale)), 0.5, 1.5)
 		debug_panel_position = Vector2(float(save.get_value("window", "x", -1.0)), float(save.get_value("window", "y", -1.0)))
@@ -1241,8 +1241,8 @@ func _fit_debug_panel_to_viewport() -> void:
 		viewport_size = get_viewport().get_visible_rect().size
 	var scale_factor := clampf(debug_panel_scale, 0.5, 1.5)
 	var available := Vector2(maxf(1.0, viewport_size.x - 20.0), maxf(1.0, viewport_size.y - 20.0))
-	var panel_width := minf(maxf(300.0, debug_panel_size.x), available.x)
-	var panel_height := minf(maxf(220.0, debug_panel_size.y), available.y)
+	var panel_width := minf(maxf(0.0, debug_panel_size.x), available.x)
+	var panel_height := minf(maxf(0.0, debug_panel_size.y), available.y)
 	var target_size := Vector2(panel_width, panel_height)
 	var target_position := debug_panel_position
 	if target_position.x < 0.0 or target_position.y < 0.0:
@@ -1263,8 +1263,8 @@ func _fit_debug_panel_to_viewport() -> void:
 	panel.clip_contents = true
 	if debug_object_list != null:
 		debug_object_list.custom_minimum_size = Vector2(
-			minf(250.0, maxf(190.0, panel_width * 0.27)),
-			minf(260.0, maxf(180.0, panel_height * 0.34))
+			minf(250.0, panel_width * 0.27),
+			minf(260.0, panel_height * 0.34)
 		)
 
 
@@ -1281,8 +1281,7 @@ func _ensure_debug_resize_handles() -> void:
 	for edge in handle_specs:
 		var handle := ColorRect.new()
 		handle.name = "DebugResize_" + edge
-		handle.color = Color("#a9bd9e")
-		handle.color.a = 0.72
+		handle.color = Color(0.0, 0.0, 0.0, 0.0)
 		handle.mouse_filter = Control.MOUSE_FILTER_STOP
 		handle.mouse_default_cursor_shape = handle_specs[edge]
 		handle.z_index = 100
@@ -1337,8 +1336,8 @@ func _input(event: InputEvent) -> void:
 		var motion := event as InputEventMouseMotion
 		var delta := motion.global_position - debug_resize_start_mouse
 		var viewport_size := root.size
-		var min_width := 620.0
-		var min_height := 420.0
+		var min_width := 0.0
+		var min_height := 0.0
 		var max_width := maxf(min_width, viewport_size.x - 20.0)
 		var max_height := maxf(min_height, viewport_size.y - 20.0)
 		var new_position := debug_resize_start_position
