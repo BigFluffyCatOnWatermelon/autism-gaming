@@ -119,6 +119,31 @@ func _ready() -> void:
 	if not Engine.is_editor_hint():
 		camera.make_current()
 
+# Shared world-space anchors. CharacterBody2D stays at the physics-body origin.
+# The collision capsule is centered at y=4 with height 28, so its bottom is y=18.
+const GROUND_ANCHOR := Vector2(0.0, 18.0)
+const AIM_ANCHOR := Vector2(0.0, -3.0)
+const HAND_DISTANCE := 13.0
+const HAND_OFFSET := Vector2(0.0, 3.0)
+
+func get_ground_position() -> Vector2:
+	return to_global(GROUND_ANCHOR)
+
+func get_foot_sort_y() -> float:
+	return get_ground_position().y
+
+func get_aim_position() -> Vector2:
+	return to_global(AIM_ANCHOR)
+
+func get_hand_local_position(aim_direction: Vector2) -> Vector2:
+	var direction := aim_direction.normalized()
+	if direction.length_squared() < 0.001:
+		direction = Vector2.RIGHT
+	return direction * HAND_DISTANCE + HAND_OFFSET
+
+func get_hand_position(aim_direction: Vector2) -> Vector2:
+	return to_global(get_hand_local_position(aim_direction))
+
 func set_held_item(item_id: String, aim_direction: Vector2) -> void:
 	if held_item_sprite == null:
 		return
