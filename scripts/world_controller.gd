@@ -196,6 +196,7 @@ func _create_ui() -> void:
 	ui.debug_reset_requested.connect(_reset_debug_selection)
 	ui.debug_cheats_changed.connect(_on_debug_cheats_changed)
 	ui.debug_default_requested.connect(_save_item_catalog_default)
+	ui.debug_item_save_requested.connect(_save_selected_item_catalog)
 	ui.debug_spawn_item_requested.connect(_spawn_debug_item)
 	ui.set_debug_item_catalog(config.items, config.item_categories)
 	ui.set_backpack_slots(backpack_slots, int(config.inventory.max_backpack_slots))
@@ -457,6 +458,34 @@ func _spawn_debug_item(item_id: String, amount: int) -> void:
 	_update_debug_inspector()
 	var object_count := spawned_nodes.size()
 	_log("В мир добавлено: %s ×%d (%d отдельных объектов)." % [definition.display_name, amount, object_count])
+
+
+func _save_selected_item_catalog() -> void:
+	var entry := _find_debug_entry()
+	var node = entry.get("node")
+	if not is_instance_valid(node) or not node is ResourceDrop:
+		_log("Сначала выбери предмет в мире.")
+		return
+	var item_id := str(node.item_id)
+	var definition := config.item_definitions.get(item_id) as ItemDefinition
+	var catalog := config.item_catalog_by_id.get(item_id) as ItemCatalog
+	if definition == null or catalog == null or catalog.resource_path.is_empty():
+		_log("У выбранного предмета нет доступного файла каталога.")
+		return
+	var save_error := ResourceSaver.save(catalog, catalog.resource_path)
+	if save_error != OK:
+		_log("Не удалось сохранить %s (код %d)." % [catalog.resource_path, save_error])
+		return
+	config.items[item_id] = ItemCatalogServiceScript.rebuild_item_data(definition)
+	if not definition.combat_stats.is_empty():
+		config.weapons[item_id] = definition.combat_stats.duplicate(true)
+	node.default_definition = definition.duplicate(true)
+	node.default_item_id = item_id
+	node.default_amount = node.amount
+	defaults_config = config.duplicate(true)
+	_log("Все характеристики предмета сохранены в %s." % catalog.resource_path)
+	_refresh_debug_entries()
+	_update_debug_inspector()
 
 
 func _save_item_catalog_default(path: String, value: Variant) -> void:
@@ -856,7 +885,8 @@ func _update_drops() -> void:
 		if drop.is_protected_from_player():
 			drop.clear_magnet_target()
 			continue
-		if distance <= magnet_radius:
+		var drop_magnet_radius: float = drop.get_magnet_radius(magnet_radius)
+		if distance <= drop_magnet_radius:
 			drop.set_magnet_target(player)
 		else:
 			drop.clear_magnet_target()
@@ -1028,10 +1058,16 @@ func _update_debug_inspector() -> void:
 		return
 	var entry := _find_debug_entry()
 	if entry.is_empty():
+		ui.set_debug_item_save_enabled(false)
 		_clear_debug_inspector_properties()
 		return
 	var kind := str(entry.get("kind", ""))
 	var node = entry.get("node")
+	var can_save_item := false
+	if is_instance_valid(node) and node is ResourceDrop:
+		var item_catalog := config.item_catalog_by_id.get(str(node.item_id)) as ItemCatalog
+		can_save_item = item_catalog != null and not item_catalog.resource_path.is_empty()
+	ui.set_debug_item_save_enabled(can_save_item)
 	if kind == "player" and is_instance_valid(node):
 		ui.set_debug_target("Игрок", node.current_health, float(config.player.max_health))
 	elif (kind == "tree" or kind == "rock" or kind == "stump") and is_instance_valid(node):
@@ -1168,8 +1204,8 @@ func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 		result.append(_debug_property("player.pickup_magnet_per_level", "Радиус за уровень Магнита", config.player.pickup_magnet_per_level, 0.0, 100.0, 1.0))
 		result.append(_debug_property("transform.x", "Координата X", node.global_position.x, -5000.0, 5000.0, 1.0))
 		result.append(_debug_property("transform.y", "Координата Y", node.global_position.y, -5000.0, 5000.0, 1.0))
-		result.append(_debug_property("transform.scale_x", "Масштаб X", node.scale.x, 0.1, 5.0, 0.05))
-		result.append(_debug_property("transform.scale_y", "Масштаб Y", node.scale.y, 0.1, 5.0, 0.05))
+		result.append(_debug_property("transform.scale_x", "Масштаб X (%)", node.scale.x * 100.0, 10.0, 500.0, 5.0))
+		result.append(_debug_property("transform.scale_y", "Масштаб Y (%)", node.scale.y * 100.0, 10.0, 500.0, 5.0))
 		result.append(_debug_property("transform.rotation", "Вращение", rad_to_deg(node.rotation), -360.0, 360.0, 1.0))
 	elif (kind == "tree" or kind == "rock" or kind == "stump") and is_instance_valid(node):
 		result.append(_debug_property("resource.health", "Текущее здоровье", node.health, 0.0, 5000.0, 1.0))
@@ -1185,8 +1221,8 @@ func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 		result.append(_debug_property("resource.resistance_crushing", "Сопротивление: дробящий", node.damage_resistances.get("crushing", 1.0), 0.0, 5.0, 0.05))
 		result.append(_debug_property("transform.x", "Координата X", node.global_position.x, -5000.0, 5000.0, 1.0))
 		result.append(_debug_property("transform.y", "Координата Y", node.global_position.y, -5000.0, 5000.0, 1.0))
-		result.append(_debug_property("transform.scale_x", "Масштаб X", node.scale.x, 0.1, 5.0, 0.05))
-		result.append(_debug_property("transform.scale_y", "Масштаб Y", node.scale.y, 0.1, 5.0, 0.05))
+		result.append(_debug_property("transform.scale_x", "Масштаб X (%)", node.scale.x * 100.0, 10.0, 500.0, 5.0))
+		result.append(_debug_property("transform.scale_y", "Масштаб Y (%)", node.scale.y * 100.0, 10.0, 500.0, 5.0))
 		result.append(_debug_property("transform.rotation", "Вращение", rad_to_deg(node.rotation), -360.0, 360.0, 1.0))
 	elif is_instance_valid(node) and node is ResourceDrop:
 		if node.stack_limit > 1:
@@ -1207,6 +1243,8 @@ func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 		result.append(_debug_property("drop.pickup_radius", "Радиус подбора", node.pickup_radius, 1.0, 200.0, 1.0))
 		result.append(_debug_property("transform.x", "Координата X", node.global_position.x, -5000.0, 5000.0, 1.0))
 		result.append(_debug_property("transform.y", "Координата Y", node.global_position.y, -5000.0, 5000.0, 1.0))
+		result.append(_debug_property("transform.scale_x", "Масштаб X (%)", node.scale.x * 100.0, 10.0, 500.0, 5.0))
+		result.append(_debug_property("transform.scale_y", "Масштаб Y (%)", node.scale.y * 100.0, 10.0, 500.0, 5.0))
 		var definition := config.item_definitions.get(str(node.item_id)) as ItemDefinition
 		if definition != null:
 			result.append({"path": "item.description", "label": "Описание", "value": definition.description, "readonly": true})
@@ -1250,11 +1288,11 @@ func _on_debug_value_changed(path: String, value: float) -> void:
 				node.global_position = position_y
 			"transform.scale_x":
 				var scale_x: Vector2 = node.scale
-				scale_x.x = value
+				scale_x.x = value / 100.0
 				node.scale = scale_x
 			"transform.scale_y":
 				var scale_y: Vector2 = node.scale
-				scale_y.y = value
+				scale_y.y = value / 100.0
 				node.scale = scale_y
 			"transform.rotation":
 				node.rotation = deg_to_rad(value)

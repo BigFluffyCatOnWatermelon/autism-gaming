@@ -16,6 +16,7 @@ signal debug_delete_requested
 signal debug_reset_requested
 signal debug_cheats_changed(infinite_stamina: bool, invulnerable: bool)
 signal debug_default_requested(path: String, value: Variant)
+signal debug_item_save_requested
 signal debug_spawn_item_requested(item_id: String, amount: int)
 
 var root: Control
@@ -51,13 +52,17 @@ var debug_objects: Array[Dictionary] = []
 var debug_panel_size := Vector2(760.0, 620.0)
 var debug_panel_position := Vector2(-1.0, -1.0)
 var debug_panel_opacity := 0.92
+var debug_panel_scale := 1.0
 var debug_panel_dragging := false
 var debug_panel_drag_offset := Vector2.ZERO
 var debug_window_settings: VBoxContainer
 var debug_panel_settings_button: Button
+var debug_item_save_button: Button
 var debug_panel_width_slider: HSlider
 var debug_panel_height_slider: HSlider
 var debug_panel_opacity_slider: HSlider
+var debug_panel_scale_slider: HSlider
+var debug_panel_scale_label: Label
 var debug_panel_reset_position_button: Button
 var debug_spawn_toggle: Button
 var debug_spawn_menu: VBoxContainer
@@ -256,12 +261,16 @@ func _wire_controls() -> void:
 		clear_button.pressed.connect(_on_clear_logs)
 	if debug_panel_settings_button != null and not debug_panel_settings_button.pressed.is_connected(_toggle_debug_window_settings):
 		debug_panel_settings_button.pressed.connect(_toggle_debug_window_settings)
+	if debug_item_save_button != null and not debug_item_save_button.pressed.is_connected(_on_debug_item_save_pressed):
+		debug_item_save_button.pressed.connect(_on_debug_item_save_pressed)
 	if debug_panel_width_slider != null and not debug_panel_width_slider.value_changed.is_connected(_on_debug_panel_dimension_changed):
 		debug_panel_width_slider.value_changed.connect(_on_debug_panel_dimension_changed)
 	if debug_panel_height_slider != null and not debug_panel_height_slider.value_changed.is_connected(_on_debug_panel_dimension_changed):
 		debug_panel_height_slider.value_changed.connect(_on_debug_panel_dimension_changed)
 	if debug_panel_opacity_slider != null and not debug_panel_opacity_slider.value_changed.is_connected(_on_debug_panel_opacity_changed):
 		debug_panel_opacity_slider.value_changed.connect(_on_debug_panel_opacity_changed)
+	if debug_panel_scale_slider != null and not debug_panel_scale_slider.value_changed.is_connected(_on_debug_panel_scale_changed):
+		debug_panel_scale_slider.value_changed.connect(_on_debug_panel_scale_changed)
 	if debug_panel_reset_position_button != null and not debug_panel_reset_position_button.pressed.is_connected(_reset_debug_panel_position):
 		debug_panel_reset_position_button.pressed.connect(_reset_debug_panel_position)
 	if debug_spawn_toggle != null and not debug_spawn_toggle.pressed.is_connected(_toggle_debug_spawn_menu):
@@ -767,6 +776,18 @@ func _ensure_debug_panel_features() -> void:
 			if not heading.gui_input.is_connected(_on_debug_title_gui_input):
 				heading.gui_input.connect(_on_debug_title_gui_input)
 		var close_button := header_row.get_node_or_null("CloseButton") as Button
+		if debug_item_save_button == null:
+			debug_item_save_button = Button.new()
+			debug_item_save_button.name = "DebugSaveItemToCode"
+			debug_item_save_button.text = "Сохранить предмет в код"
+			debug_item_save_button.tooltip_text = "Записать все изменённые характеристики выбранного предмета в его .tres-файл"
+			debug_item_save_button.custom_minimum_size = Vector2(164, 30)
+			debug_item_save_button.visible = false
+			if close_button != null:
+				header_row.add_child(debug_item_save_button)
+				header_row.move_child(debug_item_save_button, close_button.get_index())
+			else:
+				header_row.add_child(debug_item_save_button)
 		if debug_panel_settings_button == null:
 			debug_panel_settings_button = Button.new()
 			debug_panel_settings_button.name = "DebugWindowSettingsButton"
@@ -818,6 +839,21 @@ func _ensure_debug_panel_features() -> void:
 		debug_panel_opacity_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		opacity_row.add_child(debug_panel_opacity_slider)
 		debug_window_settings.add_child(opacity_row)
+
+		var scale_row := HBoxContainer.new()
+		scale_row.add_child(_make_label("Масштаб", 11))
+		debug_panel_scale_slider = HSlider.new()
+		debug_panel_scale_slider.name = "DebugPanelScale"
+		debug_panel_scale_slider.min_value = 50.0
+		debug_panel_scale_slider.max_value = 150.0
+		debug_panel_scale_slider.step = 5.0
+		debug_panel_scale_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		scale_row.add_child(debug_panel_scale_slider)
+		debug_panel_scale_label = _make_label("100%", 11, Color("#d4dec8"))
+		debug_panel_scale_label.custom_minimum_size.x = 42
+		debug_panel_scale_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		scale_row.add_child(debug_panel_scale_label)
+		debug_window_settings.add_child(scale_row)
 
 		debug_panel_reset_position_button = Button.new()
 		debug_panel_reset_position_button.name = "DebugPanelResetPosition"
@@ -903,6 +939,7 @@ func _load_debug_panel_settings() -> void:
 		debug_panel_size.x = float(save.get_value("window", "width", debug_panel_size.x))
 		debug_panel_size.y = float(save.get_value("window", "height", debug_panel_size.y))
 		debug_panel_opacity = clampf(float(save.get_value("window", "opacity", debug_panel_opacity)), 0.25, 1.0)
+		debug_panel_scale = clampf(float(save.get_value("window", "scale", debug_panel_scale)), 0.5, 1.5)
 		debug_panel_position = Vector2(float(save.get_value("window", "x", -1.0)), float(save.get_value("window", "y", -1.0)))
 	if debug_panel_width_slider != null:
 		debug_panel_width_slider.set_value_no_signal(debug_panel_size.x)
@@ -910,7 +947,12 @@ func _load_debug_panel_settings() -> void:
 		debug_panel_height_slider.set_value_no_signal(debug_panel_size.y)
 	if debug_panel_opacity_slider != null:
 		debug_panel_opacity_slider.set_value_no_signal(debug_panel_opacity)
+	if debug_panel_scale_slider != null:
+		debug_panel_scale_slider.set_value_no_signal(debug_panel_scale * 100.0)
+	if debug_panel_scale_label != null:
+		debug_panel_scale_label.text = "%d%%" % roundi(debug_panel_scale * 100.0)
 	_apply_debug_panel_appearance()
+	_fit_debug_panel_to_viewport()
 
 
 func _save_debug_panel_settings() -> void:
@@ -918,6 +960,7 @@ func _save_debug_panel_settings() -> void:
 	save.set_value("window", "width", debug_panel_size.x)
 	save.set_value("window", "height", debug_panel_size.y)
 	save.set_value("window", "opacity", debug_panel_opacity)
+	save.set_value("window", "scale", debug_panel_scale)
 	save.set_value("window", "x", debug_panel_position.x)
 	save.set_value("window", "y", debug_panel_position.y)
 	var error := save.save("user://debug_panel.cfg")
@@ -945,21 +988,25 @@ func _fit_debug_panel_to_viewport() -> void:
 	var viewport_size := root.size
 	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
 		viewport_size = get_viewport().get_visible_rect().size
+	var scale_factor := clampf(debug_panel_scale, 0.5, 1.5)
 	var available := Vector2(maxf(1.0, viewport_size.x - 20.0), maxf(1.0, viewport_size.y - 20.0))
 	var panel_width := minf(maxf(300.0, debug_panel_size.x), available.x)
 	var panel_height := minf(maxf(220.0, debug_panel_size.y), available.y)
+	var target_size := Vector2(panel_width, panel_height)
 	var target_position := debug_panel_position
 	if target_position.x < 0.0 or target_position.y < 0.0:
-		target_position = (viewport_size - Vector2(panel_width, panel_height)) * 0.5
-	target_position.x = clampf(target_position.x, 0.0, maxf(0.0, viewport_size.x - panel_width))
-	target_position.y = clampf(target_position.y, 0.0, maxf(0.0, viewport_size.y - panel_height))
+		target_position = (viewport_size - target_size) * 0.5
+	target_position.x = clampf(target_position.x, 0.0, maxf(0.0, viewport_size.x - target_size.x))
+	target_position.y = clampf(target_position.y, 0.0, maxf(0.0, viewport_size.y - target_size.y))
 	debug_panel_position = target_position
 
+	panel.pivot_offset = Vector2.ZERO
+	panel.scale = Vector2.ONE * scale_factor
 	panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	panel.offset_left = target_position.x
 	panel.offset_top = target_position.y
-	panel.offset_right = target_position.x + panel_width
-	panel.offset_bottom = target_position.y + panel_height
+	panel.offset_right = target_position.x + panel_width / scale_factor
+	panel.offset_bottom = target_position.y + panel_height / scale_factor
 	panel.custom_minimum_size = Vector2.ZERO
 	panel.clip_contents = true
 	if debug_object_list != null:
@@ -986,6 +1033,14 @@ func _on_debug_panel_dimension_changed(_value: float) -> void:
 func _on_debug_panel_opacity_changed(value: float) -> void:
 	debug_panel_opacity = clampf(value, 0.25, 1.0)
 	_apply_debug_panel_appearance()
+	_save_debug_panel_settings()
+
+
+func _on_debug_panel_scale_changed(value: float) -> void:
+	debug_panel_scale = clampf(value / 100.0, 0.5, 1.5)
+	if debug_panel_scale_label != null:
+		debug_panel_scale_label.text = "%d%%" % roundi(debug_panel_scale * 100.0)
+	_fit_debug_panel_to_viewport()
 	_save_debug_panel_settings()
 
 
@@ -1109,6 +1164,16 @@ func _on_save_debug_default_pressed(property_path: String, editor: Control) -> v
 	debug_default_requested.emit(property_path, value)
 
 
+func _on_debug_item_save_pressed() -> void:
+	debug_item_save_requested.emit()
+
+
+func set_debug_item_save_enabled(enabled: bool) -> void:
+	if debug_item_save_button != null:
+		debug_item_save_button.visible = enabled
+		debug_item_save_button.disabled = not enabled
+
+
 func _on_debug_filter_changed(_index: int) -> void:
 	_render_debug_object_list()
 
@@ -1176,6 +1241,15 @@ func set_debug_properties(properties: Array[Dictionary]) -> void:
 		return
 	for child in debug_properties.get_children():
 		child.queue_free()
+	var has_code_editable_properties := false
+	for property_data in properties:
+		if bool(property_data.get("save_default", false)):
+			has_code_editable_properties = true
+			break
+	if has_code_editable_properties:
+		var hint := _make_label("Измени характеристику и нажми «В код» рядом с ней — значение запишется в .tres-файл предмета.", 11, Color("#b8d49f"))
+		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		debug_properties.add_child(hint)
 	for property_data in properties:
 		var row := HBoxContainer.new()
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1214,9 +1288,10 @@ func set_debug_properties(properties: Array[Dictionary]) -> void:
 		debug_properties.add_child(row)
 		if bool(property_data.get("save_default", false)):
 			var save_button := Button.new()
-			save_button.text = "База"
-			save_button.custom_minimum_size = Vector2(54, 26)
-			save_button.tooltip_text = "Сохранить значение в .tres-файл категории этого предмета"
+			save_button.text = "В код"
+			save_button.custom_minimum_size = Vector2(76, 26)
+			save_button.tooltip_text = "Записать это значение в файл каталога предмета (.tres). Оно станет базовым при каждом запуске."
+			save_button.add_theme_color_override("font_color", Color("#c6e8b5"))
 			save_button.pressed.connect(_on_save_debug_default_pressed.bind(property_path, editor))
 			row.add_child(save_button)
 
@@ -1270,6 +1345,7 @@ func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String
 	var icon_rect := button.get_node_or_null("Icon") as TextureRect
 	var count_label := button.get_node_or_null("StackCount") as Label
 	if icon_rect != null:
+		icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_definition: Dictionary = item_definitions_cache.get(item_id, {})
 		var definition_icon := item_definition.get("icon") as Texture2D
 		if definition_icon != null:
@@ -1282,6 +1358,7 @@ func _set_slot_icon(button: Button, item_id: String, count: int, tooltip: String
 		button.text = ""
 	button.set_meta("item_id", item_id)
 	if count_label != null:
+		count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		count_label.text = str(count) if count > 1 else ""
 	if tooltip != "":
 		button.tooltip_text = tooltip
@@ -1418,9 +1495,19 @@ func set_backpack_slots(open_slots: int, maximum: int) -> void:
 		var slot := inventory_grid.get_child(index) as Button
 		var unlocked := index < backpack_slots
 		slot.disabled = not unlocked
-		slot.tooltip_text = "Пустая ячейка" if unlocked else "Ячейка закрыта"
+		if not unlocked:
+			slot.tooltip_text = "Ячейка закрыта"
+		elif str(slot.get_meta("item_id", "")).is_empty():
+			slot.tooltip_text = "Пустая ячейка"
+		var icon_rect := slot.get_node_or_null("Icon") as TextureRect
+		if icon_rect != null:
+			icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var count_label := slot.get_node_or_null("StackCount") as Label
+		if count_label != null:
+			count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var lock_mark := slot.get_node_or_null("LockMark") as Label
 		if lock_mark != null:
+			lock_mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			lock_mark.visible = not unlocked
 
 func set_debug_values(walk_speed: float, strength: float) -> void:

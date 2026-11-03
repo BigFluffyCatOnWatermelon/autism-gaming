@@ -35,6 +35,8 @@ var debug_selected := false
 var player_drop_protected := false
 var player_drop_origin := Vector2.ZERO
 var player_drop_exclusion_radius := 0.0
+var player_drop_lock_remaining := 0.0
+var magnet_radius_multiplier := 1.0
 var player_nearby := false
 
 var visual: Sprite2D
@@ -139,17 +141,27 @@ func set_debug_selected(value: bool) -> void:
 	debug_selected = value
 	queue_redraw()
 
-func protect_from_player(origin: Vector2, exclusion_radius: float) -> void:
+func protect_from_player(origin: Vector2, exclusion_radius: float, lock_seconds: float = 0.9, magnet_multiplier: float = 0.35) -> void:
 	player_drop_origin = origin
 	player_drop_exclusion_radius = maxf(0.0, exclusion_radius)
-	player_drop_protected = global_position.distance_to(origin) <= player_drop_exclusion_radius
+	player_drop_lock_remaining = maxf(0.0, lock_seconds)
+	magnet_radius_multiplier = clampf(magnet_multiplier, 0.1, 1.0)
+	player_drop_protected = true
+
 
 func is_protected_from_player() -> bool:
 	if not player_drop_protected:
 		return false
+	if player_drop_lock_remaining > 0.0:
+		return true
 	if global_position.distance_to(player_drop_origin) > player_drop_exclusion_radius:
 		player_drop_protected = false
 	return player_drop_protected
+
+
+func get_magnet_radius(base_radius: float) -> float:
+	return maxf(0.0, base_radius) * magnet_radius_multiplier
+
 
 func can_collect() -> bool:
 	return not picked and vertical_offset <= 4.0 and player_nearby
@@ -163,6 +175,8 @@ func collect() -> int:
 func _physics_process(delta: float) -> void:
 	if picked:
 		return
+	if player_drop_lock_remaining > 0.0:
+		player_drop_lock_remaining = maxf(0.0, player_drop_lock_remaining - delta)
 	if is_instance_valid(magnet_target):
 		var direction := magnet_target.global_position - global_position
 		if direction.length_squared() > 0.01:
