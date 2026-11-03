@@ -28,7 +28,6 @@ const PLACEABLE_ROOTS := [
 var _generation_done := false
 var _generated_scenes := 0
 var _generated_tiles := 0
-var _force_refresh := false
 
 func _enter_tree() -> void:
 	add_tool_menu_item(MENU_ITEM, _refresh_assets)
@@ -48,7 +47,6 @@ func _on_filesystem_changed() -> void:
 		call_deferred("_generate_all")
 
 func _refresh_assets() -> void:
-	_force_refresh = true
 	_generation_done = false
 	_generate_all()
 
@@ -67,25 +65,19 @@ func _generate_all() -> void:
 	for mapping in PLACEABLE_ROOTS:
 		_scan_placeables(str(mapping.source), str(mapping.destination))
 	_configure_ground_collision()
-	print("Cozy Village & Farm: создано атласов TileSet: ", _generated_tiles, "; сцен объектов: ", _generated_scenes)
-	_force_refresh = false
+	print("Cozy Village & Farm: добавлено атласов TileSet: ", _generated_tiles, "; создано сцен объектов: ", _generated_scenes)
 	if _generated_scenes > 0 or _generated_tiles > 0:
 		filesystem.scan()
 
 func _generate_catalog(catalog: Dictionary) -> void:
 	var output_path := str(catalog.path)
 	var tile_set := ResourceLoader.load(output_path) as TileSet
-	if tile_set != null and tile_set.get_source_count() > 0 and not _force_refresh:
-		return
 	if tile_set == null:
 		tile_set = TileSet.new()
 	tile_set.tile_size = Vector2i(16, 16)
 	tile_set.resource_name = str(catalog.name)
-	for source_id in tile_set.get_source_ids():
-		tile_set.remove_source(source_id)
-	while tile_set.get_physics_layers_count() > 0:
-		tile_set.remove_physics_layer(tile_set.get_physics_layers_count() - 1)
-	tile_set.add_physics_layer()
+	if tile_set.get_physics_layers_count() == 0:
+		tile_set.add_physics_layer()
 	tile_set.set_physics_layer_collision_layer(0, 2)
 	tile_set.set_physics_layer_collision_mask(0, 1)
 	for root_path in catalog.roots:
@@ -134,8 +126,13 @@ func _add_texture_to_catalog(tile_set: TileSet, path: String, kind: String) -> v
 	var height := texture.get_height()
 	if width <= 0 or height <= 0:
 		return
+	for source_id in tile_set.get_source_ids():
+		var existing := tile_set.get_source(source_id) as TileSetAtlasSource
+		if existing != null and (existing.resource_name == path or (existing.texture != null and existing.texture.resource_path == path)):
+			return
+
 	var source := TileSetAtlasSource.new()
-	source.resource_name = path.get_file().get_basename()
+	source.resource_name = path
 	var grid_aligned := width % 16 == 0 and height % 16 == 0
 	if grid_aligned:
 		source.texture = texture
