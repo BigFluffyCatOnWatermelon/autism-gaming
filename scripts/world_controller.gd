@@ -283,7 +283,7 @@ func _update_held_item() -> void:
 	if selected_item == "arrows":
 		# Ammunition stays in the inventory slot; it is not displayed as an equipped bow.
 		selected_item = ""
-	var aim_direction: Vector2 = (get_global_mouse_position() - player.global_position).normalized()
+	var aim_direction: Vector2 = (get_global_mouse_position() - player.get_aim_position()).normalized()
 	player.set_held_item(selected_item, aim_direction)
 
 func _handle_hotkeys() -> void:
@@ -401,14 +401,15 @@ func _move_inventory_slot(from_index: int, to_index: int) -> void:
 func _drop_selected_item() -> void:
 	if player == null:
 		return
-	var direction: Vector2 = get_global_mouse_position() - player.global_position
+	var ground_position: Vector2 = player.get_ground_position()
+	var direction: Vector2 = get_global_mouse_position() - ground_position
 	if direction.length_squared() < 0.001:
 		direction = player.last_move_direction
 	if direction.length_squared() < 0.001:
 		direction = Vector2.DOWN
 	direction = direction.normalized()
-	# Start the toss at the character, not at the edge of the pickup magnet.
-	var spawn_position: Vector2 = player.global_position + direction * 8.0
+	# Tosses start at the feet, on the same ground plane used for pickup.
+	var spawn_position: Vector2 = ground_position + direction * 8.0
 	_drop_inventory_item(selected_slot, spawn_position)
 
 func _drop_inventory_item(slot_index: int, drop_position: Vector2) -> void:
@@ -419,22 +420,22 @@ func _drop_inventory_item(slot_index: int, drop_position: Vector2) -> void:
 	var amount := int(stack.get("amount", 0))
 	if item_id.is_empty() or amount <= 0:
 		return
-	var direction: Vector2 = drop_position - player.global_position
+	var ground_position: Vector2 = player.get_ground_position()
+	var direction: Vector2 = drop_position - ground_position
 	if direction.length_squared() < 0.001:
 		direction = player.last_move_direction
 	if direction.length_squared() < 0.001:
 		direction = Vector2.DOWN
 	direction = direction.normalized()
-	# Cursor position determines the toss direction only; every inventory drop
-	# physically leaves the player's position instead of teleporting to the cursor.
-	drop_position = player.global_position + direction * 8.0
+	# Cursor position determines direction only; the drop always starts at the feet.
+	drop_position = ground_position + direction * 8.0
 	var dropped := ResourceDropScript.new() as ResourceDrop
 	dropped.name = "Dropped_%s_%03d" % [item_id, drops.size() + 1]
 	var definition := config.item_definitions.get(item_id) as ItemDefinition
 	dropped.configure(item_id, amount, direction * 220.0, config.drops, definition)
 	world_objects.add_child(dropped)
 	dropped.global_position = drop_position
-	dropped.protect_from_player(player.global_position, 14.0)
+	dropped.protect_from_player(ground_position, 14.0)
 	drops.append(dropped)
 	inventory[slot_index] = {"id": "", "amount": 0}
 	inventory_dirty = true
@@ -449,7 +450,7 @@ func _spawn_debug_item(item_id: String, amount: int) -> void:
 	if world_objects == null:
 		world_objects = self
 	var spawn_position: Vector2 = get_global_mouse_position()
-	var direction: Vector2 = spawn_position - player.global_position
+	var direction: Vector2 = spawn_position - player.get_ground_position()
 	if direction.length_squared() < 0.001:
 		direction = Vector2.RIGHT
 	direction = direction.normalized()
@@ -465,7 +466,7 @@ func _spawn_debug_item(item_id: String, amount: int) -> void:
 		world_objects.add_child(spawned)
 		var offset_index := spawned_nodes.size()
 		spawned.global_position = spawn_position + Vector2(offset_index * 10.0, offset_index * 6.0)
-		spawned.protect_from_player(player.global_position, 14.0)
+		spawned.protect_from_player(player.get_ground_position(), 14.0)
 		drops.append(spawned)
 		spawned_nodes.append(spawned)
 		remaining -= stack_amount
@@ -696,7 +697,9 @@ func _attack(secondary: bool) -> void:
 	attack["weapon_id"] = weapon_id
 	if float(attack_cooldowns.get(cooldown_key, 0.0)) > 0.0:
 		return
-	var aim_vector: Vector2 = get_global_mouse_position() - player.global_position
+	var attack_origin: Vector2 = player.get_ground_position()
+	var aim_origin: Vector2 = player.get_aim_position()
+	var aim_vector: Vector2 = get_global_mouse_position() - aim_origin
 	if aim_vector.length_squared() < 0.001:
 		return
 	var stamina_cost := float(attack.get("stamina_cost", config.combat.attack_stamina_cost))
@@ -722,15 +725,15 @@ func _attack(secondary: bool) -> void:
 	for target in resources.duplicate():
 		if not is_instance_valid(target) or target.destroying:
 			continue
-		var offset: Vector2 = target.global_position - player.global_position
+		var offset: Vector2 = target.global_position - attack_origin
 		var distance: float = offset.length()
 		var reach := float(attack.get("reach", 70.0))
 		var is_hit := false
 		if mode == "slash" or mode == "swing":
-			is_hit = CombatSystemScript.point_in_arc(player.global_position, target.global_position, aim_angle, reach + target.hit_radius, attack_arc)
+			is_hit = CombatSystemScript.point_in_arc(attack_origin, target.global_position, aim_angle, reach + target.hit_radius, attack_arc)
 		else:
-			var start: Vector2 = player.global_position + aim_direction * 12.0
-			var finish: Vector2 = player.global_position + aim_direction * reach
+			var start: Vector2 = attack_origin + aim_direction * 12.0
+			var finish: Vector2 = attack_origin + aim_direction * reach
 			var hit_width := float(attack.get("width", 22.0)) * skill_scale
 			is_hit = distance <= reach + target.hit_radius and CombatSystemScript.distance_to_segment(target.global_position, start, finish) <= hit_width + target.hit_radius * 0.35
 		if is_hit:
@@ -752,7 +755,7 @@ func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_deg
 		effect.antialiased = true
 		effect.begin_cap_mode = Line2D.LINE_CAP_ROUND
 		effect.end_cap_mode = Line2D.LINE_CAP_ROUND
-		effect.position = player.global_position
+		effect.position = player.get_ground_position()
 		effect.z_index = player.z_index + 5
 		if mode == "slash" or mode == "swing":
 			var points := PackedVector2Array()
@@ -775,7 +778,7 @@ func _fire_arrow(weapon: Dictionary) -> void:
 		attack_cooldowns["bow"] = 0.4
 		_log("Стрелы закончились.")
 		return
-	var aim_vector: Vector2 = get_global_mouse_position() - player.global_position
+	var aim_vector: Vector2 = get_global_mouse_position() - player.get_aim_position()
 	if aim_vector.length_squared() < 0.001:
 		return
 	var stamina_cost := float(weapon.get("stamina_cost", 0.0))
@@ -796,7 +799,7 @@ func _fire_arrow(weapon: Dictionary) -> void:
 	var arrow := ArrowProjectileScript.new() as Node2D
 	arrow.name = "ArrowProjectile"
 	arrow.rotation = direction.angle()
-	arrow.global_position = player.global_position + direction * 22.0
+	arrow.global_position = player.get_hand_position(direction) + direction * 8.0
 	arrow.z_as_relative = false
 	arrow.z_index = clampi(floori(arrow.global_position.y) + WORLD_Z_SORT_OFFSET + 2, -4096, 4096)
 	add_child(arrow)
@@ -902,11 +905,12 @@ func _update_drops() -> void:
 	if player == null:
 		return
 	var magnet_radius := _get_magnet_radius()
+	var ground_position: Vector2 = player.get_ground_position()
 	for drop in drops.duplicate():
 		if not is_instance_valid(drop):
 			drops.erase(drop)
 			continue
-		var distance: float = drop.global_position.distance_to(player.global_position)
+		var distance: float = drop.global_position.distance_to(ground_position)
 		if drop.is_protected_from_player():
 			drop.clear_magnet_target()
 			continue
@@ -936,7 +940,7 @@ func _count_nearby_resources() -> int:
 	if world_objects == null or player == null:
 		return total
 	for resource in _get_resource_nodes():
-		if resource.resource_type != "stump" and resource.global_position.distance_to(player.global_position) <= 240.0:
+		if resource.resource_type != "stump" and resource.global_position.distance_to(player.get_ground_position()) <= 240.0:
 			total += 1
 	return total
 
@@ -965,7 +969,7 @@ func _update_z_order() -> void:
 		# Sort by the character's foot Y at pixel precision so small vertical
 		# movements correctly move the sprite behind/in front of tree canopies.
 		player.z_as_relative = false
-		player.z_index = clampi(floori(player.global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
+		player.z_index = clampi(floori(player.get_foot_sort_y()) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 
 func _on_settings_changed(screen_shake: bool, camera_zoom: float) -> void:
 	screen_shake_enabled = screen_shake

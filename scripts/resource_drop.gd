@@ -180,7 +180,10 @@ func _physics_process(delta: float) -> void:
 	if player_drop_lock_remaining > 0.0:
 		player_drop_lock_remaining = maxf(0.0, player_drop_lock_remaining - delta)
 	if is_instance_valid(magnet_target):
-		var direction := magnet_target.global_position - global_position
+		var target_position: Vector2 = magnet_target.global_position
+		if magnet_target.has_method("get_ground_position"):
+			target_position = magnet_target.get_ground_position()
+		var direction := target_position - global_position
 		if direction.length_squared() > 0.01:
 			velocity = velocity.move_toward(direction.normalized() * magnet_speed, 1500.0 * delta)
 	else:
