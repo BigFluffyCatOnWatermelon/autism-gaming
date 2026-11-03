@@ -3,58 +3,78 @@ extends CharacterBody2D
 const GameConfigScript = preload("res://scripts/game_config.gd")
 const WORLD_Z_SORT_OFFSET := 2048
 @export_group("Анимации персонажа")
-@export_subgroup("Idle — отдельные направления")
-@export var idle_down_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_down.png")
-@export var idle_up_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_up.png")
-@export var idle_left_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_left.png")
-@export var idle_right_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_right.png")
+@export_subgroup("Idle")
+@export var idle_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
+@export_range(1, 32, 1) var idle_columns: int = 6
+@export_range(1, 16, 1) var idle_rows: int = 4
+@export_range(1, 32, 1) var idle_frame_count: int = 2
 @export var idle_flip_h := false
-@export var walk_flip_h := false
-@export var run_flip_h := false
-@export var hurt_flip_h := false
-@export var death_flip_h := false
-@export var dodge_flip_h := false
-@export var interact_flip_h := false
+
+@export_subgroup("Walk")
 @export var movement_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
 @export_range(1, 32, 1) var movement_columns: int = 6
 @export_range(1, 16, 1) var movement_rows: int = 4
+@export var walk_flip_h := false
+
+@export_subgroup("Run")
 @export var run_sheet: Texture2D
 @export_range(1, 32, 1) var run_columns: int = 6
 @export_range(1, 16, 1) var run_rows: int = 4
+@export var run_flip_h := false
+
+@export_subgroup("Hurt")
 @export var hurt_sheet: Texture2D
 @export_range(1, 32, 1) var hurt_columns: int = 3
 @export_range(1, 16, 1) var hurt_rows: int = 4
+@export var hurt_flip_h := false
+
+@export_subgroup("Death")
 @export var death_sheet: Texture2D
 @export_range(1, 32, 1) var death_columns: int = 4
 @export_range(1, 16, 1) var death_rows: int = 4
+@export var death_flip_h := false
+
+@export_subgroup("Dodge")
 @export var dodge_sheet: Texture2D
 @export_range(1, 32, 1) var dodge_columns: int = 5
 @export_range(1, 16, 1) var dodge_rows: int = 4
+@export var dodge_flip_h := false
+
+@export_subgroup("Interact")
 @export var interact_sheet: Texture2D
 @export_range(1, 32, 1) var interact_columns: int = 4
 @export_range(1, 16, 1) var interact_rows: int = 4
+@export var interact_flip_h := false
 
 @export_group("Боевые анимации")
+@export_subgroup("Axe")
 @export var axe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
 @export_range(1, 32, 1) var axe_attack_columns: int = 3
 @export_range(1, 16, 1) var axe_attack_rows: int = 4
+@export var axe_attack_flip_h := false
+
+@export_subgroup("Pickaxe")
 @export var pickaxe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
 @export_range(1, 32, 1) var pickaxe_attack_columns: int = 3
 @export_range(1, 16, 1) var pickaxe_attack_rows: int = 4
+@export var pickaxe_attack_flip_h := false
+
+@export_subgroup("Sword Slash")
 @export var sword_slash_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
 @export_range(1, 32, 1) var sword_slash_columns: int = 3
 @export_range(1, 16, 1) var sword_slash_rows: int = 4
+@export var sword_slash_flip_h := false
+
+@export_subgroup("Sword Thrust")
 @export var sword_thrust_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
 @export_range(1, 32, 1) var sword_thrust_columns: int = 3
 @export_range(1, 16, 1) var sword_thrust_rows: int = 4
+@export var sword_thrust_flip_h := false
+
+@export_subgroup("Bow")
 @export var bow_attack_sheet: Texture2D
 @export_range(1, 32, 1) var bow_attack_columns: int = 5
 @export_range(1, 16, 1) var bow_attack_rows: int = 4
-@export_subgroup("Отражение боевых анимаций")
-@export var axe_attack_flip_h := false
-@export var pickaxe_attack_flip_h := false
-@export var sword_slash_flip_h := false
-@export var sword_thrust_flip_h := false
 @export var bow_attack_flip_h := false
 
 const ITEM_TEXTURE_PATHS := {
@@ -426,24 +446,16 @@ func _update_visuals(delta: float) -> void:
 	else:
 		walk_animation_time = 0.0
 		idle_animation_time += delta
-		var idle_texture: Texture2D = idle_down_sheet
-		match facing_row:
-			1: idle_texture = idle_up_sheet
-			2: idle_texture = idle_left_sheet
-			3: idle_texture = idle_right_sheet
-		if idle_texture != null:
-			sprite.texture = idle_texture
-			sprite.hframes = 1
-			sprite.vframes = 1
-			sprite.frame = 0
-		else:
-			sprite.texture = movement_sheet
-			sprite.hframes = maxi(1, movement_columns)
-			sprite.vframes = maxi(1, movement_rows)
-			var idle_start := maxi(0, movement_columns - 2)
-			var idle_frame_count := maxi(1, movement_columns - idle_start)
-			var idle_frame := idle_start + (int(floor(idle_animation_time / 0.35)) % idle_frame_count)
-			sprite.frame_coords = Vector2i(idle_frame, clampi(sheet_row, 0, sprite.vframes - 1))
+		var selected_idle_sheet: Texture2D = idle_sheet if idle_sheet != null else movement_sheet
+		var selected_idle_columns := maxi(1, idle_columns if idle_sheet != null else movement_columns)
+		var selected_idle_rows := maxi(1, idle_rows if idle_sheet != null else movement_rows)
+		sprite.texture = selected_idle_sheet
+		sprite.hframes = selected_idle_columns
+		sprite.vframes = selected_idle_rows
+		var idle_count := clampi(idle_frame_count, 1, selected_idle_columns)
+		var idle_start := selected_idle_columns - idle_count
+		var idle_frame := idle_start + (int(floor(idle_animation_time / 0.35)) % idle_count)
+		sprite.frame_coords = Vector2i(idle_frame, clampi(sheet_row, 0, sprite.vframes - 1))
 		sprite.flip_h = idle_flip_h
 
 	if rolling:
