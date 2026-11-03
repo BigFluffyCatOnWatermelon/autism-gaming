@@ -14,4 +14,4 @@ func _process(_delta: float) -> void:
 
 func _update_depth() -> void:
 	z_as_relative = false
-	z_index = clampi(floori(global_position.y / 16.0) + depth_adjustment, -4096, 4096)
+	z_index = clampi(floori(global_position.y) + depth_adjustment, -4096, 4096)

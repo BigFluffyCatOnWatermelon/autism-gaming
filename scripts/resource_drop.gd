@@ -38,6 +38,7 @@ var shadow: Sprite2D
 var pickup_area: Area2D
 
 func _ready() -> void:
+	z_as_relative = false
 	shadow = get_node_or_null("Shadow") as Sprite2D
 	if shadow == null:
 		shadow = Sprite2D.new()
@@ -164,7 +165,8 @@ func _physics_process(delta: float) -> void:
 				vertical_velocity = 0.0
 	if visual != null:
 		visual.position.y = -vertical_offset
-	z_index = int(global_position.y / 16.0) + 3
+	z_as_relative = false
+	z_index = clampi(floori(global_position.y) + 3, -4096, 4096)
 	queue_redraw()
 
 func _draw() -> void:

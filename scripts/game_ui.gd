@@ -77,6 +77,9 @@ func _ready() -> void:
 		_claim_editor_ownership(root, self)
 	_wire_controls()
 	_refresh_item_icons()
+	if not get_viewport().size_changed.is_connected(_fit_debug_panel_to_viewport):
+		get_viewport().size_changed.connect(_fit_debug_panel_to_viewport)
+	call_deferred("_fit_debug_panel_to_viewport")
 	set_player_data(100.0, 100.0, 100.0, 100.0, 30)
 	set_hotbar_selection(0)
 	if Engine.is_editor_hint():
@@ -573,7 +576,7 @@ func _create_settings() -> void:
 	box.add_child(_make_label("Настройки сохраняются в локальном файле Godot.", 11, Color("#9eaa93")))
 
 func _create_debug() -> void:
-	var box := _create_center_panel("debug", "Debug Inspector · F3", Rect2(70, -250, 430, 500))
+	var box := _create_center_panel("debug", "Debug Inspector · F3", Rect2(-215, -250, 430, 500))
 	debug_stats = _make_label("FPS: — · Позиция: — · Бег: —", 11, Color("#b8d49f"))
 	debug_stats.name = "DebugStats"
 	box.add_child(debug_stats)
@@ -608,7 +611,7 @@ func _create_debug() -> void:
 
 	debug_object_list = ItemList.new()
 	debug_object_list.name = "DebugObjectList"
-	debug_object_list.custom_minimum_size = Vector2(145, 300)
+	debug_object_list.custom_minimum_size = Vector2(145, 180)
 	debug_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	debug_object_list.allow_reselect = true
 	body.add_child(debug_object_list)
@@ -654,6 +657,35 @@ func _create_debug() -> void:
 	debug_delete_dialog.title = "Удаление объекта"
 	debug_delete_dialog.dialog_text = "Удалить выбранный объект из текущей игровой сессии?"
 	root.add_child(debug_delete_dialog)
+
+func _fit_debug_panel_to_viewport() -> void:
+	var panel := panels.get("debug") as Control
+	if panel == null or root == null:
+		return
+	var viewport_size := root.size
+	if viewport_size.x <= 1.0 or viewport_size.y <= 1.0:
+		viewport_size = get_viewport().get_visible_rect().size
+	var available := Vector2(maxf(120.0, viewport_size.x - 24.0), maxf(120.0, viewport_size.y - 24.0))
+	var panel_width := minf(430.0, available.x)
+	var panel_height := minf(500.0, available.y)
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -panel_width * 0.5
+	panel.offset_right = panel_width * 0.5
+	panel.offset_top = -panel_height * 0.5
+	panel.offset_bottom = panel_height * 0.5
+	panel.clip_contents = true
+
+	# The object list used to force a 300 px minimum height, making the panel
+	# overflow short game windows. Scale its minimum with the available space.
+	if debug_object_list != null:
+		debug_object_list.custom_minimum_size = Vector2(
+			minf(145.0, maxf(90.0, panel_width * 0.34)),
+			clampf(panel_height - 300.0, 64.0, 180.0)
+		)
+
 
 func _on_debug_filter_changed(_index: int) -> void:
 	_render_debug_object_list()
@@ -912,6 +944,8 @@ func toggle_panel(panel_name: String) -> void:
 	close_panels()
 	var panel: Control = panels.get(panel_name)
 	if panel != null:
+		if panel_name == "debug":
+			_fit_debug_panel_to_viewport()
 		panel.visible = true
 		current_panel = panel_name
 

@@ -383,7 +383,8 @@ func _drop_selected_item() -> void:
 	if direction.length_squared() < 0.001:
 		direction = Vector2.DOWN
 	direction = direction.normalized()
-	var spawn_position: Vector2 = player.global_position + direction * (_get_magnet_radius() + 32.0)
+	# Start the toss at the character, not at the edge of the pickup magnet.
+	var spawn_position: Vector2 = player.global_position + direction * 8.0
 	_drop_inventory_item(selected_slot, spawn_position)
 
 func _drop_inventory_item(slot_index: int, drop_position: Vector2) -> void:
@@ -400,14 +401,15 @@ func _drop_inventory_item(slot_index: int, drop_position: Vector2) -> void:
 	if direction.length_squared() < 0.001:
 		direction = Vector2.DOWN
 	direction = direction.normalized()
-	if drop_position.distance_to(player.global_position) < _get_magnet_radius() + 12.0:
-		drop_position = player.global_position + direction * (_get_magnet_radius() + 32.0)
+	# Cursor position determines the toss direction only; every inventory drop
+	# physically leaves the player's position instead of teleporting to the cursor.
+	drop_position = player.global_position + direction * 8.0
 	var dropped := ResourceDropScript.new() as ResourceDrop
 	dropped.name = "Dropped_%s_%03d" % [item_id, drops.size() + 1]
 	dropped.configure(item_id, amount, direction * 220.0, config.drops)
 	world_objects.add_child(dropped)
 	dropped.global_position = drop_position
-	dropped.protect_from_player(player.global_position, 24.0)
+	dropped.protect_from_player(player.global_position, 14.0)
 	drops.append(dropped)
 	inventory[slot_index] = {"id": "", "amount": 0}
 	inventory_dirty = true
@@ -631,7 +633,8 @@ func _fire_arrow(weapon: Dictionary) -> void:
 	arrow.name = "ArrowProjectile"
 	arrow.rotation = direction.angle()
 	arrow.global_position = player.global_position + direction * 22.0
-	arrow.z_index = player.z_index + 4
+	arrow.z_as_relative = false
+	arrow.z_index = clampi(floori(arrow.global_position.y) + 2, -4096, 4096)
 	add_child(arrow)
 	projectiles.append({
 		"node": arrow,
@@ -657,6 +660,8 @@ func _update_projectiles(delta: float) -> void:
 		if movement_length > remaining_distance and movement_length > 0.0:
 			movement = movement.normalized() * remaining_distance
 		arrow.global_position = previous + movement
+		arrow.z_as_relative = false
+		arrow.z_index = clampi(floori(arrow.global_position.y) + 2, -4096, 4096)
 		remaining_distance = maxf(0.0, remaining_distance - movement.length())
 		shot["remaining"] = remaining_distance
 		projectiles[index] = shot
@@ -669,7 +674,8 @@ func _update_projectiles(delta: float) -> void:
 func _embed_arrow(arrow: Node2D) -> void:
 	if arrow.has_method("embed"):
 		arrow.call("embed")
-	arrow.z_index = int(arrow.global_position.y / 16.0)
+	arrow.z_as_relative = false
+	arrow.z_index = clampi(floori(arrow.global_position.y) + 2, -4096, 4096)
 	embedded_arrows.append(arrow)
 	while embedded_arrows.size() > 100:
 		var oldest: Node2D = embedded_arrows.pop_front()
@@ -789,7 +795,10 @@ func _camera_shake() -> void:
 
 func _update_z_order() -> void:
 	if player != null:
-		player.z_index = int(player.global_position.y / 16.0) + 1
+		# Sort by the character's foot Y at pixel precision so small vertical
+		# movements correctly move the sprite behind/in front of tree canopies.
+		player.z_as_relative = false
+		player.z_index = clampi(floori(player.global_position.y) + 1, -4096, 4096)
 
 func _on_settings_changed(screen_shake: bool, camera_zoom: float) -> void:
 	screen_shake_enabled = screen_shake

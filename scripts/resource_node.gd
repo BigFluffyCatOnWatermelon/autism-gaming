@@ -45,6 +45,7 @@ func configure(kind: String, starting_health: float) -> void:
 	queue_redraw()
 
 func _ready() -> void:
+	z_as_relative = false
 	if resource_type == "rock" and max_health == 90.0:
 		max_health = 110.0
 		health = max_health
@@ -203,7 +204,8 @@ func _finish_rock_break() -> void:
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
-		z_index = int(global_position.y / 16.0) + 1
+		z_as_relative = false
+		z_index = clampi(floori(global_position.y) + 1, -4096, 4096)
 		return
 	if flash_timer > 0.0:
 		flash_timer = maxf(0.0, flash_timer - delta)
@@ -213,7 +215,8 @@ func _process(delta: float) -> void:
 		sway_velocity -= rotation * 26.0 * delta
 		sway_velocity *= exp(-7.5 * delta)
 		rotation += sway_velocity * delta
-	z_index = int(global_position.y / 16.0) + 1
+	z_as_relative = false
+	z_index = clampi(floori(global_position.y) + 1, -4096, 4096)
 
 func _draw() -> void:
 	if debug_selected:
