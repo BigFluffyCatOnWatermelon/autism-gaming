@@ -894,7 +894,11 @@ func _clear_debug_selection() -> void:
 	debug_selected_id = ""
 	_update_debug_selection_highlight()
 	if ui != null:
-		ui.set_debug_properties([])
+		_clear_debug_inspector_properties()
+
+func _clear_debug_inspector_properties() -> void:
+	var empty_properties: Array[Dictionary] = []
+	ui.set_debug_properties(empty_properties)
 
 func _find_debug_entry() -> Dictionary:
 	for entry in debug_entries:
@@ -907,7 +911,7 @@ func _update_debug_inspector() -> void:
 		return
 	var entry := _find_debug_entry()
 	if entry.is_empty():
-		ui.set_debug_properties([])
+		_clear_debug_inspector_properties()
 		return
 	var kind := str(entry.get("kind", ""))
 	var node = entry.get("node")
