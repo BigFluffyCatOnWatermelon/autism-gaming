@@ -356,13 +356,13 @@ func _add_water_animation_source(tile_set: TileSet, texture_path: String, upper_
 					["bottom_right_corner", TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER]
 				]
 				for bit_index in range(bits.size()):
-					var upper := _water_corner_pattern(coords)[bit_index]
+					var upper: bool = bool(_water_corner_pattern(coords)[bit_index])
 					data.set_terrain_peering_bit(int(bits[bit_index][1]), upper_terrain if upper else lower_terrain)
 			else:
 				data.set_terrain_set(0)
 				data.set_terrain(0, upper_terrain)
 				for side in [TileSet.CELL_NEIGHBOR_TOP_SIDE, TileSet.CELL_NEIGHBOR_RIGHT_SIDE, TileSet.CELL_NEIGHBOR_BOTTOM_SIDE, TileSet.CELL_NEIGHBOR_LEFT_SIDE]:
-					data.set_terrain_peering_bit(side, upper_terrain)
+					data.set_terrain_peering_bit(int(side), upper_terrain)
 			if (not is_corner_sheet) or upper_terrain == 5:
 				data.set_collision_polygons_count(0, 1)
 				data.set_collision_polygon_points(0, 0, _rectangle_polygon(16.0, 16.0, 0.0))
