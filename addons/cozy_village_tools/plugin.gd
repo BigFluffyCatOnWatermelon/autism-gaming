@@ -150,7 +150,7 @@ func _apply_tile_collision(data: TileData, kind: String, path: String, width: in
 	var solid := false
 	match kind:
 		"world":
-			solid = lower.contains("/trees/") or lower.contains("/rocks/") or lower.contains("/buildings/") or lower.contains("/props/") or lower.contains("/furniture/")
+			solid = lower.contains("/trees/") or lower.contains("/rocks/") or lower.contains("/buildings/") or lower.contains("/03_buildings/") or lower.contains("/props/") or lower.contains("/04_props/") or lower.contains("/furniture/")
 			if lower.contains("/flowers/") or lower.contains("/grass/") or lower.contains("/decor/") or lower.contains("banner") or lower.contains("rug"):
 				solid = false
 		"creatures":
@@ -172,7 +172,7 @@ func _apply_tile_collision(data: TileData, kind: String, path: String, width: in
 		collider_width = float(width) * 0.82
 		collider_height = maxf(6.0, float(height) * 0.48)
 		center_y = -float(height) * 0.24
-	elif lower.contains("/buildings/") or lower.contains("/cliffs/"):
+	elif lower.contains("/buildings/") or lower.contains("/03_buildings/") or lower.contains("/cliffs/"):
 		collider_width = float(width) * 0.88
 		collider_height = maxf(8.0, float(height) * 0.28)
 		center_y = -collider_height * 0.5
@@ -398,7 +398,7 @@ func _scene_collision(path: String, size: Vector2i) -> Dictionary:
 		cw = w * 0.82
 		ch = maxf(6.0, h * 0.48)
 		cy = -h * 0.24
-	elif lower.contains("/buildings/"):
+	elif lower.contains("/buildings/") or lower.contains("/03_buildings/"):
 		cw = w * 0.88
 		ch = maxf(8.0, h * 0.28)
 	elif lower.contains("/animals/"):
@@ -407,7 +407,7 @@ func _scene_collision(path: String, size: Vector2i) -> Dictionary:
 	elif lower.contains("/characters/"):
 		cw = w * 0.48
 		ch = maxf(6.0, h * 0.2)
-	elif lower.contains("/props/") or lower.contains("/furniture/") or lower.contains("/beach_fishing/"):
+	elif lower.contains("/props/") or lower.contains("/04_props/") or lower.contains("/furniture/") or lower.contains("/beach_fishing/") or lower.contains("/09_beach_fishing/"):
 		if "banner" in lower or "sign" in lower or "flowerpot" in lower or "flower" in lower or "grass" in lower:
 			return {}
 		cw = w * 0.72

@@ -3,7 +3,17 @@
 [ext_resource type="Script" path="res://scripts/terrain_editor.gd" id="1_terrain"]
 [ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_ground_spring.tres" id="2_ground"]
 [ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_crops.tres" id="3_crops"]
-[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fences.tres" id="4_fences"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fence_wood.tres" id="6_fence_wood"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fence_dark.tres" id="7_fence_dark"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_fence_white.tres" id="8_fence_white"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_stone_wall.tres" id="9_stone_wall"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_world_assets_library.tres" id="10_world_assets"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_creatures_library.tres" id="11_creatures"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_farming_items_library.tres" id="12_farming_items"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_beach_library.tres" id="13_beach"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_ui_library.tres" id="14_ui"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_effects_library.tres" id="15_effects"]
+[ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_terrain_extras_library.tres" id="16_terrain_extras"]
 [ext_resource type="TileSet" path="res://Assets/CozyVillageFarm/Godot/TileSets/cozy_decorations.tres" id="5_details"]
 
 [node name="Terrain" type="Node2D"]
@@ -19,12 +29,64 @@ z_index = -120
 texture_filter = 1
 tile_set = ExtResource("3_crops")
 
-[node name="Fences" type="TileMapLayer" parent="."]
+[node name="Fence_Wood" type="TileMapLayer" parent="."]
 z_index = -116
 texture_filter = 1
-tile_set = ExtResource("4_fences")
+tile_set = ExtResource("6_fence_wood")
+
+[node name="Fence_Dark" type="TileMapLayer" parent="."]
+z_index = -116
+texture_filter = 1
+tile_set = ExtResource("7_fence_dark")
+
+[node name="Fence_White" type="TileMapLayer" parent="."]
+z_index = -116
+texture_filter = 1
+tile_set = ExtResource("8_fence_white")
+
+[node name="Stone_Wall" type="TileMapLayer" parent="."]
+z_index = -116
+texture_filter = 1
+tile_set = ExtResource("9_stone_wall")
 
 [node name="Decorations" type="TileMapLayer" parent="."]
 z_index = -112
 texture_filter = 1
 tile_set = ExtResource("5_details")
+
+[node name="AssetLibraries" type="Node2D" parent="."]
+
+[node name="World_Assets" type="TileMapLayer" parent="AssetLibraries"]
+y_sort_enabled = true
+texture_filter = 1
+tile_set = ExtResource("10_world_assets")
+
+[node name="Creatures" type="TileMapLayer" parent="AssetLibraries"]
+y_sort_enabled = true
+texture_filter = 1
+tile_set = ExtResource("11_creatures")
+
+[node name="Farming_Items" type="TileMapLayer" parent="AssetLibraries"]
+y_sort_enabled = true
+texture_filter = 1
+tile_set = ExtResource("12_farming_items")
+
+[node name="Beach_Fishing" type="TileMapLayer" parent="AssetLibraries"]
+y_sort_enabled = true
+texture_filter = 1
+tile_set = ExtResource("13_beach")
+
+[node name="UI_Assets" type="TileMapLayer" parent="AssetLibraries"]
+y_sort_enabled = true
+texture_filter = 1
+tile_set = ExtResource("14_ui")
+
+[node name="Effects_Assets" type="TileMapLayer" parent="AssetLibraries"]
+y_sort_enabled = true
+texture_filter = 1
+tile_set = ExtResource("15_effects")
+
+[node name="Terrain_Extras" type="TileMapLayer" parent="AssetLibraries"]
+y_sort_enabled = true
+texture_filter = 1
+tile_set = ExtResource("16_terrain_extras")

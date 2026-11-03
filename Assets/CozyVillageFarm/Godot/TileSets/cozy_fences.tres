@@ -343,7 +343,7 @@ texture_region_size = Vector2i(16, 16)
 
 [resource]
 tile_size = Vector2i(16, 16)
-terrain_set_0/mode = 1
+terrain_set_0/mode = 2
 terrain_set_0/terrain_0/name = "Забор и стена"
 terrain_set_0/terrain_0/color = Color(0.62, 0.48, 0.32, 1)
 sources/0 = SubResource("Fence_0")
