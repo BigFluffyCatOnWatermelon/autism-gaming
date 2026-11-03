@@ -174,7 +174,7 @@ func _apply_tile_collision(data: TileData, kind: String, path: String, width: in
 	var solid := false
 	match kind:
 		"world":
-			solid = lower.contains("/trees/") or lower.contains("/rocks/") or lower.contains("/buildings/") or lower.contains("/03_buildings/") or lower.contains("/props/") or lower.contains("/04_props/") or lower.contains("/furniture/")
+			solid = lower.contains("/trees/") or lower.contains("/bushes/") or lower.contains("/rocks/") or lower.contains("/buildings/") or lower.contains("/03_buildings/") or lower.contains("/props/") or lower.contains("/04_props/") or lower.contains("/furniture/")
 			if lower.contains("/flowers/") or lower.contains("/grass/") or lower.contains("/decor/") or lower.contains("banner") or lower.contains("rug"):
 				solid = false
 		"creatures":
@@ -191,6 +191,10 @@ func _apply_tile_collision(data: TileData, kind: String, path: String, width: in
 	if lower.contains("/trees/"):
 		collider_width = clampf(float(width) * 0.24, 5.0, 12.0)
 		collider_height = clampf(float(height) * 0.22, 7.0, 13.0)
+		center_y = -collider_height * 0.5
+	elif lower.contains("/bushes/"):
+		collider_width = float(width) * 0.68
+		collider_height = maxf(6.0, float(height) * 0.32)
 		center_y = -collider_height * 0.5
 	elif lower.contains("/rocks/") or "rock" in lower:
 		collider_width = float(width) * 0.82
@@ -521,6 +525,9 @@ func _scene_collision(path: String, size: Vector2i) -> Dictionary:
 	if lower.contains("/trees/"):
 		cw = clampf(w * 0.24, 5.0, 12.0)
 		ch = clampf(h * 0.22, 7.0, 13.0)
+	elif lower.contains("/bushes/"):
+		cw = w * 0.68
+		ch = maxf(6.0, h * 0.32)
 	elif lower.contains("/rocks/") or "rock" in lower:
 		cw = w * 0.82
 		ch = maxf(6.0, h * 0.48)
