@@ -50,9 +50,8 @@ func _generate_placeable_scenes() -> void:
 	if _generation_done:
 		return
 	var filesystem := EditorInterface.get_resource_filesystem()
-	# The initial project scan must finish before imported textures are loaded.
-	# filesystem_changed will call this method again after that scan.
 	if filesystem.is_scanning():
+		# Wait for filesystem_changed instead of repeatedly deferring while scanning.
 		return
 
 	_generation_done = true
@@ -76,11 +75,10 @@ func _scan_assets(source_path: String, destination_path: String) -> void:
 		if entry == "." or entry == "..":
 			continue
 		var child_source := source_path.path_join(entry)
-		var child_destination := destination_path.path_join(entry)
 		if directory.current_is_dir():
-			_scan_assets(child_source, child_destination)
+			_scan_assets(child_source, destination_path.path_join(entry))
 		elif entry.get_extension().to_lower() == "png" and _is_static_placeable(entry):
-			_create_placeable_scene(child_source, child_destination)
+			_create_placeable_scene(child_source, destination_path)
 	directory.list_dir_end()
 
 func _is_static_placeable(file_name: String) -> bool:
