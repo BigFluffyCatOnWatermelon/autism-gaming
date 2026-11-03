@@ -17,6 +17,7 @@ signal debug_reset_requested
 signal debug_cheats_changed(infinite_stamina: bool, invulnerable: bool)
 signal debug_default_requested(path: String, value: Variant)
 signal debug_item_save_requested
+signal debug_inventory_item_selected(slot_index: int)
 signal debug_spawn_item_requested(item_id: String, amount: int)
 
 var root: Control
@@ -49,7 +50,7 @@ var debug_infinite_stamina: CheckBox
 var debug_invulnerable: CheckBox
 var debug_delete_dialog: ConfirmationDialog
 var debug_objects: Array[Dictionary] = []
-var debug_panel_size := Vector2(760.0, 620.0)
+var debug_panel_size := Vector2(880.0, 620.0)
 var debug_panel_position := Vector2(-1.0, -1.0)
 var debug_panel_opacity := 0.92
 var debug_panel_scale := 1.0
@@ -58,6 +59,9 @@ var debug_panel_drag_offset := Vector2.ZERO
 var debug_window_settings: VBoxContainer
 var debug_panel_settings_button: Button
 var debug_item_save_button: Button
+var debug_nearby_toggle: CheckBox
+var debug_inventory_option: OptionButton
+var debug_inventory_items_signature := ""
 var debug_panel_width_slider: HSlider
 var debug_panel_height_slider: HSlider
 var debug_panel_opacity_slider: HSlider
@@ -72,6 +76,15 @@ var debug_spawn_amount: SpinBox
 var debug_spawn_confirm: Button
 var debug_spawn_catalog: Dictionary = {}
 var debug_spawn_categories: Dictionary = {}
+var settings_hud_scale := 1.0
+var settings_hotbar_scale := 1.0
+var settings_windows_scale := 1.0
+var settings_hud_scale_slider: HSlider
+var settings_hotbar_scale_slider: HSlider
+var settings_windows_scale_slider: HSlider
+var settings_hud_scale_label: Label
+var settings_hotbar_scale_label: Label
+var settings_windows_scale_label: Label
 var backpack_slots := 12
 var max_backpack_slots := 24
 
@@ -101,14 +114,18 @@ func _ready() -> void:
 		_build_ui()
 	_create_world_drop_zone()
 	_ensure_debug_panel_features()
+	_ensure_ui_scale_settings()
 	if Engine.is_editor_hint() and get_tree().edited_scene_root == self:
 		_claim_editor_ownership(root, self)
 	_wire_controls()
 	_load_debug_panel_settings()
+	_load_ui_scale_settings()
 	_refresh_item_icons()
 	if not get_viewport().size_changed.is_connected(_fit_debug_panel_to_viewport):
 		get_viewport().size_changed.connect(_fit_debug_panel_to_viewport)
+	get_viewport().size_changed.connect(_apply_ui_element_scales)
 	call_deferred("_fit_debug_panel_to_viewport")
+	call_deferred("_apply_ui_element_scales")
 	set_player_data(100.0, 100.0, 100.0, 100.0, 30)
 	set_hotbar_selection(0)
 	if Engine.is_editor_hint():
@@ -240,6 +257,16 @@ func _wire_controls() -> void:
 		debug_filter.item_selected.connect(_on_debug_filter_changed)
 	if debug_object_list != null and not debug_object_list.item_selected.is_connected(_on_debug_object_selected):
 		debug_object_list.item_selected.connect(_on_debug_object_selected)
+	if debug_nearby_toggle != null and not debug_nearby_toggle.toggled.is_connected(_on_debug_nearby_toggled):
+		debug_nearby_toggle.toggled.connect(_on_debug_nearby_toggled)
+	if debug_inventory_option != null and not debug_inventory_option.item_selected.is_connected(_on_debug_inventory_option_selected):
+		debug_inventory_option.item_selected.connect(_on_debug_inventory_option_selected)
+	if settings_hud_scale_slider != null and not settings_hud_scale_slider.value_changed.is_connected(_on_ui_scale_changed):
+		settings_hud_scale_slider.value_changed.connect(_on_ui_scale_changed)
+	if settings_hotbar_scale_slider != null and not settings_hotbar_scale_slider.value_changed.is_connected(_on_ui_scale_changed):
+		settings_hotbar_scale_slider.value_changed.connect(_on_ui_scale_changed)
+	if settings_windows_scale_slider != null and not settings_windows_scale_slider.value_changed.is_connected(_on_ui_scale_changed):
+		settings_windows_scale_slider.value_changed.connect(_on_ui_scale_changed)
 	if debug_infinite_stamina != null and not debug_infinite_stamina.toggled.is_connected(_on_debug_cheat_toggled):
 		debug_infinite_stamina.toggled.connect(_on_debug_cheat_toggled)
 	if debug_invulnerable != null and not debug_invulnerable.toggled.is_connected(_on_debug_cheat_toggled):
@@ -289,17 +316,16 @@ func _wire_controls() -> void:
 
 func _style_panel(panel: PanelContainer) -> void:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#272b30")
-	style.border_color = Color("#8b9299")
-	style.set_border_width_all(3)
-	style.set_corner_radius_all(3)
+	style.bg_color = Color("#20272d")
+	style.border_color = Color("#52675a")
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(9)
 	style.content_margin_left = 12
 	style.content_margin_right = 12
-	style.content_margin_top = 10
-	style.content_margin_bottom = 10
+	style.content_margin_top = 9
+	style.content_margin_bottom = 9
 	panel.add_theme_stylebox_override("panel", style)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-
 func _style_slot(button: Button) -> void:
 	var normal := StyleBoxFlat.new()
 	normal.bg_color = Color("#343940")
@@ -601,7 +627,7 @@ func _create_inventory() -> void:
 	box.add_child(_make_label("Предметы и экипировка отображаются отдельными ячейками, как в Minecraft.", 11, Color("#9eaa93")))
 
 func _create_settings() -> void:
-	var box := _create_center_panel("settings", "Настройки", Rect2(-240, -190, 480, 380))
+	var box := _create_center_panel("settings", "Настройки", Rect2(-270, -250, 540, 500))
 	box.add_child(_make_label("Эффекты камеры", 14, Color("#b8d49f")))
 	settings_shake = CheckBox.new()
 	settings_shake.name = "ScreenShake"
@@ -621,22 +647,38 @@ func _create_settings() -> void:
 	settings_debug.name = "DebugMode"
 	settings_debug.text = "Режим выделения объектов (Debug Inspector)"
 	box.add_child(settings_debug)
-	box.add_child(_make_label("Включи режим, затем нажимай на объекты мира, чтобы открыть и менять их параметры. F3 — быстрый переключатель.", 11, Color("#9eaa93")))
-	box.add_child(_make_label("Настройки сохраняются в локальном файле Godot.", 11, Color("#9eaa93")))
-
+	box.add_child(_make_label("Включи режим и нажимай на объекты мира. F3 — быстрый переключатель.", 11, Color("#9eaa93")))
+	box.add_child(_make_label("Настройки сохраняются локально.", 11, Color("#9eaa93")))
 func _create_debug() -> void:
-	var box := _create_center_panel("debug", "Debug Inspector · F3", Rect2(-215, -250, 430, 500))
-	debug_stats = _make_label("FPS: — · Позиция: — · Бег: —", 11, Color("#b8d49f"))
+	var box := _create_center_panel("debug", "DEBUG · ИНСПЕКТОР", Rect2(-440, -310, 880, 620))
+	debug_stats = _make_label("FPS: — · Позиция: — · Объекты рядом: —", 11, Color("#a9bd9e"))
 	debug_stats.name = "DebugStats"
+	debug_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(debug_stats)
+
 	debug_target_text = _make_label("Выбран объект: Игрок", 12, Color("#e5d6a6"))
 	debug_target_text.name = "DebugTarget"
-	box.add_child(debug_target_text)
+	var selection_row := HBoxContainer.new()
+	selection_row.name = "DebugSelectionRow"
+	selection_row.add_theme_constant_override("separation", 8)
+	debug_target_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	selection_row.add_child(debug_target_text)
+	debug_inventory_option = OptionButton.new()
+	debug_inventory_option.name = "DebugInventorySlot"
+	debug_inventory_option.custom_minimum_size = Vector2(240, 30)
+	debug_inventory_option.size_flags_horizontal = Control.SIZE_SHRINK_END
+	debug_inventory_option.add_item("— Предмет из инвентаря / хотбара —")
+	debug_inventory_option.set_item_metadata(0, -1)
+	selection_row.add_child(debug_inventory_option)
+	box.add_child(selection_row)
 
 	var filter_row := HBoxContainer.new()
-	filter_row.add_child(_make_label("Фильтр объектов:", 12))
+	filter_row.name = "DebugFilterRow"
+	filter_row.add_theme_constant_override("separation", 8)
+	filter_row.add_child(_make_label("Фильтр:", 11))
 	debug_filter = OptionButton.new()
 	debug_filter.name = "DebugFilter"
+	debug_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	debug_filter.add_item("Все объекты")
 	debug_filter.select(0)
 	debug_filter.set_item_metadata(0, "all")
@@ -659,31 +701,58 @@ func _create_debug() -> void:
 	debug_filter.add_item("Боеприпасы")
 	debug_filter.set_item_metadata(9, "ammunition")
 	filter_row.add_child(debug_filter)
+	debug_nearby_toggle = CheckBox.new()
+	debug_nearby_toggle.name = "DebugNearbyOnly"
+	debug_nearby_toggle.text = "Рядом · 600 px"
+	debug_nearby_toggle.button_pressed = true
+	debug_nearby_toggle.tooltip_text = "Показывать ближайшие объекты и сортировать их по расстоянию до игрока"
+	filter_row.add_child(debug_nearby_toggle)
 	box.add_child(filter_row)
 
 	var body := HBoxContainer.new()
-	body.add_theme_constant_override("separation", 10)
+	body.name = "DebugBody"
+	body.add_theme_constant_override("separation", 12)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(body)
 
+	var object_column := VBoxContainer.new()
+	object_column.name = "DebugObjectColumn"
+	object_column.custom_minimum_size.x = 220
+	object_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	object_column.add_theme_constant_override("separation", 4)
+	body.add_child(object_column)
+	object_column.add_child(_make_label("ОБЪЕКТЫ", 10, Color("#a9bd9e")))
 	debug_object_list = ItemList.new()
 	debug_object_list.name = "DebugObjectList"
-	debug_object_list.custom_minimum_size = Vector2(145, 180)
+	debug_object_list.custom_minimum_size = Vector2(220, 220)
+	debug_object_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	debug_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	debug_object_list.allow_reselect = true
-	body.add_child(debug_object_list)
+	object_column.add_child(debug_object_list)
 
+	var inspector_column := VBoxContainer.new()
+	inspector_column.name = "DebugInspectorColumn"
+	inspector_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inspector_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	inspector_column.add_child(_make_label("ПАРАМЕТРЫ", 10, Color("#a9bd9e")))
+	body.add_child(inspector_column)
 	var inspector_scroll := ScrollContainer.new()
+	inspector_scroll.name = "DebugInspectorScroll"
 	inspector_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inspector_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_child(inspector_scroll)
+	inspector_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	inspector_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	inspector_column.add_child(inspector_scroll)
 	debug_properties = VBoxContainer.new()
 	debug_properties.name = "DebugProperties"
 	debug_properties.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	debug_properties.add_theme_constant_override("separation", 4)
 	inspector_scroll.add_child(debug_properties)
-	debug_properties.add_child(_make_label("Выбери объект в списке или кликни по нему в мире.", 12, Color("#d4dec8")))
+	debug_properties.add_child(_make_label("Выбери объект слева или предмет из списка слотов выше.", 12, Color("#c3cfb8")))
 
 	var cheat_row := HBoxContainer.new()
+	cheat_row.name = "DebugCheatsRow"
+	cheat_row.add_theme_constant_override("separation", 14)
 	debug_infinite_stamina = CheckBox.new()
 	debug_infinite_stamina.name = "InfiniteStamina"
 	debug_infinite_stamina.text = "Бесконечная выносливость"
@@ -695,17 +764,22 @@ func _create_debug() -> void:
 	box.add_child(cheat_row)
 
 	var actions := HBoxContainer.new()
+	actions.name = "DebugActions"
+	actions.add_theme_constant_override("separation", 6)
 	var clone_button := Button.new()
 	clone_button.name = "DebugClone"
-	clone_button.text = "Копировать объект"
+	clone_button.text = "Копировать"
+	clone_button.custom_minimum_size.y = 28
 	actions.add_child(clone_button)
 	var reset_button := Button.new()
 	reset_button.name = "DebugReset"
-	reset_button.text = "Сбросить параметры"
+	reset_button.text = "Сбросить"
+	reset_button.custom_minimum_size.y = 28
 	actions.add_child(reset_button)
 	var delete_button := Button.new()
 	delete_button.name = "DebugDelete"
 	delete_button.text = "Удалить…"
+	delete_button.custom_minimum_size.y = 28
 	actions.add_child(delete_button)
 	box.add_child(actions)
 
@@ -714,8 +788,6 @@ func _create_debug() -> void:
 	debug_delete_dialog.title = "Удаление объекта"
 	debug_delete_dialog.dialog_text = "Удалить выбранный объект из текущей игровой сессии?"
 	root.add_child(debug_delete_dialog)
-
-
 func _ensure_debug_panel_features() -> void:
 	var panel := panels.get("debug") as PanelContainer
 	if panel == null:
@@ -776,29 +848,60 @@ func _ensure_debug_panel_features() -> void:
 			if not heading.gui_input.is_connected(_on_debug_title_gui_input):
 				heading.gui_input.connect(_on_debug_title_gui_input)
 		var close_button := header_row.get_node_or_null("CloseButton") as Button
-		if debug_item_save_button == null:
-			debug_item_save_button = Button.new()
-			debug_item_save_button.name = "DebugSaveItemToCode"
-			debug_item_save_button.text = "Сохранить предмет в код"
-			debug_item_save_button.tooltip_text = "Записать все изменённые характеристики выбранного предмета в его .tres-файл"
-			debug_item_save_button.custom_minimum_size = Vector2(164, 30)
-			debug_item_save_button.visible = false
-			if close_button != null:
-				header_row.add_child(debug_item_save_button)
-				header_row.move_child(debug_item_save_button, close_button.get_index())
-			else:
-				header_row.add_child(debug_item_save_button)
 		if debug_panel_settings_button == null:
 			debug_panel_settings_button = Button.new()
 			debug_panel_settings_button.name = "DebugWindowSettingsButton"
-			debug_panel_settings_button.text = "Окно ⚙"
-			debug_panel_settings_button.tooltip_text = "Размер, прозрачность и положение инспектора"
-			debug_panel_settings_button.custom_minimum_size = Vector2(86, 30)
+			debug_panel_settings_button.text = "⚙"
+			debug_panel_settings_button.tooltip_text = "Настройки окна дебага"
+			debug_panel_settings_button.custom_minimum_size = Vector2(34, 30)
 			if close_button != null:
 				header_row.add_child(debug_panel_settings_button)
 				header_row.move_child(debug_panel_settings_button, close_button.get_index())
 			else:
 				header_row.add_child(debug_panel_settings_button)
+
+	var debug_filter_row := _find_node("DebugFilterRow") as HBoxContainer
+	if debug_filter_row == null and debug_filter != null:
+		debug_filter_row = debug_filter.get_parent() as HBoxContainer
+	if debug_nearby_toggle == null and debug_filter_row != null:
+		debug_nearby_toggle = CheckBox.new()
+		debug_nearby_toggle.name = "DebugNearbyOnly"
+		debug_nearby_toggle.text = "Рядом · 600 px"
+		debug_nearby_toggle.button_pressed = true
+		debug_nearby_toggle.tooltip_text = "Показывать ближайшие объекты и сортировать их по расстоянию до игрока"
+		debug_filter_row.add_child(debug_nearby_toggle)
+
+	var selection_row := panel.find_child("DebugSelectionRow", true, false) as HBoxContainer
+	if selection_row == null:
+		selection_row = HBoxContainer.new()
+		selection_row.name = "DebugSelectionRow"
+		selection_row.add_theme_constant_override("separation", 8)
+		var target_label := _find_node("DebugTarget") as Label
+		var target_index := 0
+		if target_label != null:
+			target_index = target_label.get_index()
+			var target_parent := target_label.get_parent()
+			target_parent.remove_child(target_label)
+			selection_row.add_child(target_label)
+			target_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		content.add_child(selection_row)
+		content.move_child(selection_row, clampi(target_index, 0, content.get_child_count() - 1))
+	if debug_inventory_option == null:
+		debug_inventory_option = OptionButton.new()
+		debug_inventory_option.name = "DebugInventorySlot"
+		debug_inventory_option.custom_minimum_size = Vector2(240, 30)
+		debug_inventory_option.size_flags_horizontal = Control.SIZE_SHRINK_END
+		debug_inventory_option.add_item("— Предмет из инвентаря / хотбара —")
+		debug_inventory_option.set_item_metadata(0, -1)
+		selection_row.add_child(debug_inventory_option)
+	if debug_item_save_button == null:
+		debug_item_save_button = Button.new()
+		debug_item_save_button.name = "DebugSaveItemToCode"
+		debug_item_save_button.text = "Сохранить в базу"
+		debug_item_save_button.tooltip_text = "Сохранить текущие характеристики предмета в его файл каталога .tres"
+		debug_item_save_button.custom_minimum_size = Vector2(142, 30)
+		debug_item_save_button.visible = false
+		selection_row.add_child(debug_item_save_button)
 
 	if debug_window_settings == null:
 		debug_window_settings = VBoxContainer.new()
@@ -811,7 +914,7 @@ func _ensure_debug_panel_features() -> void:
 		width_row.add_child(_make_label("Ширина", 11))
 		debug_panel_width_slider = HSlider.new()
 		debug_panel_width_slider.name = "DebugPanelWidth"
-		debug_panel_width_slider.min_value = 360.0
+		debug_panel_width_slider.min_value = 620.0
 		debug_panel_width_slider.max_value = 1200.0
 		debug_panel_width_slider.step = 20.0
 		debug_panel_width_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -822,7 +925,7 @@ func _ensure_debug_panel_features() -> void:
 		height_row.add_child(_make_label("Высота", 11))
 		debug_panel_height_slider = HSlider.new()
 		debug_panel_height_slider.name = "DebugPanelHeight"
-		debug_panel_height_slider.min_value = 300.0
+		debug_panel_height_slider.min_value = 420.0
 		debug_panel_height_slider.max_value = 1000.0
 		debug_panel_height_slider.step = 20.0
 		debug_panel_height_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -864,6 +967,7 @@ func _ensure_debug_panel_features() -> void:
 
 	var filter := _find_node("DebugFilter") as OptionButton
 	if filter != null:
+		filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var legacy_filter_ids := ["all", "player", "tree", "rock", "drop", "weapons"]
 		for legacy_index in range(mini(filter.item_count, legacy_filter_ids.size())):
 			filter.set_item_metadata(legacy_index, legacy_filter_ids[legacy_index])
@@ -929,15 +1033,15 @@ func _ensure_debug_panel_features() -> void:
 			content.add_child(debug_spawn_menu)
 
 	if debug_object_list != null:
-		debug_object_list.custom_minimum_size = Vector2(130, 140)
+		debug_object_list.custom_minimum_size = Vector2(220, 220)
 	_apply_debug_panel_appearance()
 
 
 func _load_debug_panel_settings() -> void:
 	var save := ConfigFile.new()
 	if save.load("user://debug_panel.cfg") == OK:
-		debug_panel_size.x = float(save.get_value("window", "width", debug_panel_size.x))
-		debug_panel_size.y = float(save.get_value("window", "height", debug_panel_size.y))
+		debug_panel_size.x = maxf(820.0, float(save.get_value("window", "width", debug_panel_size.x)))
+		debug_panel_size.y = maxf(520.0, float(save.get_value("window", "height", debug_panel_size.y)))
 		debug_panel_opacity = clampf(float(save.get_value("window", "opacity", debug_panel_opacity)), 0.25, 1.0)
 		debug_panel_scale = clampf(float(save.get_value("window", "scale", debug_panel_scale)), 0.5, 1.5)
 		debug_panel_position = Vector2(float(save.get_value("window", "x", -1.0)), float(save.get_value("window", "y", -1.0)))
@@ -954,6 +1058,115 @@ func _load_debug_panel_settings() -> void:
 	_apply_debug_panel_appearance()
 	_fit_debug_panel_to_viewport()
 
+
+func _ensure_ui_scale_settings() -> void:
+	var panel := panels.get("settings") as PanelContainer
+	if panel == null:
+		return
+	var content := panel.get_node_or_null("Content") as VBoxContainer
+	if content == null or content.get_node_or_null("InterfaceScaleSettings") != null:
+		return
+	var section := VBoxContainer.new()
+	section.name = "InterfaceScaleSettings"
+	section.add_theme_constant_override("separation", 4)
+	section.add_child(HSeparator.new())
+	section.add_child(_make_label("МАСШТАБ ЭЛЕМЕНТОВ ИНТЕРФЕЙСА", 11, Color("#b8d49f")))
+	settings_hud_scale_slider = _add_ui_scale_row(section, "HUD", "HudScale", settings_hud_scale)
+	settings_hotbar_scale_slider = _add_ui_scale_row(section, "Быстрые слоты", "HotbarScale", settings_hotbar_scale)
+	settings_windows_scale_slider = _add_ui_scale_row(section, "Окна", "WindowsScale", settings_windows_scale)
+	content.add_child(section)
+	settings_hud_scale_label = _find_node("HudScaleValue") as Label
+	settings_hotbar_scale_label = _find_node("HotbarScaleValue") as Label
+	settings_windows_scale_label = _find_node("WindowsScaleValue") as Label
+	panel.anchor_left = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -270
+	panel.offset_right = 270
+	panel.offset_top = -250
+	panel.offset_bottom = 250
+
+func _add_ui_scale_row(parent: VBoxContainer, row_label: String, control_name: String, initial_value: float) -> HSlider:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var title := _make_label(row_label, 11)
+	title.custom_minimum_size.x = 112
+	row.add_child(title)
+	var slider := HSlider.new()
+	slider.name = control_name
+	slider.min_value = 70.0
+	slider.max_value = 140.0
+	slider.step = 5.0
+	slider.value = initial_value * 100.0
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(slider)
+	var value_label := _make_label("%d%%" % roundi(initial_value * 100.0), 11, Color("#d4dec8"))
+	value_label.name = control_name + "Value"
+	value_label.custom_minimum_size.x = 42
+	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(value_label)
+	parent.add_child(row)
+	return slider
+
+func _load_ui_scale_settings() -> void:
+	var save := ConfigFile.new()
+	if save.load("user://ui_scale.cfg") == OK:
+		settings_hud_scale = clampf(float(save.get_value("ui", "hud", settings_hud_scale)), 0.7, 1.4)
+		settings_hotbar_scale = clampf(float(save.get_value("ui", "hotbar", settings_hotbar_scale)), 0.7, 1.4)
+		settings_windows_scale = clampf(float(save.get_value("ui", "windows", settings_windows_scale)), 0.7, 1.4)
+	if settings_hud_scale_slider != null:
+		settings_hud_scale_slider.set_value_no_signal(settings_hud_scale * 100.0)
+	if settings_hotbar_scale_slider != null:
+		settings_hotbar_scale_slider.set_value_no_signal(settings_hotbar_scale * 100.0)
+	if settings_windows_scale_slider != null:
+		settings_windows_scale_slider.set_value_no_signal(settings_windows_scale * 100.0)
+	_update_ui_scale_labels()
+	_apply_ui_element_scales()
+
+func _save_ui_scale_settings() -> void:
+	var save := ConfigFile.new()
+	save.set_value("ui", "hud", settings_hud_scale)
+	save.set_value("ui", "hotbar", settings_hotbar_scale)
+	save.set_value("ui", "windows", settings_windows_scale)
+	var error := save.save("user://ui_scale.cfg")
+	if error != OK:
+		add_log("Не удалось сохранить масштаб интерфейса: %s" % error)
+
+func _on_ui_scale_changed(_value: float) -> void:
+	if settings_hud_scale_slider != null:
+		settings_hud_scale = clampf(settings_hud_scale_slider.value / 100.0, 0.7, 1.4)
+	if settings_hotbar_scale_slider != null:
+		settings_hotbar_scale = clampf(settings_hotbar_scale_slider.value / 100.0, 0.7, 1.4)
+	if settings_windows_scale_slider != null:
+		settings_windows_scale = clampf(settings_windows_scale_slider.value / 100.0, 0.7, 1.4)
+	_update_ui_scale_labels()
+	_apply_ui_element_scales()
+	_save_ui_scale_settings()
+
+func _update_ui_scale_labels() -> void:
+	var labels: Array[Label] = [settings_hud_scale_label, settings_hotbar_scale_label, settings_windows_scale_label]
+	var values: Array[float] = [settings_hud_scale, settings_hotbar_scale, settings_windows_scale]
+	for index in range(labels.size()):
+		if labels[index] != null:
+			labels[index].text = "%d%%" % roundi(values[index] * 100.0)
+
+func _apply_ui_element_scales() -> void:
+	if root == null:
+		return
+	var hud := _find_node("HUD") as Control
+	if hud != null:
+		hud.pivot_offset = Vector2(0.0, hud.size.y)
+		hud.scale = Vector2.ONE * settings_hud_scale
+	var hotbar := _find_node("Hotbar") as Control
+	if hotbar != null:
+		hotbar.pivot_offset = Vector2(hotbar.size.x * 0.5, hotbar.size.y)
+		hotbar.scale = Vector2.ONE * settings_hotbar_scale
+	for panel_name in ["inventory", "settings", "logs"]:
+		var panel := panels.get(panel_name) as Control
+		if panel != null:
+			panel.pivot_offset = panel.size * 0.5
+			panel.scale = Vector2.ONE * settings_windows_scale
 
 func _save_debug_panel_settings() -> void:
 	var save := ConfigFile.new()
@@ -1011,8 +1224,8 @@ func _fit_debug_panel_to_viewport() -> void:
 	panel.clip_contents = true
 	if debug_object_list != null:
 		debug_object_list.custom_minimum_size = Vector2(
-			minf(160.0, maxf(100.0, panel_width * 0.27)),
-			minf(180.0, maxf(80.0, panel_height * 0.28))
+			minf(250.0, maxf(190.0, panel_width * 0.27)),
+			minf(260.0, maxf(180.0, panel_height * 0.34))
 		)
 
 
@@ -1168,21 +1381,68 @@ func _on_debug_item_save_pressed() -> void:
 	debug_item_save_requested.emit()
 
 
+func set_debug_inventory_items(items: Array[Dictionary], open_slots: int, selected_slot: int, item_data: Dictionary) -> void:
+	if debug_inventory_option == null:
+		return
+	var last_slot := mini(items.size(), 9 + maxi(0, open_slots))
+	var signature := "%d|%d" % [open_slots, selected_slot]
+	for slot_index in range(last_slot):
+		var stack: Dictionary = items[slot_index]
+		var item_id := str(stack.get("id", ""))
+		var amount := int(stack.get("amount", 0))
+		if not item_id.is_empty() and amount > 0:
+			signature += "|%d:%s:%d" % [slot_index, item_id, amount]
+	if signature == debug_inventory_items_signature:
+		return
+	debug_inventory_items_signature = signature
+	debug_inventory_option.clear()
+	debug_inventory_option.add_item("— Предмет из инвентаря / хотбара —")
+	debug_inventory_option.set_item_metadata(0, -1)
+	var selected_index := 0
+	for slot_index in range(last_slot):
+		var stack: Dictionary = items[slot_index]
+		var item_id := str(stack.get("id", ""))
+		var amount := int(stack.get("amount", 0))
+		if item_id.is_empty() or amount <= 0:
+			continue
+		var definition: Dictionary = item_data.get(item_id, {})
+		var item_label := str(definition.get("label", item_id.capitalize()))
+		var location := "Быстрый %d" % (slot_index + 1) if slot_index < 9 else "Рюкзак %d" % (slot_index - 8)
+		debug_inventory_option.add_item("%s  ·  %s ×%d" % [location, item_label, amount])
+		var option_index := debug_inventory_option.item_count - 1
+		debug_inventory_option.set_item_metadata(option_index, slot_index)
+		if slot_index == selected_slot:
+			selected_index = option_index
+	debug_inventory_option.select(selected_index)
+
 func set_debug_item_save_enabled(enabled: bool) -> void:
 	if debug_item_save_button != null:
 		debug_item_save_button.visible = enabled
 		debug_item_save_button.disabled = not enabled
 
-
+func set_debug_world_actions_enabled(enabled: bool) -> void:
+	for node_name in ["DebugClone", "DebugReset", "DebugDelete"]:
+		var action_button := _find_node(node_name) as Button
+		if action_button != null:
+			action_button.disabled = not enabled
 func _on_debug_filter_changed(_index: int) -> void:
 	_render_debug_object_list()
 
 func _on_debug_object_selected(index: int) -> void:
-	if index < 0 or index >= debug_object_list.item_count:
+	if debug_object_list == null or index < 0 or index >= debug_object_list.item_count:
 		return
 	var object_id := str(debug_object_list.get_item_metadata(index))
+	if object_id.is_empty():
+		return
 	debug_object_selected.emit(object_id)
 
+func _on_debug_inventory_option_selected(index: int) -> void:
+	if debug_inventory_option == null or index < 0 or index >= debug_inventory_option.item_count:
+		return
+	debug_inventory_item_selected.emit(int(debug_inventory_option.get_item_metadata(index)))
+
+func _on_debug_nearby_toggled(_enabled: bool) -> void:
+	_render_debug_object_list()
 func _on_debug_cheat_toggled(_enabled: bool) -> void:
 	debug_cheats_changed.emit(
 		debug_infinite_stamina.button_pressed if debug_infinite_stamina != null else false,
@@ -1209,8 +1469,17 @@ func _render_debug_object_list() -> void:
 	var filter_value := "all"
 	if debug_filter != null and debug_filter.selected >= 0:
 		filter_value = str(debug_filter.get_item_metadata(debug_filter.selected))
-	for entry in debug_objects:
+	var entries_to_show: Array[Dictionary] = debug_objects.duplicate(true)
+	entries_to_show.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.get("distance", 0.0)) < float(b.get("distance", 0.0))
+	)
+	for entry in entries_to_show:
 		var kind := str(entry.get("kind", "other"))
+		var object_id := str(entry.get("id", ""))
+		var selected_id := str(entry.get("selected_id", ""))
+		var distance := float(entry.get("distance", 0.0))
+		if debug_nearby_toggle != null and debug_nearby_toggle.button_pressed and distance > 600.0 and object_id != selected_id:
+			continue
 		if filter_value != "all":
 			if filter_value == "tree" and kind != "tree" and kind != "stump":
 				continue
@@ -1222,12 +1491,17 @@ func _render_debug_object_list() -> void:
 				continue
 			elif filter_value == "player" and kind != "player":
 				continue
-		debug_object_list.add_item(str(entry.get("label", "Объект")))
+		var display_label := str(entry.get("label", "Объект"))
+		if kind != "player":
+			display_label += "  ·  %d px" % roundi(distance)
+		debug_object_list.add_item(display_label)
 		var item_index := debug_object_list.item_count - 1
-		debug_object_list.set_item_metadata(item_index, str(entry.get("id", "")))
-		if str(entry.get("id", "")) == str(entry.get("selected_id", "")):
+		debug_object_list.set_item_metadata(item_index, object_id)
+		if object_id == selected_id:
 			debug_object_list.select(item_index)
-
+	if debug_object_list.item_count == 0:
+		debug_object_list.add_item("Нет объектов поблизости")
+		debug_object_list.set_item_disabled(0, true)
 func set_debug_objects(entries: Array[Dictionary], selected_id: String = "") -> void:
 	debug_objects.clear()
 	for entry in entries:
@@ -1235,7 +1509,6 @@ func set_debug_objects(entries: Array[Dictionary], selected_id: String = "") -> 
 		copied_entry["selected_id"] = selected_id
 		debug_objects.append(copied_entry)
 	_render_debug_object_list()
-
 func set_debug_properties(properties: Array[Dictionary]) -> void:
 	if debug_properties == null:
 		return
@@ -1254,7 +1527,7 @@ func set_debug_properties(properties: Array[Dictionary]) -> void:
 		var row := HBoxContainer.new()
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var title := _make_label(str(property_data.get("label", property_data.get("path", "Параметр"))), 11)
-		title.custom_minimum_size.x = 142
+		title.custom_minimum_size.x = 164
 		row.add_child(title)
 		var property_path := str(property_data.get("path", ""))
 		if bool(property_data.get("readonly", false)):
@@ -1288,9 +1561,9 @@ func set_debug_properties(properties: Array[Dictionary]) -> void:
 		debug_properties.add_child(row)
 		if bool(property_data.get("save_default", false)):
 			var save_button := Button.new()
-			save_button.text = "В код"
-			save_button.custom_minimum_size = Vector2(76, 26)
-			save_button.tooltip_text = "Записать это значение в файл каталога предмета (.tres). Оно станет базовым при каждом запуске."
+			save_button.text = "В базу"
+			save_button.custom_minimum_size = Vector2(68, 26)
+			save_button.tooltip_text = "Сохранить это значение в файл каталога предмета (.tres)."
 			save_button.add_theme_color_override("font_color", Color("#c6e8b5"))
 			save_button.pressed.connect(_on_save_debug_default_pressed.bind(property_path, editor))
 			row.add_child(save_button)

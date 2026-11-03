@@ -37,6 +37,7 @@ var camera_shake_timer := 0.0
 var rng := RandomNumberGenerator.new()
 var debug_entries: Array[Dictionary] = []
 var debug_selected_id := ""
+var debug_selected_inventory_slot := -1
 var debug_refresh_timer := 0.0
 
 func _ready() -> void:
@@ -197,6 +198,7 @@ func _create_ui() -> void:
 	ui.debug_cheats_changed.connect(_on_debug_cheats_changed)
 	ui.debug_default_requested.connect(_save_item_catalog_default)
 	ui.debug_item_save_requested.connect(_save_selected_item_catalog)
+	ui.debug_inventory_item_selected.connect(_on_debug_inventory_item_selected)
 	ui.debug_spawn_item_requested.connect(_spawn_debug_item)
 	ui.set_debug_item_catalog(config.items, config.item_categories)
 	ui.set_backpack_slots(backpack_slots, int(config.inventory.max_backpack_slots))
@@ -463,10 +465,12 @@ func _spawn_debug_item(item_id: String, amount: int) -> void:
 func _save_selected_item_catalog() -> void:
 	var entry := _find_debug_entry()
 	var node = entry.get("node")
-	if not is_instance_valid(node) or not node is ResourceDrop:
-		_log("Сначала выбери предмет в мире.")
+	var item_id := str(entry.get("item_id", ""))
+	if item_id.is_empty() and is_instance_valid(node) and node is ResourceDrop:
+		item_id = str(node.item_id)
+	if item_id.is_empty():
+		_log("Сначала выбери предмет в инвентаре или в мире.")
 		return
-	var item_id := str(node.item_id)
 	var definition := config.item_definitions.get(item_id) as ItemDefinition
 	var catalog := config.item_catalog_by_id.get(item_id) as ItemCatalog
 	if definition == null or catalog == null or catalog.resource_path.is_empty():
@@ -476,25 +480,31 @@ func _save_selected_item_catalog() -> void:
 	if save_error != OK:
 		_log("Не удалось сохранить %s (код %d)." % [catalog.resource_path, save_error])
 		return
+	_sync_item_definition_to_runtime(item_id, definition)
+	defaults_config = config.duplicate(true)
+	_log("Предмет сохранён в базу: %s." % catalog.resource_path)
+	_refresh_debug_entries()
+	_update_debug_inspector()
+func _sync_item_definition_to_runtime(item_id: String, definition: ItemDefinition) -> void:
 	config.items[item_id] = ItemCatalogServiceScript.rebuild_item_data(definition)
 	if not definition.combat_stats.is_empty():
 		config.weapons[item_id] = definition.combat_stats.duplicate(true)
-	node.default_definition = definition.duplicate(true)
-	node.default_item_id = item_id
-	node.default_amount = node.amount
-	defaults_config = config.duplicate(true)
-	_log("Все характеристики предмета сохранены в %s." % catalog.resource_path)
-	_refresh_debug_entries()
-	_update_debug_inspector()
+	for drop in drops:
+		if is_instance_valid(drop) and str(drop.item_id) == item_id:
+			drop.set_item_definition(item_id, definition, drop.amount)
+			drop.default_definition = definition.duplicate(true)
+			drop.default_item_id = item_id
 
 
 func _save_item_catalog_default(path: String, value: Variant) -> void:
 	var entry := _find_debug_entry()
 	var node = entry.get("node")
-	if not is_instance_valid(node) or not node is ResourceDrop:
-		_log("Выбери предмет в мире, чтобы сохранить его базовые характеристики.")
+	var item_id := str(entry.get("item_id", ""))
+	if item_id.is_empty() and is_instance_valid(node) and node is ResourceDrop:
+		item_id = str(node.item_id)
+	if item_id.is_empty():
+		_log("Сначала выбери предмет в инвентаре или в мире.")
 		return
-	var item_id := str(node.item_id)
 	var definition := config.item_definitions.get(item_id) as ItemDefinition
 	var catalog := config.item_catalog_by_id.get(item_id) as ItemCatalog
 	if definition == null or catalog == null or catalog.resource_path.is_empty():
@@ -508,7 +518,11 @@ func _save_item_catalog_default(path: String, value: Variant) -> void:
 		definition.stack_limit = maxi(1, roundi(float(value)))
 	elif path.begins_with("item.combat."):
 		var parts := path.trim_prefix("item.combat.").split(".")
-		if not _set_nested_item_dictionary(definition.combat_stats, parts, value):
+		var stored_value: Variant = value
+		if parts.size() > 0 and parts[parts.size() - 1] == "damage_type":
+			var damage_types := ["cutting", "piercing", "crushing"]
+			stored_value = damage_types[clampi(roundi(float(value)), 0, damage_types.size() - 1)]
+		if not _set_nested_item_dictionary(definition.combat_stats, parts, stored_value):
 			_log("Неизвестная характеристика: %s." % path)
 			return
 	elif path.begins_with("item.properties."):
@@ -531,18 +545,11 @@ func _save_item_catalog_default(path: String, value: Variant) -> void:
 		_log("Не удалось записать %s (код %d)." % [catalog.resource_path, save_error])
 		return
 
-	config.items[item_id] = ItemCatalogServiceScript.rebuild_item_data(definition)
-	if not definition.combat_stats.is_empty():
-		config.weapons[item_id] = definition.combat_stats.duplicate(true)
-	node.set_item_definition(item_id, definition)
-	node.default_definition = definition.duplicate(true)
-	node.default_item_id = item_id
+	_sync_item_definition_to_runtime(item_id, definition)
 	defaults_config = config.duplicate(true)
-	_log("Базовая характеристика сохранена в %s." % catalog.resource_path)
+	_log("Значение сохранено в базе: %s." % catalog.resource_path)
 	_refresh_debug_entries()
 	_update_debug_inspector()
-
-
 func _set_nested_item_dictionary(target: Dictionary, path_parts: PackedStringArray, value: Variant) -> bool:
 	if path_parts.is_empty():
 		return false
@@ -965,35 +972,59 @@ func _refresh_debug_entries() -> void:
 		return
 	debug_entries.clear()
 	if is_instance_valid(player):
-		debug_entries.append({"id": str(player.get_instance_id()), "kind": "player", "label": "Игрок", "node": player})
+		debug_entries.append({
+			"id": str(player.get_instance_id()),
+			"kind": "player",
+			"label": "Игрок",
+			"node": player,
+			"distance": 0.0
+		})
 	if world_objects != null:
 		for resource in _get_resource_nodes():
 			var kind := str(resource.resource_type)
 			var label := "Пень" if kind == "stump" else ("Дерево" if kind == "tree" else "Камень")
-			debug_entries.append({"id": str(resource.get_instance_id()), "kind": kind, "label": "%s · %s" % [label, resource.name], "node": resource})
+			var distance := resource.global_position.distance_to(player.global_position) if is_instance_valid(player) else 0.0
+			debug_entries.append({
+				"id": str(resource.get_instance_id()),
+				"kind": kind,
+				"label": "%s · %s" % [label, resource.name],
+				"node": resource,
+				"distance": distance
+			})
 	for drop in drops:
 		if is_instance_valid(drop):
 			var item_kind := str(drop.category)
 			var item_label := str(config.items.get(str(drop.item_id), {}).get("label", drop.item_id))
+			var distance := drop.global_position.distance_to(player.global_position) if is_instance_valid(player) else 0.0
 			debug_entries.append({
 				"id": str(drop.get_instance_id()),
 				"kind": item_kind,
 				"label": "%s · %s ×%d" % [item_label, _item_category_label(item_kind), int(drop.amount)],
-				"node": drop
+				"node": drop,
+				"distance": distance
 			})
+	var inventory_selection_invalidated := false
+	if debug_selected_inventory_slot >= 0 and _find_debug_entry().is_empty():
+		debug_selected_inventory_slot = -1
+		inventory_selection_invalidated = true
 	var ui_entries: Array[Dictionary] = []
 	var selected_found := false
 	for entry in debug_entries:
-		ui_entries.append({"id": entry["id"], "kind": entry["kind"], "label": entry["label"]})
+		ui_entries.append({
+			"id": entry["id"],
+			"kind": entry["kind"],
+			"label": entry["label"],
+			"distance": float(entry.get("distance", 0.0))
+		})
 		if str(entry["id"]) == debug_selected_id:
 			selected_found = true
-	if not selected_found and not debug_selected_id.is_empty():
-		_clear_debug_selection()
-		ui_entries = []
-		for entry in debug_entries:
-			ui_entries.append({"id": entry["id"], "kind": entry["kind"], "label": entry["label"]})
-	ui.set_debug_objects(ui_entries, debug_selected_id)
-
+	if debug_selected_inventory_slot < 0 and not selected_found and not debug_selected_id.is_empty():
+		debug_selected_id = ""
+		_update_debug_selection_highlight()
+	ui.set_debug_objects(ui_entries, debug_selected_id if debug_selected_inventory_slot < 0 else "")
+	ui.set_debug_inventory_items(inventory, backpack_slots, debug_selected_inventory_slot, config.items)
+	if inventory_selection_invalidated:
+		_update_debug_inspector()
 func _select_debug_target(world_position: Vector2) -> void:
 	var nearest_id := ""
 	var nearest_distance := 72.0
@@ -1016,17 +1047,36 @@ func _select_debug_target(world_position: Vector2) -> void:
 				nearest_distance = distance
 	if nearest_id.is_empty():
 		return
+	debug_selected_inventory_slot = -1
 	debug_selected_id = nearest_id
 	_update_debug_selection_highlight()
 	_refresh_debug_entries()
 	_update_debug_inspector()
 
 func _on_debug_object_selected(object_id: String) -> void:
+	debug_selected_inventory_slot = -1
 	debug_selected_id = object_id
 	_update_debug_selection_highlight()
 	_refresh_debug_entries()
 	_update_debug_inspector()
 
+func _on_debug_inventory_item_selected(slot_index: int) -> void:
+	if slot_index < 0:
+		debug_selected_inventory_slot = -1
+		debug_selected_id = ""
+		_update_debug_selection_highlight()
+		_refresh_debug_entries()
+		_update_debug_inspector()
+		return
+	if slot_index >= inventory.size() or slot_index >= 9 + backpack_slots:
+		return
+	if str(inventory[slot_index].get("id", "")).is_empty():
+		return
+	debug_selected_id = ""
+	debug_selected_inventory_slot = slot_index
+	_update_debug_selection_highlight()
+	_refresh_debug_entries()
+	_update_debug_inspector()
 func _update_debug_selection_highlight() -> void:
 	if is_instance_valid(player):
 		player.set_debug_selected(debug_selected_id == str(player.get_instance_id()))
@@ -1039,46 +1089,74 @@ func _update_debug_selection_highlight() -> void:
 
 func _clear_debug_selection() -> void:
 	debug_selected_id = ""
+	debug_selected_inventory_slot = -1
 	_update_debug_selection_highlight()
 	if ui != null:
+		ui.set_debug_item_save_enabled(false)
+		ui.set_debug_world_actions_enabled(false)
 		_clear_debug_inspector_properties()
-
 func _clear_debug_inspector_properties() -> void:
 	var empty_properties: Array[Dictionary] = []
 	ui.set_debug_properties(empty_properties)
 
 func _find_debug_entry() -> Dictionary:
+	if debug_selected_inventory_slot >= 0:
+		var slot_index := debug_selected_inventory_slot
+		if slot_index >= inventory.size() or slot_index >= 9 + backpack_slots:
+			return {}
+		var stack: Dictionary = inventory[slot_index]
+		var item_id := str(stack.get("id", ""))
+		var amount := int(stack.get("amount", 0))
+		if item_id.is_empty() or amount <= 0:
+			return {}
+		var item_data: Dictionary = config.items.get(item_id, {})
+		var item_label := str(item_data.get("label", item_id))
+		var location := "Быстрый слот %d" % (slot_index + 1) if slot_index < 9 else "Рюкзак · ячейка %d" % (slot_index - 8)
+		return {
+			"id": "inventory:%d" % slot_index,
+			"kind": "inventory_item",
+			"label": "%s · %s ×%d" % [location, item_label, amount],
+			"node": null,
+			"item_id": item_id,
+			"amount": amount,
+			"slot_index": slot_index
+		}
 	for entry in debug_entries:
 		if str(entry.get("id", "")) == debug_selected_id:
 			return entry
 	return {}
-
 func _update_debug_inspector() -> void:
 	if ui == null:
 		return
 	var entry := _find_debug_entry()
 	if entry.is_empty():
 		ui.set_debug_item_save_enabled(false)
+		ui.set_debug_world_actions_enabled(false)
 		_clear_debug_inspector_properties()
 		return
 	var kind := str(entry.get("kind", ""))
 	var node = entry.get("node")
-	var can_save_item := false
+	var item_id := str(entry.get("item_id", ""))
 	if is_instance_valid(node) and node is ResourceDrop:
-		var item_catalog := config.item_catalog_by_id.get(str(node.item_id)) as ItemCatalog
+		item_id = str(node.item_id)
+	var can_save_item := false
+	if kind == "inventory_item" or (is_instance_valid(node) and node is ResourceDrop):
+		var item_catalog := config.item_catalog_by_id.get(item_id) as ItemCatalog
 		can_save_item = item_catalog != null and not item_catalog.resource_path.is_empty()
 	ui.set_debug_item_save_enabled(can_save_item)
+	ui.set_debug_world_actions_enabled(kind != "inventory_item" and is_instance_valid(node))
 	if kind == "player" and is_instance_valid(node):
 		ui.set_debug_target("Игрок", node.current_health, float(config.player.max_health))
 	elif (kind == "tree" or kind == "rock" or kind == "stump") and is_instance_valid(node):
 		ui.set_debug_target(str(entry.get("label", kind)), node.health, node.max_health)
+	elif kind == "inventory_item":
+		ui.set_debug_target(str(entry.get("label", "Предмет из инвентаря")))
 	elif is_instance_valid(node) and node is ResourceDrop:
-		var item_data: Dictionary = config.items.get(str(node.item_id), {})
-		ui.set_debug_target("%s ×%d" % [str(item_data.get("label", node.item_id)), node.amount])
+		var item_data: Dictionary = config.items.get(item_id, {})
+		ui.set_debug_target("%s ×%d" % [str(item_data.get("label", item_id)), node.amount])
 	else:
 		ui.set_debug_target(str(entry.get("label", kind)))
 	ui.set_debug_properties(_build_debug_properties(entry))
-
 func _debug_property(path: String, label: String, value: float, minimum: float = -100000.0, maximum: float = 100000.0, step: float = 0.1) -> Dictionary:
 	return {"path": path, "label": label, "value": value, "min": minimum, "max": maximum, "step": step}
 
@@ -1118,6 +1196,30 @@ func _item_property_label(property_key: String) -> String:
 		"restore_stamina": "Восстановление выносливости"
 	}
 	return str(labels.get(property_key, property_key.capitalize()))
+
+
+func _append_item_definition_debug_properties(result: Array[Dictionary], definition: ItemDefinition) -> void:
+	result.append({"path": "item.description", "label": "Описание", "value": definition.description, "readonly": true})
+	result.append({"path": "item.category", "label": "Категория", "value": _item_category_label(definition.category), "readonly": true})
+	if definition.category in ["tools", "weapons"]:
+		result.append({"path": "item.stack_limit", "label": "Хранение", "value": "Отдельный объект · без стопки", "readonly": true})
+	else:
+		var stack_property := _debug_property("item.stack_limit", "Максимум в стопке", definition.stack_limit, 1.0, 9999.0, 1.0)
+		stack_property["save_default"] = true
+		result.append(stack_property)
+	for property_key in definition.properties:
+		var property_value: Variant = definition.properties[property_key]
+		var property_label := _item_property_label(str(property_key))
+		if property_value is int or property_value is float:
+			var data := _debug_property("item.properties." + str(property_key), property_label, float(property_value), -5000.0, 5000.0, 0.1)
+			if definition.category == "food":
+				data["save_default"] = true
+			else:
+				data["readonly"] = true
+			result.append(data)
+		else:
+			result.append({"path": "item.properties." + str(property_key), "label": property_label, "value": str(property_value), "readonly": true})
+	_append_debug_item_combat_properties(result, definition.combat_stats, "item.combat")
 
 
 func _append_debug_item_combat_properties(result: Array[Dictionary], stats: Dictionary, prefix: String) -> void:
@@ -1164,8 +1266,8 @@ func _append_debug_item_combat_properties(result: Array[Dictionary], stats: Dict
 			result.append({"path": property_path, "label": _item_property_label(key), "value": str(value), "readonly": true})
 
 
-func _apply_item_definition_value(node: ResourceDrop, path: String, value: float) -> void:
-	var definition := config.item_definitions.get(str(node.item_id)) as ItemDefinition
+func _apply_item_definition_value(item_id: String, path: String, value: float) -> void:
+	var definition := config.item_definitions.get(item_id) as ItemDefinition
 	if definition == null:
 		return
 	if path == "item.stack_limit":
@@ -1177,16 +1279,16 @@ func _apply_item_definition_value(node: ResourceDrop, path: String, value: float
 			var damage_types := ["cutting", "piercing", "crushing"]
 			stored_value = damage_types[clampi(roundi(value), 0, damage_types.size() - 1)]
 		_set_nested_item_dictionary(definition.combat_stats, parts, stored_value)
-		config.weapons[str(node.item_id)] = definition.combat_stats.duplicate(true)
+		config.weapons[item_id] = definition.combat_stats.duplicate(true)
 	elif path.begins_with("item.properties."):
 		var parts := path.trim_prefix("item.properties.").split(".")
 		_set_nested_item_dictionary(definition.properties, parts, value)
 	else:
 		return
-	config.items[str(node.item_id)] = ItemCatalogServiceScript.rebuild_item_data(definition)
-	node.set_item_definition(str(node.item_id), definition)
-
-
+	config.items[item_id] = ItemCatalogServiceScript.rebuild_item_data(definition)
+	for drop in drops:
+		if is_instance_valid(drop) and str(drop.item_id) == item_id:
+			drop.set_item_definition(item_id, definition, drop.amount)
 func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	var kind := str(entry.get("kind", ""))
@@ -1247,27 +1349,14 @@ func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 		result.append(_debug_property("transform.scale_y", "Масштаб Y (%)", node.scale.y * 100.0, 10.0, 500.0, 5.0))
 		var definition := config.item_definitions.get(str(node.item_id)) as ItemDefinition
 		if definition != null:
-			result.append({"path": "item.description", "label": "Описание", "value": definition.description, "readonly": true})
-			result.append({"path": "item.category", "label": "Категория", "value": _item_category_label(definition.category), "readonly": true})
-			if definition.category in ["tools", "weapons"]:
-				result.append({"path": "item.stack_limit", "label": "Хранение", "value": "Отдельный объект · без стопки", "readonly": true})
-			else:
-				var stack_property := _debug_property("item.stack_limit", "Максимум в стопке", definition.stack_limit, 1.0, 9999.0, 1.0)
-				stack_property["save_default"] = true
-				result.append(stack_property)
-			for property_key in definition.properties:
-				var property_value: Variant = definition.properties[property_key]
-				var property_label := _item_property_label(str(property_key))
-				if property_value is int or property_value is float:
-					var data := _debug_property("item.properties." + str(property_key), property_label, float(property_value), -5000.0, 5000.0, 0.1)
-					if definition.category == "food":
-						data["save_default"] = true
-					else:
-						data["readonly"] = true
-					result.append(data)
-				else:
-					result.append({"path": "item.properties." + str(property_key), "label": property_label, "value": str(property_value), "readonly": true})
-			_append_debug_item_combat_properties(result, definition.combat_stats, "item.combat")
+			_append_item_definition_debug_properties(result, definition)
+	elif kind == "inventory_item":
+		var item_id := str(entry.get("item_id", ""))
+		var definition := config.item_definitions.get(item_id) as ItemDefinition
+		var max_stack := maxi(1, int(config.items.get(item_id, {}).get("max_stack", 1)))
+		result.append(_debug_property("inventory.amount", "Количество в слоте", int(entry.get("amount", 1)), 1.0, float(max_stack), 1.0))
+		if definition != null:
+			_append_item_definition_debug_properties(result, definition)
 	return result
 
 func _on_debug_value_changed(path: String, value: float) -> void:
@@ -1350,9 +1439,18 @@ func _on_debug_value_changed(path: String, value: float) -> void:
 			"resource.resistance_crushing":
 				node.damage_resistances["crushing"] = value
 		node.queue_redraw()
+	elif kind == "inventory_item":
+		var item_id := str(entry.get("item_id", ""))
+		if path == "inventory.amount":
+			var slot_index := int(entry.get("slot_index", -1))
+			if slot_index >= 0 and slot_index < inventory.size():
+				var max_stack := maxi(1, int(config.items.get(item_id, {}).get("max_stack", 1)))
+				inventory[slot_index]["amount"] = clampi(roundi(value), 1, max_stack)
+		elif path.begins_with("item."):
+			_apply_item_definition_value(item_id, path, value)
 	elif is_instance_valid(node) and node is ResourceDrop:
 		if path.begins_with("item."):
-			_apply_item_definition_value(node, path, value)
+			_apply_item_definition_value(str(node.item_id), path, value)
 		else:
 			match path:
 				"drop.amount":
@@ -1395,6 +1493,7 @@ func _on_debug_mode_requested(enabled: bool) -> void:
 		if ui.current_panel != "debug":
 			ui.toggle_panel("debug")
 			player.set_debug_selected(true)
+			debug_selected_inventory_slot = -1
 			debug_selected_id = str(player.get_instance_id())
 			_refresh_debug_entries()
 			_update_debug_inspector()
@@ -1404,7 +1503,6 @@ func _on_debug_mode_requested(enabled: bool) -> void:
 			ui.close_panels()
 		_clear_debug_selection()
 	ui.set_debug_mode_enabled(enabled)
-
 func _on_debug_cheats_changed(infinite_stamina: bool, invulnerable: bool) -> void:
 	player.debug_infinite_stamina = infinite_stamina
 	player.debug_invulnerable = invulnerable
