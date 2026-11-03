@@ -110,13 +110,24 @@ func _is_catalog_texture(path: String) -> bool:
 	var file := lower.get_file()
 	if file.begins_with("_") or "guide" in file or "preview" in lower:
 		return false
-	if "autotile" in file or "_anim_" in file or file.ends_with("_2f.png"):
+	if "autotile" in file:
 		return false
 	if "_sheet" in file or "_stages_" in file or "_all_" in file:
 		return false
 	if lower.contains("/example_scenes/") or lower.contains("/previews/") or lower.contains("/palette/"):
 		return false
 	return true
+
+func _get_strip_frame_count(path: String) -> int:
+	var file_name := path.to_lower().get_file()
+	var regex := RegEx.new()
+	regex.compile("_anim_(\\d+)f")
+	var result := regex.search(file_name)
+	if result != null:
+		return maxi(2, int(result.get_string(1)))
+	if file_name.ends_with("_2f.png"):
+		return 2
+	return 1
 
 func _add_texture_to_catalog(tile_set: TileSet, path: String, kind: String) -> void:
 	var texture := ResourceLoader.load(path) as Texture2D
@@ -133,8 +144,19 @@ func _add_texture_to_catalog(tile_set: TileSet, path: String, kind: String) -> v
 
 	var source := TileSetAtlasSource.new()
 	source.resource_name = path
-	var grid_aligned := width % 16 == 0 and height % 16 == 0
-	if grid_aligned:
+	var frame_count := _get_strip_frame_count(path)
+	var frame_width := int(width / maxi(frame_count, 1))
+	if frame_count > 1 and width % frame_count == 0 and frame_width % 16 == 0 and height % 16 == 0:
+		source.texture = texture
+		source.texture_region_size = Vector2i(16, 16)
+		var frame_size := Vector2i(frame_width / 16, height / 16)
+		source.create_tile(Vector2i.ZERO, frame_size)
+		source.set_tile_animation_columns(Vector2i.ZERO, 0)
+		source.set_tile_animation_separation(Vector2i.ZERO, Vector2i.ZERO)
+		source.set_tile_animation_frames_count(Vector2i.ZERO, frame_count)
+		source.set_tile_animation_speed(Vector2i.ZERO, 6.0)
+		_apply_tile_collision(source.get_tile_data(Vector2i.ZERO, 0), kind, path, frame_width, height)
+	elif width % 16 == 0 and height % 16 == 0:
 		source.texture = texture
 		source.texture_region_size = Vector2i(16, 16)
 		if path.to_lower().contains("/walls/") and width == 16 and height >= 32:
