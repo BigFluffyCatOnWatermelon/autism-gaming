@@ -3,6 +3,18 @@ extends CharacterBody2D
 const GameConfigScript = preload("res://scripts/game_config.gd")
 const WORLD_Z_SORT_OFFSET := 2048
 @export_group("Анимации персонажа")
+@export_subgroup("Idle — отдельные направления")
+@export var idle_down_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_down.png")
+@export var idle_up_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_up.png")
+@export var idle_left_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_left.png")
+@export var idle_right_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_right.png")
+@export var idle_flip_h := false
+@export var walk_flip_h := false
+@export var run_flip_h := false
+@export var hurt_flip_h := false
+@export var death_flip_h := false
+@export var dodge_flip_h := false
+@export var interact_flip_h := false
 @export var movement_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
 @export_range(1, 32, 1) var movement_columns: int = 6
 @export_range(1, 16, 1) var movement_rows: int = 4
@@ -38,6 +50,12 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var bow_attack_sheet: Texture2D
 @export_range(1, 32, 1) var bow_attack_columns: int = 5
 @export_range(1, 16, 1) var bow_attack_rows: int = 4
+@export_subgroup("Отражение боевых анимаций")
+@export var axe_attack_flip_h := false
+@export var pickaxe_attack_flip_h := false
+@export var sword_slash_flip_h := false
+@export var sword_thrust_flip_h := false
+@export var bow_attack_flip_h := false
 
 const ITEM_TEXTURE_PATHS := {
 	"sword": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png",
@@ -73,6 +91,7 @@ var attack_animation_row := 0
 var attack_animation_uses_sheet := false
 var active_attack_columns := 3
 var active_attack_rows := 4
+var active_animation_flip_h := false
 var current_held_item := ""
 
 var sprite: Sprite2D
@@ -242,6 +261,13 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 		_:
 			action_texture = null
 
+	match sheet_id:
+		"axe": active_animation_flip_h = axe_attack_flip_h
+		"pickaxe": active_animation_flip_h = pickaxe_attack_flip_h
+		"sword_slash": active_animation_flip_h = sword_slash_flip_h
+		"sword_thrust": active_animation_flip_h = sword_thrust_flip_h
+		"bow": active_animation_flip_h = bow_attack_flip_h
+
 	if action_texture == null:
 		attack_animation_time = 0.0
 		attack_animation_uses_sheet = false
@@ -264,13 +290,15 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	sprite.vframes = maxi(1, active_attack_rows)
 	attack_animation_row = clampi(attack_animation_row, 0, sprite.vframes - 1)
 	sprite.frame_coords = Vector2i(0, attack_animation_row)
+	sprite.flip_h = active_animation_flip_h
 
 func _restore_player_sheet() -> void:
 	if sprite == null:
 		return
 	sprite.texture = movement_sheet
-	sprite.hframes = 6
-	sprite.vframes = 4
+	sprite.hframes = maxi(1, movement_columns)
+	sprite.vframes = maxi(1, movement_rows)
+	sprite.flip_h = false
 
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint():
@@ -380,17 +408,43 @@ func _update_visuals(delta: float) -> void:
 	elif moving and not rolling:
 		walk_animation_time += delta
 		idle_animation_time = 0.0
-		var interval := 0.085 if running else 0.145
-		var walk_frame_count := maxi(1, mini(4, movement_columns))
-		var frame := int(floor(walk_animation_time / interval)) % walk_frame_count
-		sprite.frame_coords = Vector2i(frame, clampi(sheet_row, 0, sprite.vframes - 1))
+		if running and run_sheet != null:
+			sprite.texture = run_sheet
+			sprite.hframes = maxi(1, run_columns)
+			sprite.vframes = maxi(1, run_rows)
+			var run_frame := int(floor(walk_animation_time / 0.085)) % sprite.hframes
+			sprite.frame_coords = Vector2i(run_frame, clampi(sheet_row, 0, sprite.vframes - 1))
+			sprite.flip_h = run_flip_h
+		else:
+			sprite.texture = movement_sheet
+			sprite.hframes = maxi(1, movement_columns)
+			sprite.vframes = maxi(1, movement_rows)
+			var walk_frame_count := maxi(1, mini(4, movement_columns))
+			var frame := int(floor(walk_animation_time / (0.145 if not running else 0.085))) % walk_frame_count
+			sprite.frame_coords = Vector2i(frame, clampi(sheet_row, 0, sprite.vframes - 1))
+			sprite.flip_h = walk_flip_h
 	else:
 		walk_animation_time = 0.0
 		idle_animation_time += delta
-		var idle_start := maxi(0, movement_columns - 2)
-		var idle_frame_count := maxi(1, movement_columns - idle_start)
-		var idle_frame := idle_start + (int(floor(idle_animation_time / 0.35)) % idle_frame_count)
-		sprite.frame_coords = Vector2i(idle_frame, clampi(sheet_row, 0, sprite.vframes - 1))
+		var idle_texture: Texture2D = idle_down_sheet
+		match facing_row:
+			1: idle_texture = idle_up_sheet
+			2: idle_texture = idle_left_sheet
+			3: idle_texture = idle_right_sheet
+		if idle_texture != null:
+			sprite.texture = idle_texture
+			sprite.hframes = 1
+			sprite.vframes = 1
+			sprite.frame = 0
+		else:
+			sprite.texture = movement_sheet
+			sprite.hframes = maxi(1, movement_columns)
+			sprite.vframes = maxi(1, movement_rows)
+			var idle_start := maxi(0, movement_columns - 2)
+			var idle_frame_count := maxi(1, movement_columns - idle_start)
+			var idle_frame := idle_start + (int(floor(idle_animation_time / 0.35)) % idle_frame_count)
+			sprite.frame_coords = Vector2i(idle_frame, clampi(sheet_row, 0, sprite.vframes - 1))
+		sprite.flip_h = idle_flip_h
 
 	if rolling:
 		sprite.modulate = Color(0.7, 0.85, 1.0, 0.72)
