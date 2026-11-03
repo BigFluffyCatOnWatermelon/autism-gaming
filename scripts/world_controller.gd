@@ -319,7 +319,7 @@ func _handle_hotkeys() -> void:
 			_on_slot_selected(index)
 
 func _unhandled_input(event: InputEvent) -> void:
-	var debug_panel_open := ui != null and ui.current_panel == "debug"
+	var debug_panel_open: bool = ui != null and ui.current_panel == "debug"
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if debug_panel_open and debug_object_selection_enabled:
 			_select_debug_target(get_global_mouse_position())
