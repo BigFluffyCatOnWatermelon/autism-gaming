@@ -2,11 +2,25 @@ extends CharacterBody2D
 
 const GameConfigScript = preload("res://scripts/game_config.gd")
 const WORLD_Z_SORT_OFFSET := 2048
-const PLAYER_SHEET_PATH := "res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png"
-const ATTACK_SHEET_PATHS := {
-	"axe": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png",
-	"pickaxe": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png",
-}
+@export_group("Анимации персонажа")
+@export var movement_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
+@export var run_sheet: Texture2D
+@export var hurt_sheet: Texture2D
+@export var death_sheet: Texture2D
+@export var dodge_sheet: Texture2D
+@export var interact_sheet: Texture2D
+
+@export_group("Боевые анимации")
+@export var axe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
+@export var pickaxe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
+@export var sword_slash_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
+@export var sword_thrust_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
+@export var bow_attack_sheet: Texture2D
+
+@export_group("Настройки кадров анимации")
+@export_range(1, 12, 1) var attack_sheet_columns: int = 3
+@export_range(1, 12, 1) var attack_sheet_rows: int = 4
+
 const ITEM_TEXTURE_PATHS := {
 	"sword": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png",
 	"pickaxe": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/pickaxe_basic.png",
@@ -91,7 +105,7 @@ func _ready() -> void:
 		sprite = Sprite2D.new()
 		sprite.name = "Sprite"
 		add_child(sprite)
-	sprite.texture = load(PLAYER_SHEET_PATH) as Texture2D
+	sprite.texture = movement_sheet
 	sprite.hframes = 6
 	sprite.vframes = 4
 	sprite.scale = Vector2.ONE * float(game_config.player.sprite_scale)
@@ -183,15 +197,25 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	# animation_id selects the actual action sheet. For example, sword slashes
 	# use the axe swing sheet and sword thrusts use the pickaxe strike sheet.
 	var sheet_id := animation_id if not animation_id.is_empty() else item_id
-	if not ATTACK_SHEET_PATHS.has(sheet_id):
+	var action_texture: Texture2D
+	match sheet_id:
+		"axe":
+			action_texture = axe_attack_sheet
+		"pickaxe":
+			action_texture = pickaxe_attack_sheet
+		"sword_slash":
+			action_texture = sword_slash_sheet
+		"sword_thrust":
+			action_texture = sword_thrust_sheet
+		"bow":
+			action_texture = bow_attack_sheet
+		_:
+			action_texture = null
+
+	if action_texture == null:
 		attack_animation_time = 0.0
 		attack_animation_uses_sheet = false
 		attack_animation_item = item_id
-		return
-
-	var action_texture := load(str(ATTACK_SHEET_PATHS[sheet_id])) as Texture2D
-	if action_texture == null:
-		push_warning("Не удалось загрузить анимацию удара: " + str(ATTACK_SHEET_PATHS[sheet_id]))
 		return
 
 	attack_animation_item = item_id
@@ -204,16 +228,16 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	else:
 		attack_animation_row = 1 if direction.y < 0.0 else 0
 
-	# All action sheets in this asset set are 3 columns × 4 direction rows.
+	# Configure the grid in the Inspector to match the selected action sheets.
 	sprite.texture = action_texture
-	sprite.hframes = 3
-	sprite.vframes = 4
+	sprite.hframes = maxi(1, attack_sheet_columns)
+	sprite.vframes = maxi(1, attack_sheet_rows)
 	sprite.frame_coords = Vector2i(0, attack_animation_row)
 
 func _restore_player_sheet() -> void:
 	if sprite == null:
 		return
-	sprite.texture = load(PLAYER_SHEET_PATH) as Texture2D
+	sprite.texture = movement_sheet
 	sprite.hframes = 6
 	sprite.vframes = 4
 
@@ -320,7 +344,7 @@ func _update_visuals(delta: float) -> void:
 
 	if attack_animation_time > 0.0 and attack_animation_uses_sheet:
 		var progress := 1.0 - attack_animation_time / maxf(attack_animation_duration, 0.001)
-		var action_frame := mini(2, int(floor(progress * 3.0)))
+		var action_frame := mini(maxi(0, attack_sheet_columns - 1), int(floor(progress * float(maxi(1, attack_sheet_columns)))))
 		sprite.frame_coords = Vector2i(action_frame, attack_animation_row)
 	elif moving and not rolling:
 		walk_animation_time += delta

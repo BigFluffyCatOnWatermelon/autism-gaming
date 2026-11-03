@@ -716,9 +716,7 @@ func _attack(secondary: bool) -> void:
 	if player.has_method("play_attack_animation"):
 		var animation_id := weapon_id
 		if weapon_id == "sword":
-			# Reuse the closest matching supplied action animations:
-			# slash = axe swing, thrust = pickaxe jab.
-			animation_id = "pickaxe" if mode == "thrust" else "axe"
+			animation_id = "sword_thrust" if mode == "thrust" else "sword_slash"
 		player.play_attack_animation(
 			weapon_id,
 			aim_direction,
