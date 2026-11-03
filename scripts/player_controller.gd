@@ -1,6 +1,7 @@
 extends CharacterBody2D
 
 const GameConfigScript = preload("res://scripts/game_config.gd")
+const WORLD_Z_SORT_OFFSET := 2048
 const PLAYER_SHEET_PATH := "res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png"
 const ATTACK_SHEET_PATHS := {
 	"axe": "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png",
@@ -297,7 +298,8 @@ func _update_visuals(delta: float) -> void:
 		sprite.modulate = Color.WHITE
 		sprite.rotation = 0.0
 	shadow.scale = Vector2(0.9, 0.82) if crouching else Vector2(1.15, 1.0)
-	z_index = int(global_position.y / 16.0)
+	z_as_relative = false
+	z_index = clampi(floori(global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 
 func apply_damage(amount: float) -> bool:
 	if amount <= 0.0 or debug_invulnerable or invulnerability_timer > 0.0:

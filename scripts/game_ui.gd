@@ -9,6 +9,7 @@ signal backpack_expand_requested
 signal settings_changed(screen_shake: bool, camera_zoom: float)
 signal debug_value_changed(path: String, value: float)
 signal debug_mode_requested(enabled: bool)
+signal debug_selection_mode_changed(enabled: bool)
 signal inventory_slot_dropped(from_index: int, to_index: int)
 signal debug_object_selected(object_id: String)
 signal debug_clone_requested
@@ -66,6 +67,8 @@ var debug_window_settings: VBoxContainer
 var debug_panel_settings_button: Button
 var debug_item_save_button: Button
 var debug_nearby_toggle: CheckBox
+var debug_selection_mode_button: Button
+var debug_selection_mode_enabled := true
 var debug_inventory_option: OptionButton
 var debug_inventory_items_signature := ""
 var debug_panel_width_slider: HSlider
@@ -265,6 +268,8 @@ func _wire_controls() -> void:
 		debug_object_list.item_selected.connect(_on_debug_object_selected)
 	if debug_nearby_toggle != null and not debug_nearby_toggle.toggled.is_connected(_on_debug_nearby_toggled):
 		debug_nearby_toggle.toggled.connect(_on_debug_nearby_toggled)
+	if debug_selection_mode_button != null and not debug_selection_mode_button.toggled.is_connected(_on_debug_selection_mode_toggled):
+		debug_selection_mode_button.toggled.connect(_on_debug_selection_mode_toggled)
 	if debug_inventory_option != null and not debug_inventory_option.item_selected.is_connected(_on_debug_inventory_option_selected):
 		debug_inventory_option.item_selected.connect(_on_debug_inventory_option_selected)
 	if settings_hud_scale_slider != null and not settings_hud_scale_slider.value_changed.is_connected(_on_ui_scale_changed):
@@ -876,6 +881,15 @@ func _ensure_debug_panel_features() -> void:
 		debug_nearby_toggle.button_pressed = true
 		debug_nearby_toggle.tooltip_text = "Показывать ближайшие объекты и сортировать их по расстоянию до игрока"
 		debug_filter_row.add_child(debug_nearby_toggle)
+	debug_selection_mode_button = _find_node("DebugSelectionMode") as Button
+	if debug_selection_mode_button == null and debug_filter_row != null:
+		debug_selection_mode_button = Button.new()
+		debug_selection_mode_button.name = "DebugSelectionMode"
+		debug_selection_mode_button.toggle_mode = true
+		debug_selection_mode_button.custom_minimum_size = Vector2(118, 30)
+		debug_selection_mode_button.tooltip_text = "Включено: щелчок по миру выбирает объект. Выключено: щелчок атакует."
+		debug_filter_row.add_child(debug_selection_mode_button)
+	set_debug_selection_mode_enabled(debug_selection_mode_enabled)
 
 	var object_list_parent := debug_object_list.get_parent() as HBoxContainer if debug_object_list != null else null
 	var properties_scroll := debug_properties.get_parent() as ScrollContainer if debug_properties != null else null
@@ -1586,6 +1600,18 @@ func _on_debug_inventory_option_selected(index: int) -> void:
 
 func _on_debug_nearby_toggled(_enabled: bool) -> void:
 	_render_debug_object_list()
+
+
+func _on_debug_selection_mode_toggled(enabled: bool) -> void:
+	set_debug_selection_mode_enabled(enabled)
+
+
+func set_debug_selection_mode_enabled(enabled: bool) -> void:
+	debug_selection_mode_enabled = enabled
+	if debug_selection_mode_button != null:
+		debug_selection_mode_button.set_pressed_no_signal(enabled)
+		debug_selection_mode_button.text = "Выбор: ВКЛ" if enabled else "Атака: ВКЛ"
+	debug_selection_mode_changed.emit(enabled)
 func _on_debug_cheat_toggled(_enabled: bool) -> void:
 	debug_cheats_changed.emit(
 		debug_infinite_stamina.button_pressed if debug_infinite_stamina != null else false,

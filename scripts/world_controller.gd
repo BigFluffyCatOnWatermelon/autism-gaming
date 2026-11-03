@@ -9,6 +9,8 @@ const ArrowProjectileScript = preload("res://scripts/arrow_projectile.gd")
 const ObjectsScene = preload("res://scenes/objects.tscn")
 const UIScene = preload("res://scenes/ui.tscn")
 
+const WORLD_Z_SORT_OFFSET := 2048
+
 const DAMAGE_LABELS := {
 	"cutting": {"name": "режущий", "color": Color("#ffe0a0")},
 	"piercing": {"name": "колющий", "color": Color("#bfe8ff")},
@@ -38,6 +40,7 @@ var rng := RandomNumberGenerator.new()
 var debug_entries: Array[Dictionary] = []
 var debug_selected_id := ""
 var debug_selected_inventory_slot := -1
+var debug_object_selection_enabled := true
 var debug_refresh_timer := 0.0
 
 func _ready() -> void:
@@ -190,6 +193,7 @@ func _create_ui() -> void:
 	ui.settings_changed.connect(_on_settings_changed)
 	ui.debug_value_changed.connect(_on_debug_value_changed)
 	ui.debug_mode_requested.connect(_on_debug_mode_requested)
+	ui.debug_selection_mode_changed.connect(_on_debug_selection_mode_changed)
 	ui.inventory_slot_dropped.connect(_move_inventory_slot)
 	ui.debug_object_selected.connect(_on_debug_object_selected)
 	ui.debug_clone_requested.connect(_clone_debug_selection)
@@ -251,7 +255,9 @@ func _process(delta: float) -> void:
 			)
 
 func _handle_held_combat() -> void:
-	if player == null or ui == null or ui.has_modal_open():
+	if player == null or ui == null:
+		return
+	if ui.has_modal_open() and not _debug_world_interaction_allowed():
 		return
 	var primary_pressed := Input.is_action_pressed("attack_primary")
 	var secondary_pressed := Input.is_action_pressed("attack_secondary")
@@ -296,6 +302,7 @@ func _handle_hotkeys() -> void:
 		ui.toggle_panel("debug")
 		ui.set_debug_mode_enabled(ui.current_panel == "debug")
 		if ui.current_panel == "debug":
+			ui.set_debug_selection_mode_enabled(true)
 			player.set_debug_selected(true)
 			debug_selected_id = str(player.get_instance_id())
 			_refresh_debug_entries()
@@ -312,18 +319,28 @@ func _handle_hotkeys() -> void:
 			_on_slot_selected(index)
 
 func _unhandled_input(event: InputEvent) -> void:
+	var debug_panel_open := ui != null and ui.current_panel == "debug"
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if ui != null and ui.current_panel == "debug":
+		if debug_panel_open and debug_object_selection_enabled:
 			_select_debug_target(get_global_mouse_position())
 			get_viewport().set_input_as_handled()
 			return
-		if ui != null and ui.has_modal_open():
+		if ui != null and ui.has_modal_open() and not _debug_world_interaction_allowed():
 			return
 		_attack(false)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		if ui != null and ui.has_modal_open():
+		if ui != null and ui.has_modal_open() and not _debug_world_interaction_allowed():
 			return
 		_attack(true)
+
+
+func _debug_world_interaction_allowed() -> bool:
+	if ui == null or ui.current_panel != "debug" or debug_object_selection_enabled:
+		return false
+	var debug_panel := ui.panels.get("debug") as Control
+	if debug_panel == null:
+		return true
+	return not debug_panel.get_global_rect().has_point(get_viewport().get_mouse_position())
 
 func _on_slot_selected(index: int) -> void:
 	if index < 0 or index >= int(config.inventory.hotbar_slots):
@@ -781,7 +798,7 @@ func _fire_arrow(weapon: Dictionary) -> void:
 	arrow.rotation = direction.angle()
 	arrow.global_position = player.global_position + direction * 22.0
 	arrow.z_as_relative = false
-	arrow.z_index = clampi(floori(arrow.global_position.y) + 2, -4096, 4096)
+	arrow.z_index = clampi(floori(arrow.global_position.y) + WORLD_Z_SORT_OFFSET + 2, -4096, 4096)
 	add_child(arrow)
 	projectiles.append({
 		"node": arrow,
@@ -808,7 +825,7 @@ func _update_projectiles(delta: float) -> void:
 			movement = movement.normalized() * remaining_distance
 		arrow.global_position = previous + movement
 		arrow.z_as_relative = false
-		arrow.z_index = clampi(floori(arrow.global_position.y) + 2, -4096, 4096)
+		arrow.z_index = clampi(floori(arrow.global_position.y) + WORLD_Z_SORT_OFFSET + 2, -4096, 4096)
 		remaining_distance = maxf(0.0, remaining_distance - movement.length())
 		shot["remaining"] = remaining_distance
 		projectiles[index] = shot
@@ -822,7 +839,7 @@ func _embed_arrow(arrow: Node2D) -> void:
 	if arrow.has_method("embed"):
 		arrow.call("embed")
 	arrow.z_as_relative = false
-	arrow.z_index = clampi(floori(arrow.global_position.y) + 2, -4096, 4096)
+	arrow.z_index = clampi(floori(arrow.global_position.y) + WORLD_Z_SORT_OFFSET + 2, -4096, 4096)
 	embedded_arrows.append(arrow)
 	while embedded_arrows.size() > 100:
 		var oldest: Node2D = embedded_arrows.pop_front()
@@ -850,7 +867,8 @@ func _spawn_damage_number(world_position: Vector2, amount: float, damage_type: S
 	var label := Label.new()
 	label.text = "-%d" % roundi(amount)
 	label.position = world_position
-	label.z_index = 1000
+	label.z_as_relative = false
+	label.z_index = clampi((player.z_index if player != null else WORLD_Z_SORT_OFFSET) + 128, -4096, 4096)
 	label.add_theme_font_size_override("font_size", 14)
 	label.add_theme_color_override("font_color", DAMAGE_LABELS.get(damage_type, {"color": Color.WHITE})["color"])
 	label.add_theme_color_override("font_outline_color", Color("#202020"))
@@ -947,7 +965,7 @@ func _update_z_order() -> void:
 		# Sort by the character's foot Y at pixel precision so small vertical
 		# movements correctly move the sprite behind/in front of tree canopies.
 		player.z_as_relative = false
-		player.z_index = clampi(floori(player.global_position.y) + 1, -4096, 4096)
+		player.z_index = clampi(floori(player.global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 
 func _on_settings_changed(screen_shake: bool, camera_zoom: float) -> void:
 	screen_shake_enabled = screen_shake
@@ -1559,6 +1577,7 @@ func _on_debug_mode_requested(enabled: bool) -> void:
 	if enabled:
 		if ui.current_panel != "debug":
 			ui.toggle_panel("debug")
+			ui.set_debug_selection_mode_enabled(true)
 			player.set_debug_selected(true)
 			debug_selected_inventory_slot = -1
 			debug_selected_id = str(player.get_instance_id())
@@ -1570,6 +1589,11 @@ func _on_debug_mode_requested(enabled: bool) -> void:
 			ui.close_panels()
 		_clear_debug_selection()
 	ui.set_debug_mode_enabled(enabled)
+
+func _on_debug_selection_mode_changed(enabled: bool) -> void:
+	debug_object_selection_enabled = enabled
+
+
 func _on_debug_cheats_changed(infinite_stamina: bool, invulnerable: bool) -> void:
 	player.debug_infinite_stamina = infinite_stamina
 	player.debug_invulnerable = invulnerable

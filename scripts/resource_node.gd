@@ -2,6 +2,8 @@
 extends StaticBody2D
 class_name ResourceNode
 
+const WORLD_Z_SORT_OFFSET := 2048
+
 signal resource_broken(kind: String, drop_position: Vector2, amount: int)
 
 @export_enum("tree", "rock", "stump") var resource_type := "tree":
@@ -205,7 +207,7 @@ func _finish_rock_break() -> void:
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		z_as_relative = false
-		z_index = clampi(floori(global_position.y) + 1, -4096, 4096)
+		z_index = clampi(floori(global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 		return
 	if flash_timer > 0.0:
 		flash_timer = maxf(0.0, flash_timer - delta)
@@ -216,7 +218,7 @@ func _process(delta: float) -> void:
 		sway_velocity *= exp(-7.5 * delta)
 		rotation += sway_velocity * delta
 	z_as_relative = false
-	z_index = clampi(floori(global_position.y) + 1, -4096, 4096)
+	z_index = clampi(floori(global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 
 func _draw() -> void:
 	if debug_selected:

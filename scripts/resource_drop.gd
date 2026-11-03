@@ -1,6 +1,8 @@
 extends Node2D
 class_name ResourceDrop
 
+const WORLD_Z_SORT_OFFSET := 2048
+
 const ITEM_TEXTURES := {
 	"sword": preload("res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png"),
 	"pickaxe": preload("res://Assets/CozyVillageFarm/06_Farming/Tools/basic/pickaxe_basic.png"),
@@ -199,7 +201,7 @@ func _physics_process(delta: float) -> void:
 	if visual != null:
 		visual.position.y = -vertical_offset
 	z_as_relative = false
-	z_index = clampi(floori(global_position.y) + 3, -4096, 4096)
+	z_index = clampi(floori(global_position.y) + WORLD_Z_SORT_OFFSET + 3, -4096, 4096)
 	queue_redraw()
 
 func _draw() -> void:
