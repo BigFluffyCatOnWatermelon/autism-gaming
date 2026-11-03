@@ -27,6 +27,7 @@ var roll_timer := 0.0
 var roll_cooldown_timer := 0.0
 var invulnerability_timer := 0.0
 var walk_animation_time := 0.0
+var idle_animation_time := 0.0
 var current_held_item := ""
 
 var sprite: Sprite2D
@@ -78,10 +79,10 @@ func _ready() -> void:
 	if sprite == null:
 		sprite = Sprite2D.new()
 		sprite.name = "Sprite"
-		sprite.texture = load("res://Assets/Creatures/player.png")
-		sprite.hframes = 4
-		sprite.vframes = 5
 		add_child(sprite)
+	sprite.texture = load("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png") as Texture2D
+	sprite.hframes = 6
+	sprite.vframes = 4
 	sprite.scale = Vector2.ONE * float(game_config.player.sprite_scale)
 	sprite.position = Vector2(0, -3)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -214,17 +215,27 @@ func _update_facing(input_vector: Vector2) -> void:
 
 func _update_visuals(delta: float) -> void:
 	sprite.position = Vector2(0, -3)
+
+	# В CozyVillageFarm строки листа идут в порядке: вниз, вверх, вправо, влево.
+	# Внутренние facing_row сохранены: вниз, вверх, влево, вправо.
+	var sheet_row := facing_row
+	if facing_row == 2:
+		sheet_row = 3
+	elif facing_row == 3:
+		sheet_row = 2
+
 	if moving and not rolling:
 		walk_animation_time += delta
+		idle_animation_time = 0.0
 		var interval := 0.085 if running else 0.145
 		var frame := int(floor(walk_animation_time / interval)) % 4
-		sprite.frame_coords = Vector2i(frame, facing_row)
+		sprite.frame_coords = Vector2i(frame, sheet_row)
 	else:
 		walk_animation_time = 0.0
-		if crouching:
-			sprite.frame_coords = Vector2i(0, 4)
-		else:
-			sprite.frame_coords = Vector2i(0, facing_row)
+		idle_animation_time += delta
+		# Последние два столбца листа — чередующиеся кадры ожидания.
+		var idle_frame := 4 + (int(floor(idle_animation_time / 0.35)) % 2)
+		sprite.frame_coords = Vector2i(idle_frame, sheet_row)
 
 	if rolling:
 		sprite.modulate = Color(0.7, 0.85, 1.0, 0.72)

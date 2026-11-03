@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://scenes/objects.tscn" id="2_objects"]
 [ext_resource type="PackedScene" uid="uid://dumfefyt6fha4" path="res://scenes/ui.tscn" id="3_ui"]
 [ext_resource type="Script" uid="uid://pueheorbixg" path="res://scripts/player_controller.gd" id="4_player"]
-[ext_resource type="Texture2D" uid="uid://c5cgq0ofjh7cr" path="res://Assets/Creatures/player.png" id="5_player_texture"]
+[ext_resource type="Texture2D" uid="uid://h40r2qorhnjo" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png" id="5_player_texture"]
 [ext_resource type="Texture2D" uid="uid://ch5s216cd63rb" path="res://Assets/Effects/shadow.png" id="6_shadow_texture"]
 [ext_resource type="PackedScene" path="res://scenes/terrain.tscn" id="7_terrain"]
 
@@ -37,8 +37,8 @@ texture_filter = 1
 position = Vector2(0, -3)
 scale = Vector2(1.25, 1.25)
 texture = ExtResource("5_player_texture")
-hframes = 4
-vframes = 5
+hframes = 6
+vframes = 4
 
 [node name="HeldItem" type="Sprite2D" parent="Player" unique_id=690079888]
 visible = false
