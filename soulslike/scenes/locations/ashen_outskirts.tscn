@@ -1,0 +1,65 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/ashen_hollow.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/ui/combat_hud.tscn" id="3"]
+[ext_resource type="Script" path="res://scripts/world/arena_controller.gd" id="4"]
+
+[sub_resource type="Environment" id="Environment_world"]
+background_mode = 1
+background_color = Color(0.025, 0.032, 0.045, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.42, 0.46, 0.52, 1)
+ambient_light_energy = 0.38
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.13, 0.15, 0.18, 1)
+fog_density = 0.018
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
+size = Vector2(48, 48)
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(48, 0.5, 48)
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.16, 0.17, 0.17, 1)
+roughness = 0.96
+
+[node name="AshenOutskirts" type="Node3D"]
+script = ExtResource("4")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_world")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.92, -0.55, 0)
+light_color = Color(0.67, 0.7, 0.78, 1)
+light_energy = 0.62
+shadow_enabled = true
+
+[node name="Floor" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 3
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Floor"]
+mesh = SubResource("PlaneMesh_floor")
+surface_material_override/0 = SubResource("Material_floor")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Floor"]
+position = Vector3(0, -0.25, 0)
+shape = SubResource("BoxShape_floor")
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector3(0, 0, 5)
+
+[node name="Hollow_01" parent="." instance=ExtResource("2")]
+position = Vector3(0, 0, -3)
+
+[node name="Hollow_02" parent="." instance=ExtResource("2")]
+position = Vector3(5, 0, -5)
+maximum_health = 95.0
+attack_damage = 22.0
+souls_reward = 65
+
+[node name="CombatHUD" parent="." instance=ExtResource("3")]
