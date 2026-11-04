@@ -38,6 +38,7 @@ detection_range = 22.0
 attack_range = 2.8
 attack_damage = 27.0
 souls_reward = 650
+backstab_vulnerable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 position = Vector3(0, 1.28, 0)
