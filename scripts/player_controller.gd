@@ -9,7 +9,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var idle_rows: int = 4
 @export_range(1, 256, 1) var idle_frame_count: int = 2
 @export var idle_flip_h := false
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var idle_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Walk")
@@ -18,7 +18,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var movement_rows: int = 4
 @export var walk_flip_h := false
 @export_range(1, 256, 1) var movement_frames_per_direction: int = 4
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var movement_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Run")
@@ -27,7 +27,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var run_rows: int = 4
 @export var run_flip_h := false
 @export_range(1, 256, 1) var run_frames_per_direction: int = 8
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var run_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Hurt")
@@ -36,7 +36,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var hurt_rows: int = 4
 @export var hurt_flip_h := false
 @export_range(1, 256, 1) var hurt_frames_per_direction: int = 3
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var hurt_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Death")
@@ -45,7 +45,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var death_rows: int = 4
 @export var death_flip_h := false
 @export_range(1, 256, 1) var death_frames_per_direction: int = 4
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var death_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Dodge")
@@ -54,7 +54,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var dodge_rows: int = 4
 @export var dodge_flip_h := false
 @export_range(1, 256, 1) var dodge_frames_per_direction: int = 5
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var dodge_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Interact")
@@ -63,7 +63,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var interact_rows: int = 4
 @export var interact_flip_h := false
 @export_range(1, 256, 1) var interact_frames_per_direction: int = 4
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var interact_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_group("Боевые анимации")
@@ -73,7 +73,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var axe_attack_rows: int = 4
 @export var axe_attack_flip_h := false
 @export_range(1, 256, 1) var axe_attack_frames_per_direction: int = 3
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var axe_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Pickaxe")
@@ -82,7 +82,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var pickaxe_attack_rows: int = 4
 @export var pickaxe_attack_flip_h := false
 @export_range(1, 256, 1) var pickaxe_attack_frames_per_direction: int = 3
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var pickaxe_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Sword Slash")
@@ -91,7 +91,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var sword_slash_rows: int = 4
 @export var sword_slash_flip_h := false
 @export_range(1, 256, 1) var sword_slash_frames_per_direction: int = 3
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var sword_slash_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Sword Thrust")
@@ -100,7 +100,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var sword_thrust_rows: int = 4
 @export var sword_thrust_flip_h := false
 @export_range(1, 256, 1) var sword_thrust_frames_per_direction: int = 3
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var sword_thrust_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Bow")
@@ -109,7 +109,7 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var bow_attack_rows: int = 4
 @export var bow_attack_flip_h := false
 @export_range(1, 256, 1) var bow_attack_frames_per_direction: int = 5
-@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var bow_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 const ITEM_TEXTURE_PATHS := {
