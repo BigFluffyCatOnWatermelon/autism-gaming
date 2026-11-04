@@ -7,7 +7,10 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var idle_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
 @export_range(1, 256, 1) var idle_columns: int = 6
 @export_range(1, 256, 1) var idle_rows: int = 4
+## Legacy fallback used by older scenes when Idle Frames Per Direction is 0.
 @export_range(1, 256, 1) var idle_frame_count: int = 2
+## 0 = use the legacy Idle Frame Count value above.
+@export_range(0, 256, 1) var idle_frames_per_direction: int = 0
 @export var idle_flip_h := false
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var idle_direction_frame_starts: PackedInt32Array = PackedInt32Array()
@@ -29,6 +32,15 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var run_frames_per_direction: int = 8
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 @export var run_direction_frame_starts: PackedInt32Array = PackedInt32Array()
+
+@export_subgroup("Sitting")
+@export var sitting_sheet: Texture2D
+@export_range(1, 256, 1) var sitting_columns: int = 1
+@export_range(1, 256, 1) var sitting_rows: int = 1
+@export var sitting_flip_h := false
+@export_range(1, 256, 1) var sitting_frames_per_direction: int = 1
+## Same eight-direction order as other animations. Empty uses the legacy four-row layout.
+@export var sitting_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Hurt")
 @export var hurt_sheet: Texture2D
@@ -139,6 +151,7 @@ var roll_cooldown_timer := 0.0
 var invulnerability_timer := 0.0
 var walk_animation_time := 0.0
 var idle_animation_time := 0.0
+var sitting_animation_time := 0.0
 var attack_animation_time := 0.0
 var attack_animation_duration := 0.0
 var attack_animation_item := ""
@@ -522,9 +535,26 @@ func _update_visuals(delta: float) -> void:
 			int(floor(progress * float(active_attack_frames_per_direction)))
 		)
 		_set_sprite_frame(attack_animation_frame_start + action_frame)
+	elif crouching and not moving and not rolling and sitting_sheet != null:
+		walk_animation_time = 0.0
+		idle_animation_time = 0.0
+		sitting_animation_time += delta
+		sprite.texture = sitting_sheet
+		sprite.hframes = maxi(1, sitting_columns)
+		sprite.vframes = maxi(1, sitting_rows)
+		var sitting_start := _get_direction_start_frame(
+			sitting_direction_frame_starts,
+			facing_direction_index,
+			sprite.hframes
+		)
+		var sitting_count := maxi(1, sitting_frames_per_direction)
+		var sitting_frame := int(floor(sitting_animation_time / 0.35)) % sitting_count
+		_set_sprite_frame(sitting_start + sitting_frame)
+		sprite.flip_h = sitting_flip_h
 	elif moving and not rolling:
 		walk_animation_time += delta
 		idle_animation_time = 0.0
+		sitting_animation_time = 0.0
 		if running and run_sheet != null:
 			sprite.texture = run_sheet
 			sprite.hframes = maxi(1, run_columns)
@@ -549,6 +579,7 @@ func _update_visuals(delta: float) -> void:
 			sprite.flip_h = walk_flip_h
 	else:
 		walk_animation_time = 0.0
+		sitting_animation_time = 0.0
 		idle_animation_time += delta
 		var has_separate_idle_sheet := idle_sheet != null
 		var selected_idle_sheet: Texture2D = idle_sheet if has_separate_idle_sheet else movement_sheet
@@ -559,7 +590,8 @@ func _update_visuals(delta: float) -> void:
 		sprite.hframes = selected_idle_columns
 		sprite.vframes = selected_idle_rows
 		var idle_max_frames := sprite.hframes * sprite.vframes if not selected_idle_direction_starts.is_empty() else sprite.hframes
-		var idle_count := clampi(idle_frame_count, 1, idle_max_frames)
+		var configured_idle_frames := idle_frames_per_direction if idle_frames_per_direction > 0 else idle_frame_count
+		var idle_count := clampi(configured_idle_frames, 1, idle_max_frames)
 		var idle_start := _get_direction_start_frame(selected_idle_direction_starts, facing_direction_index, sprite.hframes)
 		# Legacy sheets place idle frames at the end of each direction row.
 		if selected_idle_direction_starts.is_empty():
