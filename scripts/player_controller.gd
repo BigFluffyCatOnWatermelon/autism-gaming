@@ -400,7 +400,7 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	attack_animation_uses_sheet = true
 
 	active_attack_direction_frame_starts = action_direction_frame_starts
-	active_attack_frames_per_direction = maxi(1, action_frames_per_direction)
+	active_attack_frames_per_direction = maxi(1, active_attack_columns if action_direction_frame_starts.is_empty() else action_frames_per_direction)
 	attack_animation_direction_index = _get_direction_index(direction)
 
 	# Configure the full sprite-sheet grid and direction frame starts in the Inspector.
@@ -531,6 +531,8 @@ func _update_visuals(delta: float) -> void:
 			sprite.vframes = maxi(1, run_rows)
 			var run_start := _get_direction_start_frame(run_direction_frame_starts, facing_direction_index, sprite.hframes)
 			var run_count := maxi(1, run_frames_per_direction)
+			if run_direction_frame_starts.is_empty():
+				run_count = sprite.hframes
 			var run_frame := int(floor(walk_animation_time / 0.085)) % run_count
 			_set_sprite_frame(run_start + run_frame)
 			sprite.flip_h = run_flip_h
@@ -540,6 +542,8 @@ func _update_visuals(delta: float) -> void:
 			sprite.vframes = maxi(1, movement_rows)
 			var walk_start := _get_direction_start_frame(movement_direction_frame_starts, facing_direction_index, sprite.hframes)
 			var walk_count := maxi(1, movement_frames_per_direction)
+			if movement_direction_frame_starts.is_empty():
+				walk_count = maxi(1, mini(4, sprite.hframes))
 			var frame := int(floor(walk_animation_time / (0.145 if not running else 0.085))) % walk_count
 			_set_sprite_frame(walk_start + frame)
 			sprite.flip_h = walk_flip_h
@@ -554,7 +558,8 @@ func _update_visuals(delta: float) -> void:
 		sprite.texture = selected_idle_sheet
 		sprite.hframes = selected_idle_columns
 		sprite.vframes = selected_idle_rows
-		var idle_count := clampi(idle_frame_count, 1, sprite.hframes * sprite.vframes)
+		var idle_max_frames := sprite.hframes * sprite.vframes if not selected_idle_direction_starts.is_empty() else sprite.hframes
+		var idle_count := clampi(idle_frame_count, 1, idle_max_frames)
 		var idle_start := _get_direction_start_frame(selected_idle_direction_starts, facing_direction_index, sprite.hframes)
 		# Legacy sheets place idle frames at the end of each direction row.
 		if selected_idle_direction_starts.is_empty():
