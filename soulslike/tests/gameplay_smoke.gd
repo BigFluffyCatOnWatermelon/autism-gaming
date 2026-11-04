@@ -54,11 +54,15 @@ func _ready() -> void:
 	enemy.state = EnemyBase.AIState.IDLE
 	var health_before := enemy.current_health
 	_send_key(KEY_J, true)
+	if not bool(player._direct_just_pressed.get(&"light_attack", false)):
+		_fail("The physical J event never reached PlayerController._input.")
+		return
 	await get_tree().physics_frame
 	if player.state != PlayerController.ActionState.WINDUP:
 		_fail("Physical J key event did not start the light attack. State: %s" % player.state)
 		return
 	_send_key(KEY_J, false)
+	print("LIGHT INPUT STARTED; state=", player.state, " stamina=", player.stamina)
 	enemy.global_position = player.to_global(Vector3(0.0, 0.0, -1.0))
 	for _frame in range(42):
 		await get_tree().physics_frame
