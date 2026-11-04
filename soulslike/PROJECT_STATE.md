@@ -4,12 +4,16 @@ Last updated: 2026-11-04
 
 ## Direction
 
-Original dark-fantasy 3D Soulslike for Windows, Godot 4.7.2, GDScript. Third-person over-the-shoulder camera inspired by the genre, with mouse orbit, zoom, soft follow, collision handling and target-lock framing. Standalone project in `soulslike/`; the legacy farm project and `main` are untouched.
+Original dark-fantasy 3D Soulslike for Windows, Godot 4.7.2, GDScript. Third-person over-the-shoulder camera inspired by the genre, with mouse orbit, inverted vertical look, zoom, soft follow, collision handling and target-lock framing. Standalone project in `soulslike/`; the legacy farm project and `main` are untouched.
 
 ## Implemented in source
 
 - Standalone Godot project and ruined-arena main scene.
-- Third-person orbit camera behind the player, mouse look, wheel zoom, configurable pitch/distance/sensitivity, smooth shoulder-height follow and collision ray.
+- Third-person orbit camera behind the player, mouse look with inverted vertical axis, wheel zoom, configurable pitch/distance/sensitivity, smooth shoulder-height follow and collision ray.
+- Procedurally generated low-poly player, hollow, shield guard and Warden models with layered armour, helmet silhouettes, cloaks, articulated limbs, sword/cleaver/club meshes and a tower shield.
+- Runtime animation poses for idle breathing, walk/run gait, attack wind-up and follow-through, shield guard, dodge lean, stagger, hit flash, boss enrage and death collapse.
+- Combat VFX for blade impacts, critical hits, parries, dodges, healing and death sparks.
+- Arena set dressing with stone columns, arch fragments, grave markers, rubble, dead trees, animated torches and rising bonfire embers.
 - Camera-relative WASD movement; target lock smoothly turns the camera toward a valid enemy.
 - Explicit player input processing and direct physical keyboard/mouse fallback in addition to InputMap actions.
 - Keyboard/mouse and baseline gamepad movement/buttons.

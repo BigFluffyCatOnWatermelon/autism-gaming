@@ -133,6 +133,8 @@ func _face_player() -> void:
 		look_at(global_position + direction, Vector3.UP)
 
 func _perform_attack() -> void:
+	if body_visual.has_method("play_attack"):
+		body_visual.call("play_attack", false)
 	if not is_instance_valid(player):
 		return
 	var offset := player.global_position - global_position
@@ -198,6 +200,7 @@ func receive_damage(info: DamageInfo) -> void:
 		poise_broken = current_poise <= 0.0
 	poise_regeneration_wait = poise_regeneration_delay
 	current_health = maxf(0.0, current_health - damage)
+	_spawn_combat_effect("spawn_hit", [global_position + Vector3.UP * 1.0, false, blocked_by_shield and not poise_broken])
 	_flash_hit()
 	if current_health <= 0.0:
 		_die()
@@ -215,24 +218,17 @@ func on_parried(_source: Node3D) -> void:
 	state = AIState.STUNNED
 	state_time = 2.0
 	_set_telegraph(false)
+	_spawn_combat_effect("spawn_parry", [global_position + Vector3.UP * 1.1])
 	_flash_hit()
 
 func _flash_hit() -> void:
-	var mesh := body_visual.get_node_or_null("Torso") as MeshInstance3D
-	if mesh == null:
-		return
-	var flash := StandardMaterial3D.new()
-	flash.albedo_color = Color(1.0, 0.55, 0.42, 1.0)
-	flash.emission_enabled = true
-	flash.emission = Color(1.0, 0.18, 0.08, 1.0)
-	flash.emission_energy_multiplier = 1.5
-	mesh.material_override = flash
-	var tween := create_tween()
-	tween.tween_interval(0.11)
-	tween.tween_callback(func() -> void:
-		if is_instance_valid(mesh):
-			mesh.material_override = base_material
-	)
+	if body_visual.has_method("play_hit"):
+		body_visual.call("play_hit")
+
+func _spawn_combat_effect(method_name: StringName, arguments: Array) -> void:
+	var effects := get_tree().get_first_node_in_group("combat_vfx")
+	if effects != null and effects.has_method(method_name):
+		effects.callv(method_name, arguments)
 
 func _die() -> void:
 	state = AIState.DEAD
@@ -240,7 +236,16 @@ func _die() -> void:
 	if not reward_given and is_instance_valid(player):
 		reward_given = true
 		player.add_souls(souls_reward)
-	body_visual.visible = false
+	body_visual.visible = true
+	if body_visual.has_method("play_death"):
+		body_visual.call("play_death")
+	_spawn_combat_effect("spawn_death", [global_position + Vector3.UP * 0.8])
+	var collapse := create_tween()
+	collapse.tween_interval(0.78)
+	collapse.tween_callback(func() -> void:
+		if is_instance_valid(body_visual):
+			body_visual.visible = false
+	)
 	collision_shape.set_deferred("disabled", true)
 	collision_layer = 0
 	collision_mask = 0
@@ -258,6 +263,8 @@ func reset_enemy() -> void:
 	global_rotation = spawn_rotation
 	velocity = Vector3.ZERO
 	body_visual.visible = true
+	if body_visual.has_method("reset_visual"):
+		body_visual.call("reset_visual")
 	collision_shape.set_deferred("disabled", false)
 	collision_layer = 2
 	collision_mask = 3

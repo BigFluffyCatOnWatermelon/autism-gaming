@@ -1,31 +1,11 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy_base.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/actors/humanoid_visual.gd" id="2"]
 
 [sub_resource type="CapsuleShape3D" id="GuardShape"]
 radius = 0.46
 height = 1.9
-
-[sub_resource type="CapsuleMesh" id="GuardBody"]
-radius = 0.46
-height = 1.9
-
-[sub_resource type="SphereMesh" id="GuardHead"]
-radius = 0.25
-height = 0.5
-
-[sub_resource type="BoxMesh" id="ShieldMesh"]
-size = Vector3(0.88, 1.12, 0.18)
-
-[sub_resource type="StandardMaterial3D" id="GuardMaterial"]
-albedo_color = Color(0.16, 0.17, 0.19, 1)
-metallic = 0.55
-roughness = 0.68
-
-[sub_resource type="StandardMaterial3D" id="ShieldMaterial"]
-albedo_color = Color(0.24, 0.27, 0.29, 1)
-metallic = 0.78
-roughness = 0.42
 
 [sub_resource type="CylinderMesh" id="GuardTelegraph"]
 top_radius = 1.05
@@ -57,22 +37,8 @@ position = Vector3(0, 0.95, 0)
 shape = SubResource("GuardShape")
 
 [node name="Visual" type="Node3D" parent="."]
-
-[node name="Torso" type="MeshInstance3D" parent="Visual"]
-position = Vector3(0, 0.95, 0)
-mesh = SubResource("GuardBody")
-material_override = SubResource("GuardMaterial")
-
-[node name="Head" type="MeshInstance3D" parent="Visual"]
-position = Vector3(0, 1.7, -0.02)
-mesh = SubResource("GuardHead")
-material_override = SubResource("GuardMaterial")
-
-[node name="Shield" type="MeshInstance3D" parent="Visual"]
-position = Vector3(0.55, 1.05, -0.43)
-rotation = Vector3(0, -0.12, -0.08)
-mesh = SubResource("ShieldMesh")
-material_override = SubResource("ShieldMaterial")
+script = ExtResource("2")
+archetype = "guard"
 
 [node name="Telegraph" type="MeshInstance3D" parent="."]
 position = Vector3(0, 0.025, 0)

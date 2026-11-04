@@ -110,6 +110,20 @@ func _ready() -> void:
 	if is_equal_approx(player.camera_yaw, yaw_before):
 		_fail("Mouse-look did not rotate the third-person camera.")
 		return
+	var pitch_before := player.camera_pitch_degrees
+	player._apply_mouse_look(Vector2(0.0, -60.0))
+	if player.camera_pitch_degrees >= pitch_before:
+		_fail("The vertical camera axis is not inverted: moving the mouse up should look up.")
+		return
+	var visual := player.get_node("Visual")
+	if not visual.has_method("play_attack") or visual.get_node_or_null("Torso") == null:
+		_fail("The player procedural model or animation rig was not created.")
+		return
+	var effects := get_tree().get_first_node_in_group("combat_vfx")
+	if effects == null:
+		_fail("The combat VFX manager was not created.")
+		return
+	effects.call("spawn_hit", player.global_position + Vector3.UP, true, false)
 	var distance_before := player.camera_distance
 	player._zoom_camera(-0.65)
 	if player.camera_distance >= distance_before:

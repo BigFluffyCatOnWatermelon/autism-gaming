@@ -37,7 +37,6 @@ func _physics_process(delta: float) -> void:
 			if distance <= detection_range:
 				state = AIState.CHASE
 				boss_health_changed.emit(enemy_title, current_health, maximum_health, phase)
-				boss_health_changed.emit(enemy_title, current_health, maximum_health, phase)
 		AIState.CHASE:
 			if distance > detection_range * 1.8:
 				state = AIState.IDLE
@@ -74,6 +73,8 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func _perform_boss_attack() -> void:
+	if body_visual.has_method("play_attack"):
+		body_visual.call("play_attack", true)
 	if not is_instance_valid(player):
 		return
 	var offset := player.global_position - global_position
@@ -106,6 +107,11 @@ func receive_damage(info: DamageInfo) -> void:
 
 func _enter_phase_two() -> void:
 	phase = 2
+	if body_visual.has_method("enrage"):
+		body_visual.call("enrage")
+	var effects := get_tree().get_first_node_in_group("combat_vfx")
+	if effects != null and effects.has_method("spawn_death"):
+		effects.call("spawn_death", global_position + Vector3.UP * 1.4)
 	move_speed = phase_two_speed
 	attack_damage = phase_two_damage
 	attack_recovery = 0.78

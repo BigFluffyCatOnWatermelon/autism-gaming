@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.0 — 2026-11-04
+
+- Inverted vertical camera look: moving the mouse up now looks up.
+- Replaced primitive capsule visuals with procedural low-poly character rigs for the player, hollows, shield guard and Warden.
+- Added layered armour, helmets, chest plates, articulated limbs, cloaks, longsword, Grave Cleaver, club and tower shield.
+- Added procedural idle breathing, walk/run cycles, enemy wind-up, player attack follow-through, guard, dodge, stagger, hit flash, enrage and death-collapse animation poses.
+- Added impact sparks/rings, critical hit bursts, parry flashes, dodge trails, healing motes and death VFX.
+- Added stone columns, broken arch fragments, gravestones, rubble piles, dead trees, flickering torches and rising bonfire embers to the arena.
+- Extended CI gameplay checks for camera inversion and runtime visual/VFX creation.
+
+# Changelog
+
 ## 0.4.0 — 2026-11-04
 
 - Replaced the fixed overhead view with a third-person over-the-shoulder orbit camera.

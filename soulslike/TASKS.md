@@ -3,7 +3,11 @@
 ## Phase 1 — playable combat slice
 
 - [x] Independent Godot project and main scene.
-- [x] Third-person over-the-shoulder camera with mouse orbit, wheel zoom, soft follow and wall collision.
+- [x] Third-person over-the-shoulder camera with mouse orbit, inverted vertical axis, wheel zoom, soft follow and wall collision.
+- [x] Procedural low-poly player, enemy and boss models with modular armour, helmets, cloaks, shields and weapons.
+- [x] Procedural locomotion, breathing, attack wind-up/follow-through, guard, dodge lean, stagger and death poses.
+- [x] Combat VFX for hit sparks, critical strikes, parries, dodge trails, healing and death.
+- [x] Arena dressing with columns, broken arch fragments, grave markers, rubble, dead trees, animated torches and bonfire embers.
 - [x] Camera-relative WASD movement and target-lock camera framing.
 - [x] Keyboard/mouse and baseline gamepad controls.
 - [x] Sprint stamina drain and delayed regeneration.

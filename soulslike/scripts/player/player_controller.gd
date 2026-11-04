@@ -49,6 +49,7 @@ enum ActionState { FREE, WINDUP, ACTIVE, RECOVERY, DODGING, STAGGERED, DEAD }
 @onready var attack_area: Area3D = $AttackArea
 @onready var camera_rig: Node3D = $CameraRig
 @onready var camera: Camera3D = $CameraRig/Camera3D
+@onready var visual_rig: Node3D = $Visual
 
 var stamina := 100.0
 var souls := 0
@@ -109,7 +110,7 @@ func _apply_mouse_look(relative: Vector2) -> void:
 	if locked_target != null and is_instance_valid(locked_target):
 		return
 	camera_yaw = wrapf(camera_yaw - relative.x * camera_sensitivity, -PI, PI)
-	camera_pitch_degrees = clampf(camera_pitch_degrees - relative.y * camera_sensitivity * 180.0 / PI, 12.0, 48.0)
+	camera_pitch_degrees = clampf(camera_pitch_degrees + relative.y * camera_sensitivity * 180.0 / PI, 12.0, 48.0)
 	camera_rig.global_rotation = Vector3(0.0, camera_yaw, 0.0)
 	_update_camera_transform()
 
@@ -343,6 +344,8 @@ func _request_attack(kind: StringName) -> void:
 		attack_damage *= 1.8
 		riposte_ready = false
 	state = ActionState.WINDUP
+	if visual_rig.has_method("play_attack"):
+		visual_rig.call("play_attack", is_heavy)
 	var windup := (current_weapon.heavy_windup if is_heavy else current_weapon.light_windup) if current_weapon != null else (0.46 if is_heavy else 0.24)
 	action_time = windup
 	var range_scale := (current_weapon.heavy_range_scale if is_heavy else current_weapon.light_range_scale) if current_weapon != null else (1.35 if is_heavy else 1.0)
@@ -362,6 +365,9 @@ func _start_dodge() -> void:
 		direction.y = 0.0
 	dodge_direction = direction.normalized() if direction.length_squared() > 0.01 else facing
 	state = ActionState.DODGING
+	if visual_rig.has_method("play_attack"):
+		visual_rig.call("play_attack", false)
+	_spawn_combat_effect("spawn_dodge", [global_position + Vector3.UP * 0.1, dodge_direction])
 	action_time = dodge_duration
 	invulnerability_time = invulnerability_duration
 	blocking = false
@@ -372,6 +378,7 @@ func _start_parry() -> void:
 	stamina -= 12.0
 	stamina_regen_wait = stamina_regen_delay
 	parry_window = parry_window_duration
+	_spawn_combat_effect("spawn_parry", [global_position + Vector3.UP * 1.0])
 	state = ActionState.RECOVERY
 	action_time = 0.34
 	blocking = false
@@ -382,6 +389,7 @@ func _use_flask() -> void:
 		return
 	flask_charges -= 1
 	health.restore(flask_heal_amount)
+	_spawn_combat_effect("spawn_heal", [global_position])
 	state = ActionState.RECOVERY
 	action_time = 0.42
 	blocking = false
@@ -434,6 +442,7 @@ func _on_attack_body_entered(body: Node3D) -> void:
 		else:
 			status_message.emit("HIT!")
 		body.receive_damage(DamageInfo.new(dealt_damage, attack_damage_type, poise, self))
+		_spawn_combat_effect("spawn_hit", [body.global_position + Vector3.UP * 0.9, is_critical, false])
 
 func receive_damage(info: DamageInfo) -> void:
 	if state == ActionState.DEAD or invulnerability_time > 0.0 or hurt_lock > 0.0:
@@ -459,6 +468,9 @@ func receive_damage(info: DamageInfo) -> void:
 			action_time = 0.9
 			status_message.emit("GUARD BROKEN")
 	health.apply_damage(damage)
+	if visual_rig.has_method("play_hit"):
+		visual_rig.call("play_hit")
+	_spawn_combat_effect("spawn_hit", [global_position + Vector3.UP * 1.0, false, blocking])
 	hurt_lock = 0.22
 	stats_changed.emit()
 
@@ -548,8 +560,16 @@ func apply_progression_stats(keep_current: bool = true) -> void:
 func get_flask_charges() -> int:
 	return flask_charges
 
+func _spawn_combat_effect(method_name: StringName, arguments: Array) -> void:
+	var effects := get_tree().get_first_node_in_group("combat_vfx")
+	if effects != null and effects.has_method(method_name):
+		effects.callv(method_name, arguments)
+
 func _on_depleted() -> void:
 	state = ActionState.DEAD
 	attack_area.monitoring = false
+	if visual_rig.has_method("play_death"):
+		visual_rig.call("play_death")
+	_spawn_combat_effect("spawn_death", [global_position + Vector3.UP * 0.8])
 	RunState.record_death(global_position)
 	player_died.emit()

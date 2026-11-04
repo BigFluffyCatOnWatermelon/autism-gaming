@@ -20,6 +20,7 @@ var _cleaver: Node3D
 var _club: Node3D
 var _shield: Node3D
 var _eyes: StandardMaterial3D
+var _base_scale := Vector3.ONE
 
 func _ready() -> void:
 	_build_rig()
@@ -182,6 +183,7 @@ func _build_rig() -> void:
 	_mesh(self, "ChestSigil", _sphere(0.075 if archetype != "warden" else 0.12), eye_material, Vector3(0, 1.42 if archetype != "warden" else 1.82, -0.38))
 	_mesh(self, "Belt", _box(Vector3(0.62 if archetype != "warden" else 0.86, 0.12, 0.35)), leather, Vector3(0, 0.89 if archetype != "warden" else 1.12, 0))
 	_mesh(self, "Buckle", _box(Vector3(0.12, 0.14, 0.04)), trim, Vector3(0, 0.89 if archetype != "warden" else 1.12, -0.195))
+	_base_torso_material = _torso.material_override as StandardMaterial3D
 	_cape = _mesh(self, "Cloak", _box(Vector3(0.62 if archetype != "warden" else 0.96, 0.95 if archetype != "warden" else 1.2, 0.075)), cloth, Vector3(0, 1.15 if archetype != "warden" else 1.50, 0.22), Vector3.ONE, Vector3(-0.12, 0, 0))
 	if archetype == "warden":
 		_mesh(self, "ShoulderMantle", _sphere(0.45), dark_armor, Vector3(0, 2.02, 0))
@@ -283,9 +285,10 @@ func _make_shield(parent: Node3D, armor: Material, trim: Material) -> Node3D:
 
 func _apply_proportions() -> void:
 	if archetype == "warden":
-		scale = Vector3(1.3, 1.38, 1.3)
+		_base_scale = Vector3(1.3, 1.38, 1.3)
 	elif archetype == "hollow":
-		scale = Vector3(0.96, 0.96, 0.96)
+		_base_scale = Vector3(0.96, 0.96, 0.96)
+	scale = _base_scale
 
 func _update_weapon(actor: CharacterBody3D) -> void:
 	if archetype != "player":
@@ -322,7 +325,7 @@ func play_death() -> void:
 func reset_visual() -> void:
 	if _death_tween != null:
 		_death_tween.kill()
-	scale = Vector3.ONE
+	scale = _base_scale
 	rotation = Vector3.ZERO
 	position = Vector3.ZERO
 	_attack_pose_time = 0.0

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=14 format=3]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/ashen_hollow.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/ui/combat_hud.tscn" id="3"]
@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://scenes/bonfires/bonfire.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/bosses/warden_of_the_bell.tscn" id="6"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/ashen_shield_guard.tscn" id="7"]
+[ext_resource type="Script" path="res://scripts/world/arena_dressing.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/world/combat_vfx.gd" id="9"]
 
 [sub_resource type="Environment" id="Environment_world"]
 background_mode = 1
@@ -27,6 +29,12 @@ roughness = 0.98
 
 [node name="AshenOutskirts" type="Node3D"]
 script = ExtResource("4")
+[node name="ArenaDressing" type="Node3D" parent="."]
+script = ExtResource("8")
+
+[node name="CombatVFX" type="Node3D" parent="."]
+script = ExtResource("9")
+
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_world")
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]

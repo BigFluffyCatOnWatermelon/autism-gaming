@@ -21,7 +21,7 @@ Open **this folder** (the one containing `project.godot`) in Godot 4.7.2. Do not
 | V | Switch equipped weapon |
 | Esc | Pause |
 
-The camera is now positioned behind the character rather than looking down from above. Mouse input orbits around the player, the wheel changes distance, and the rig smoothly follows at shoulder height. A collision ray shortens the camera arm near walls. Lock-on turns the camera toward the selected enemy.
+The camera is positioned behind the character rather than looking down from above. Mouse input orbits around the player with an **inverted vertical axis** (move the mouse up to look up); the wheel changes distance, and the rig smoothly follows at shoulder height. A collision ray shortens the camera arm near walls. Lock-on turns the camera toward the selected enemy.
 
 The mouse is captured during gameplay. Click the game window after closing a menu to capture it again. Camera pitch, distance, sensitivity, follow speed and collision margin are exported on the Player node for tuning in the Inspector.
 
@@ -35,6 +35,12 @@ The mouse is captured during gameplay. Click the game window after closing a men
 - The **Ashen Shield Guard** reduces incoming damage while facing the player. Heavy hits with enough poise damage break its guard.
 - Attacking a vulnerable enemy from behind at close range triggers a critical backstab. The Warden of the Bell is immune to backstabs.
 - Physical and fire resistance are supported on enemies; player resistance hooks support physical, fire and magic damage.
+
+## Visuals and animation
+
+Characters are assembled from procedural low-poly meshes at runtime: layered armour, helmets, chest plates, articulated arms and legs, cloaks, swords, the Grave Cleaver and the Guard's tower shield. Idle breathing and gait cycles blend with wind-up, attack follow-through, block, dodge, stagger, hit and death poses. These are original procedural placeholder models/animations, not imported motion-capture or final production assets.
+
+Combat effects include impact rings and sparks, critical-hit bursts, parry flashes, dodge trails, healing motes and death effects. The Ashen Outskirts includes dressed stonework, broken arches, graves, rubble, dead trees, flickering torches and rising bonfire embers.
 
 ## Existing systems
 
