@@ -243,7 +243,7 @@ func _die() -> void:
 	var collapse := create_tween()
 	collapse.tween_interval(0.78)
 	collapse.tween_callback(func() -> void:
-		if is_instance_valid(body_visual):
+		if is_instance_valid(body_visual) and state == AIState.DEAD:
 			body_visual.visible = false
 	)
 	collision_shape.set_deferred("disabled", true)
