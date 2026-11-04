@@ -203,6 +203,9 @@ func _get_move_input() -> Vector2:
 func _ready() -> void:
 	set_process_input(true)
 	add_to_group("player")
+	if not weapon_loadout.is_empty():
+		current_weapon_index = 0
+		current_weapon = weapon_loadout[0] as WeaponDefinition
 	apply_progression_stats(false)
 	stamina = max_stamina
 	flask_charges = max_flasks
@@ -212,9 +215,6 @@ func _ready() -> void:
 	health.depleted.connect(_on_depleted)
 	attack_area.monitoring = false
 	attack_area.body_entered.connect(_on_attack_body_entered)
-	if not weapon_loadout.is_empty():
-		current_weapon_index = 0
-		current_weapon = weapon_loadout[0] as WeaponDefinition
 	# The camera orbits the player from an over-the-shoulder third-person position.
 	camera_rig.top_level = true
 	camera_rig.global_position = global_position + Vector3.UP * camera_target_height

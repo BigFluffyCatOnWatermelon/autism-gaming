@@ -36,8 +36,9 @@ func _ready() -> void:
 
 	var player := world.get_node("Player") as PlayerController
 	var enemy := world.get_node("Hollow_01") as EnemyBase
+	var guard := world.get_node("ShieldGuard") as EnemyBase
 	var bonfire := world.get_node("Bonfire") as Bonfire
-	if player == null or enemy == null or bonfire == null:
+	if player == null or enemy == null or guard == null or bonfire == null:
 		_fail("Main scene did not expose the player, enemy and bonfire.")
 		return
 
@@ -103,6 +104,65 @@ func _ready() -> void:
 		_fail("Left mouse attack did not damage the enemy.")
 		return
 
+	# Third-person orbit, zoom and shoulder-height tracking.
+	var yaw_before := player.camera_yaw
+	player._apply_mouse_look(Vector2(80.0, 0.0))
+	if is_equal_approx(player.camera_yaw, yaw_before):
+		_fail("Mouse-look did not rotate the third-person camera.")
+		return
+	var distance_before := player.camera_distance
+	player._zoom_camera(-0.65)
+	if player.camera_distance >= distance_before:
+		_fail("Mouse-wheel zoom did not move the camera closer.")
+		return
+	if player.camera_rig.global_position.distance_to(player.global_position) < 0.5:
+		_fail("Camera focus did not follow the player at shoulder height.")
+		return
+
+	# V cycles actual data-driven movesets.
+	var first_weapon_name := player.get_weapon_name()
+	player._switch_weapon()
+	if player.get_weapon_name() == first_weapon_name or player.get_weapon_name() != "Grave Cleaver":
+		_fail("Weapon switching did not equip the second weapon definition.")
+		return
+	player._switch_weapon()
+
+	# A close attack from directly behind applies the weapon critical multiplier.
+	player.global_position = Vector3(0.0, 0.0, 1.0)
+	enemy.global_position = Vector3.ZERO
+	enemy.rotation = Vector3.ZERO
+	enemy.state = EnemyBase.AIState.CHASE
+	player.state = PlayerController.ActionState.ACTIVE
+	player.attack_damage = 10.0
+	player.attack_poise_damage = 26.0
+	player.attack_damage_type = &"physical"
+	player.hit_targets.clear()
+	var health_before_critical := enemy.current_health
+	player._on_attack_body_entered(enemy)
+	var critical_multiplier := player.current_weapon.critical_multiplier
+	if not is_equal_approx(health_before_critical - enemy.current_health, 10.0 * critical_multiplier):
+		_fail("Backstab did not apply the weapon's critical multiplier.")
+		return
+
+	# A frontal shield reduces light damage and breaks to a heavy hit.
+	player.global_position = Vector3(-6.0, 0.0, -8.0)
+	guard.global_position = Vector3(-6.0, 0.0, -7.0)
+	guard.rotation = Vector3.ZERO
+	guard.current_health = guard.maximum_health
+	guard.shield_broken_time = 0.0
+	guard.current_poise = guard.maximum_poise
+	var guard_health_before := guard.current_health
+	guard.receive_damage(DamageInfo.new(40.0, &"physical", 20.0, player))
+	var guarded_damage := guard_health_before - guard.current_health
+	if guarded_damage > 15.0:
+		_fail("Shield guard did not meaningfully reduce frontal light damage.")
+		return
+	guard_health_before = guard.current_health
+	guard.receive_damage(DamageInfo.new(50.0, &"physical", 82.0, player))
+	if guard.shield_broken_time <= 0.0 or guard.current_health >= guard_health_before:
+		_fail("Heavy poise damage did not break the shield guard.")
+		return
+
 	player.global_position = bonfire.global_position + Vector3(1.0, 0.0, 0.0)
 	player.health.apply_damage(35.0)
 	player.stamina = 5.0
@@ -134,7 +194,7 @@ func _ready() -> void:
 		_fail("Vitality did not increase maximum health.")
 		return
 
-	print("GAMEPLAY CHECKS PASSED: forward/back movement, melee hit, bonfire rest/checkpoint and persistent level-up.")
+	print("GAMEPLAY CHECKS PASSED: movement, camera orbit/zoom, weapon swap, melee/backstab, shield break, bonfire and progression.")
 	get_tree().quit(0)
 
 func _fail(message: String) -> void:

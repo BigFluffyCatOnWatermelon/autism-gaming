@@ -7,6 +7,7 @@ extends CanvasLayer
 @onready var souls_label: Label = $Root/Margins/Content/BottomRight/Souls
 @onready var flask_label: Label = $Root/Margins/Content/BottomRight/Flasks
 @onready var state_label: Label = $Root/Margins/Content/BottomLeft/State
+@onready var weapon_label: Label = $Root/Margins/Content/BottomLeft/Weapon
 @onready var prompt_label: Label = $Root/Margins/Content/CenterBottom/Prompt
 @onready var message_label: Label = $Root/Margins/Content/CenterBottom/Message
 @onready var boss_panel: Control = $Root/Margins/Content/BossPanel
@@ -62,6 +63,7 @@ func _refresh() -> void:
 	stamina_text.text = "STAMINA  %d / %d" % [roundi(player.stamina), roundi(player.max_stamina)]
 	flask_label.text = "✦  ESTUS  %d / %d   [Q]" % [player.get_flask_charges(), player.max_flasks]
 	state_label.text = "ASHEN OATH   •   " + _state_name(player.state)
+	weapon_label.text = "EQUIPPED  •  %s  [V]" % player.get_weapon_name().to_upper()
 	if player.blocking:
 		state_label.text = "GUARD UP   •   ASHEN OATH"
 
@@ -111,6 +113,8 @@ func _unhandled_input(event: InputEvent) -> void:
 func _set_paused(value: bool) -> void:
 	get_tree().paused = value
 	pause_panel.visible = value
+	if DisplayServer.get_name() != "headless":
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED
 
 func _on_resume_pressed() -> void:
 	_set_paused(false)
@@ -128,6 +132,8 @@ func show_level_up_menu(source_player: PlayerController) -> void:
 	pause_panel.visible = false
 	level_panel.visible = true
 	get_tree().paused = true
+	if DisplayServer.get_name() != "headless":
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_refresh_level_menu()
 
 func _build_level_buttons() -> void:
@@ -165,3 +171,5 @@ func _on_attribute_upgrade(attribute: String) -> void:
 func _close_level_panel() -> void:
 	level_panel.visible = false
 	get_tree().paused = false
+	if DisplayServer.get_name() != "headless":
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
