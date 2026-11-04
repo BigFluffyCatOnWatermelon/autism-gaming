@@ -1,23 +1,18 @@
-extends SceneTree
+extends Node
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/locations/ashen_outskirts.tscn")
 
-func _initialize() -> void:
-	call_deferred("_run_gameplay_checks")
-
-func _run_gameplay_checks() -> void:
-	await process_frame
+func _ready() -> void:
+	await get_tree().process_frame
 	if not InputMap.has_action("move_forward"):
-		var setup_script = load("res://scripts/core/input_setup.gd")
-		var setup = setup_script.new()
-		root.add_child(setup)
-		await process_frame
+		_fail("InputSetup did not register the movement actions.")
+		return
 
 	var world := MAIN_SCENE.instantiate()
-	root.add_child(world)
-	await process_frame
+	get_tree().root.add_child(world)
+	await get_tree().process_frame
 	for _frame in range(3):
-		await physics_frame
+		await get_tree().physics_frame
 
 	var player := world.get_node("Player") as PlayerController
 	var enemy := world.get_node("Hollow_01") as EnemyBase
@@ -29,7 +24,7 @@ func _run_gameplay_checks() -> void:
 	var start_z := player.global_position.z
 	Input.action_press("move_forward")
 	for _frame in range(30):
-		await physics_frame
+		await get_tree().physics_frame
 	Input.action_release("move_forward")
 	if player.global_position.z >= start_z - 0.35:
 		_fail("W / move_forward did not move the character toward world -Z.")
@@ -38,7 +33,7 @@ func _run_gameplay_checks() -> void:
 	var after_forward_z := player.global_position.z
 	Input.action_press("move_back")
 	for _frame in range(30):
-		await physics_frame
+		await get_tree().physics_frame
 	Input.action_release("move_back")
 	if player.global_position.z <= after_forward_z + 0.35:
 		_fail("S / move_back did not move the character toward world +Z.")
@@ -53,7 +48,7 @@ func _run_gameplay_checks() -> void:
 	var health_before := enemy.current_health
 	Input.action_press("light_attack")
 	for _frame in range(42):
-		await physics_frame
+		await get_tree().physics_frame
 	Input.action_release("light_attack")
 	if enemy.current_health >= health_before:
 		_fail("A light attack did not damage an enemy in front of the player.")
@@ -91,8 +86,8 @@ func _run_gameplay_checks() -> void:
 		return
 
 	print("GAMEPLAY CHECKS PASSED: forward/back movement, melee hit, bonfire rest/checkpoint and persistent level-up.")
-	quit(0)
+	get_tree().quit(0)
 
 func _fail(message: String) -> void:
 	push_error("GAMEPLAY CHECK FAILED: " + message)
-	quit(1)
+	get_tree().quit(1)

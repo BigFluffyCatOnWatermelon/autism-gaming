@@ -38,4 +38,4 @@ jobs:
         run: '"$GODOT_BIN" --headless --path soulslike --quit-after 240'
 
       - name: Exercise movement, combat, bonfire and progression
-        run: '"$GODOT_BIN" --headless --path soulslike --script res://tests/gameplay_smoke.gd'
+        run: '"$GODOT_BIN" --headless --path soulslike res://tests/gameplay_smoke.tscn'
