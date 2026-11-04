@@ -26,10 +26,13 @@ window/stretch/mode="canvas_items"
 
 enabled=PackedStringArray("res://addons/cozy_village_tools/plugin.cfg")
 
+[physics]
+common/physics_interpolation=true
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.12, 0.2, 0.13, 1)
-2d/snap/snap_2d_transforms_to_pixel=true
-2d/snap/snap_2d_vertices_to_pixel=true
+2d/snap/snap_2d_transforms_to_pixel=false
+2d/snap/snap_2d_vertices_to_pixel=false
