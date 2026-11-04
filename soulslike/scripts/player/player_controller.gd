@@ -88,6 +88,18 @@ func _input(event: InputEvent) -> void:
 		if DisplayServer.get_name() != "headless" and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE and mouse_event.pressed:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			return
+
+		# Always process mouse-button releases, even if the cursor was uncaptured.
+		# Otherwise a held guard/attack can remain stuck after releasing the button.
+		var mouse_action := _mouse_to_action(mouse_event.button_index)
+		if mouse_action != &"":
+			if mouse_event.pressed:
+				if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or DisplayServer.get_name() == "headless":
+					_set_direct_action(mouse_action, true, false)
+			else:
+				_set_direct_action(mouse_action, false, false)
+			return
+
 		if (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or DisplayServer.get_name() == "headless") and mouse_event.pressed:
 			if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
 				_zoom_camera(-0.65)
@@ -95,9 +107,6 @@ func _input(event: InputEvent) -> void:
 			if mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 				_zoom_camera(0.65)
 				return
-			var mouse_action := _mouse_to_action(mouse_event.button_index)
-			if mouse_action != &"":
-				_set_direct_action(mouse_action, mouse_event.pressed, false)
 		return
 	if event is InputEventKey:
 		var key_event := event as InputEventKey

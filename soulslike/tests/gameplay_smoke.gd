@@ -104,6 +104,30 @@ func _ready() -> void:
 		_fail("Left mouse attack did not damage the enemy.")
 		return
 
+	# RMB guard must stop immediately on release and allow stamina regeneration.
+	player.state = PlayerController.ActionState.FREE
+	player.blocking = false
+	player.stamina = player.max_stamina - 20.0
+	player.stamina_regen_wait = 0.0
+	var stamina_before_guard := player.stamina
+	_send_mouse_to_player(player, MOUSE_BUTTON_RIGHT, true)
+	await get_tree().physics_frame
+	if not player.blocking or not player._action_pressed(&"block"):
+		_fail("Right mouse button did not engage the guard.")
+		return
+	_send_mouse_to_player(player, MOUSE_BUTTON_RIGHT, false)
+	if player._action_pressed(&"block"):
+		_fail("Right mouse button remained logically pressed after its release event.")
+		return
+	for _frame in range(3):
+		await get_tree().physics_frame
+	if player.blocking:
+		_fail("Guard remained active after releasing the right mouse button.")
+		return
+	if player.stamina <= stamina_before_guard:
+		_fail("Stamina did not regenerate after releasing the right mouse button.")
+		return
+
 	# Third-person orbit, zoom and shoulder-height tracking.
 	var yaw_before := player.camera_yaw
 	player._apply_mouse_look(Vector2(80.0, 0.0))
