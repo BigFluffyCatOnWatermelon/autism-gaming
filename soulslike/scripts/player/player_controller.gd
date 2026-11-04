@@ -189,8 +189,7 @@ func receive_damage(info: DamageInfo) -> void:
 			blocking = false
 			state = ActionState.STAGGERED
 			action_time = 0.8
-	if state != ActionState.STAGGERED:
-		health.apply_damage(damage)
+	health.apply_damage(damage)
 	hurt_lock = 0.18
 	stats_changed.emit()
 
