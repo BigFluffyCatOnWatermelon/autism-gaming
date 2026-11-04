@@ -36,3 +36,6 @@ jobs:
 
       - name: Smoke-test the main scene
         run: '"$GODOT_BIN" --headless --path soulslike --quit-after 240'
+
+      - name: Exercise movement, combat, bonfire and progression
+        run: '"$GODOT_BIN" --headless --path soulslike --script res://tests/gameplay_smoke.gd'
