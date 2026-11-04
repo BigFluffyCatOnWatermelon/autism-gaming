@@ -37,7 +37,8 @@
 ## Phase 3 — progression
 
 - [ ] Full inventory, equipment load, armor and upgrade materials.
-- [ ] Leveling with eight attributes and derived stats.
+- [x] Basic level and eight-attribute progression at bonfires; core derived stats for Vitality, Endurance, Strength and Dexterity.
+- [ ] Complete remaining attribute effects, attribute scaling and balancing.
 - [ ] Consumables, spell slots and multiple magic schools.
 - [ ] Expanded save slots, backup saves and robust world-state persistence.
 

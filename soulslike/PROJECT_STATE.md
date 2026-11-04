@@ -36,11 +36,12 @@ Original dark-fantasy 3D Soulslike for Windows, Godot 4.7.2, GDScript. Slightly 
 - Headless editor import and global class registration passed.
 - Main scene smoke test ran for 240 frames and passed.
 - Automated gameplay integration passed: simulated forward/back input moves along the expected world axes; light attack damages a target; bonfire restores resources and saves checkpoint; leveling spends souls and increases Vitality-derived health.
-- Run: https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/41796382428
+- Keyboard/mouse routing is checked separately: W/S move in opposite directions; J and left mouse start attacks; the melee hitbox damages the enemy.
+- Latest run: https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/41815540492
 - Camera/world-compass coupling was removed; camera follows independently in world space.
 - The pause-menu node path was corrected and is now included in the successful startup check.
 - This confirms parser/import and short startup stability, **not** final visual quality, animation timing, Windows input feel, or the full design brief. Those still require hands-on editor/gameplay validation.
 
 ## Not implemented
 
-Three total bosses, finished character rigs/animations/final art, full weapon roster and data-driven move sets, backstab/critical finishers, complete damage-type resistance and poise system, inventory, equipment and upgrades, leveling, spells, NPCs, quests, interconnected regions, secrets/lifts/ladders/traps, comprehensive world-state persistence, production music/SFX and final balancing.
+Two additional bosses, finished character rigs/animations/final art, full weapon roster and data-driven move sets, backstab/critical finishers, complete damage-type resistance and poise system, full inventory/equipment/upgrades, remaining derived attribute effects, spells, NPCs, quests, interconnected regions, secrets/lifts/ladders/traps, comprehensive world-state persistence, production music/SFX and final balancing.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.6 — 2026-11-04
+
+- Godot 4.7.2 CI passes after explicit player input processing.
+- Confirmed W/S movement direction, J-key attack routing, left-mouse attack routing and melee damage in gameplay integration tests.
+
 ## 0.3.5 — 2026-11-04
 
 - Explicitly enabled player input processing and added direct keyboard/mouse fallback in PlayerController alongside InputMap.
