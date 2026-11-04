@@ -19,6 +19,10 @@
 - [x] First original two-phase boss and boss health bar.
 - [x] Expanded HUD, on-screen controls, pause menu and ruined arena layout.
 - [x] Godot 4.7.2 headless editor import and 240-frame main-scene smoke test in GitHub Actions.
+- [x] Automated W/S movement-direction test.
+- [x] Automated light-attack hit test.
+- [x] Automated bonfire rest/checkpoint/resource restore test.
+- [x] Automated soul-spend/Vitality level-up test.
 - [ ] Visually validate camera framing, hit volumes, telegraphs and animation timing on Windows.
 
 ## Phase 2 — combat depth

@@ -34,8 +34,10 @@ Original dark-fantasy 3D Soulslike for Windows, Godot 4.7.2, GDScript. Slightly 
 - GitHub Actions executed Godot **4.7.2 Standard**.
 - Headless editor import and global class registration passed.
 - Main scene smoke test ran for 240 frames and passed.
+- Automated gameplay integration passed: simulated forward/back input moves along the expected world axes; light attack damages a target; bonfire restores resources and saves checkpoint; leveling spends souls and increases Vitality-derived health.
 - Run: https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/41796382428
 - Camera/world-compass coupling was removed; camera follows independently in world space.
+- The pause-menu node path was corrected and is now included in the successful startup check.
 - This confirms parser/import and short startup stability, **not** final visual quality, animation timing, Windows input feel, or the full design brief. Those still require hands-on editor/gameplay validation.
 
 ## Not implemented

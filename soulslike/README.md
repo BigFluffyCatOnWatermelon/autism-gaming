@@ -53,7 +53,7 @@ All game content is authored independently under this directory. No farm scripts
 
 A GitHub Actions workflow downloads Godot 4.7.2 Standard, imports the project headlessly, and starts the main scene for 240 frames on pushes to `soulslike-reboot`.
 
-Latest validation passed: [Godot 4.7.2 headless import + scene smoke test](https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/41796382428).
+Latest validation passed: [Godot 4.7.2 import, scene startup and gameplay integration checks](https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/41797681842). The gameplay test drives W/S input, confirms forward/back movement, confirms melee damage, activates a bonfire, checks restored resources and levels Vitality.
 
 This confirms parsing/import and short startup stability. It does **not** prove final visual quality, animation timing, or Windows input feel; manually test those in the editor.
 

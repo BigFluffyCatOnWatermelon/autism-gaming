@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.4 — 2026-11-04
+
+- Fixed the pause overlay node path discovered by headless startup validation.
+- Added a gameplay integration test that simulates forward/back movement, verifies melee damage, rests at the bonfire and levels Vitality.
+- Godot 4.7.2 import, main-scene startup and gameplay integration all pass in GitHub Actions.
+
 ## 0.3.3 — 2026-11-04
 
 - Added soul-cost leveling at the bonfire with all eight character attributes.
