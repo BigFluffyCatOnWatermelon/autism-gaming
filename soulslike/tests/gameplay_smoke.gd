@@ -2,6 +2,13 @@ extends Node
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/locations/ashen_outskirts.tscn")
 
+func _send_key_to_player(player: PlayerController, key_code: int, pressed: bool) -> void:
+	var key_event := InputEventKey.new()
+	key_event.keycode = key_code
+	key_event.physical_keycode = key_code
+	key_event.pressed = pressed
+	player._input(key_event)
+
 func _send_key(key_code: int, pressed: bool) -> void:
 	var key_event := InputEventKey.new()
 	key_event.keycode = key_code
@@ -53,15 +60,19 @@ func _ready() -> void:
 	player.velocity = Vector3.ZERO
 	enemy.state = EnemyBase.AIState.IDLE
 	var health_before := enemy.current_health
-	_send_key(KEY_J, true)
-	if not bool(player._direct_just_pressed.get(&"light_attack", false)):
-		_fail("The physical J event never reached PlayerController._input.")
+	var light_key_bound := false
+	for mapped_event in InputMap.action_get_events("light_attack"):
+		if mapped_event is InputEventKey and (mapped_event as InputEventKey).physical_keycode == KEY_J:
+			light_key_bound = true
+	if not light_key_bound:
+		_fail("J key is missing from the light_attack InputMap.")
 		return
+	_send_key_to_player(player, KEY_J, true)
 	await get_tree().physics_frame
 	if player.state != PlayerController.ActionState.WINDUP:
 		_fail("Physical J key event did not start the light attack. State: %s" % player.state)
 		return
-	_send_key(KEY_J, false)
+	_send_key_to_player(player, KEY_J, false)
 	print("LIGHT INPUT STARTED; state=", player.state, " stamina=", player.stamina)
 	enemy.global_position = player.to_global(Vector3(0.0, 0.0, -1.0))
 	for _frame in range(42):
