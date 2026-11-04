@@ -47,6 +47,14 @@ Open **this folder** (the one containing `project.godot`) in Godot 4.7.2. Do not
 
 All game content is authored independently under this directory. No farm scripts, scenes, assets or add-ons are referenced.
 
+## Validation
+
+A GitHub Actions workflow downloads Godot 4.7.2 Standard, imports the project headlessly, and starts the main scene for 240 frames on pushes to `soulslike-reboot`.
+
+Latest validation passed: [Godot 4.7.2 headless import + scene smoke test](https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/41796382428).
+
+This confirms parsing/import and short startup stability. It does **not** prove final visual quality, animation timing, or Windows input feel; manually test those in the editor.
+
 ## Honest status
 
-This is a playable prototype slice, not the completed game brief. It still uses original greybox 3D meshes and does not yet include a finished character rig/animation set, three bosses, interconnected chapter, inventory/equipment, leveling, magic, NPC quests, production audio or complete world-state persistence. Godot editor/headless validation must be run locally before calling the build verified.
+This is a playable prototype slice, not the completed game brief. It still uses original greybox 3D meshes and does not yet include a finished character rig/animation set, three bosses, interconnected chapter, inventory/equipment, leveling, magic, NPC quests, production audio or complete world-state persistence.

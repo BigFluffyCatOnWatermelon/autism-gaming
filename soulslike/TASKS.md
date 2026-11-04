@@ -17,8 +17,8 @@
 - [x] Target lock and interaction prompt.
 - [x] First original two-phase boss and boss health bar.
 - [x] Expanded HUD and ruined arena layout.
-- [ ] Run Godot 4.7.2 headless import and main-scene startup; fix all parser/runtime errors.
-- [ ] Visually validate camera framing, hit volumes, telegraphs and animation timing.
+- [x] Godot 4.7.2 headless editor import and 240-frame main-scene smoke test in GitHub Actions.
+- [ ] Visually validate camera framing, hit volumes, telegraphs and animation timing on Windows.
 
 ## Phase 2 — combat depth
 

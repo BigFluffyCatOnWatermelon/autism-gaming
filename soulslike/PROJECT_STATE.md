@@ -26,11 +26,15 @@ Original dark-fantasy 3D Soulslike for Windows, Godot 4.7.2, GDScript. Slightly 
 - Original first boss, Warden of the Bell: two phases, different wind-up/recovery timings and three attack patterns.
 - HUD for vitality, stamina, souls, Estus charges, action state, interactions and boss health.
 
-## Verification status
+## Verification
 
-- Branch exists on GitHub and changes are committed separately from main.
-- Camera-relative movement issue has been addressed by separating the camera's world-space orientation from player yaw.
-- Source and scenes are authored, but Godot 4.7.2 headless/editor startup is not available in this environment. **Parser/runtime validation remains pending**. Do not claim the build is verified until it is opened and run locally.
+- GitHub branch: `soulslike-reboot`.
+- GitHub Actions executed Godot **4.7.2 Standard**.
+- Headless editor import and global class registration passed.
+- Main scene smoke test ran for 240 frames and passed.
+- Run: https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/41796382428
+- Camera/world-compass coupling was removed; camera follows independently in world space.
+- This confirms parser/import and short startup stability, **not** final visual quality, animation timing, Windows input feel, or the full design brief. Those still require hands-on editor/gameplay validation.
 
 ## Not implemented
 
