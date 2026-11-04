@@ -9,42 +9,62 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var idle_rows: int = 4
 @export_range(1, 256, 1) var idle_frame_count: int = 2
 @export var idle_flip_h := false
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var idle_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Walk")
 @export var movement_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
 @export_range(1, 256, 1) var movement_columns: int = 6
 @export_range(1, 256, 1) var movement_rows: int = 4
 @export var walk_flip_h := false
+@export_range(1, 256, 1) var movement_frames_per_direction: int = 4
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var movement_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Run")
 @export var run_sheet: Texture2D
 @export_range(1, 256, 1) var run_columns: int = 6
 @export_range(1, 256, 1) var run_rows: int = 4
 @export var run_flip_h := false
+@export_range(1, 256, 1) var run_frames_per_direction: int = 8
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var run_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Hurt")
 @export var hurt_sheet: Texture2D
 @export_range(1, 256, 1) var hurt_columns: int = 3
 @export_range(1, 256, 1) var hurt_rows: int = 4
 @export var hurt_flip_h := false
+@export_range(1, 256, 1) var hurt_frames_per_direction: int = 3
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var hurt_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Death")
 @export var death_sheet: Texture2D
 @export_range(1, 256, 1) var death_columns: int = 4
 @export_range(1, 256, 1) var death_rows: int = 4
 @export var death_flip_h := false
+@export_range(1, 256, 1) var death_frames_per_direction: int = 4
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var death_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Dodge")
 @export var dodge_sheet: Texture2D
 @export_range(1, 256, 1) var dodge_columns: int = 5
 @export_range(1, 256, 1) var dodge_rows: int = 4
 @export var dodge_flip_h := false
+@export_range(1, 256, 1) var dodge_frames_per_direction: int = 5
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var dodge_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Interact")
 @export var interact_sheet: Texture2D
 @export_range(1, 256, 1) var interact_columns: int = 4
 @export_range(1, 256, 1) var interact_rows: int = 4
 @export var interact_flip_h := false
+@export_range(1, 256, 1) var interact_frames_per_direction: int = 4
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var interact_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_group("Боевые анимации")
 @export_subgroup("Axe")
@@ -52,30 +72,45 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(1, 256, 1) var axe_attack_columns: int = 3
 @export_range(1, 256, 1) var axe_attack_rows: int = 4
 @export var axe_attack_flip_h := false
+@export_range(1, 256, 1) var axe_attack_frames_per_direction: int = 3
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var axe_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Pickaxe")
 @export var pickaxe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
 @export_range(1, 256, 1) var pickaxe_attack_columns: int = 3
 @export_range(1, 256, 1) var pickaxe_attack_rows: int = 4
 @export var pickaxe_attack_flip_h := false
+@export_range(1, 256, 1) var pickaxe_attack_frames_per_direction: int = 3
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var pickaxe_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Sword Slash")
 @export var sword_slash_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
 @export_range(1, 256, 1) var sword_slash_columns: int = 3
 @export_range(1, 256, 1) var sword_slash_rows: int = 4
 @export var sword_slash_flip_h := false
+@export_range(1, 256, 1) var sword_slash_frames_per_direction: int = 3
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var sword_slash_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Sword Thrust")
 @export var sword_thrust_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
 @export_range(1, 256, 1) var sword_thrust_columns: int = 3
 @export_range(1, 256, 1) var sword_thrust_rows: int = 4
 @export var sword_thrust_flip_h := false
+@export_range(1, 256, 1) var sword_thrust_frames_per_direction: int = 3
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var sword_thrust_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Bow")
 @export var bow_attack_sheet: Texture2D
 @export_range(1, 256, 1) var bow_attack_columns: int = 5
 @export_range(1, 256, 1) var bow_attack_rows: int = 4
 @export var bow_attack_flip_h := false
+@export_range(1, 256, 1) var bow_attack_frames_per_direction: int = 5
+@export_tooltip("Порядок 8 направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: columns=32, rows=1, frames_per_direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.")
+@export var bow_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 const ITEM_TEXTURE_PATHS := {
 	"sword": "res://Assets/CozyVillageFarm/06_Farming/Tools/basic/sword_basic.png",
@@ -98,7 +133,7 @@ var debug_invulnerable := false
 var debug_selected := false
 var roll_direction := Vector2.DOWN
 var last_move_direction := Vector2.DOWN
-var facing_row := 0
+var facing_direction_index := 0
 var roll_timer := 0.0
 var roll_cooldown_timer := 0.0
 var invulnerability_timer := 0.0
@@ -107,10 +142,13 @@ var idle_animation_time := 0.0
 var attack_animation_time := 0.0
 var attack_animation_duration := 0.0
 var attack_animation_item := ""
-var attack_animation_row := 0
+var attack_animation_frame_start := 0
+var attack_animation_direction_index := 0
 var attack_animation_uses_sheet := false
 var active_attack_columns := 3
 var active_attack_rows := 4
+var active_attack_frames_per_direction := 3
+var active_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 var active_animation_flip_h := false
 var current_held_item := ""
 
@@ -205,6 +243,56 @@ func get_ground_position() -> Vector2:
 func get_foot_sort_y() -> float:
 	return get_ground_position().y
 
+func _get_direction_index(direction: Vector2) -> int:
+	if direction.length_squared() < 0.001:
+		return facing_direction_index
+	# Clockwise order, starting at Down.
+	var angle := atan2(direction.x, direction.y)
+	return posmod(roundi(angle / (PI / 4.0)), 8)
+
+
+func _get_legacy_direction_start_frame(direction_index: int, columns: int) -> int:
+	# Compatibility with the original four-row sheets:
+	# Down, Up, Right, Left. Diagonals use the vertical direction as before.
+	var row := 0
+	match direction_index:
+		2:
+			row = 2 # Right
+		3, 4, 5:
+			row = 1 # Up and upper diagonals
+		6:
+			row = 3 # Left
+		_:
+			row = 0 # Down and lower diagonals
+	return row * maxi(1, columns)
+
+
+func _get_direction_start_frame(
+		direction_frame_starts: PackedInt32Array,
+		direction_index: int,
+		columns: int
+	) -> int:
+	if direction_index >= 0 and direction_index < direction_frame_starts.size():
+		var configured_start := direction_frame_starts[direction_index]
+		if configured_start >= 0:
+			return configured_start
+	return _get_legacy_direction_start_frame(direction_index, columns)
+
+
+func _get_frame_coords(frame_index: int, columns: int) -> Vector2i:
+	var safe_columns := maxi(1, columns)
+	var safe_index := maxi(0, frame_index)
+	return Vector2i(safe_index % safe_columns, floori(float(safe_index) / float(safe_columns)))
+
+
+func _set_sprite_frame(frame_index: int) -> void:
+	if sprite == null:
+		return
+	var frame_total := maxi(1, sprite.hframes * sprite.vframes)
+	var safe_index := clampi(frame_index, 0, frame_total - 1)
+	sprite.frame_coords = _get_frame_coords(safe_index, sprite.hframes)
+
+
 func get_aim_position() -> Vector2:
 	return to_global(AIM_ANCHOR)
 
@@ -257,27 +345,39 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	# use the axe swing sheet and sword thrusts use the pickaxe strike sheet.
 	var sheet_id := animation_id if not animation_id.is_empty() else item_id
 	var action_texture: Texture2D
+	var action_direction_frame_starts := PackedInt32Array()
+	var action_frames_per_direction := 3
 	match sheet_id:
 		"axe":
 			action_texture = axe_attack_sheet
 			active_attack_columns = axe_attack_columns
 			active_attack_rows = axe_attack_rows
+			action_direction_frame_starts = axe_attack_direction_frame_starts
+			action_frames_per_direction = axe_attack_frames_per_direction
 		"pickaxe":
 			action_texture = pickaxe_attack_sheet
 			active_attack_columns = pickaxe_attack_columns
 			active_attack_rows = pickaxe_attack_rows
+			action_direction_frame_starts = pickaxe_attack_direction_frame_starts
+			action_frames_per_direction = pickaxe_attack_frames_per_direction
 		"sword_slash":
 			action_texture = sword_slash_sheet
 			active_attack_columns = sword_slash_columns
 			active_attack_rows = sword_slash_rows
+			action_direction_frame_starts = sword_slash_direction_frame_starts
+			action_frames_per_direction = sword_slash_frames_per_direction
 		"sword_thrust":
 			action_texture = sword_thrust_sheet
 			active_attack_columns = sword_thrust_columns
 			active_attack_rows = sword_thrust_rows
+			action_direction_frame_starts = sword_thrust_direction_frame_starts
+			action_frames_per_direction = sword_thrust_frames_per_direction
 		"bow":
 			action_texture = bow_attack_sheet
 			active_attack_columns = bow_attack_columns
 			active_attack_rows = bow_attack_rows
+			action_direction_frame_starts = bow_attack_direction_frame_starts
+			action_frames_per_direction = bow_attack_frames_per_direction
 		_:
 			action_texture = null
 
@@ -299,17 +399,20 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	attack_animation_time = attack_animation_duration
 	attack_animation_uses_sheet = true
 
-	if absf(direction.x) > absf(direction.y):
-		attack_animation_row = 2 if direction.x > 0.0 else 3
-	else:
-		attack_animation_row = 1 if direction.y < 0.0 else 0
+	active_attack_direction_frame_starts = action_direction_frame_starts
+	active_attack_frames_per_direction = maxi(1, action_frames_per_direction)
+	attack_animation_direction_index = _get_direction_index(direction)
 
-	# Configure the grid in the Inspector to match the selected action sheets.
+	# Configure the full sprite-sheet grid and direction frame starts in the Inspector.
 	sprite.texture = action_texture
 	sprite.hframes = maxi(1, active_attack_columns)
 	sprite.vframes = maxi(1, active_attack_rows)
-	attack_animation_row = clampi(attack_animation_row, 0, sprite.vframes - 1)
-	sprite.frame_coords = Vector2i(0, attack_animation_row)
+	attack_animation_frame_start = _get_direction_start_frame(
+		active_attack_direction_frame_starts,
+		attack_animation_direction_index,
+		sprite.hframes
+	)
+	_set_sprite_frame(attack_animation_frame_start)
 	sprite.flip_h = active_animation_flip_h
 
 func _restore_player_sheet() -> void:
@@ -402,10 +505,7 @@ func _update_facing(input_vector: Vector2) -> void:
 		direction = get_global_mouse_position() - global_position
 	if direction.length_squared() < 0.001:
 		return
-	if absf(direction.x) > absf(direction.y):
-		facing_row = 2 if direction.x < 0.0 else 3
-	else:
-		facing_row = 1 if direction.y < 0.0 else 0
+	facing_direction_index = _get_direction_index(direction)
 
 func _update_visuals(delta: float) -> void:
 	sprite.position = Vector2(0, -3)
@@ -415,16 +515,13 @@ func _update_visuals(delta: float) -> void:
 		attack_animation_uses_sheet = false
 		_restore_player_sheet()
 
-	var sheet_row := facing_row
-	if facing_row == 2:
-		sheet_row = 3
-	elif facing_row == 3:
-		sheet_row = 2
-
 	if attack_animation_time > 0.0 and attack_animation_uses_sheet:
 		var progress := 1.0 - attack_animation_time / maxf(attack_animation_duration, 0.001)
-		var action_frame := mini(sprite.hframes - 1, int(floor(progress * float(sprite.hframes))))
-		sprite.frame_coords = Vector2i(action_frame, clampi(attack_animation_row, 0, sprite.vframes - 1))
+		var action_frame := mini(
+			active_attack_frames_per_direction - 1,
+			int(floor(progress * float(active_attack_frames_per_direction)))
+		)
+		_set_sprite_frame(attack_animation_frame_start + action_frame)
 	elif moving and not rolling:
 		walk_animation_time += delta
 		idle_animation_time = 0.0
@@ -432,30 +529,38 @@ func _update_visuals(delta: float) -> void:
 			sprite.texture = run_sheet
 			sprite.hframes = maxi(1, run_columns)
 			sprite.vframes = maxi(1, run_rows)
-			var run_frame := int(floor(walk_animation_time / 0.085)) % sprite.hframes
-			sprite.frame_coords = Vector2i(run_frame, clampi(sheet_row, 0, sprite.vframes - 1))
+			var run_start := _get_direction_start_frame(run_direction_frame_starts, facing_direction_index, sprite.hframes)
+			var run_count := maxi(1, run_frames_per_direction)
+			var run_frame := int(floor(walk_animation_time / 0.085)) % run_count
+			_set_sprite_frame(run_start + run_frame)
 			sprite.flip_h = run_flip_h
 		else:
 			sprite.texture = movement_sheet
 			sprite.hframes = maxi(1, movement_columns)
 			sprite.vframes = maxi(1, movement_rows)
-			var walk_frame_count := maxi(1, mini(4, movement_columns))
-			var frame := int(floor(walk_animation_time / (0.145 if not running else 0.085))) % walk_frame_count
-			sprite.frame_coords = Vector2i(frame, clampi(sheet_row, 0, sprite.vframes - 1))
+			var walk_start := _get_direction_start_frame(movement_direction_frame_starts, facing_direction_index, sprite.hframes)
+			var walk_count := maxi(1, movement_frames_per_direction)
+			var frame := int(floor(walk_animation_time / (0.145 if not running else 0.085))) % walk_count
+			_set_sprite_frame(walk_start + frame)
 			sprite.flip_h = walk_flip_h
 	else:
 		walk_animation_time = 0.0
 		idle_animation_time += delta
-		var selected_idle_sheet: Texture2D = idle_sheet if idle_sheet != null else movement_sheet
-		var selected_idle_columns := maxi(1, idle_columns if idle_sheet != null else movement_columns)
-		var selected_idle_rows := maxi(1, idle_rows if idle_sheet != null else movement_rows)
+		var has_separate_idle_sheet := idle_sheet != null
+		var selected_idle_sheet: Texture2D = idle_sheet if has_separate_idle_sheet else movement_sheet
+		var selected_idle_columns := maxi(1, idle_columns if has_separate_idle_sheet else movement_columns)
+		var selected_idle_rows := maxi(1, idle_rows if has_separate_idle_sheet else movement_rows)
+		var selected_idle_direction_starts := idle_direction_frame_starts if has_separate_idle_sheet else movement_direction_frame_starts
 		sprite.texture = selected_idle_sheet
 		sprite.hframes = selected_idle_columns
 		sprite.vframes = selected_idle_rows
-		var idle_count := clampi(idle_frame_count, 1, selected_idle_columns)
-		var idle_start := selected_idle_columns - idle_count
-		var idle_frame := idle_start + (int(floor(idle_animation_time / 0.35)) % idle_count)
-		sprite.frame_coords = Vector2i(idle_frame, clampi(sheet_row, 0, sprite.vframes - 1))
+		var idle_count := clampi(idle_frame_count, 1, sprite.hframes * sprite.vframes)
+		var idle_start := _get_direction_start_frame(selected_idle_direction_starts, facing_direction_index, sprite.hframes)
+		# Legacy sheets place idle frames at the end of each direction row.
+		if selected_idle_direction_starts.is_empty():
+			idle_start += maxi(0, selected_idle_columns - idle_count)
+		var idle_frame := int(floor(idle_animation_time / 0.35)) % idle_count
+		_set_sprite_frame(idle_start + idle_frame)
 		sprite.flip_h = idle_flip_h
 
 	if rolling:
