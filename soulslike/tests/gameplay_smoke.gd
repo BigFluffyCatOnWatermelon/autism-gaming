@@ -2,6 +2,13 @@ extends Node
 
 const MAIN_SCENE: PackedScene = preload("res://scenes/locations/ashen_outskirts.tscn")
 
+func _send_key(key_code: int, pressed: bool) -> void:
+	var key_event := InputEventKey.new()
+	key_event.keycode = key_code
+	key_event.physical_keycode = key_code
+	key_event.pressed = pressed
+	Input.parse_input_event(key_event)
+
 func _ready() -> void:
 	await get_tree().process_frame
 	if not InputMap.has_action("move_forward"):
@@ -22,19 +29,19 @@ func _ready() -> void:
 		return
 
 	var start_z := player.global_position.z
-	Input.action_press("move_forward")
+	_send_key(KEY_W, true)
 	for _frame in range(30):
 		await get_tree().physics_frame
-	Input.action_release("move_forward")
+	_send_key(KEY_W, false)
 	if player.global_position.z >= start_z - 0.35:
 		_fail("W / move_forward did not move the character toward world -Z.")
 		return
 
 	var after_forward_z := player.global_position.z
-	Input.action_press("move_back")
+	_send_key(KEY_S, true)
 	for _frame in range(30):
 		await get_tree().physics_frame
-	Input.action_release("move_back")
+	_send_key(KEY_S, false)
 	if player.global_position.z <= after_forward_z + 0.35:
 		_fail("S / move_back did not move the character toward world +Z.")
 		return
@@ -46,10 +53,10 @@ func _ready() -> void:
 	player.velocity = Vector3.ZERO
 	enemy.state = EnemyBase.AIState.IDLE
 	var health_before := enemy.current_health
-	Input.action_press("light_attack")
+	_send_key(KEY_J, true)
 	for _frame in range(42):
 		await get_tree().physics_frame
-	Input.action_release("light_attack")
+	_send_key(KEY_J, false)
 	if enemy.current_health >= health_before:
 		_fail("A light attack did not damage an enemy in front of the player.")
 		return

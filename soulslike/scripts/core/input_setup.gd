@@ -1,6 +1,6 @@
 extends Node
 
-func _ready() -> void:
+func _enter_tree() -> void:
 	_bind_key("move_forward", KEY_W)
 	_bind_key("move_back", KEY_S)
 	_bind_key("move_left", KEY_A)
@@ -37,6 +37,7 @@ func _ensure_action(action: StringName) -> void:
 func _bind_key(action: StringName, key: int) -> void:
 	_ensure_action(action)
 	var event := InputEventKey.new()
+	event.keycode = key
 	event.physical_keycode = key
 	if not InputMap.action_has_event(action, event):
 		InputMap.action_add_event(action, event)

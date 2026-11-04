@@ -56,6 +56,69 @@ var blocking := false
 var riposte_ready := false
 var current_interactable: Node3D
 var locked_target: Node3D
+var _direct_pressed: Dictionary = {}
+var _direct_just_pressed: Dictionary = {}
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		var code := key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
+		var action := _key_to_action(code)
+		if action != &"":
+			_set_direct_action(action, key_event.pressed, key_event.echo)
+	elif event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		var action := _mouse_to_action(mouse_event.button_index)
+		if action != &"":
+			_set_direct_action(action, mouse_event.pressed, false)
+
+func _key_to_action(code: int) -> StringName:
+	match code:
+		KEY_W: return &"move_forward"
+		KEY_S: return &"move_back"
+		KEY_A: return &"move_left"
+		KEY_D: return &"move_right"
+		KEY_SHIFT: return &"sprint"
+		KEY_SPACE: return &"dodge"
+		KEY_E: return &"interact"
+		KEY_F: return &"parry"
+		KEY_Q: return &"heal"
+		KEY_TAB: return &"lock_target"
+		KEY_ESCAPE: return &"pause"
+		KEY_J: return &"light_attack"
+		KEY_K: return &"heavy_attack"
+		KEY_L: return &"block"
+	return &""
+
+func _mouse_to_action(button: int) -> StringName:
+	match button:
+		MOUSE_BUTTON_LEFT: return &"light_attack"
+		MOUSE_BUTTON_MIDDLE: return &"heavy_attack"
+		MOUSE_BUTTON_RIGHT: return &"block"
+	return &""
+
+func _set_direct_action(action: StringName, pressed: bool, echo: bool) -> void:
+	_direct_pressed[action] = pressed
+	if pressed and not echo:
+		_direct_just_pressed[action] = true
+
+func _action_pressed(action: StringName) -> bool:
+	return Input.is_action_pressed(action) or bool(_direct_pressed.get(action, false))
+
+func _action_just_pressed(action: StringName) -> bool:
+	var direct := bool(_direct_just_pressed.get(action, false))
+	_direct_just_pressed.erase(action)
+	return Input.is_action_just_pressed(action) or direct
+
+func _get_move_input() -> Vector2:
+	var mapped := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var direct := Vector2(
+		float(bool(_direct_pressed.get(&"move_right", false))) - float(bool(_direct_pressed.get(&"move_left", false))),
+		float(bool(_direct_pressed.get(&"move_back", false))) - float(bool(_direct_pressed.get(&"move_forward", false)))
+	)
+	if direct.length_squared() > 0.0:
+		return direct.normalized()
+	return mapped
 
 func _ready() -> void:
 	add_to_group("player")
@@ -96,28 +159,30 @@ func _physics_process(delta: float) -> void:
 	if state == ActionState.FREE:
 		if stamina_regen_wait <= 0.0 and not blocking:
 			stamina = minf(max_stamina, stamina + stamina_regen * delta)
-		blocking = Input.is_action_pressed("block") and stamina > 0.0
-		if Input.is_action_just_pressed("interact"):
+		blocking = _action_pressed(&"block") and stamina > 0.0
+		if _action_just_pressed(&"interact"):
 			_interact()
-		if Input.is_action_just_pressed("parry"):
+		if _action_just_pressed(&"parry"):
 			_start_parry()
-		elif Input.is_action_just_pressed("dodge"):
+		elif _action_just_pressed(&"dodge"):
 			_start_dodge()
-		elif Input.is_action_just_pressed("heavy_attack"):
+		elif _action_just_pressed(&"heavy_attack"):
 			_request_attack(&"heavy")
-		elif Input.is_action_just_pressed("light_attack"):
+		elif _action_just_pressed(&"light_attack"):
 			_request_attack(&"light")
-		elif Input.is_action_just_pressed("heal"):
+		elif _action_just_pressed(&"heal"):
 			_use_flask()
-		if Input.is_action_just_pressed("lock_target"):
+		if _action_just_pressed(&"lock_target"):
 			_toggle_target_lock()
 	elif state == ActionState.WINDUP or state == ActionState.ACTIVE or state == ActionState.RECOVERY:
-		if Input.is_action_just_pressed("light_attack") or Input.is_action_just_pressed("heavy_attack"):
-			queued_attack = &"heavy" if Input.is_action_just_pressed("heavy_attack") else &"light"
+		var light_buffered := _action_just_pressed(&"light_attack")
+		var heavy_buffered := _action_just_pressed(&"heavy_attack")
+		if light_buffered or heavy_buffered:
+			queued_attack = &"heavy" if heavy_buffered else &"light"
 	stats_changed.emit()
 
 func _update_movement(delta: float) -> void:
-	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input_vector := _get_move_input()
 	# Both camera and character movement use a fixed world compass.
 	var forward := -camera_rig.global_basis.z
 	var right := camera_rig.global_basis.x
@@ -134,7 +199,7 @@ func _update_movement(delta: float) -> void:
 		velocity.x = move_toward(velocity.x, 0.0, acceleration * delta)
 		velocity.z = move_toward(velocity.z, 0.0, acceleration * delta)
 	else:
-		var sprinting := Input.is_action_pressed("sprint") and stamina > 1.0 and not blocking and state == ActionState.FREE
+		var sprinting := _action_pressed(&"sprint") and stamina > 1.0 and not blocking and state == ActionState.FREE
 		var speed := sprint_speed if sprinting else walk_speed
 		if sprinting and move_direction.length_squared() > 0.01:
 			stamina = maxf(0.0, stamina - 19.0 * delta)
