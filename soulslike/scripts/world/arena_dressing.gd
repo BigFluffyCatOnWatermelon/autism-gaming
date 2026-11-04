@@ -107,7 +107,7 @@ func _build_graves() -> void:
 func _build_rubble() -> void:
 	for center in [Vector3(-11, 0, -11), Vector3(11, 0, -12), Vector3(-15, 0, 2), Vector3(15, 0, 4), Vector3(-5, 0, -21), Vector3(7, 0, -21), Vector3(-12, 0, 18), Vector3(12, 0, 18)]:
 		for index in range(9):
-			var at := center + Vector3(_rng.randf_range(-1.35, 1.35), _rng.randf_range(0.08, 0.35), _rng.randf_range(-1.0, 1.0))
+			var at: Vector3 = center + Vector3(_rng.randf_range(-1.35, 1.35), _rng.randf_range(0.08, 0.35), _rng.randf_range(-1.0, 1.0))
 			var extent := Vector3(_rng.randf_range(0.3, 0.9), _rng.randf_range(0.2, 0.58), _rng.randf_range(0.3, 0.8))
 			_block(self, at, extent, _stone if index % 2 == 0 else _stone_light, _rng.randf_range(-0.8, 0.8))
 
