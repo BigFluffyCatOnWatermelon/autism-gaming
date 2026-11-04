@@ -2,6 +2,15 @@ extends CharacterBody2D
 
 const GameConfigScript = preload("res://scripts/game_config.gd")
 const WORLD_Z_SORT_OFFSET := 2048
+enum DirectionLayout {
+	LEGACY_4_ROWS,
+	EIGHT_ROWS,
+	EIGHT_COLUMNS,
+	SINGLE_ROW,
+	SEQUENTIAL_GRID,
+	CUSTOM,
+}
+
 @export_group("Анимации персонажа")
 @export_subgroup("Idle")
 @export var idle_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
@@ -13,6 +22,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_range(0, 256, 1) var idle_frames_per_direction: int = 0
 @export var idle_flip_h := false
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var idle_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var idle_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Walk")
@@ -22,6 +34,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var walk_flip_h := false
 @export_range(1, 256, 1) var movement_frames_per_direction: int = 4
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var movement_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var movement_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Run")
@@ -31,6 +46,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var run_flip_h := false
 @export_range(1, 256, 1) var run_frames_per_direction: int = 8
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var run_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var run_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Sitting")
@@ -40,6 +58,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var sitting_flip_h := false
 @export_range(1, 256, 1) var sitting_frames_per_direction: int = 1
 ## Same eight-direction order as other animations. Empty uses the legacy four-row layout.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var sitting_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var sitting_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Hurt")
@@ -49,6 +70,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var hurt_flip_h := false
 @export_range(1, 256, 1) var hurt_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var hurt_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var hurt_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Death")
@@ -58,6 +82,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var death_flip_h := false
 @export_range(1, 256, 1) var death_frames_per_direction: int = 4
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var death_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var death_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Dodge")
@@ -67,6 +94,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var dodge_flip_h := false
 @export_range(1, 256, 1) var dodge_frames_per_direction: int = 5
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var dodge_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var dodge_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Interact")
@@ -76,6 +106,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var interact_flip_h := false
 @export_range(1, 256, 1) var interact_frames_per_direction: int = 4
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var interact_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var interact_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_group("Боевые анимации")
@@ -86,6 +119,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var axe_attack_flip_h := false
 @export_range(1, 256, 1) var axe_attack_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var axe_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var axe_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Pickaxe")
@@ -95,6 +131,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var pickaxe_attack_flip_h := false
 @export_range(1, 256, 1) var pickaxe_attack_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var pickaxe_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var pickaxe_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Sword Slash")
@@ -104,6 +143,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var sword_slash_flip_h := false
 @export_range(1, 256, 1) var sword_slash_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var sword_slash_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var sword_slash_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Sword Thrust")
@@ -113,6 +155,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var sword_thrust_flip_h := false
 @export_range(1, 256, 1) var sword_thrust_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var sword_thrust_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var sword_thrust_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 @export_subgroup("Bow")
@@ -122,6 +167,9 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export var bow_attack_flip_h := false
 @export_range(1, 256, 1) var bow_attack_frames_per_direction: int = 5
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
+## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var bow_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var bow_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
 const ITEM_TEXTURE_PATHS := {
@@ -161,6 +209,7 @@ var attack_animation_uses_sheet := false
 var active_attack_columns := 3
 var active_attack_rows := 4
 var active_attack_frames_per_direction := 3
+var active_attack_direction_layout := DirectionLayout.LEGACY_4_ROWS
 var active_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 var active_animation_flip_h := false
 var current_held_item := ""
@@ -281,15 +330,44 @@ func _get_legacy_direction_start_frame(direction_index: int, columns: int) -> in
 
 
 func _get_direction_start_frame(
+		direction_layout: int,
 		direction_frame_starts: PackedInt32Array,
 		direction_index: int,
+		columns: int,
+		frames_per_direction: int
+	) -> int:
+	var safe_columns := maxi(1, columns)
+	match direction_layout:
+		DirectionLayout.LEGACY_4_ROWS:
+			if direction_frame_starts.is_empty():
+				return _get_legacy_direction_start_frame(direction_index, safe_columns)
+			return direction_frame_starts[direction_index] if direction_index < direction_frame_starts.size() else _get_legacy_direction_start_frame(direction_index, safe_columns)
+		DirectionLayout.EIGHT_ROWS:
+			# One direction per row; frames advance horizontally.
+			return direction_index * safe_columns
+		DirectionLayout.EIGHT_COLUMNS:
+			# One direction per column; frames advance vertically.
+			return direction_index
+		DirectionLayout.SINGLE_ROW, DirectionLayout.SEQUENTIAL_GRID:
+			# Direction blocks are consecutive in row-major order.
+			return direction_index * maxi(1, frames_per_direction)
+		DirectionLayout.CUSTOM:
+			if direction_index >= 0 and direction_index < direction_frame_starts.size():
+				return maxi(0, direction_frame_starts[direction_index])
+			return direction_index * maxi(1, frames_per_direction)
+	return 0
+
+
+func _get_direction_frame_index(
+		start_frame: int,
+		animation_frame: int,
+		direction_layout: int,
 		columns: int
 	) -> int:
-	if direction_index >= 0 and direction_index < direction_frame_starts.size():
-		var configured_start := direction_frame_starts[direction_index]
-		if configured_start >= 0:
-			return configured_start
-	return _get_legacy_direction_start_frame(direction_index, columns)
+	var frame_offset := animation_frame
+	if direction_layout == DirectionLayout.EIGHT_COLUMNS:
+		frame_offset *= maxi(1, columns)
+	return start_frame + frame_offset
 
 
 func _get_frame_coords(frame_index: int, columns: int) -> Vector2i:
@@ -359,6 +437,7 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	var sheet_id := animation_id if not animation_id.is_empty() else item_id
 	var action_texture: Texture2D
 	var action_direction_frame_starts := PackedInt32Array()
+	var action_direction_layout := DirectionLayout.LEGACY_4_ROWS
 	var action_frames_per_direction := 3
 	match sheet_id:
 		"axe":
@@ -366,30 +445,35 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 			active_attack_columns = axe_attack_columns
 			active_attack_rows = axe_attack_rows
 			action_direction_frame_starts = axe_attack_direction_frame_starts
+			action_direction_layout = axe_attack_direction_layout
 			action_frames_per_direction = axe_attack_frames_per_direction
 		"pickaxe":
 			action_texture = pickaxe_attack_sheet
 			active_attack_columns = pickaxe_attack_columns
 			active_attack_rows = pickaxe_attack_rows
 			action_direction_frame_starts = pickaxe_attack_direction_frame_starts
+			action_direction_layout = pickaxe_attack_direction_layout
 			action_frames_per_direction = pickaxe_attack_frames_per_direction
 		"sword_slash":
 			action_texture = sword_slash_sheet
 			active_attack_columns = sword_slash_columns
 			active_attack_rows = sword_slash_rows
 			action_direction_frame_starts = sword_slash_direction_frame_starts
+			action_direction_layout = sword_slash_direction_layout
 			action_frames_per_direction = sword_slash_frames_per_direction
 		"sword_thrust":
 			action_texture = sword_thrust_sheet
 			active_attack_columns = sword_thrust_columns
 			active_attack_rows = sword_thrust_rows
 			action_direction_frame_starts = sword_thrust_direction_frame_starts
+			action_direction_layout = sword_thrust_direction_layout
 			action_frames_per_direction = sword_thrust_frames_per_direction
 		"bow":
 			action_texture = bow_attack_sheet
 			active_attack_columns = bow_attack_columns
 			active_attack_rows = bow_attack_rows
 			action_direction_frame_starts = bow_attack_direction_frame_starts
+			action_direction_layout = bow_attack_direction_layout
 			action_frames_per_direction = bow_attack_frames_per_direction
 		_:
 			action_texture = null
@@ -413,7 +497,8 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	attack_animation_uses_sheet = true
 
 	active_attack_direction_frame_starts = action_direction_frame_starts
-	active_attack_frames_per_direction = maxi(1, active_attack_columns if action_direction_frame_starts.is_empty() else action_frames_per_direction)
+	active_attack_direction_layout = action_direction_layout
+	active_attack_frames_per_direction = maxi(1, active_attack_columns if action_direction_layout == DirectionLayout.LEGACY_4_ROWS and action_direction_frame_starts.is_empty() else action_frames_per_direction)
 	attack_animation_direction_index = _get_direction_index(direction)
 
 	# Configure the full sprite-sheet grid and direction frame starts in the Inspector.
@@ -421,9 +506,11 @@ func play_attack_animation(item_id: String, aim_direction: Vector2, duration: fl
 	sprite.hframes = maxi(1, active_attack_columns)
 	sprite.vframes = maxi(1, active_attack_rows)
 	attack_animation_frame_start = _get_direction_start_frame(
+		active_attack_direction_layout,
 		active_attack_direction_frame_starts,
 		attack_animation_direction_index,
-		sprite.hframes
+		sprite.hframes,
+		active_attack_frames_per_direction
 	)
 	_set_sprite_frame(attack_animation_frame_start)
 	sprite.flip_h = active_animation_flip_h
@@ -534,7 +621,7 @@ func _update_visuals(delta: float) -> void:
 			active_attack_frames_per_direction - 1,
 			int(floor(progress * float(active_attack_frames_per_direction)))
 		)
-		_set_sprite_frame(attack_animation_frame_start + action_frame)
+		_set_sprite_frame(_get_direction_frame_index(attack_animation_frame_start, action_frame, active_attack_direction_layout, sprite.hframes))
 	elif crouching and not moving and not rolling and sitting_sheet != null:
 		walk_animation_time = 0.0
 		idle_animation_time = 0.0
@@ -543,13 +630,15 @@ func _update_visuals(delta: float) -> void:
 		sprite.hframes = maxi(1, sitting_columns)
 		sprite.vframes = maxi(1, sitting_rows)
 		var sitting_start := _get_direction_start_frame(
+			sitting_direction_layout,
 			sitting_direction_frame_starts,
 			facing_direction_index,
-			sprite.hframes
+			sprite.hframes,
+			sitting_frames_per_direction
 		)
 		var sitting_count := maxi(1, sitting_frames_per_direction)
 		var sitting_frame := int(floor(sitting_animation_time / 0.35)) % sitting_count
-		_set_sprite_frame(sitting_start + sitting_frame)
+		_set_sprite_frame(_get_direction_frame_index(sitting_start, sitting_frame, sitting_direction_layout, sprite.hframes))
 		sprite.flip_h = sitting_flip_h
 	elif moving and not rolling:
 		walk_animation_time += delta
@@ -559,23 +648,23 @@ func _update_visuals(delta: float) -> void:
 			sprite.texture = run_sheet
 			sprite.hframes = maxi(1, run_columns)
 			sprite.vframes = maxi(1, run_rows)
-			var run_start := _get_direction_start_frame(run_direction_frame_starts, facing_direction_index, sprite.hframes)
+			var run_start := _get_direction_start_frame(run_direction_layout, run_direction_frame_starts, facing_direction_index, sprite.hframes, run_frames_per_direction)
 			var run_count := maxi(1, run_frames_per_direction)
-			if run_direction_frame_starts.is_empty():
+			if run_direction_layout == DirectionLayout.LEGACY_4_ROWS and run_direction_frame_starts.is_empty():
 				run_count = sprite.hframes
 			var run_frame := int(floor(walk_animation_time / 0.085)) % run_count
-			_set_sprite_frame(run_start + run_frame)
+			_set_sprite_frame(_get_direction_frame_index(run_start, run_frame, run_direction_layout, sprite.hframes))
 			sprite.flip_h = run_flip_h
 		else:
 			sprite.texture = movement_sheet
 			sprite.hframes = maxi(1, movement_columns)
 			sprite.vframes = maxi(1, movement_rows)
-			var walk_start := _get_direction_start_frame(movement_direction_frame_starts, facing_direction_index, sprite.hframes)
+			var walk_start := _get_direction_start_frame(movement_direction_layout, movement_direction_frame_starts, facing_direction_index, sprite.hframes, movement_frames_per_direction)
 			var walk_count := maxi(1, movement_frames_per_direction)
-			if movement_direction_frame_starts.is_empty():
+			if movement_direction_layout == DirectionLayout.LEGACY_4_ROWS and movement_direction_frame_starts.is_empty():
 				walk_count = maxi(1, mini(4, sprite.hframes))
 			var frame := int(floor(walk_animation_time / (0.145 if not running else 0.085))) % walk_count
-			_set_sprite_frame(walk_start + frame)
+			_set_sprite_frame(_get_direction_frame_index(walk_start, frame, movement_direction_layout, sprite.hframes))
 			sprite.flip_h = walk_flip_h
 	else:
 		walk_animation_time = 0.0
@@ -586,18 +675,19 @@ func _update_visuals(delta: float) -> void:
 		var selected_idle_columns := maxi(1, idle_columns if has_separate_idle_sheet else movement_columns)
 		var selected_idle_rows := maxi(1, idle_rows if has_separate_idle_sheet else movement_rows)
 		var selected_idle_direction_starts := idle_direction_frame_starts if has_separate_idle_sheet else movement_direction_frame_starts
+		var selected_idle_layout := idle_direction_layout if has_separate_idle_sheet else movement_direction_layout
+		var selected_idle_frames_per_direction := idle_frames_per_direction if idle_frames_per_direction > 0 else idle_frame_count
 		sprite.texture = selected_idle_sheet
 		sprite.hframes = selected_idle_columns
 		sprite.vframes = selected_idle_rows
-		var idle_max_frames := sprite.hframes * sprite.vframes if not selected_idle_direction_starts.is_empty() else sprite.hframes
-		var configured_idle_frames := idle_frames_per_direction if idle_frames_per_direction > 0 else idle_frame_count
-		var idle_count := clampi(configured_idle_frames, 1, idle_max_frames)
-		var idle_start := _get_direction_start_frame(selected_idle_direction_starts, facing_direction_index, sprite.hframes)
+		var idle_max_frames := sprite.vframes if selected_idle_layout == DirectionLayout.EIGHT_COLUMNS else (sprite.hframes if selected_idle_layout == DirectionLayout.LEGACY_4_ROWS else sprite.hframes * sprite.vframes)
+		var idle_count := clampi(selected_idle_frames_per_direction, 1, maxi(1, idle_max_frames))
+		var idle_start := _get_direction_start_frame(selected_idle_layout, selected_idle_direction_starts, facing_direction_index, sprite.hframes, idle_count)
 		# Legacy sheets place idle frames at the end of each direction row.
-		if selected_idle_direction_starts.is_empty():
+		if selected_idle_layout == DirectionLayout.LEGACY_4_ROWS and selected_idle_direction_starts.is_empty():
 			idle_start += maxi(0, selected_idle_columns - idle_count)
 		var idle_frame := int(floor(idle_animation_time / 0.35)) % idle_count
-		_set_sprite_frame(idle_start + idle_frame)
+		_set_sprite_frame(_get_direction_frame_index(idle_start, idle_frame, selected_idle_layout, sprite.hframes))
 		sprite.flip_h = idle_flip_h
 
 	if rolling:
