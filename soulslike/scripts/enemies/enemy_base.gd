@@ -14,12 +14,27 @@ enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STUNNED, DEAD }
 @export var attack_recovery := 1.12
 @export var gravity := 22.0
 @export var attack_arc_degrees := 105.0
+@export_group("Defense")
+@export_range(0.0, 0.85, 0.01) var physical_resistance := 0.0
+@export_range(0.0, 0.85, 0.01) var fire_resistance := 0.0
+@export var maximum_poise := 60.0
+@export var poise_regeneration := 22.0
+@export var poise_regeneration_delay := 1.25
+@export var backstab_vulnerable := true
+@export var backstab_distance := 1.8
+@export var backstab_dot_threshold := -0.62
+@export var shield_guard := false
+@export_range(0.0, 0.95, 0.01) var shield_guard_reduction := 0.78
+@export var shield_break_poise := 62.0
 
 @onready var body_visual: Node3D = $Visual
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var telegraph: MeshInstance3D = $Telegraph
 
 var current_health: float
+var current_poise := 60.0
+var poise_regeneration_wait := 0.0
+var shield_broken_time := 0.0
 var state: AIState = AIState.IDLE
 var state_time := 0.0
 var player: PlayerController
@@ -31,6 +46,7 @@ var base_material: StandardMaterial3D
 func _ready() -> void:
 	add_to_group("enemies")
 	current_health = maximum_health
+	current_poise = maximum_poise
 	spawn_position = global_position
 	spawn_rotation = global_rotation
 	telegraph.visible = false
@@ -51,6 +67,10 @@ func _physics_process(delta: float) -> void:
 		return
 
 	state_time = maxf(0.0, state_time - delta)
+	poise_regeneration_wait = maxf(0.0, poise_regeneration_wait - delta)
+	shield_broken_time = maxf(0.0, shield_broken_time - delta)
+	if poise_regeneration_wait <= 0.0 and current_poise < maximum_poise and state != AIState.STUNNED:
+		current_poise = minf(maximum_poise, current_poise + poise_regeneration * delta)
 	var distance := global_position.distance_to(player.global_position)
 	match state:
 		AIState.IDLE:
@@ -133,20 +153,61 @@ func _set_telegraph(enabled: bool) -> void:
 		var tween := create_tween()
 		tween.tween_property(telegraph, "scale", Vector3.ONE, attack_windup)
 
+func is_backstab_position(attacker: Node3D) -> bool:
+	if not backstab_vulnerable or state == AIState.DEAD or not is_instance_valid(attacker):
+		return false
+	var offset := attacker.global_position - global_position
+	offset.y = 0.0
+	if offset.length() > backstab_distance or offset.length_squared() < 0.01:
+		return false
+	var forward := -global_basis.z
+	forward.y = 0.0
+	return forward.normalized().dot(offset.normalized()) <= backstab_dot_threshold
+
+func _attacker_is_in_front(attacker: Node3D) -> bool:
+	if not is_instance_valid(attacker):
+		return false
+	var offset := attacker.global_position - global_position
+	offset.y = 0.0
+	if offset.length_squared() < 0.01:
+		return true
+	var forward := -global_basis.z
+	forward.y = 0.0
+	return forward.normalized().dot(offset.normalized()) >= 0.35
+
 func receive_damage(info: DamageInfo) -> void:
 	if state == AIState.DEAD:
 		return
-	current_health = maxf(0.0, current_health - info.amount)
+	var resistance := physical_resistance if info.damage_type == &"physical" else (fire_resistance if info.damage_type == &"fire" else 0.0)
+	var damage := info.amount * (1.0 - clampf(resistance, 0.0, 0.85))
+	var blocked_by_shield := shield_guard and shield_broken_time <= 0.0 and _attacker_is_in_front(info.source)
+	var poise_broken := false
+	if blocked_by_shield:
+		if info.poise_damage >= shield_break_poise:
+			shield_broken_time = 2.2
+			poise_broken = true
+			damage *= 1.2
+		else:
+			damage *= 1.0 - shield_guard_reduction
+			current_poise = maxf(0.0, current_poise - info.poise_damage * 0.65)
+			if current_poise <= 0.0:
+				shield_broken_time = 1.8
+				poise_broken = true
+	else:
+		current_poise = maxf(0.0, current_poise - info.poise_damage)
+		poise_broken = current_poise <= 0.0
+	poise_regeneration_wait = poise_regeneration_delay
+	current_health = maxf(0.0, current_health - damage)
 	_flash_hit()
 	if current_health <= 0.0:
 		_die()
 	else:
 		state = AIState.STUNNED
-		state_time = 0.38 if info.poise_damage >= 20.0 else 0.24
+		state_time = 1.15 if poise_broken else (0.38 if info.poise_damage >= 20.0 else 0.24)
 		var push := global_position - info.source.global_position if info.source != null else Vector3.ZERO
 		push.y = 0.0
 		if push.length_squared() > 0.001:
-			velocity += push.normalized() * 3.2
+			velocity += push.normalized() * (4.2 if poise_broken else 3.2)
 
 func on_parried(_source: Node3D) -> void:
 	if state == AIState.DEAD:
@@ -189,6 +250,9 @@ func reset_enemy() -> void:
 	state = AIState.IDLE
 	state_time = 0.0
 	current_health = maximum_health
+	current_poise = maximum_poise
+	poise_regeneration_wait = 0.0
+	shield_broken_time = 0.0
 	reward_given = false
 	global_position = spawn_position
 	global_rotation = spawn_rotation

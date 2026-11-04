@@ -22,6 +22,7 @@ func _enter_tree() -> void:
 	_bind_key("light_attack", KEY_J)
 	_bind_key("heavy_attack", KEY_K)
 	_bind_key("block", KEY_L)
+	_bind_key("switch_weapon", KEY_V)
 	_bind_pad("dodge", JOY_BUTTON_B)
 	_bind_pad("light_attack", JOY_BUTTON_X)
 	_bind_pad("heavy_attack", JOY_BUTTON_Y)

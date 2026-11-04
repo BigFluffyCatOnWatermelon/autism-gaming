@@ -14,7 +14,15 @@ enum ActionState { FREE, WINDUP, ACTIVE, RECOVERY, DODGING, STAGGERED, DEAD }
 @export var sprint_speed := 7.2
 @export var acceleration := 32.0
 @export var gravity := 24.0
-@export var camera_offset := Vector3(0.0, 13.0, 10.0)
+@export_group("Camera")
+@export var camera_target_height := 1.35
+@export var camera_distance := 6.4
+@export var camera_min_distance := 3.5
+@export var camera_max_distance := 9.0
+@export_range(12.0, 48.0, 0.5) var camera_pitch_degrees := 19.0
+@export var camera_sensitivity := 0.0025
+@export var camera_follow_speed := 12.0
+@export var camera_collision_margin := 0.22
 @export_group("Combat")
 @export var max_health := 120.0
 @export var max_stamina := 100.0
@@ -32,6 +40,10 @@ enum ActionState { FREE, WINDUP, ACTIVE, RECOVERY, DODGING, STAGGERED, DEAD }
 @export_group("Flasks")
 @export var flask_heal_amount := 48.0
 @export var max_flasks := 3
+@export_group("Weapons")
+@export var weapon_loadout: Array[Resource] = []
+@export_group("Defense")
+@export var damage_resistances: Dictionary = {"physical": 0.0, "fire": 0.0, "magic": 0.0}
 
 @onready var health: HealthComponent = $Health
 @onready var attack_area: Area3D = $AttackArea
@@ -45,6 +57,12 @@ var state: ActionState = ActionState.FREE
 var action_time := 0.0
 var queued_attack: StringName = &""
 var attack_damage := 0.0
+var attack_poise_damage := 26.0
+var attack_damage_type: StringName = &"physical"
+var current_attack_kind: StringName = &"light"
+var current_weapon: WeaponDefinition
+var current_weapon_index := -1
+var camera_yaw := 0.0
 var hit_targets: Array[Node] = []
 var facing := Vector3.FORWARD
 var dodge_direction := Vector3.ZERO
@@ -60,17 +78,78 @@ var _direct_pressed: Dictionary = {}
 var _direct_just_pressed: Dictionary = {}
 
 func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion:
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			_apply_mouse_look((event as InputEventMouseMotion).relative)
+		return
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if DisplayServer.get_name() != "headless" and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE and mouse_event.pressed:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			return
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and mouse_event.pressed:
+			if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
+				_zoom_camera(-0.65)
+				return
+			if mouse_event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				_zoom_camera(0.65)
+				return
+			var mouse_action := _mouse_to_action(mouse_event.button_index)
+			if mouse_action != &"":
+				_set_direct_action(mouse_action, mouse_event.pressed, false)
+		return
 	if event is InputEventKey:
 		var key_event := event as InputEventKey
 		var code := key_event.physical_keycode if key_event.physical_keycode != KEY_NONE else key_event.keycode
 		var action := _key_to_action(code)
 		if action != &"":
 			_set_direct_action(action, key_event.pressed, key_event.echo)
-	elif event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
-		var action := _mouse_to_action(mouse_event.button_index)
-		if action != &"":
-			_set_direct_action(action, mouse_event.pressed, false)
+
+func _apply_mouse_look(relative: Vector2) -> void:
+	if locked_target != null and is_instance_valid(locked_target):
+		return
+	camera_yaw = wrapf(camera_yaw - relative.x * camera_sensitivity, -PI, PI)
+	camera_pitch_degrees = clampf(camera_pitch_degrees - relative.y * camera_sensitivity * 180.0 / PI, 12.0, 48.0)
+	camera_rig.global_rotation = Vector3(0.0, camera_yaw, 0.0)
+	_update_camera_transform()
+
+func _zoom_camera(amount: float) -> void:
+	camera_distance = clampf(camera_distance + amount, camera_min_distance, camera_max_distance)
+	_update_camera_transform()
+
+func _update_camera_transform() -> void:
+	if not is_instance_valid(camera) or not is_instance_valid(camera_rig):
+		return
+	var pitch := deg_to_rad(camera_pitch_degrees)
+	var desired_local := Vector3(0.0, sin(pitch) * camera_distance, cos(pitch) * camera_distance)
+	camera.position = desired_local
+	camera.rotation = Vector3(-pitch, 0.0, 0.0)
+	if not is_inside_tree() or get_world_3d() == null:
+		return
+	var query := PhysicsRayQueryParameters3D.create(camera_rig.global_position, camera_rig.to_global(desired_local))
+	query.exclude = [get_rid()]
+	query.collision_mask = 1
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if not hit.is_empty():
+		camera.position = camera_rig.to_local(hit.position + hit.normal * camera_collision_margin)
+
+func get_weapon_name() -> String:
+	return current_weapon.display_name if current_weapon != null else "UNARMED"
+
+func _switch_weapon() -> void:
+	if weapon_loadout.size() < 2:
+		status_message.emit("NO SECONDARY WEAPON")
+		return
+	var next_index := (current_weapon_index + 1) % weapon_loadout.size()
+	var next_weapon := weapon_loadout[next_index] as WeaponDefinition
+	if next_weapon == null:
+		status_message.emit("INVALID WEAPON SLOT")
+		return
+	current_weapon_index = next_index
+	current_weapon = next_weapon
+	apply_progression_stats(true)
+	status_message.emit("EQUIPPED  •  " + current_weapon.display_name.to_upper())
+	stats_changed.emit()
 
 func _key_to_action(code: int) -> StringName:
 	match code:
@@ -88,6 +167,7 @@ func _key_to_action(code: int) -> StringName:
 		KEY_J: return &"light_attack"
 		KEY_K: return &"heavy_attack"
 		KEY_L: return &"block"
+		KEY_V: return &"switch_weapon"
 	return &""
 
 func _mouse_to_action(button: int) -> StringName:
@@ -132,11 +212,17 @@ func _ready() -> void:
 	health.depleted.connect(_on_depleted)
 	attack_area.monitoring = false
 	attack_area.body_entered.connect(_on_attack_body_entered)
-	# The camera has its own world-space compass; character yaw cannot rotate WASD.
+	if not weapon_loadout.is_empty():
+		current_weapon_index = 0
+		current_weapon = weapon_loadout[0] as WeaponDefinition
+	# The camera orbits the player from an over-the-shoulder third-person position.
 	camera_rig.top_level = true
-	camera_rig.global_position = global_position
-	camera_rig.global_rotation = Vector3.ZERO
-	camera.position = camera_offset
+	camera_rig.global_position = global_position + Vector3.UP * camera_target_height
+	camera_yaw = 0.0
+	camera_rig.global_rotation = Vector3(0.0, camera_yaw, 0.0)
+	_update_camera_transform()
+	if DisplayServer.get_name() != "headless":
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if RunState.has_checkpoint:
 		global_position = RunState.checkpoint_position
 	RunState.souls_changed.connect(_on_run_souls_changed)
@@ -144,7 +230,20 @@ func _ready() -> void:
 	stats_changed.emit()
 
 func _process(delta: float) -> void:
-	camera_rig.global_position = camera_rig.global_position.lerp(global_position, minf(1.0, delta * 9.0))
+	var focus := global_position + Vector3.UP * camera_target_height
+	var follow_weight := 1.0 - exp(-camera_follow_speed * delta)
+	camera_rig.global_position = camera_rig.global_position.lerp(focus, follow_weight)
+	if locked_target != null:
+		if not is_instance_valid(locked_target) or not locked_target.visible:
+			locked_target = null
+		else:
+			var target_direction := locked_target.global_position - global_position
+			target_direction.y = 0.0
+			if target_direction.length_squared() > 0.001:
+				var target_yaw := atan2(-target_direction.x, -target_direction.z)
+				camera_yaw = lerp_angle(camera_yaw, target_yaw, 1.0 - exp(-delta * 9.0))
+	camera_rig.global_rotation = Vector3(0.0, camera_yaw, 0.0)
+	_update_camera_transform()
 	_update_interactable_prompt()
 
 func _physics_process(delta: float) -> void:
@@ -173,6 +272,8 @@ func _physics_process(delta: float) -> void:
 			_request_attack(&"light")
 		elif _action_just_pressed(&"heal"):
 			_use_flask()
+		elif _action_just_pressed(&"switch_weapon"):
+			_switch_weapon()
 		if _action_just_pressed(&"lock_target"):
 			_toggle_target_lock()
 	elif state == ActionState.WINDUP or state == ActionState.ACTIVE or state == ActionState.RECOVERY:
@@ -227,30 +328,34 @@ func _request_attack(kind: StringName) -> void:
 	if state != ActionState.FREE:
 		queued_attack = kind
 		return
-	var cost := heavy_cost if kind == &"heavy" else light_cost
+	var is_heavy := kind == &"heavy"
+	var cost := (current_weapon.heavy_stamina_cost if is_heavy else current_weapon.light_stamina_cost) if current_weapon != null else (heavy_cost if is_heavy else light_cost)
 	if stamina < cost:
 		status_message.emit("Not enough stamina")
 		return
 	stamina -= cost
 	stamina_regen_wait = stamina_regen_delay
-	attack_damage = heavy_damage if kind == &"heavy" else light_damage
+	current_attack_kind = kind
+	attack_damage = heavy_damage if is_heavy else light_damage
+	attack_poise_damage = (current_weapon.heavy_poise_damage if is_heavy else current_weapon.light_poise_damage) if current_weapon != null else (50.0 if is_heavy else 26.0)
+	attack_damage_type = current_weapon.damage_type if current_weapon != null else &"physical"
 	if riposte_ready:
 		attack_damage *= 1.8
 		riposte_ready = false
 	state = ActionState.WINDUP
-	action_time = 0.46 if kind == &"heavy" else 0.24
-	attack_area.scale = Vector3.ONE * (1.35 if kind == &"heavy" else 1.0)
+	var windup := (current_weapon.heavy_windup if is_heavy else current_weapon.light_windup) if current_weapon != null else (0.46 if is_heavy else 0.24)
+	action_time = windup
+	var range_scale := (current_weapon.heavy_range_scale if is_heavy else current_weapon.light_range_scale) if current_weapon != null else (1.35 if is_heavy else 1.0)
+	attack_area.scale = Vector3.ONE * range_scale
 	hit_targets.clear()
 	blocking = false
-	if has_node("Weapon"):
-		(get_node("Weapon") as Node3D).visible = true
 
 func _start_dodge() -> void:
 	if state != ActionState.FREE or stamina < dodge_cost:
 		return
 	stamina -= dodge_cost
 	stamina_regen_wait = stamina_regen_delay
-	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
+	var input_vector := _get_move_input()
 	var direction := Vector3.ZERO
 	if input_vector.length_squared() > 0.01:
 		direction = camera_rig.global_basis.x * input_vector.x + camera_rig.global_basis.z * input_vector.y
@@ -287,9 +392,10 @@ func _update_action(delta: float) -> void:
 	if state == ActionState.FREE:
 		return
 	action_time -= delta
+	var is_heavy := current_attack_kind == &"heavy"
 	if state == ActionState.WINDUP and action_time <= 0.0:
 		state = ActionState.ACTIVE
-		action_time = 0.19 if attack_damage <= heavy_damage else 0.25
+		action_time = (current_weapon.heavy_active if is_heavy else current_weapon.light_active) if current_weapon != null else (0.25 if is_heavy else 0.19)
 		attack_area.monitoring = true
 		_check_attack_overlaps()
 	elif state == ActionState.ACTIVE:
@@ -297,9 +403,7 @@ func _update_action(delta: float) -> void:
 		if action_time <= 0.0:
 			attack_area.monitoring = false
 			state = ActionState.RECOVERY
-			action_time = 0.42 if attack_damage <= heavy_damage else 0.58
-			if has_node("Weapon"):
-				(get_node("Weapon") as Node3D).visible = false
+			action_time = (current_weapon.heavy_recovery if is_heavy else current_weapon.light_recovery) if current_weapon != null else (0.58 if is_heavy else 0.42)
 	elif action_time <= 0.0:
 		if state == ActionState.DODGING or state == ActionState.RECOVERY or state == ActionState.STAGGERED:
 			state = ActionState.FREE
@@ -317,8 +421,17 @@ func _on_attack_body_entered(body: Node3D) -> void:
 		return
 	if body.has_method("receive_damage"):
 		hit_targets.append(body)
-		body.receive_damage(DamageInfo.new(attack_damage, &"physical", 26.0, self))
-		status_message.emit("Hit!")
+		var dealt_damage := attack_damage
+		var poise := attack_poise_damage
+		var is_critical := body.has_method("is_backstab_position") and bool(body.is_backstab_position(self))
+		if is_critical:
+			var multiplier := current_weapon.critical_multiplier if current_weapon != null else 2.5
+			dealt_damage *= multiplier
+			poise = maxf(poise, 100.0)
+			status_message.emit("BACKSTAB  •  CRITICAL HIT")
+		else:
+			status_message.emit("HIT!")
+		body.receive_damage(DamageInfo.new(dealt_damage, attack_damage_type, poise, self))
 
 func receive_damage(info: DamageInfo) -> void:
 	if state == ActionState.DEAD or invulnerability_time > 0.0 or hurt_lock > 0.0:
@@ -332,7 +445,8 @@ func receive_damage(info: DamageInfo) -> void:
 		status_message.emit("PARRY — RIPOSTE READY")
 		stats_changed.emit()
 		return
-	var damage := info.amount
+	var resistance := clampf(float(damage_resistances.get(String(info.damage_type), 0.0)), 0.0, 0.85)
+	var damage := info.amount * (1.0 - resistance)
 	if blocking:
 		damage *= 0.24
 		stamina = maxf(0.0, stamina - info.amount * 0.9)
@@ -415,8 +529,12 @@ func apply_progression_stats(keep_current: bool = true) -> void:
 	var dexterity := int(RunState.attributes.get("dexterity", 10))
 	max_health = 120.0 + float(vitality - 10) * 8.0
 	max_stamina = 100.0 + float(endurance - 10) * 6.0
-	light_damage = 25.0 + float(strength - 10) * 1.8 + float(dexterity - 10) * 0.8
-	heavy_damage = 48.0 + float(strength - 10) * 3.0
+	if current_weapon != null:
+		light_damage = current_weapon.base_light_damage + float(strength - 10) * current_weapon.strength_light_scaling + float(dexterity - 10) * current_weapon.dexterity_light_scaling
+		heavy_damage = current_weapon.base_heavy_damage + float(strength - 10) * current_weapon.strength_heavy_scaling + float(dexterity - 10) * current_weapon.dexterity_heavy_scaling
+	else:
+		light_damage = 25.0 + float(strength - 10) * 1.8 + float(dexterity - 10) * 0.8
+		heavy_damage = 48.0 + float(strength - 10) * 3.0
 	if is_instance_valid(health):
 		health.maximum_health = max_health
 		if keep_current:
