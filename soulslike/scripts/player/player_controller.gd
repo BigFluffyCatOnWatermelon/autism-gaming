@@ -87,7 +87,7 @@ func _input(event: InputEvent) -> void:
 		if DisplayServer.get_name() != "headless" and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE and mouse_event.pressed:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 			return
-		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and mouse_event.pressed:
+		if (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED or DisplayServer.get_name() == "headless") and mouse_event.pressed:
 			if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
 				_zoom_camera(-0.65)
 				return
