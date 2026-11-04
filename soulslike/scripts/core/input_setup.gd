@@ -1,7 +1,6 @@
 extends Node
-## Defines the complete keyboard/mouse baseline. Gamepad actions are added alongside it.
 
-func _enter_tree() -> void:
+func _ready() -> void:
 	_bind_key("move_forward", KEY_W)
 	_bind_key("move_back", KEY_S)
 	_bind_key("move_left", KEY_A)
@@ -13,6 +12,8 @@ func _enter_tree() -> void:
 	_bind_key("sprint", KEY_SHIFT)
 	_bind_key("dodge", KEY_SPACE)
 	_bind_key("interact", KEY_E)
+	_bind_key("parry", KEY_F)
+	_bind_key("heal", KEY_Q)
 	_bind_key("lock_target", KEY_TAB)
 	_bind_mouse("light_attack", MOUSE_BUTTON_LEFT)
 	_bind_mouse("heavy_attack", MOUSE_BUTTON_MIDDLE)
@@ -25,34 +26,35 @@ func _enter_tree() -> void:
 	_bind_pad("heavy_attack", JOY_BUTTON_Y)
 	_bind_pad("block", JOY_BUTTON_LEFT_SHOULDER)
 	_bind_pad("sprint", JOY_BUTTON_RIGHT_SHOULDER)
+	_bind_pad("interact", JOY_BUTTON_A)
 
-func _bind_key(action: StringName, key: Key) -> void:
+func _ensure_action(action: StringName) -> void:
 	if not InputMap.has_action(action):
-		InputMap.add_action(action)
+		InputMap.add_action(action, 0.2)
+
+func _bind_key(action: StringName, key: int) -> void:
+	_ensure_action(action)
 	var event := InputEventKey.new()
 	event.physical_keycode = key
 	if not InputMap.action_has_event(action, event):
 		InputMap.action_add_event(action, event)
 
-func _bind_mouse(action: StringName, button: MouseButton) -> void:
-	if not InputMap.has_action(action):
-		InputMap.add_action(action)
+func _bind_mouse(action: StringName, button: int) -> void:
+	_ensure_action(action)
 	var event := InputEventMouseButton.new()
 	event.button_index = button
 	if not InputMap.action_has_event(action, event):
 		InputMap.action_add_event(action, event)
 
-func _bind_pad(action: StringName, button: JoyButton) -> void:
-	if not InputMap.has_action(action):
-		InputMap.add_action(action)
+func _bind_pad(action: StringName, button: int) -> void:
+	_ensure_action(action)
 	var event := InputEventJoypadButton.new()
 	event.button_index = button
 	if not InputMap.action_has_event(action, event):
 		InputMap.action_add_event(action, event)
 
-func _bind_axis(action: StringName, axis: JoyAxis, direction: float) -> void:
-	if not InputMap.has_action(action):
-		InputMap.add_action(action)
+func _bind_axis(action: StringName, axis: int, direction: float) -> void:
+	_ensure_action(action)
 	var event := InputEventJoypadMotion.new()
 	event.axis = axis
 	event.axis_value = direction

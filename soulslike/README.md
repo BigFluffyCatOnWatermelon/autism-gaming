@@ -1,16 +1,20 @@
 # Ashen Oath — standalone Soulslike project
 
-This folder is an independent Godot 4.7.2 project. Open **this folder** (the one containing `project.godot`) in Godot; do not open the repository root for this game.
+Open **this folder** (the one containing `project.godot`) in Godot 4.7.2. Do not open the repository root for this game.
 
-## Current playable slice
+## Playable combat slice
 
-- 3D top-down / slightly isometric arena.
-- WASD movement, Shift sprint, Space dodge with a short invulnerability window.
-- Left mouse / J light attack; middle mouse / K heavy attack.
-- Right mouse / L block.
-- Enemy detection, pursuit, telegraphed melee wind-up, recovery, stagger and death.
-- Stamina costs and regeneration; souls awarded for kills.
-- Health/stamina HUD and restart after death (R also restarts).
+- Camera-relative WASD movement with a detached, smooth-follow isometric camera.
+- Shift sprint, Space dodge with invulnerability frames, Q healing flask, E interaction.
+- Left mouse / J light attack; middle mouse / K heavy attack; right mouse / L guard; F parry.
+- Tab toggles lock-on to the nearest living enemy.
+- Enemy AI with detection, pursuit, visible red attack telegraph, attack arc, recovery, stagger and parry response.
+- Guard reduces incoming damage and consumes stamina; empty stamina causes a guard break.
+- A timed parry stuns an attacker and empowers the next strike.
+- Bonfire interaction restores health, stamina and flasks, activates a checkpoint and resets regular enemies.
+- Death moves carried souls into a persistent world stain. Interact with it to reclaim them. A second death overwrites the previous stain.
+- Save data is stored in `user://ashen_oath_save.json`.
+- First original boss, **Warden of the Bell**, has two phases, three attack patterns and a boss health bar.
 
 ## Controls
 
@@ -21,24 +25,28 @@ This folder is an independent Godot 4.7.2 project. Open **this folder** (the one
 | Dodge | Space | B |
 | Light attack | Left mouse / J | X |
 | Heavy attack | Middle mouse / K | Y |
-| Block | Right mouse / L | Left shoulder |
-
-The gamepad baseline is mapped through Godot's standard joypad events. Analog movement dead-zone tuning and target lock are scheduled for a later pass.
+| Guard | Right mouse / L | Left shoulder |
+| Parry | F | — |
+| Heal | Q | — |
+| Interact | E | A |
+| Lock target | Tab | — |
+| Restart after death | R | — |
 
 ## Project structure
 
-- `scripts/core`: input setup and shared runtime services
-- `scripts/player`: player movement and action state machine
-- `scripts/combat`: typed damage payloads
-- `scripts/actors`: reusable health component
-- `scripts/enemies`: enemy AI
-- `scripts/world`: arena lifecycle
-- `scripts/ui`: combat HUD
-- `scenes`: player, enemy, UI and location scenes
-- `data`: future Resource-based content definitions
+- `scripts/core`: input and persistent run state
+- `scripts/player`: movement, combat action queue, dodge, guard, parry, healing, lock-on and interaction
+- `scripts/combat`: damage payloads
+- `scripts/actors`: health component
+- `scripts/enemies`: enemy state machine and telegraphed attack
+- `scripts/bosses`: multi-phase boss AI
+- `scripts/bonfires`: checkpoint and rest interaction
+- `scripts/world`: arena lifecycle and recoverable soul stain
+- `scripts/ui`: combat HUD and prompts
+- `scenes`: reusable player, enemy, boss, bonfire, soul stain, UI and location scenes
 
-## Development rules
+All game content is authored independently under this directory. No farm scripts, scenes, assets or add-ons are referenced.
 
-All assets, scenes and scripts for this game must be authored independently under this directory. Do not reference files outside `soulslike/`, the old farm project, Cozy Village & Farm, or the archived browser game. Keep the root project's existing game untouched.
+## Honest status
 
-The first commit establishes the project and a combat test arena. It is not the complete game described in the design brief. See `PROJECT_STATE.md` and `TASKS.md`.
+This is a playable prototype slice, not the completed game brief. It still uses original greybox 3D meshes and does not yet include a finished character rig/animation set, three bosses, interconnected chapter, inventory/equipment, leveling, magic, NPC quests, production audio or complete world-state persistence. Godot editor/headless validation must be run locally before calling the build verified.

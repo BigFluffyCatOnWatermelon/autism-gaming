@@ -1,44 +1,51 @@
 # Development Tasks
 
-## Phase 1 — playable combat foundation
+## Phase 1 — playable combat slice
 
-- [x] Create independent Godot project and main scene.
-- [x] Add camera-relative player movement and sprint stamina.
-- [x] Add dodge with invulnerability frames.
-- [x] Add light/heavy attack timing and attack queue.
-- [x] Add blocking and guard-break stagger.
-- [x] Add enemy detection, chase, telegraphed attack, recovery and stagger.
-- [x] Add health/stamina/souls HUD and kill rewards.
+- [x] Independent Godot project and main scene.
+- [x] Camera-relative movement with camera yaw decoupled from player facing.
+- [x] Smooth-follow isometric camera.
+- [x] Keyboard/mouse and baseline gamepad controls.
+- [x] Sprint stamina drain and delayed regeneration.
+- [x] Dodge with invulnerability frames.
+- [x] Light/heavy attack timing and buffered follow-up.
+- [x] Guard, guard break and timed parry/riposte.
+- [x] Limited healing flasks.
+- [x] Enemy detect/chase/telegraph/attack/recovery/stagger/death/reset.
+- [x] Bonfire rest, checkpoint and enemy reset.
+- [x] Persistent souls, death stain and retrieval.
+- [x] Target lock and interaction prompt.
+- [x] First original two-phase boss and boss health bar.
+- [x] Expanded HUD and ruined arena layout.
 - [ ] Run Godot 4.7.2 headless import and main-scene startup; fix all parser/runtime errors.
-- [ ] Visually validate attack hitboxes, camera framing, enemy telegraphs and combat readability.
-- [ ] Replace greybox meshes with original authored models/materials/animations.
+- [ ] Visually validate camera framing, hit volumes, telegraphs and animation timing.
 
 ## Phase 2 — combat depth
 
-- [ ] Data-driven weapon definitions and distinct move sets.
-- [ ] Parry windows, riposte, backstab and critical reactions.
-- [ ] Poise, damage types, resistances and hit reactions.
-- [ ] Target lock, controller analog movement and remappable controls.
-- [ ] Multiple enemy archetypes and ranged AI.
+- [ ] Weapon Resource definitions, unique move sets and equipment slots.
+- [ ] Backstab, riposte animation, critical finishers and poise break.
+- [ ] Damage types/resistances and armor mitigation.
+- [ ] More enemy archetypes: shield guard, duelist, archer, caster and brute.
+- [ ] Gamepad remapping and accessibility options.
 
-## Phase 3 — Soulslike progression
+## Phase 3 — progression
 
-- [ ] Bonfires, rest interaction and enemy reset rules.
-- [ ] Souls death-drop, retrieval marker and persistent loss.
-- [ ] Leveling and all eight attributes.
-- [ ] Inventory, equipment load, armor and weapon upgrades.
-- [ ] Consumables, flasks and spell slots.
+- [ ] Full inventory, equipment load, armor and upgrade materials.
+- [ ] Leveling with eight attributes and derived stats.
+- [ ] Consumables, spell slots and multiple magic schools.
+- [ ] Expanded save slots, backup saves and robust world-state persistence.
 
 ## Phase 4 — bosses and world
 
-- [ ] Three original bosses with distinct phases and arenas.
+- [x] First original boss with two phases and distinct attack patterns.
+- [ ] Two more original bosses.
 - [ ] Interconnected chapter locations and shortcuts.
-- [ ] NPC dialogue, vendors, quests and progression flags.
-- [ ] Traps, secrets, ladders, lifts and hidden routes.
+- [ ] NPC dialogue, shops, quests and progression flags.
+- [ ] Secrets, traps, lifts, ladders and hidden routes.
 
-## Phase 5 — polish
+## Phase 5 — polish and release slice
 
-- [ ] Original art, animation, VFX, audio and music.
-- [ ] Save/load and world-state persistence.
-- [ ] Balance pass, accessibility and performance.
-- [ ] Full playable chapter acceptance test.
+- [ ] Original character rigs, animation, VFX, models and environment art.
+- [ ] Audio, music, ambience and surface-specific footsteps.
+- [ ] Performance, balance, UX and accessibility pass.
+- [ ] End-to-end chapter acceptance test after repeated deaths/reloads.
