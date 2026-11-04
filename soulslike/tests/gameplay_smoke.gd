@@ -137,11 +137,11 @@ func _ready() -> void:
 	player.attack_poise_damage = 26.0
 	player.attack_damage_type = &"physical"
 	player.hit_targets.clear()
+	enemy.current_health = enemy.maximum_health
 	var health_before_critical := enemy.current_health
-	var is_backstab := enemy.is_backstab_position(player)
-	var backstab_offset := player.global_position - enemy.global_position
-	var backstab_forward := -enemy.global_basis.z
-	print("BACKSTAB DEBUG: vulnerable=", enemy.backstab_vulnerable, " state=", enemy.state, " distance=", backstab_offset.length(), " dot=", backstab_forward.normalized().dot(backstab_offset.normalized()), " detected=", is_backstab)
+	if not enemy.is_backstab_position(player):
+		_fail("A player standing directly behind the vulnerable enemy was not detected.")
+		return
 	player._on_attack_body_entered(enemy)
 	var critical_multiplier := player.current_weapon.critical_multiplier
 	if not is_equal_approx(health_before_critical - enemy.current_health, 10.0 * critical_multiplier):
