@@ -30,6 +30,7 @@ script = ExtResource("4_player")
 idle_sheet = ExtResource("4_jhx03")
 idle_columns = 8
 idle_frame_count = 8
+idle_frames_per_direction = 8
 movement_sheet = ExtResource("5_o8fc1")
 movement_columns = 8
 run_sheet = ExtResource("6_xo05s")
