@@ -204,10 +204,26 @@ func _finish_rock_break() -> void:
 	resource_broken.emit("stone", global_position, maxi(1, stone_drop_amount))
 	queue_free()
 
+func _get_visual_bottom_y() -> float:
+	if visual == null or visual.texture == null or not visual.visible:
+		return global_position.y
+	var rect := visual.get_rect()
+	var corners := [
+		rect.position,
+		Vector2(rect.end.x, rect.position.y),
+		rect.end,
+		Vector2(rect.position.x, rect.end.y),
+	]
+	var bottom_y := -INF
+	for corner in corners:
+		bottom_y = maxf(bottom_y, visual.to_global(corner).y)
+	return bottom_y
+
+
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		z_as_relative = false
-		z_index = clampi(floori(global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
+		z_index = clampi(floori(_get_visual_bottom_y()) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 		return
 	if flash_timer > 0.0:
 		flash_timer = maxf(0.0, flash_timer - delta)
@@ -218,7 +234,7 @@ func _process(delta: float) -> void:
 		sway_velocity *= exp(-7.5 * delta)
 		rotation += sway_velocity * delta
 	z_as_relative = false
-	z_index = clampi(floori(global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
+	z_index = clampi(floori(_get_visual_bottom_y()) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 
 func _draw() -> void:
 	if debug_selected:
