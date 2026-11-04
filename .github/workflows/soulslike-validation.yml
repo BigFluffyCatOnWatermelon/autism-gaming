@@ -1,0 +1,38 @@
+name: Validate standalone Soulslike project
+
+on:
+  push:
+    branches:
+      - soulslike-reboot
+    paths:
+      - "soulslike/**"
+      - ".github/workflows/soulslike-validation.yml"
+  workflow_dispatch:
+
+jobs:
+  godot-smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download Godot 4.7.2 Standard
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 \
+            "https://github.com/godotengine/godot-builds/releases/download/4.7.2-stable/Godot_v4.7.2-stable_linux.x86_64.zip" \
+            -o /tmp/godot.zip
+          mkdir -p /tmp/godot
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          GODOT_BIN="$(find /tmp/godot -maxdepth 1 -type f -name 'Godot_v4.7.2*' -print -quit)"
+          test -n "$GODOT_BIN"
+          chmod +x "$GODOT_BIN"
+          echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
+
+      - name: Import and parse all project resources
+        run: '"$GODOT_BIN" --headless --editor --path soulslike --quit'
+
+      - name: Smoke-test the main scene
+        run: '"$GODOT_BIN" --headless --path soulslike --quit-after 240'
