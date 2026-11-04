@@ -24,7 +24,8 @@ Original dark-fantasy 3D Soulslike for Windows, Godot 4.7.2, GDScript. Slightly 
 - Persistent carried souls, death stain and retrieval; a later death replaces the previous stain.
 - Save data for souls, stain, checkpoint and defeated-boss flags.
 - Original first boss, Warden of the Bell: two phases, different wind-up/recovery timings and three attack patterns.
-- HUD for vitality, stamina, souls, Estus charges, action state, interactions and boss health.
+- HUD for vitality, stamina, souls, Estus charges, action state, interactions, boss health and an on-screen control reminder.
+- Functional pause menu with resume, restart area and quit.
 
 ## Verification
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2 — 2026-11-04
+
+- Added an on-screen keyboard/gamepad control reminder.
+- Added a pause menu with resume, restart area and quit actions.
+
+
 ## 0.3.1 — 2026-11-04
 
 - Corrected the follow camera offset and set the initial enemy detection distance to give the player a short safe approach.

@@ -12,11 +12,13 @@ extends CanvasLayer
 @onready var boss_panel: Control = $Root/Margins/Content/BossPanel
 @onready var boss_title: Label = $Root/Margins/Content/BossPanel/BossTitle
 @onready var boss_bar: ProgressBar = $Root/Margins/Content/BossPanel/BossHealth
+@onready var pause_panel: Control = $Root/PausePanel
 
 var player: PlayerController
 var message_time := 0.0
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	add_to_group("hud")
 	await get_tree().process_frame
 	var players := get_tree().get_nodes_in_group("player")
@@ -92,3 +94,23 @@ func _on_boss_health_changed(title: String, current: float, maximum: float, phas
 func _on_boss_defeated() -> void:
 	boss_panel.visible = false
 	show_message("THE BELL FALLS SILENT")
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("pause"):
+		_set_paused(not get_tree().paused)
+		get_viewport().set_input_as_handled()
+
+func _set_paused(value: bool) -> void:
+	get_tree().paused = value
+	pause_panel.visible = value
+
+func _on_resume_pressed() -> void:
+	_set_paused(false)
+
+func _on_restart_pressed() -> void:
+	_set_paused(false)
+	get_tree().reload_current_scene()
+
+func _on_quit_pressed() -> void:
+	_set_paused(false)
+	get_tree().quit()

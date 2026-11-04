@@ -15,6 +15,7 @@ func _ready() -> void:
 	_bind_key("parry", KEY_F)
 	_bind_key("heal", KEY_Q)
 	_bind_key("lock_target", KEY_TAB)
+	_bind_key("pause", KEY_ESCAPE)
 	_bind_mouse("light_attack", MOUSE_BUTTON_LEFT)
 	_bind_mouse("heavy_attack", MOUSE_BUTTON_MIDDLE)
 	_bind_mouse("block", MOUSE_BUTTON_RIGHT)
@@ -27,6 +28,7 @@ func _ready() -> void:
 	_bind_pad("block", JOY_BUTTON_LEFT_SHOULDER)
 	_bind_pad("sprint", JOY_BUTTON_RIGHT_SHOULDER)
 	_bind_pad("interact", JOY_BUTTON_A)
+	_bind_pad("pause", JOY_BUTTON_START)
 
 func _ensure_action(action: StringName) -> void:
 	if not InputMap.has_action(action):

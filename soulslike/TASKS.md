@@ -16,7 +16,7 @@
 - [x] Persistent souls, death stain and retrieval.
 - [x] Target lock and interaction prompt.
 - [x] First original two-phase boss and boss health bar.
-- [x] Expanded HUD and ruined arena layout.
+- [x] Expanded HUD, on-screen controls, pause menu and ruined arena layout.
 - [x] Godot 4.7.2 headless editor import and 240-frame main-scene smoke test in GitHub Actions.
 - [ ] Visually validate camera framing, hit volumes, telegraphs and animation timing on Windows.
 
