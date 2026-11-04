@@ -2,61 +2,46 @@
 
 Open **this folder** (the one containing `project.godot`) in Godot 4.7.2. Do not open the repository root for this game.
 
-## Playable combat slice
+## Camera and controls
 
-- Camera-relative WASD movement with a detached, smooth-follow isometric camera.
-- Shift sprint, Space dodge with invulnerability frames, Q healing flask, E interaction.
-- Left mouse / J light attack; middle mouse / K heavy attack; right mouse / L guard; F parry. Keyboard/mouse events are also read directly by the player controller as a fallback to InputMap.
-- Tab toggles lock-on to the nearest living enemy. Escape opens pause or closes a bonfire level-up menu.
-- Spend souls at a bonfire to level up across eight attributes. Vitality, Endurance, Strength and Dexterity currently change combat stats.
-- Enemy AI with detection, pursuit, visible red attack telegraph, attack arc, recovery, stagger and parry response.
-- Guard reduces incoming damage and consumes stamina; empty stamina causes a guard break.
-- A timed parry stuns an attacker and empowers the next strike.
-- Bonfire interaction restores health, stamina and flasks, activates a checkpoint, resets regular enemies and opens a working level-up menu.
-- Death moves carried souls into a persistent world stain. Interact with it to reclaim them. A second death overwrites the previous stain.
-- Save data is stored in `user://ashen_oath_save.json`.
-- First original boss, **Warden of the Bell**, has two phases, three attack patterns and a boss health bar.
+| Input | Action |
+|---|---|
+| WASD | Move relative to camera |
+| Mouse | Orbit third-person camera |
+| Mouse wheel | Zoom camera |
+| Shift | Sprint |
+| Space | Dodge with invulnerability frames |
+| Left mouse / J | Light attack |
+| Middle mouse / K | Heavy attack |
+| Right mouse / L | Guard |
+| F | Timed parry |
+| Q | Use Estus flask |
+| E | Interact / rest at bonfire |
+| Tab | Lock/unlock target |
+| V | Switch equipped weapon |
+| Esc | Pause |
 
-## Controls
+The camera is now positioned behind the character rather than looking down from above. Mouse input orbits around the player, the wheel changes distance, and the rig smoothly follows at shoulder height. A collision ray shortens the camera arm near walls. Lock-on turns the camera toward the selected enemy.
 
-| Action | Keyboard / mouse | Gamepad |
-|---|---|---|
-| Move | WASD | Left stick |
-| Sprint | Shift | Right shoulder |
-| Dodge | Space | B |
-| Light attack | Left mouse / J | X |
-| Heavy attack | Middle mouse / K | Y |
-| Guard | Right mouse / L | Left shoulder |
-| Parry | F | — |
-| Heal | Q | — |
-| Interact | E | A |
-| Lock target | Tab | — |
-| Pause menu | Escape | Start |
-| Restart after death | R | — |
+The mouse is captured during gameplay. Click the game window after closing a menu to capture it again. Camera pitch, distance, sensitivity, follow speed and collision margin are exported on the Player node for tuning in the Inspector.
 
-## Project structure
+## Current combat slice
 
-- `scripts/core`: input and persistent run state
-- `scripts/player`: movement, combat action queue, dodge, guard, parry, healing, lock-on and interaction
-- `scripts/combat`: damage payloads
-- `scripts/actors`: health component
-- `scripts/enemies`: enemy state machine and telegraphed attack
-- `scripts/bosses`: multi-phase boss AI
-- `scripts/bonfires`: checkpoint and rest interaction
-- `scripts/world`: arena lifecycle and recoverable soul stain
-- `scripts/ui`: combat HUD and prompts
-- `scenes`: reusable player, enemy, boss, bonfire, soul stain, UI and location scenes
+- **Ashen Longsword**: fast standard moveset, balanced stamina use and reach.
+- **Grave Cleaver**: slower, heavier hits with greater reach and poise damage.
+- Weapon definitions are editable Godot Resources in `data/weapons/`.
+- Each moveset has independent damage, attribute scaling, stamina costs, attack timings, reach, poise damage and backstab multiplier.
+- Enemies recover poise over time. Powerful hits can break poise and cause a longer stagger.
+- The **Ashen Shield Guard** reduces incoming damage while facing the player. Heavy hits with enough poise damage break its guard.
+- Attacking a vulnerable enemy from behind at close range triggers a critical backstab. The Warden of the Bell is immune to backstabs.
+- Physical and fire resistance are supported on enemies; player resistance hooks support physical, fire and magic damage.
 
-All game content is authored independently under this directory. No farm scripts, scenes, assets or add-ons are referenced.
+## Existing systems
+
+Sprint/stamina, dodge/i-frames, guard, timed parry/riposte, Estus, lock-on, soul rewards, death stain recovery, bonfire checkpoint/rest, level-up attributes, save data and the two-phase Warden boss.
 
 ## Validation
 
-A GitHub Actions workflow downloads Godot 4.7.2 Standard, imports the project headlessly, and starts the main scene for 240 frames on pushes to `soulslike-reboot`.
+GitHub Actions runs the Godot 4.7.2 editor import, scene smoke test and gameplay integration scene. Headless tests cover movement, input, camera, weapon switching, critical hits, shield guard break, bonfire and progression. They cannot judge the final camera feel, visuals or attack timing; those still need a hands-on check in the Windows Godot editor.
 
-Latest validation passed: [Godot 4.7.2 import, scene startup and gameplay integration checks](https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/41815540492). The gameplay test checks W/S movement, J-key and left-mouse attack routing, actual melee damage, bonfire restoration/checkpoint and a persistent Vitality level-up.
-
-This confirms parsing/import and short startup stability. It does **not** prove final visual quality, animation timing, or Windows input feel; manually test those in the editor.
-
-## Honest status
-
-This is a playable prototype slice, not the completed game brief. It still uses original greybox 3D meshes and does not yet include a finished character rig/animation set, three bosses, interconnected chapter, inventory/equipment, leveling, magic, NPC quests, production audio or complete world-state persistence.
+See `PROJECT_STATE.md`, `TASKS.md` and `CHANGELOG.md` for implementation status.

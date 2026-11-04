@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 — 2026-11-04
+
+- Replaced the fixed overhead view with a third-person over-the-shoulder orbit camera.
+- Added mouse look, wheel zoom, adjustable pitch/distance/sensitivity, smooth shoulder-height follow and wall collision.
+- Movement now follows camera yaw; target lock turns the camera toward the locked enemy.
+- Menus release the mouse cursor and recapture it on resume.
+- Added WeaponDefinition Resources for Ashen Longsword and Grave Cleaver with independent damage, scaling, timing, stamina, reach, poise and critical values.
+- Added V weapon switching and an equipped-weapon HUD line.
+- Added enemy poise, delayed poise recovery and extended stagger on poise break.
+- Added frontal shield mitigation, heavy-hit guard break and the Ashen Shield Guard arena enemy.
+- Added close-range backstab critical hits; Warden of the Bell is immune.
+- Expanded headless integration coverage for camera, weapons, critical hits and shield guard.
+
 ## 0.3.6 — 2026-11-04
 
 - Godot 4.7.2 CI passes after explicit player input processing.
@@ -27,7 +40,6 @@
 - Added an on-screen keyboard/gamepad control reminder.
 - Added a pause menu with resume, restart area and quit actions.
 
-
 ## 0.3.1 — 2026-11-04
 
 - Corrected the follow camera offset and set the initial enemy detection distance to give the player a short safe approach.
@@ -39,10 +51,10 @@
 - Fixed the movement/camera coupling: the isometric camera now follows in world space and no longer spins with the player's facing direction.
 - Rebuilt input bootstrap for keyboard, mouse and analogue gamepad movement.
 - Added sprint regeneration delay, timed parry/riposte, target lock and healing flasks.
-- Added a persistent bonfire checkpoint/rest loop, enemy reset, soul stain and soul retrieval.
+- Added persistent bonfire checkpoint/rest, enemy reset, soul stain and recoverable souls.
 - Added readable enemy attack telegraphs, hit flash and resettable death states.
-- Added the Warden of the Bell, an original two-phase boss with a boss health bar.
-- Expanded the arena with ruined geometry, torch lighting and an improved HUD.
+- Added the Warden of the Bell, an original two-phase boss with a health bar.
+- Expanded the arena with torch lighting and an improved HUD.
 
 ## 0.1.0 — 2026-11-04
 

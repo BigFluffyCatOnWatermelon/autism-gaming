@@ -3,11 +3,11 @@
 ## Phase 1 — playable combat slice
 
 - [x] Independent Godot project and main scene.
-- [x] Camera-relative movement with camera yaw decoupled from player facing.
-- [x] Smooth-follow isometric camera.
+- [x] Third-person over-the-shoulder camera with mouse orbit, wheel zoom, soft follow and wall collision.
+- [x] Camera-relative WASD movement and target-lock camera framing.
 - [x] Keyboard/mouse and baseline gamepad controls.
 - [x] Sprint stamina drain and delayed regeneration.
-- [x] Dodge with invulnerability frames.
+- [x] Dodge with stamina cost and invulnerability frames.
 - [x] Light/heavy attack timing and buffered follow-up.
 - [x] Guard, guard break and timed parry/riposte.
 - [x] Limited healing flasks.
@@ -18,27 +18,28 @@
 - [x] Target lock and interaction prompt.
 - [x] First original two-phase boss and boss health bar.
 - [x] Expanded HUD, on-screen controls, pause menu and ruined arena layout.
-- [x] Godot 4.7.2 headless editor import and 240-frame main-scene smoke test in GitHub Actions.
-- [x] Automated W/S movement-direction test.
-- [x] Automated J-key and left-mouse attack routing tests.
-- [x] Automated light-attack hit test.
-- [x] Automated bonfire rest/checkpoint/resource restore test.
-- [x] Automated soul-spend/Vitality level-up test.
-- [ ] Visually validate camera framing, hit volumes, telegraphs and animation timing on Windows.
+- [x] Godot 4.7.2 headless editor import and main-scene smoke test in GitHub Actions.
+- [x] Automated movement, attack routing, melee hit, bonfire and progression checks.
+- [x] Automated camera orbit/zoom, weapon switching, backstab critical, shield mitigation and guard-break checks.
+- [ ] Visually validate camera framing, occlusion, hit volumes, telegraphs and animation timing on Windows.
 
 ## Phase 2 — combat depth
 
-- [ ] Weapon Resource definitions, unique move sets and equipment slots.
-- [ ] Backstab, riposte animation, critical finishers and poise break.
-- [ ] Damage types/resistances and armor mitigation.
-- [ ] More enemy archetypes: shield guard, duelist, archer, caster and brute.
+- [x] Weapon Resource definitions with per-weapon movesets, scaling, reach, stamina and poise values.
+- [x] Switch between Ashen Longsword and Grave Cleaver with V.
+- [x] Backstab criticals with weapon-specific multipliers; first boss is immune.
+- [x] Enemy poise and delayed poise recovery.
+- [x] Physical/fire resistance hooks and player damage-resistance hooks.
+- [x] Shield Guard archetype, frontal mitigation and heavy-weapon guard break.
+- [ ] Backstab/riposte presentation, finisher animations and hit-stop.
+- [ ] Additional duelist, archer, caster and brute archetypes.
 - [ ] Gamepad remapping and accessibility options.
 
 ## Phase 3 — progression
 
-- [ ] Full inventory, equipment load, armor and upgrade materials.
+- [ ] Full inventory, equipment load, armour and upgrade materials.
 - [x] Basic level and eight-attribute progression at bonfires; core derived stats for Vitality, Endurance, Strength and Dexterity.
-- [ ] Complete remaining attribute effects, attribute scaling and balancing.
+- [ ] Remaining attribute effects, weapon scaling balance and armour mitigation.
 - [ ] Consumables, spell slots and multiple magic schools.
 - [ ] Expanded save slots, backup saves and robust world-state persistence.
 
