@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/weapon_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Ashen Longsword"
+base_light_damage = 25.0
+base_heavy_damage = 48.0
+strength_light_scaling = 1.8
+dexterity_light_scaling = 0.8
+strength_heavy_scaling = 3.0
+dexterity_heavy_scaling = 0.0
+light_stamina_cost = 19.0
+heavy_stamina_cost = 36.0
+light_windup = 0.24
+heavy_windup = 0.46
+light_active = 0.19
+heavy_active = 0.25
+light_recovery = 0.42
+heavy_recovery = 0.58
+light_range_scale = 1.0
+heavy_range_scale = 1.35
+light_poise_damage = 26.0
+heavy_poise_damage = 50.0
+critical_multiplier = 2.6
+damage_type = &"physical"

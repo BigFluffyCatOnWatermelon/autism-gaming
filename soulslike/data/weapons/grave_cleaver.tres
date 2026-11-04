@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="WeaponDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/weapon_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Grave Cleaver"
+base_light_damage = 34.0
+base_heavy_damage = 72.0
+strength_light_scaling = 2.5
+dexterity_light_scaling = 0.25
+strength_heavy_scaling = 4.2
+dexterity_heavy_scaling = 0.0
+light_stamina_cost = 25.0
+heavy_stamina_cost = 44.0
+light_windup = 0.35
+heavy_windup = 0.66
+light_active = 0.22
+heavy_active = 0.29
+light_recovery = 0.58
+heavy_recovery = 0.78
+light_range_scale = 1.1
+heavy_range_scale = 1.65
+light_poise_damage = 42.0
+heavy_poise_damage = 82.0
+critical_multiplier = 2.9
+damage_type = &"physical"
