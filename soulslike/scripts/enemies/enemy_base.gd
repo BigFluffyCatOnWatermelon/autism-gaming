@@ -6,7 +6,7 @@ enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STUNNED, DEAD }
 @export var enemy_title := "Ashen Hollow"
 @export var maximum_health := 75.0
 @export var move_speed := 2.55
-@export var detection_range := 12.0
+@export var detection_range := 10.0
 @export var attack_range := 2.0
 @export var attack_damage := 18.0
 @export var souls_reward := 45

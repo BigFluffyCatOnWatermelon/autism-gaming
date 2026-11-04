@@ -69,8 +69,9 @@ func _ready() -> void:
 	attack_area.body_entered.connect(_on_attack_body_entered)
 	# The camera has its own world-space compass; character yaw cannot rotate WASD.
 	camera_rig.top_level = true
-	camera_rig.global_position = global_position + camera_offset
+	camera_rig.global_position = global_position
 	camera_rig.global_rotation = Vector3.ZERO
+	camera.position = camera_offset
 	if RunState.has_checkpoint:
 		global_position = RunState.checkpoint_position
 	RunState.souls_changed.connect(_on_run_souls_changed)
@@ -78,7 +79,7 @@ func _ready() -> void:
 	stats_changed.emit()
 
 func _process(delta: float) -> void:
-	camera_rig.global_position = camera_rig.global_position.lerp(global_position + camera_offset, minf(1.0, delta * 9.0))
+	camera_rig.global_position = camera_rig.global_position.lerp(global_position, minf(1.0, delta * 9.0))
 	_update_interactable_prompt()
 
 func _physics_process(delta: float) -> void:
