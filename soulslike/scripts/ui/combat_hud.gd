@@ -13,12 +13,17 @@ extends CanvasLayer
 @onready var boss_title: Label = $Root/Margins/Content/BossPanel/BossTitle
 @onready var boss_bar: ProgressBar = $Root/Margins/Content/BossPanel/BossHealth
 @onready var pause_panel: Control = $Root/PausePanel
+@onready var level_panel: Control = $Root/LevelPanel
+@onready var level_info: Label = $Root/LevelPanel/Menu/Contents/Info
+@onready var level_rows: VBoxContainer = $Root/LevelPanel/Menu/Contents/AttributeRows
+var level_player: PlayerController
 
 var player: PlayerController
 var message_time := 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_build_level_buttons()
 	add_to_group("hud")
 	await get_tree().process_frame
 	var players := get_tree().get_nodes_in_group("player")
@@ -97,7 +102,10 @@ func _on_boss_defeated() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
-		_set_paused(not get_tree().paused)
+		if level_panel.visible:
+			_close_level_panel()
+		else:
+			_set_paused(not get_tree().paused)
 		get_viewport().set_input_as_handled()
 
 func _set_paused(value: bool) -> void:
@@ -114,3 +122,46 @@ func _on_restart_pressed() -> void:
 func _on_quit_pressed() -> void:
 	_set_paused(false)
 	get_tree().quit()
+
+func show_level_up_menu(source_player: PlayerController) -> void:
+	level_player = source_player
+	pause_panel.visible = false
+	level_panel.visible = true
+	get_tree().paused = true
+	_refresh_level_menu()
+
+func _build_level_buttons() -> void:
+	for child in level_rows.get_children():
+		child.queue_free()
+	for key in RunState.ATTRIBUTE_LABELS.keys():
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(380, 34)
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.pressed.connect(_on_attribute_upgrade.bind(str(key)))
+		level_rows.add_child(button)
+	_refresh_level_menu()
+
+func _refresh_level_menu() -> void:
+	var cost := RunState.next_level_cost()
+	level_info.text = "LEVEL %d     SOULS %s     NEXT POINT: %s" % [
+		RunState.level, String.num_int64(RunState.souls), String.num_int64(cost)
+	]
+	for index in range(level_rows.get_child_count()):
+		var button := level_rows.get_child(index) as Button
+		var key := str(RunState.ATTRIBUTE_LABELS.keys()[index])
+		var amount := int(RunState.attributes.get(key, 10))
+		button.text = "%s     %d     [+1]" % [RunState.ATTRIBUTE_LABELS[key], amount]
+		button.disabled = RunState.souls < cost
+
+func _on_attribute_upgrade(attribute: String) -> void:
+	if not RunState.level_up(attribute):
+		show_message("NOT ENOUGH SOULS")
+		return
+	if is_instance_valid(level_player):
+		level_player.apply_progression_stats(true)
+	show_message("%s INCREASED" % RunState.ATTRIBUTE_LABELS.get(attribute, attribute.to_upper()))
+	_refresh_level_menu()
+
+func _close_level_panel() -> void:
+	level_panel.visible = false
+	get_tree().paused = false

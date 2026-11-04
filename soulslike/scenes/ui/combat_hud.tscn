@@ -229,3 +229,66 @@ text = "QUIT GAME"
 [connection signal="pressed" from="PausePanel/Menu/Contents/Resume" to="." method="_on_resume_pressed"]
 [connection signal="pressed" from="PausePanel/Menu/Contents/Restart" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="PausePanel/Menu/Contents/Quit" to="." method="_on_quit_pressed"]
+
+[node name="LevelPanel" type="Control" parent="Root"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+visible = false
+
+[node name="Dim" type="ColorRect" parent="Root/LevelPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.008, 0.012, 0.018, 0.86)
+
+[node name="Menu" type="PanelContainer" parent="Root/LevelPanel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -245.0
+offset_top = -285.0
+offset_right = 245.0
+offset_bottom = 285.0
+theme_override_styles/panel = SubResource("PanelStyle")
+
+[node name="Contents" type="VBoxContainer" parent="Root/LevelPanel/Menu"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="Title" type="Label" parent="Root/LevelPanel/Menu/Contents"]
+theme_override_colors/font_color = Color(0.9, 0.79, 0.63, 1)
+theme_override_font_sizes/font_size = 28
+text = "KINDLE YOUR SOUL"
+horizontal_alignment = 1
+
+[node name="Info" type="Label" parent="Root/LevelPanel/Menu/Contents"]
+theme_override_colors/font_color = Color(0.76, 0.73, 0.65, 1)
+text = "LEVEL 1   SOULS 0   NEXT POINT: 235"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Root/LevelPanel/Menu/Contents"]
+theme_override_colors/font_color = Color(0.64, 0.65, 0.64, 1)
+text = "Choose one attribute to raise. Each point costs souls."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="AttributeRows" type="VBoxContainer" parent="Root/LevelPanel/Menu/Contents"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Close" type="Button" parent="Root/LevelPanel/Menu/Contents"]
+custom_minimum_size = Vector2(0, 40)
+text = "CLOSE  [ESC]"
+
+[connection signal="pressed" from="Root/LevelPanel/Menu/Contents/Close" to="." method="_close_level_panel"]

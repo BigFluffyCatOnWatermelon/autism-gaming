@@ -2,7 +2,22 @@ extends Node
 signal souls_changed(total: int)
 signal stain_changed(amount: int)
 const SAVE_PATH := "user://ashen_oath_save.json"
+const ATTRIBUTE_LABELS := {
+	"vitality": "VITALITY",
+	"attunement": "ATTUNEMENT",
+	"endurance": "ENDURANCE",
+	"strength": "STRENGTH",
+	"dexterity": "DEXTERITY",
+	"intelligence": "INTELLIGENCE",
+	"faith": "FAITH",
+	"luck": "LUCK"
+}
 var souls := 0
+var level := 1
+var attributes: Dictionary = {
+	"vitality": 10, "attunement": 10, "endurance": 10, "strength": 10,
+	"dexterity": 10, "intelligence": 10, "faith": 10, "luck": 10
+}
 var lost_souls := 0
 var lost_position := Vector3.ZERO
 var has_lost_souls := false
@@ -14,6 +29,19 @@ var defeated_flags: Dictionary = {}
 
 func _ready() -> void:
 	load_game()
+
+func next_level_cost() -> int:
+	return 180 + level * level * 55
+
+func level_up(attribute: String) -> bool:
+	if not attributes.has(attribute) or souls < next_level_cost():
+		return false
+	souls -= next_level_cost()
+	attributes[attribute] = int(attributes[attribute]) + 1
+	level += 1
+	souls_changed.emit(souls)
+	save_game()
+	return true
 
 func add_souls(amount: int) -> void:
 	souls = maxi(0, souls + amount)
@@ -58,7 +86,7 @@ func is_defeated(flag: String) -> bool:
 
 func save_game() -> void:
 	var data := {
-		"version": 1, "souls": souls, "lost_souls": lost_souls,
+		"version": 2, "souls": souls, "level": level, "attributes": attributes, "lost_souls": lost_souls,
 		"has_lost_souls": has_lost_souls, "lost_position": _vector_to_array(lost_position),
 		"has_checkpoint": has_checkpoint, "checkpoint_id": checkpoint_id,
 		"checkpoint_title": checkpoint_title, "checkpoint_position": _vector_to_array(checkpoint_position),
@@ -83,6 +111,11 @@ func load_game() -> void:
 		return
 	var data: Dictionary = parsed
 	souls = maxi(0, int(data.get("souls", 0)))
+	level = maxi(1, int(data.get("level", 1)))
+	var saved_attributes: Variant = data.get("attributes", {})
+	if typeof(saved_attributes) == TYPE_DICTIONARY:
+		for key in ATTRIBUTE_LABELS.keys():
+			attributes[key] = maxi(1, int(saved_attributes.get(key, 10)))
 	lost_souls = maxi(0, int(data.get("lost_souls", 0)))
 	has_lost_souls = bool(data.get("has_lost_souls", false)) and lost_souls > 0
 	lost_position = _array_to_vector(data.get("lost_position", [0.0, 0.0, 0.0]))

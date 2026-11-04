@@ -59,6 +59,7 @@ var locked_target: Node3D
 
 func _ready() -> void:
 	add_to_group("player")
+	apply_progression_stats(false)
 	stamina = max_stamina
 	flask_charges = max_flasks
 	health.maximum_health = max_health
@@ -338,6 +339,25 @@ func rest_at_checkpoint() -> void:
 	blocking = false
 	stats_changed.emit()
 	status_message.emit("Rested at the bonfire")
+
+func apply_progression_stats(keep_current: bool = true) -> void:
+	var old_health_max := max_health
+	var old_stamina_max := max_stamina
+	var vitality := int(RunState.attributes.get("vitality", 10))
+	var endurance := int(RunState.attributes.get("endurance", 10))
+	var strength := int(RunState.attributes.get("strength", 10))
+	var dexterity := int(RunState.attributes.get("dexterity", 10))
+	max_health = 120.0 + float(vitality - 10) * 8.0
+	max_stamina = 100.0 + float(endurance - 10) * 6.0
+	light_damage = 25.0 + float(strength - 10) * 1.8 + float(dexterity - 10) * 0.8
+	heavy_damage = 48.0 + float(strength - 10) * 3.0
+	if is_instance_valid(health):
+		health.maximum_health = max_health
+		if keep_current:
+			health.current_health = clampf(health.current_health + max_health - old_health_max, 0.0, max_health)
+	if keep_current:
+		stamina = clampf(stamina + max_stamina - old_stamina_max, 0.0, max_stamina)
+	stats_changed.emit()
 
 func get_flask_charges() -> int:
 	return flask_charges

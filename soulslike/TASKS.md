@@ -12,7 +12,8 @@
 - [x] Guard, guard break and timed parry/riposte.
 - [x] Limited healing flasks.
 - [x] Enemy detect/chase/telegraph/attack/recovery/stagger/death/reset.
-- [x] Bonfire rest, checkpoint and enemy reset.
+- [x] Bonfire rest, checkpoint, enemy reset and attribute level-up interface.
+- [x] Persistent character level and eight attributes; core combat attributes affect health, stamina and attack damage.
 - [x] Persistent souls, death stain and retrieval.
 - [x] Target lock and interaction prompt.
 - [x] First original two-phase boss and boss health bar.

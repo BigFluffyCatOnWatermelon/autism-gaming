@@ -7,11 +7,12 @@ Open **this folder** (the one containing `project.godot`) in Godot 4.7.2. Do not
 - Camera-relative WASD movement with a detached, smooth-follow isometric camera.
 - Shift sprint, Space dodge with invulnerability frames, Q healing flask, E interaction.
 - Left mouse / J light attack; middle mouse / K heavy attack; right mouse / L guard; F parry.
-- Tab toggles lock-on to the nearest living enemy. Escape opens a working pause menu with resume, restart and quit.
+- Tab toggles lock-on to the nearest living enemy. Escape opens pause or closes a bonfire level-up menu.
+- Spend souls at a bonfire to level up across eight attributes. Vitality, Endurance, Strength and Dexterity currently change combat stats.
 - Enemy AI with detection, pursuit, visible red attack telegraph, attack arc, recovery, stagger and parry response.
 - Guard reduces incoming damage and consumes stamina; empty stamina causes a guard break.
 - A timed parry stuns an attacker and empowers the next strike.
-- Bonfire interaction restores health, stamina and flasks, activates a checkpoint and resets regular enemies.
+- Bonfire interaction restores health, stamina and flasks, activates a checkpoint, resets regular enemies and opens a working level-up menu.
 - Death moves carried souls into a persistent world stain. Interact with it to reclaim them. A second death overwrites the previous stain.
 - Save data is stored in `user://ashen_oath_save.json`.
 - First original boss, **Warden of the Bell**, has two phases, three attack patterns and a boss health bar.

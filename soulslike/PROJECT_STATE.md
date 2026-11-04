@@ -22,7 +22,8 @@ Original dark-fantasy 3D Soulslike for Windows, Godot 4.7.2, GDScript. Slightly 
 - Enemy soul rewards.
 - Bonfire checkpoint/rest restores health, stamina and flasks.
 - Persistent carried souls, death stain and retrieval; a later death replaces the previous stain.
-- Save data for souls, stain, checkpoint and defeated-boss flags.
+- Save data for souls, stain, checkpoint, defeated-boss flags, level and eight character attributes.
+- Bonfire level-up menu with an increasing soul cost; Vitality, Endurance, Strength and Dexterity affect player stats.
 - Original first boss, Warden of the Bell: two phases, different wind-up/recovery timings and three attack patterns.
 - HUD for vitality, stamina, souls, Estus charges, action state, interactions, boss health and an on-screen control reminder.
 - Functional pause menu with resume, restart area and quit.

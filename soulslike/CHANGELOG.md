@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.3 — 2026-11-04
+
+- Added soul-cost leveling at the bonfire with all eight character attributes.
+- Vitality, Endurance, Strength and Dexterity now directly affect health, stamina or weapon damage.
+- Level and attributes persist in the save file.
+
 ## 0.3.2 — 2026-11-04
 
 - Added an on-screen keyboard/gamepad control reminder.

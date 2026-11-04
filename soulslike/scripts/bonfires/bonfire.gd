@@ -22,6 +22,9 @@ func get_interaction_text(_player: Node3D) -> String:
 func interact(player: PlayerController) -> void:
 	RunState.activate_checkpoint(checkpoint_id, checkpoint_title, global_position + spawn_offset)
 	player.rest_at_checkpoint()
+	var hud := get_tree().get_first_node_in_group("hud")
+	if hud != null and hud.has_method("show_level_up_menu"):
+		hud.show_level_up_menu(player)
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if is_instance_valid(enemy) and enemy.has_method("reset_enemy"):
 			enemy.reset_enemy()
