@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://dd581s18idypo"]
+
+[ext_resource type="Script" uid="uid://cismqj3f2o2k0" path="res://scripts/resource_node.gd" id="1_bwtb6"]
+[ext_resource type="Texture2D" uid="uid://cqacikot8dxf" path="res://Assets/Premium_TreesUpdated_No_Outline.png" id="2_8k5s6"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2yc5q"]
+size = Vector2(7.68, 8.8)
+
+[node name="oak_summer" type="StaticBody2D" unique_id=1983556990]
+z_index = 2049
+z_as_relative = false
+collision_layer = 2
+script = ExtResource("1_bwtb6")
+preserve_visual_texture = true
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=768892094]
+z_index = -1
+texture_filter = 1
+position = Vector2(0, -20)
+texture = ExtResource("2_8k5s6")
+region_enabled = true
+region_rect = Rect2(456, 13, 45, 83)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1414736007]
+position = Vector2(0, -4.4)
+shape = SubResource("RectangleShape2D_2yc5q")

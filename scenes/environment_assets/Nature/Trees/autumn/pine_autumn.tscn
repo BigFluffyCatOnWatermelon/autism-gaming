@@ -6,16 +6,16 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_grwiy"]
 size = Vector2(7.68, 8.8)
 
-[node name="pine_autumn" type="StaticBody2D" unique_id=562147975]
+[node name="pine_autumn" type="StaticBody2D" unique_id=559201473]
 collision_layer = 2
 script = ExtResource("1_1ghyp")
 preserve_visual_texture = true
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=382277029]
+[node name="Visual" type="Sprite2D" parent="." unique_id=1448199860]
 texture_filter = 1
 position = Vector2(0, -20)
 texture = ExtResource("2_12qv7")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=337859210]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=377254789]
 position = Vector2(0, -4.4)
 shape = SubResource("RectangleShape2D_grwiy")

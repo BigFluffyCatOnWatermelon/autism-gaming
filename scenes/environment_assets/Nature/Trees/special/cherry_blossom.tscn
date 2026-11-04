@@ -6,16 +6,16 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_yl7fl"]
 size = Vector2(7.68, 8.8)
 
-[node name="cherry_blossom" type="StaticBody2D" unique_id=2139506590]
+[node name="cherry_blossom" type="StaticBody2D" unique_id=899335036]
 collision_layer = 2
 script = ExtResource("1_nujr4")
 preserve_visual_texture = true
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=824120215]
+[node name="Visual" type="Sprite2D" parent="." unique_id=1877876777]
 texture_filter = 1
 position = Vector2(0, -20)
 texture = ExtResource("2_000rq")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1025722994]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1235072063]
 position = Vector2(0, -4.4)
 shape = SubResource("RectangleShape2D_yl7fl")

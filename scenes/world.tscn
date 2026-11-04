@@ -3,18 +3,20 @@
 [ext_resource type="Script" uid="uid://dyihyj51dk126" path="res://scripts/world_controller.gd" id="1_world"]
 [ext_resource type="PackedScene" path="res://scenes/objects.tscn" id="2_objects"]
 [ext_resource type="PackedScene" uid="uid://dumfefyt6fha4" path="res://scenes/ui.tscn" id="3_ui"]
+[ext_resource type="Texture2D" uid="uid://cf3iu5e2be4qi" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/idle_512x256.png" id="4_jhx03"]
 [ext_resource type="Script" uid="uid://pueheorbixg" path="res://scripts/player_controller.gd" id="4_player"]
+[ext_resource type="Texture2D" uid="uid://fdaqcip4skr1" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/walk_512x256.png" id="5_o8fc1"]
 [ext_resource type="Texture2D" uid="uid://ch5s216cd63rb" path="res://Assets/Effects/shadow.png" id="6_shadow_texture"]
+[ext_resource type="Texture2D" uid="uid://clx78cyu1fkug" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/run_512x256.png" id="6_xo05s"]
 [ext_resource type="PackedScene" uid="uid://c4ys8f3t71vt" path="res://scenes/terrain.tscn" id="7_terrain"]
 [ext_resource type="PackedScene" uid="uid://c2gv6tv61mjfj" path="res://scenes/environment_assets/Nature/Trees/summer/oak_summer.tscn" id="8_7r4gi"]
+[ext_resource type="Texture2D" uid="uid://3mplpdsreea2" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_walk.png" id="8_q5onr"]
 [ext_resource type="PackedScene" uid="uid://ddeassbgpjklt" path="res://scenes/environment_assets/Nature/Rocks/rock_large.tscn" id="9_w7kh3"]
+[ext_resource type="PackedScene" uid="uid://dd581s18idypo" path="res://scenes/environment_assets/Nature/Trees/summer/tree.tscn" id="13_dss4m"]
 
 [sub_resource type="CapsuleShape2D" id="PlayerCollision"]
 radius = 7.0
 height = 17.857113
-
-[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_4mrxx"]
-load_path = "res://.godot/imported/player_walk_idle_sheet.png-3090407548a1806c188796f9da8dff49.ctex"
 
 [node name="World" type="Node2D" unique_id=7108458]
 script = ExtResource("1_world")
@@ -23,7 +25,15 @@ script = ExtResource("1_world")
 position = Vector2(-13, 15)
 
 [node name="Player" type="CharacterBody2D" parent="." unique_id=1571520921]
+scale = Vector2(0.5, 0.5)
 script = ExtResource("4_player")
+idle_sheet = ExtResource("4_jhx03")
+idle_columns = 8
+idle_frame_count = 8
+movement_sheet = ExtResource("5_o8fc1")
+movement_columns = 8
+run_sheet = ExtResource("6_xo05s")
+run_columns = 8
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=583635825]
 position = Vector2(0, 15)
@@ -42,11 +52,11 @@ offset = Vector2(0, -5)
 texture_filter = 1
 position = Vector2(0, 18)
 scale = Vector2(1.25, 1.25)
-texture = SubResource("CompressedTexture2D_4mrxx")
+texture = ExtResource("8_q5onr")
 offset = Vector2(0, -16)
 hframes = 6
 vframes = 4
-region_rect = Rect2(2, 10, 12, 22)
+region_rect = Rect2(-0.28395844, -6.004775, 123.41244, 161.15714)
 
 [node name="HeldItem" type="Sprite2D" parent="Player" unique_id=690079888]
 z_index = 2
@@ -63,10 +73,22 @@ position_smoothing_speed = 8.0
 
 [node name="oak_summer" parent="." unique_id=1288095231 instance=ExtResource("8_7r4gi")]
 z_index = 2074
-z_as_relative = false
 position = Vector2(-84, 25)
 
+[node name="CollisionShape2D" parent="oak_summer" index="1" unique_id=1414736007]
+position = Vector2(1, 16)
+
 [node name="rock_large" parent="." unique_id=298973204 instance=ExtResource("9_w7kh3")]
-z_index = 2112
+z_index = 2131
 z_as_relative = false
-position = Vector2(-76, 63)
+position = Vector2(19, 82)
+
+[node name="oak_summer2" parent="." unique_id=1983556990 instance=ExtResource("13_dss4m")]
+z_index = 1956
+position = Vector2(-112, -93)
+
+[node name="CollisionShape2D" parent="oak_summer2" index="1" unique_id=1414736007]
+position = Vector2(2, 15.000002)
+
+[editable path="oak_summer"]
+[editable path="oak_summer2"]

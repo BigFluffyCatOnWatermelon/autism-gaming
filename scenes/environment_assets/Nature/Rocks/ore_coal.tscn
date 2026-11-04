@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vm66q"]
 size = Vector2(13.12, 6.72)
 
-[node name="ore_coal" type="StaticBody2D" unique_id=333022634]
+[node name="ore_coal" type="StaticBody2D" unique_id=1685396698]
 collision_layer = 2
 script = ExtResource("1_1o74a")
 resource_type = "rock"
@@ -14,11 +14,11 @@ max_health = 110.0
 health = 110.0
 preserve_visual_texture = true
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=664859803]
+[node name="Visual" type="Sprite2D" parent="." unique_id=301227108]
 texture_filter = 1
 position = Vector2(0, -7)
 texture = ExtResource("2_1q1ap")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=75759625]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=998819250]
 position = Vector2(0, -6.72)
 shape = SubResource("RectangleShape2D_vm66q")
