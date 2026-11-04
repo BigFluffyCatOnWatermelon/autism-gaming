@@ -413,6 +413,8 @@ func _update_action(delta: float) -> void:
 			_request_attack(next_attack)
 
 func _check_attack_overlaps() -> void:
+	if not attack_area.monitoring:
+		return
 	for body in attack_area.get_overlapping_bodies():
 		_on_attack_body_entered(body)
 
