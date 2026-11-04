@@ -466,7 +466,7 @@ func _update_visuals(delta: float) -> void:
 		sprite.rotation = 0.0
 	shadow.scale = Vector2(0.9, 0.82) if crouching else Vector2(1.15, 1.0)
 	z_as_relative = false
-	z_index = clampi(floori(global_position.y) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
+	z_index = clampi(floori(get_foot_sort_y()) + WORLD_Z_SORT_OFFSET + 1, -4096, 4096)
 
 func apply_damage(amount: float) -> bool:
 	if amount <= 0.0 or debug_invulnerable or invulnerability_timer > 0.0:
