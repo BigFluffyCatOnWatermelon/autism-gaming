@@ -6,6 +6,10 @@ func _enter_tree() -> void:
 	_bind_key("move_back", KEY_S)
 	_bind_key("move_left", KEY_A)
 	_bind_key("move_right", KEY_D)
+	_bind_axis("move_left", JOY_AXIS_LEFT_X, -1.0)
+	_bind_axis("move_right", JOY_AXIS_LEFT_X, 1.0)
+	_bind_axis("move_forward", JOY_AXIS_LEFT_Y, -1.0)
+	_bind_axis("move_back", JOY_AXIS_LEFT_Y, 1.0)
 	_bind_key("sprint", KEY_SHIFT)
 	_bind_key("dodge", KEY_SPACE)
 	_bind_key("interact", KEY_E)
@@ -43,5 +47,14 @@ func _bind_pad(action: StringName, button: JoyButton) -> void:
 		InputMap.add_action(action)
 	var event := InputEventJoypadButton.new()
 	event.button_index = button
+	if not InputMap.action_has_event(action, event):
+		InputMap.action_add_event(action, event)
+
+func _bind_axis(action: StringName, axis: JoyAxis, direction: float) -> void:
+	if not InputMap.has_action(action):
+		InputMap.add_action(action)
+	var event := InputEventJoypadMotion.new()
+	event.axis = axis
+	event.axis_value = direction
 	if not InputMap.action_has_event(action, event):
 		InputMap.action_add_event(action, event)
