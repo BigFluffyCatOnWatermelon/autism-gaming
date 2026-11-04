@@ -6,7 +6,6 @@ enum DirectionLayout {
 	LEGACY_4_ROWS,
 	EIGHT_ROWS,
 	EIGHT_COLUMNS,
-	SINGLE_ROW,
 	SEQUENTIAL_GRID,
 	CUSTOM,
 }
@@ -23,7 +22,7 @@ enum DirectionLayout {
 @export var idle_flip_h := false
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var idle_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var idle_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var idle_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -35,7 +34,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var movement_frames_per_direction: int = 4
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var movement_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var movement_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var movement_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -47,7 +46,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var run_frames_per_direction: int = 8
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var run_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var run_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var run_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -59,7 +58,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var sitting_frames_per_direction: int = 1
 ## Same eight-direction order as other animations. Empty uses the legacy four-row layout.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var sitting_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var sitting_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var sitting_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -71,7 +70,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var hurt_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var hurt_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var hurt_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var hurt_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -83,7 +82,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var death_frames_per_direction: int = 4
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var death_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var death_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var death_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -95,7 +94,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var dodge_frames_per_direction: int = 5
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var dodge_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var dodge_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var dodge_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -107,7 +106,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var interact_frames_per_direction: int = 4
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var interact_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var interact_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var interact_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -120,7 +119,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var axe_attack_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var axe_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var axe_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var axe_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -132,7 +131,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var pickaxe_attack_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var pickaxe_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var pickaxe_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var pickaxe_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -144,7 +143,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var sword_slash_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var sword_slash_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var sword_slash_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var sword_slash_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -156,7 +155,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var sword_thrust_frames_per_direction: int = 3
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var sword_thrust_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var sword_thrust_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var sword_thrust_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -168,7 +167,7 @@ enum DirectionLayout {
 @export_range(1, 256, 1) var bow_attack_frames_per_direction: int = 5
 ## Порядок направлений: Down, DownRight, Right, UpRight, Up, UpLeft, Left, DownLeft. Значение — линейный индекс первого кадра (row * columns + column). Пример: 8 направлений по 4 кадра в одной строке: Columns=32, Rows=1, Frames per direction=4, массив [0,4,8,12,16,20,24,28]. Пустой массив включает совместимый режим старых 4 строк.
 ## Выберите готовую схему раскладки; Custom нужен только для нестандартного порядка.
-@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Single Row (direction blocks)", "Sequential Grid", "Custom") var bow_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
+@export_enum("Legacy 4 Rows", "8 Rows (one direction per row)", "8 Columns (one direction per column)", "Direction Blocks (wrap across rows)", "Custom") var bow_attack_direction_layout: int = DirectionLayout.LEGACY_4_ROWS
 ## Used only when Direction Layout = Custom. Otherwise leave empty.
 @export var bow_attack_direction_frame_starts: PackedInt32Array = PackedInt32Array()
 
@@ -348,7 +347,7 @@ func _get_direction_start_frame(
 		DirectionLayout.EIGHT_COLUMNS:
 			# One direction per column; frames advance vertically.
 			return direction_index
-		DirectionLayout.SINGLE_ROW, DirectionLayout.SEQUENTIAL_GRID:
+		DirectionLayout.SEQUENTIAL_GRID:
 			# Direction blocks are consecutive in row-major order.
 			return direction_index * maxi(1, frames_per_direction)
 		DirectionLayout.CUSTOM:
