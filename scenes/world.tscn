@@ -13,6 +13,8 @@
 [ext_resource type="Texture2D" uid="uid://3mplpdsreea2" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_walk.png" id="8_q5onr"]
 [ext_resource type="PackedScene" uid="uid://ddeassbgpjklt" path="res://scenes/environment_assets/Nature/Rocks/rock_large.tscn" id="9_w7kh3"]
 [ext_resource type="PackedScene" uid="uid://dd581s18idypo" path="res://scenes/environment_assets/Nature/Trees/summer/tree.tscn" id="13_dss4m"]
+[ext_resource type="PackedScene" uid="uid://ftq5fa43u848" path="res://scenes/environment_assets/Buildings/barn.tscn" id="14_xo05s"]
+[ext_resource type="PackedScene" uid="uid://dbe7gslcnv6ha" path="res://scenes/environment_assets/Buildings/house_purple_wood.tscn" id="15_dss4m"]
 
 [sub_resource type="CapsuleShape2D" id="PlayerCollision"]
 radius = 7.0
@@ -79,7 +81,7 @@ position_smoothing_speed = 8.0
 [node name="UI" parent="." unique_id=1558874100 instance=ExtResource("3_ui")]
 
 [node name="oak_summer" parent="." unique_id=1288095231 instance=ExtResource("8_7r4gi")]
-z_index = 2098
+z_index = 2097
 position = Vector2(-84, 25)
 
 [node name="CollisionShape2D" parent="oak_summer" index="1" unique_id=1414736007]
@@ -90,11 +92,21 @@ z_index = 2131
 position = Vector2(19, 82)
 
 [node name="oak_summer2" parent="." unique_id=1983556990 instance=ExtResource("13_dss4m")]
-z_index = 1978
+z_index = 1977
 position = Vector2(-112, -93)
 
 [node name="CollisionShape2D" parent="oak_summer2" index="1" unique_id=1414736007]
 position = Vector2(2, 15.000002)
+
+[node name="barn" parent="." unique_id=274866808 instance=ExtResource("14_xo05s")]
+z_index = 1970
+z_as_relative = false
+position = Vector2(100, -79)
+
+[node name="house_purple_wood" parent="." unique_id=16490370 instance=ExtResource("15_dss4m")]
+z_index = 2025
+z_as_relative = false
+position = Vector2(24, -24)
 
 [editable path="oak_summer"]
 [editable path="oak_summer2"]

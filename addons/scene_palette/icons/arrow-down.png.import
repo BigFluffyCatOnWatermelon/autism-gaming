@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://q2cmmkhes80y"
-path="res://.godot/imported/heart.png-8d155b26ca8953178ef90a9db342f565.ctex"
+uid="uid://dc5hpcoox62ju"
+path="res://.godot/imported/arrow-down.png-b712fff108a92e79656dd6b4b969bf5f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/godot-scene-palette-8d79000977f3f8d629bda20eaf8d35d95dd4b235/addons/scene_palette/icons/heart.png"
-dest_files=["res://.godot/imported/heart.png-8d155b26ca8953178ef90a9db342f565.ctex"]
+source_file="res://addons/scene_palette/icons/arrow-down.png"
+dest_files=["res://.godot/imported/arrow-down.png-b712fff108a92e79656dd6b4b969bf5f.ctex"]
 
 [params]
 

@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="PalettePluginSaveData" format=3 uid="uid://46cbj5386flx"]
+
+[ext_resource type="Script" uid="uid://bfm64dhei0kba" path="res://addons/scene_palette/resources/rsc_pallete_plugin_save_data.gd" id="1_tuhxn"]
+
+[resource]
+script = ExtResource("1_tuhxn")

@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dcndk6xyf5nuc"
-path="res://.godot/imported/wrench.png-5c3a893bae25152db86e4ac024f25334.ctex"
+path="res://.godot/imported/wrench.png-c288a337b937f77b2e3ed006855511ec.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/godot-scene-palette-8d79000977f3f8d629bda20eaf8d35d95dd4b235/addons/scene_palette/icons/wrench.png"
-dest_files=["res://.godot/imported/wrench.png-5c3a893bae25152db86e4ac024f25334.ctex"]
+source_file="res://addons/scene_palette/icons/wrench.png"
+dest_files=["res://.godot/imported/wrench.png-c288a337b937f77b2e3ed006855511ec.ctex"]
 
 [params]
 

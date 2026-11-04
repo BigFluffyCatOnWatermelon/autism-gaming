@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b7bi8y6rtcbva"
-path="res://.godot/imported/eye_dropper.png-53fd1040d821273eee286ad64fcab020.ctex"
+uid="uid://0r21xmskmprw"
+path="res://.godot/imported/file-folder.png-4eb362a491ca7af3427122ea9b56a25a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/godot-scene-palette-8d79000977f3f8d629bda20eaf8d35d95dd4b235/addons/scene_palette/icons/eye_dropper.png"
-dest_files=["res://.godot/imported/eye_dropper.png-53fd1040d821273eee286ad64fcab020.ctex"]
+source_file="res://addons/scene_palette/icons/file-folder.png"
+dest_files=["res://.godot/imported/file-folder.png-4eb362a491ca7af3427122ea9b56a25a.ctex"]
 
 [params]
 
