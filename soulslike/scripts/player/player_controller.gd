@@ -124,7 +124,7 @@ func _update_movement(delta: float) -> void:
 	right.y = 0.0
 	forward = forward.normalized()
 	right = right.normalized()
-	var move_direction := (right * input_vector.x + forward * input_vector.y).normalized()
+	var move_direction := (right * input_vector.x - forward * input_vector.y).normalized()
 
 	if state == ActionState.DODGING:
 		velocity.x = dodge_direction.x * dodge_speed
@@ -186,7 +186,7 @@ func _start_dodge() -> void:
 	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var direction := Vector3.ZERO
 	if input_vector.length_squared() > 0.01:
-		direction = camera_rig.global_basis.x * input_vector.x - camera_rig.global_basis.z * input_vector.y
+		direction = camera_rig.global_basis.x * input_vector.x + camera_rig.global_basis.z * input_vector.y
 		direction.y = 0.0
 	dodge_direction = direction.normalized() if direction.length_squared() > 0.01 else facing
 	state = ActionState.DODGING
