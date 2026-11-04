@@ -54,11 +54,16 @@ func _ready() -> void:
 	enemy.state = EnemyBase.AIState.IDLE
 	var health_before := enemy.current_health
 	_send_key(KEY_J, true)
+	await get_tree().physics_frame
+	if player.state != PlayerController.ActionState.WINDUP:
+		_fail("Physical J key event did not start the light attack. State: %s" % player.state)
+		return
+	_send_key(KEY_J, false)
+	enemy.global_position = player.to_global(Vector3(0.0, 0.0, -1.0))
 	for _frame in range(42):
 		await get_tree().physics_frame
-	_send_key(KEY_J, false)
 	if enemy.current_health >= health_before:
-		_fail("A light attack did not damage an enemy in front of the player.")
+		_fail("The attack started, but the melee hitbox did not damage an enemy in range.")
 		return
 
 	player.global_position = bonfire.global_position + Vector3(1.0, 0.0, 0.0)
