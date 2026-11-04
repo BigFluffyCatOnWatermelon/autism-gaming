@@ -9,6 +9,12 @@ func _send_key_to_player(player: PlayerController, key_code: int, pressed: bool)
 	key_event.pressed = pressed
 	player._input(key_event)
 
+func _send_mouse_to_player(player: PlayerController, button: MouseButton, pressed: bool) -> void:
+	var mouse_event := InputEventMouseButton.new()
+	mouse_event.button_index = button
+	mouse_event.pressed = pressed
+	player._input(mouse_event)
+
 func _send_key(key_code: int, pressed: bool) -> void:
 	var key_event := InputEventKey.new()
 	key_event.keycode = key_code
@@ -79,6 +85,22 @@ func _ready() -> void:
 		await get_tree().physics_frame
 	if enemy.current_health >= health_before:
 		_fail("The attack started, but the melee hitbox did not damage an enemy in range.")
+		return
+
+	# Verify the actual mouse-button route used by the default left-click attack.
+	player.state = PlayerController.ActionState.FREE
+	player.stamina = player.max_stamina
+	var health_after_keyboard_attack := enemy.current_health
+	_send_mouse_to_player(player, MOUSE_BUTTON_LEFT, true)
+	await get_tree().physics_frame
+	if player.state != PlayerController.ActionState.WINDUP:
+		_fail("Left mouse button did not start the light attack.")
+		return
+	_send_mouse_to_player(player, MOUSE_BUTTON_LEFT, false)
+	for _frame in range(42):
+		await get_tree().physics_frame
+	if enemy.current_health >= health_after_keyboard_attack:
+		_fail("Left mouse attack did not damage the enemy.")
 		return
 
 	player.global_position = bonfire.global_position + Vector3(1.0, 0.0, 0.0)

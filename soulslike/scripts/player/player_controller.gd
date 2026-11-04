@@ -121,6 +121,7 @@ func _get_move_input() -> Vector2:
 	return mapped
 
 func _ready() -> void:
+	set_process_input(true)
 	add_to_group("player")
 	apply_progression_stats(false)
 	stamina = max_stamina

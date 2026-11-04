@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.5 — 2026-11-04
+
+- Explicitly enabled player input processing and added direct keyboard/mouse fallback in PlayerController alongside InputMap.
+- Split input routing and hitbox assertions in the gameplay smoke test; it now checks W/S, J, left mouse and actual enemy damage separately.
+
 ## 0.3.4 — 2026-11-04
 
 - Fixed the pause overlay node path discovered by headless startup validation.

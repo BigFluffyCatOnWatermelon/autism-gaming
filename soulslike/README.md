@@ -6,7 +6,7 @@ Open **this folder** (the one containing `project.godot`) in Godot 4.7.2. Do not
 
 - Camera-relative WASD movement with a detached, smooth-follow isometric camera.
 - Shift sprint, Space dodge with invulnerability frames, Q healing flask, E interaction.
-- Left mouse / J light attack; middle mouse / K heavy attack; right mouse / L guard; F parry.
+- Left mouse / J light attack; middle mouse / K heavy attack; right mouse / L guard; F parry. Keyboard/mouse events are also read directly by the player controller as a fallback to InputMap.
 - Tab toggles lock-on to the nearest living enemy. Escape opens pause or closes a bonfire level-up menu.
 - Spend souls at a bonfire to level up across eight attributes. Vitality, Endurance, Strength and Dexterity currently change combat stats.
 - Enemy AI with detection, pursuit, visible red attack telegraph, attack arc, recovery, stagger and parry response.

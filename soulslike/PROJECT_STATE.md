@@ -10,6 +10,7 @@ Original dark-fantasy 3D Soulslike for Windows, Godot 4.7.2, GDScript. Slightly 
 
 - Standalone Godot project and ruined-arena main scene.
 - WASD movement using a fixed world compass; independent smooth-follow camera rig decoupled from player yaw.
+- Explicit player input processing and direct physical keyboard/mouse fallback in addition to InputMap actions.
 - Keyboard/mouse and baseline gamepad movement/buttons.
 - Sprint, stamina drain and delayed stamina regeneration.
 - Dodge with stamina cost and invulnerability frames.
