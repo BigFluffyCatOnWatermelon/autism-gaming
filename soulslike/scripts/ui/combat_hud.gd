@@ -35,7 +35,6 @@ func _ready() -> void:
 		if is_instance_valid(boss) and boss.state != EnemyBase.AIState.DEAD:
 			boss.boss_health_changed.connect(_on_boss_health_changed)
 			boss.boss_defeated.connect(_on_boss_defeated)
-			_on_boss_health_changed(boss.enemy_title, boss.current_health, boss.maximum_health, boss.phase)
 
 func _process(delta: float) -> void:
 	if is_instance_valid(player):

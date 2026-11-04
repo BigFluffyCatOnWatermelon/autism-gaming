@@ -20,7 +20,6 @@ func _ready() -> void:
 		set_physics_process(false)
 		return
 	add_to_group("bosses")
-	boss_health_changed.emit(enemy_title, current_health, maximum_health, phase)
 
 func _physics_process(delta: float) -> void:
 	if state == AIState.DEAD:
@@ -37,6 +36,7 @@ func _physics_process(delta: float) -> void:
 			_stop_horizontal(delta)
 			if distance <= detection_range:
 				state = AIState.CHASE
+				boss_health_changed.emit(enemy_title, current_health, maximum_health, phase)
 		AIState.CHASE:
 			if distance > detection_range * 1.8:
 				state = AIState.IDLE
