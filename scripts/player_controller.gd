@@ -5,76 +5,76 @@ const WORLD_Z_SORT_OFFSET := 2048
 @export_group("Анимации персонажа")
 @export_subgroup("Idle")
 @export var idle_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
-@export_range(1, 32, 1) var idle_columns: int = 6
-@export_range(1, 16, 1) var idle_rows: int = 4
-@export_range(1, 32, 1) var idle_frame_count: int = 2
+@export_range(1, 256, 1) var idle_columns: int = 6
+@export_range(1, 256, 1) var idle_rows: int = 4
+@export_range(1, 256, 1) var idle_frame_count: int = 2
 @export var idle_flip_h := false
 
 @export_subgroup("Walk")
 @export var movement_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_walk_idle_sheet.png")
-@export_range(1, 32, 1) var movement_columns: int = 6
-@export_range(1, 16, 1) var movement_rows: int = 4
+@export_range(1, 256, 1) var movement_columns: int = 6
+@export_range(1, 256, 1) var movement_rows: int = 4
 @export var walk_flip_h := false
 
 @export_subgroup("Run")
 @export var run_sheet: Texture2D
-@export_range(1, 32, 1) var run_columns: int = 6
-@export_range(1, 16, 1) var run_rows: int = 4
+@export_range(1, 256, 1) var run_columns: int = 6
+@export_range(1, 256, 1) var run_rows: int = 4
 @export var run_flip_h := false
 
 @export_subgroup("Hurt")
 @export var hurt_sheet: Texture2D
-@export_range(1, 32, 1) var hurt_columns: int = 3
-@export_range(1, 16, 1) var hurt_rows: int = 4
+@export_range(1, 256, 1) var hurt_columns: int = 3
+@export_range(1, 256, 1) var hurt_rows: int = 4
 @export var hurt_flip_h := false
 
 @export_subgroup("Death")
 @export var death_sheet: Texture2D
-@export_range(1, 32, 1) var death_columns: int = 4
-@export_range(1, 16, 1) var death_rows: int = 4
+@export_range(1, 256, 1) var death_columns: int = 4
+@export_range(1, 256, 1) var death_rows: int = 4
 @export var death_flip_h := false
 
 @export_subgroup("Dodge")
 @export var dodge_sheet: Texture2D
-@export_range(1, 32, 1) var dodge_columns: int = 5
-@export_range(1, 16, 1) var dodge_rows: int = 4
+@export_range(1, 256, 1) var dodge_columns: int = 5
+@export_range(1, 256, 1) var dodge_rows: int = 4
 @export var dodge_flip_h := false
 
 @export_subgroup("Interact")
 @export var interact_sheet: Texture2D
-@export_range(1, 32, 1) var interact_columns: int = 4
-@export_range(1, 16, 1) var interact_rows: int = 4
+@export_range(1, 256, 1) var interact_columns: int = 4
+@export_range(1, 256, 1) var interact_rows: int = 4
 @export var interact_flip_h := false
 
 @export_group("Боевые анимации")
 @export_subgroup("Axe")
 @export var axe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
-@export_range(1, 32, 1) var axe_attack_columns: int = 3
-@export_range(1, 16, 1) var axe_attack_rows: int = 4
+@export_range(1, 256, 1) var axe_attack_columns: int = 3
+@export_range(1, 256, 1) var axe_attack_rows: int = 4
 @export var axe_attack_flip_h := false
 
 @export_subgroup("Pickaxe")
 @export var pickaxe_attack_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
-@export_range(1, 32, 1) var pickaxe_attack_columns: int = 3
-@export_range(1, 16, 1) var pickaxe_attack_rows: int = 4
+@export_range(1, 256, 1) var pickaxe_attack_columns: int = 3
+@export_range(1, 256, 1) var pickaxe_attack_rows: int = 4
 @export var pickaxe_attack_flip_h := false
 
 @export_subgroup("Sword Slash")
 @export var sword_slash_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_axe.png")
-@export_range(1, 32, 1) var sword_slash_columns: int = 3
-@export_range(1, 16, 1) var sword_slash_rows: int = 4
+@export_range(1, 256, 1) var sword_slash_columns: int = 3
+@export_range(1, 256, 1) var sword_slash_rows: int = 4
 @export var sword_slash_flip_h := false
 
 @export_subgroup("Sword Thrust")
 @export var sword_thrust_sheet: Texture2D = preload("res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png")
-@export_range(1, 32, 1) var sword_thrust_columns: int = 3
-@export_range(1, 16, 1) var sword_thrust_rows: int = 4
+@export_range(1, 256, 1) var sword_thrust_columns: int = 3
+@export_range(1, 256, 1) var sword_thrust_rows: int = 4
 @export var sword_thrust_flip_h := false
 
 @export_subgroup("Bow")
 @export var bow_attack_sheet: Texture2D
-@export_range(1, 32, 1) var bow_attack_columns: int = 5
-@export_range(1, 16, 1) var bow_attack_rows: int = 4
+@export_range(1, 256, 1) var bow_attack_columns: int = 5
+@export_range(1, 256, 1) var bow_attack_rows: int = 4
 @export var bow_attack_flip_h := false
 
 const ITEM_TEXTURE_PATHS := {
