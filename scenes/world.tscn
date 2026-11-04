@@ -5,9 +5,9 @@
 [ext_resource type="PackedScene" uid="uid://dumfefyt6fha4" path="res://scenes/ui.tscn" id="3_ui"]
 [ext_resource type="Texture2D" uid="uid://xevic88euc6f" path="res://Assets/Raven Voss States and Animations/States/Idle/Idle.png" id="4_jhx03"]
 [ext_resource type="Script" uid="uid://pueheorbixg" path="res://scripts/player_controller.gd" id="4_player"]
-[ext_resource type="Texture2D" uid="uid://6e8282ls38ya" path="res://Assets/Raven Voss States and Animations/Animations/Walking/walk_sheet.png" id="5_jhx03"]
+[ext_resource type="Texture2D" uid="uid://dn4t377ad8ty6" path="res://Assets/Raven Voss States and Animations/Animations/Walking/walk.png" id="5_jhx03"]
+[ext_resource type="Texture2D" uid="uid://b5uw8n871hrqe" path="res://Assets/Raven Voss States and Animations/Animations/Running/Running.png" id="6_o8fc1"]
 [ext_resource type="Texture2D" uid="uid://ch5s216cd63rb" path="res://Assets/Effects/shadow.png" id="6_shadow_texture"]
-[ext_resource type="Texture2D" uid="uid://clx78cyu1fkug" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/run_512x256.png" id="6_xo05s"]
 [ext_resource type="PackedScene" uid="uid://c4ys8f3t71vt" path="res://scenes/terrain.tscn" id="7_terrain"]
 [ext_resource type="PackedScene" uid="uid://c2gv6tv61mjfj" path="res://scenes/environment_assets/Nature/Trees/summer/oak_summer.tscn" id="8_7r4gi"]
 [ext_resource type="Texture2D" uid="uid://3mplpdsreea2" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_walk.png" id="8_q5onr"]
@@ -36,9 +36,11 @@ movement_sheet = ExtResource("5_jhx03")
 movement_columns = 8
 movement_rows = 8
 movement_frames_per_direction = 8
-movement_direction_frame_starts = PackedInt32Array(0, 9, 17, 3, 4, 5, 6, 7)
-run_sheet = ExtResource("6_xo05s")
+movement_direction_layout = 1
+run_sheet = ExtResource("6_o8fc1")
 run_columns = 8
+run_rows = 8
+run_direction_layout = 1
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=583635825]
 position = Vector2(0, 15)
