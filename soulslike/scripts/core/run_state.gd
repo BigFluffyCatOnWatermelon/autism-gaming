@@ -19,6 +19,7 @@ func add_souls(amount: int) -> void:
 	souls = maxi(0, souls + amount)
 	souls_changed.emit(souls)
 	save_game()
+	save_game()
 
 func record_death(position: Vector3) -> void:
 	lost_souls = souls

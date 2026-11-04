@@ -37,6 +37,7 @@ func _physics_process(delta: float) -> void:
 			if distance <= detection_range:
 				state = AIState.CHASE
 				boss_health_changed.emit(enemy_title, current_health, maximum_health, phase)
+				boss_health_changed.emit(enemy_title, current_health, maximum_health, phase)
 		AIState.CHASE:
 			if distance > detection_range * 1.8:
 				state = AIState.IDLE
