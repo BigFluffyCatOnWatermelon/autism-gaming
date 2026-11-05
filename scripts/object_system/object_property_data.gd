@@ -153,10 +153,16 @@ func _find_definition_by_inspector_name(property_name: String) -> ObjectProperty
 
 func _inspector_property_name(definition: ObjectPropertyDefinition) -> String:
 	var property_id := definition.property_id.strip_edges()
+	var property_label := definition.display_name.strip_edges()
+	if property_label.is_empty():
+		property_label = property_id
+	var label_key := property_label.to_snake_case()
+	if label_key.is_empty():
+		label_key = property_id
 	var group_name := definition.group_name.strip_edges()
 	if group_name.is_empty():
-		return property_id
-	return _group_prefix(group_name) + property_id
+		return label_key
+	return _group_prefix(group_name) + label_key
 
 
 func _group_prefix(group_name: String) -> String:
