@@ -283,8 +283,13 @@ static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> 
 			var override: Dictionary = explicit_by_key.get(schema_key, {})
 			for override_key in override:
 				resolved[str(override_key)] = override[override_key]
-		resolved["level"] = _normalize_setting_level(str(resolved.get("level", "")), bool(resolved.get("advanced", false)))
-		resolved["advanced"] = str(resolved["level"]) != "Basic"
+		var raw_level := str(resolved.get("level", "")).strip_edges().to_lower()
+		if raw_level.is_empty() or raw_level in ["basic", "advanced", "expert"]:
+			resolved["level"] = _normalize_setting_level(raw_level, bool(resolved.get("advanced", false)))
+		else:
+			# Preserve an invalid declaration so registration can report it clearly.
+			resolved["level"] = raw_level
+		resolved["advanced"] = str(resolved["level"]).to_lower() != "basic"
 		resolved_schema.append(resolved)
 		consumed[schema_key] = true
 
