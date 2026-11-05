@@ -25,7 +25,7 @@
 - ObjectDefinition — Resource-описание объекта и версия схемы.
 - ObjectPropertyDefinition — ID, отображаемое имя, тип, значение по умолчанию, группа и описание пользовательского свойства.
 - ObjectPropertyData — дочерний узел сцены с сериализуемыми определениями/значениями и динамическими типизированными полями Inspector.
-- ObjectComponentDefinition — подключаемый компонент, категория, версия, скрипт и настройки.
+- ObjectComponentDefinition — подключаемый компонент, категория, версия, скрипт, схема типизированных настроек и сериализуемые значения.
 - ObjectComponentCatalog — каталог категорий и встроенных компонентов; сейчас доступен Health.
 - ObjectComponent — базовый Node-контракт с постоянным component_id и настройками.
 - HealthComponent — здоровье, урон, лечение, смерть, неуязвимость и сброс состояния.
@@ -55,9 +55,13 @@ ObjectFactory хранит пользовательские значения и 
 
 Компонент описывается через ObjectComponentDefinition и реализуется скриптом, наследующим ObjectComponent. Компонент получает настройки через configure(Dictionary); постоянный `component_id` позволяет найти экземпляр через `ObjectFactory.get_component()`.
 
-ObjectComponentCatalog содержит категории Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio и Procedural. Первый встроенный компонент — `health` (HealthComponent). Его можно получить через `ObjectComponentCatalog.create_definition("health")`, добавить в `ObjectDefinition.components` и создать вместе с объектом через ObjectFactory. Каталог задаёт базовые `max_health`, `starting_health`, `invulnerable` и `can_heal`; словарь settings конкретного объекта переопределяет только указанные ключи.
+ObjectComponentCatalog содержит категории Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio и Procedural. Пока встроен только `health` (HealthComponent); остальные категории зарезервированы под будущие компоненты. Каталог создаёт ObjectComponentDefinition с defaults и схемой настроек. Словарь `settings` переопределяет ключи каталога, а runtime-фабрика передаёт объединённые значения компоненту.
 
-HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. Компонент пока не подключён к игроку, ResourceNode или Debug Inspector. Визуального редактора добавления компонентов и контекстных настроек в Object Builder ещё нет; определения можно собирать через runtime API/ресурсы. Damageable, Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаются следующими компонентами.
+`ObjectComponentDefinition` предоставляет динамические типизированные поля штатного Inspector из схемы `setting_definitions`: String, Integer, Float, Boolean и Vector2, группы и числовые диапазоны. Значения сохраняются в `settings` как storage-only dictionary, чтобы не показывать дублирующий сырой словарь в Inspector. `set_setting()` проверяет типы и ограничивает числовые поля заданным диапазоном.
+
+В Object Builder раздел «Компоненты» позволяет выбрать категорию и компонент, добавить его в определение, включить/отключить или удалить. Кнопка Inspector открывает ресурс ObjectComponentDefinition для правки полей; после изменения нужно сохранить определение через «Сохранить в библиотеку». Компоненты создаются ObjectFactory во время runtime-инстанцирования, а не становятся дочерними узлами сохраняемой `.tscn`.
+
+HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. Он пока не подключён к существующему игроку, ResourceNode или Debug Inspector. Damageable, Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаются следующими компонентами.
 
 ## Определение, шаблон и экземпляр
 
@@ -75,4 +79,4 @@ HealthComponent предоставляет `apply_damage()`, `heal()`, `set_curr
 
 ## Границы 0.1.0
 
-Сейчас реализованы создание пустых объектов и копий из шаблонов, базовые 2D root-типы, категории/поиск, метаданные, пользовательские свойства и runtime-фабрика/реестр. Шаблоны пока содержат только начальные параметры и сцену-заготовку. Встроенный node-tree editor, предпросмотр, редактор компонентов, наследование и миграции — следующие этапы.
+Сейчас реализованы мастер типов, библиотека, дерево сцены, панели Sprite2D/AnimatedSprite2D, типизированные пользовательские свойства и редактор каталога компонентов с Inspector-настройками. Шаблоны пока не поддерживают общее наследование и синхронизацию вариантов. Следующие крупные этапы — расширение набора игровых компонентов, тестовые сцены, безопасная интеграция с игровыми объектами и миграции.
