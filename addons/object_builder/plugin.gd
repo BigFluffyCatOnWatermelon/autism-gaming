@@ -74,6 +74,19 @@ var _node_type_option: OptionButton
 var _node_name_edit: LineEdit
 var _scene_tree: Tree
 var _scene_tree_status: Label
+var _visual_panel: VBoxContainer
+var _visual_type_label: Label
+var _visual_preview: TextureRect
+var _texture_path_edit: LineEdit
+var _sprite_hframes: SpinBox
+var _sprite_vframes: SpinBox
+var _sprite_frame: SpinBox
+var _sprite_offset_x: SpinBox
+var _sprite_offset_y: SpinBox
+var _sprite_centered: CheckBox
+var _sprite_flip_h: CheckBox
+var _sprite_flip_v: CheckBox
+var _texture_dialog: FileDialog
 var _status_label: Label
 var _open_scene_button: Button
 var _definitions: Array[ObjectDefinition] = []
@@ -253,6 +266,8 @@ func _build_ui() -> void:
 	_scene_tree_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	editor.add_child(_scene_tree_status)
 
+	_build_visual_editor(editor)
+
 	var open_scene_row := HBoxContainer.new()
 	editor.add_child(open_scene_row)
 	_open_scene_button = Button.new()
@@ -414,6 +429,112 @@ func _build_template_dialog() -> void:
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	form.add_child(hint)
 	_template_dialog.confirmed.connect(_on_template_dialog_confirmed)
+
+
+func _build_visual_editor(parent: VBoxContainer) -> void:
+	_visual_panel = VBoxContainer.new()
+	_visual_panel.visible = false
+	_visual_panel.add_theme_constant_override("separation", 5)
+	parent.add_child(_visual_panel)
+
+	var title := Label.new()
+	title.text = "ВИЗУАЛЬНЫЙ ЭЛЕМЕНТ · SPRITE2D"
+	_visual_panel.add_child(title)
+
+	_visual_type_label = Label.new()
+	_visual_type_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_visual_panel.add_child(_visual_type_label)
+
+	_visual_preview = TextureRect.new()
+	_visual_preview.custom_minimum_size = Vector2(0, 136)
+	_visual_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_visual_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_visual_preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_visual_preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_visual_panel.add_child(_visual_preview)
+
+	var texture_row := HBoxContainer.new()
+	_visual_panel.add_child(texture_row)
+	_texture_path_edit = LineEdit.new()
+	_texture_path_edit.placeholder_text = "res://путь/к/текстуре.png"
+	_texture_path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_texture_path_edit.text_submitted.connect(_on_texture_path_submitted)
+	texture_row.add_child(_texture_path_edit)
+
+	var browse_button := Button.new()
+	browse_button.text = "Обзор…"
+	browse_button.pressed.connect(_on_browse_texture_pressed)
+	texture_row.add_child(browse_button)
+
+	var grid_row := HBoxContainer.new()
+	_visual_panel.add_child(grid_row)
+	_sprite_hframes = _make_visual_spin_box(1.0, 128.0, 1.0)
+	_sprite_hframes.value_changed.connect(_on_sprite_grid_value_changed.bind("hframes"))
+	_add_compact_labeled_control(grid_row, "H", _sprite_hframes)
+	_sprite_vframes = _make_visual_spin_box(1.0, 128.0, 1.0)
+	_sprite_vframes.value_changed.connect(_on_sprite_grid_value_changed.bind("vframes"))
+	_add_compact_labeled_control(grid_row, "V", _sprite_vframes)
+	_sprite_frame = _make_visual_spin_box(0.0, 16383.0, 1.0)
+	_sprite_frame.value_changed.connect(_on_sprite_grid_value_changed.bind("frame"))
+	_add_compact_labeled_control(grid_row, "Кадр", _sprite_frame)
+
+	var offset_row := HBoxContainer.new()
+	_visual_panel.add_child(offset_row)
+	_sprite_offset_x = _make_visual_spin_box(-4096.0, 4096.0, 1.0)
+	_sprite_offset_x.value_changed.connect(_on_sprite_offset_changed.bind("x"))
+	_add_compact_labeled_control(offset_row, "Offset X", _sprite_offset_x)
+	_sprite_offset_y = _make_visual_spin_box(-4096.0, 4096.0, 1.0)
+	_sprite_offset_y.value_changed.connect(_on_sprite_offset_changed.bind("y"))
+	_add_compact_labeled_control(offset_row, "Y", _sprite_offset_y)
+
+	var toggles_row := HBoxContainer.new()
+	_visual_panel.add_child(toggles_row)
+	_sprite_centered = CheckBox.new()
+	_sprite_centered.text = "По центру"
+	_sprite_centered.toggled.connect(_on_sprite_toggle_changed.bind("centered"))
+	toggles_row.add_child(_sprite_centered)
+	_sprite_flip_h = CheckBox.new()
+	_sprite_flip_h.text = "Flip H"
+	_sprite_flip_h.toggled.connect(_on_sprite_toggle_changed.bind("flip_h"))
+	toggles_row.add_child(_sprite_flip_h)
+	_sprite_flip_v = CheckBox.new()
+	_sprite_flip_v.text = "Flip V"
+	_sprite_flip_v.toggled.connect(_on_sprite_toggle_changed.bind("flip_v"))
+	toggles_row.add_child(_sprite_flip_v)
+
+	var hint := Label.new()
+	hint.text = "Изменения проходят через Undo/Redo. Для записи сцены нажми Ctrl+S."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_visual_panel.add_child(hint)
+
+	_texture_dialog = FileDialog.new()
+	_texture_dialog.title = "Выбрать текстуру"
+	_texture_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_texture_dialog.access = FileDialog.ACCESS_RESOURCES
+	_texture_dialog.filters = PackedStringArray([
+		"*.png, *.webp, *.jpg, *.jpeg, *.svg, *.bmp, *.tga ; Файлы изображений"
+	])
+	_texture_dialog.file_selected.connect(_on_texture_file_selected)
+	add_child(_texture_dialog)
+
+
+func _make_visual_spin_box(minimum: float, maximum: float, step_value: float) -> SpinBox:
+	var control := SpinBox.new()
+	control.min_value = minimum
+	control.max_value = maximum
+	control.step = step_value
+	control.allow_greater = false
+	control.allow_lesser = false
+	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return control
+
+
+func _add_compact_labeled_control(parent: HBoxContainer, label_text: String, control: Control) -> void:
+	var label := Label.new()
+	label.text = label_text
+	parent.add_child(label)
+	control.custom_minimum_size = Vector2(72, 0)
+	parent.add_child(control)
 
 
 func _build_node_dialog() -> void:
@@ -1094,6 +1215,7 @@ func _refresh_scene_tree() -> void:
 	_scene_tree.clear()
 	var scene_root := _get_open_object_scene_root()
 	if scene_root == null:
+		_refresh_visual_editor(null)
 		_scene_tree_status.text = "Открой сцену выбранного объекта, чтобы редактировать её структуру."
 		var placeholder := _scene_tree.create_item()
 		placeholder.set_text(0, "Сцена объекта не открыта")
@@ -1122,6 +1244,30 @@ func _on_scene_tree_item_selected() -> void:
 	var node := _get_selected_scene_tree_node()
 	if node != null:
 		EditorInterface.edit_node(node)
+	_refresh_visual_editor(node)
+
+
+func _refresh_visual_editor(node: Node) -> void:
+	if _visual_panel == null:
+		return
+	if not node is Sprite2D:
+		_visual_panel.visible = false
+		return
+
+	var sprite := node as Sprite2D
+	_visual_panel.visible = true
+	_visual_type_label.text = "Выбран узел: %s" % str(sprite.get_path())
+	_texture_path_edit.text = sprite.texture.resource_path if sprite.texture != null else ""
+	_visual_preview.texture = sprite.texture
+	_sprite_hframes.set_value_no_signal(float(sprite.hframes))
+	_sprite_vframes.set_value_no_signal(float(sprite.vframes))
+	_sprite_frame.max_value = maxf(0.0, float(sprite.hframes * sprite.vframes - 1))
+	_sprite_frame.set_value_no_signal(float(sprite.frame))
+	_sprite_offset_x.set_value_no_signal(sprite.offset.x)
+	_sprite_offset_y.set_value_no_signal(sprite.offset.y)
+	_sprite_centered.set_pressed_no_signal(sprite.centered)
+	_sprite_flip_h.set_pressed_no_signal(sprite.flip_h)
+	_sprite_flip_v.set_pressed_no_signal(sprite.flip_v)
 
 
 func _get_selected_scene_tree_node() -> Node:
@@ -1135,6 +1281,102 @@ func _get_selected_scene_tree_node() -> Node:
 	if scene_root == null:
 		return null
 	return scene_root.get_node_or_null(NodePath(str(path_value)))
+
+
+func _on_browse_texture_pressed() -> void:
+	if _get_selected_sprite_node() == null:
+		_set_status("Выбери Sprite2D в дереве сцены.", true)
+		return
+	_texture_dialog.popup_centered(Vector2i(820, 620))
+
+
+func _on_texture_file_selected(path: String) -> void:
+	_apply_texture_path(path)
+
+
+func _on_texture_path_submitted(path: String) -> void:
+	_apply_texture_path(path)
+
+
+func _apply_texture_path(path: String) -> void:
+	var sprite := _get_selected_sprite_node()
+	if sprite == null:
+		_set_status("Выбранный узел больше не является Sprite2D.", true)
+		return
+	var clean_path := path.strip_edges()
+	if clean_path.is_empty() or not clean_path.begins_with("res://"):
+		_set_status("Укажи путь к текстуре внутри проекта, начиная с res://.", true)
+		return
+	var loaded_resource: Texture2D = ResourceLoader.load(clean_path) as Texture2D
+	if loaded_resource == null:
+		_set_status("Не удалось загрузить Texture2D: " + clean_path, true)
+		return
+	_commit_sprite_property(sprite, "texture", loaded_resource, "изменить текстуру")
+	_texture_path_edit.text = clean_path
+	_visual_preview.texture = loaded_resource
+	_set_status("Текстура назначена. Для сохранения сцены нажми Ctrl+S.", false)
+
+
+func _get_selected_sprite_node() -> Sprite2D:
+	var selected_node := _get_selected_scene_tree_node()
+	if selected_node is Sprite2D:
+		return selected_node as Sprite2D
+	return null
+
+
+func _on_sprite_grid_value_changed(value: float, property_name: String) -> void:
+	var sprite := _get_selected_sprite_node()
+	if sprite == null:
+		return
+	var next_value := int(round(value))
+	if property_name == "frame":
+		var frame_limit := sprite.hframes * sprite.vframes - 1
+		next_value = clampi(next_value, 0, maxi(0, frame_limit))
+	_commit_sprite_property(sprite, property_name, next_value, "изменить %s" % property_name)
+	_refresh_visual_editor(sprite)
+
+
+func _on_sprite_offset_changed(value: float, axis: String) -> void:
+	var sprite := _get_selected_sprite_node()
+	if sprite == null:
+		return
+	var next_offset := sprite.offset
+	if axis == "x":
+		next_offset.x = value
+	else:
+		next_offset.y = value
+	_commit_sprite_property(sprite, "offset", next_offset, "изменить Offset")
+
+
+func _on_sprite_toggle_changed(value: bool, property_name: String) -> void:
+	var sprite := _get_selected_sprite_node()
+	if sprite == null:
+		return
+	_commit_sprite_property(sprite, property_name, value, "изменить %s" % property_name)
+
+
+func _commit_sprite_property(
+	sprite: Sprite2D,
+	property_name: String,
+	new_value: Variant,
+	action_label: String
+) -> void:
+	if sprite == null or not is_instance_valid(sprite):
+		return
+	var old_value: Variant = sprite.get(property_name)
+	if old_value == new_value:
+		return
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		_set_status("Сначала открой сцену выбранного объекта.", true)
+		return
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: " + action_label, 0, scene_root)
+	undo_redo.add_do_property(sprite, property_name, new_value)
+	undo_redo.add_undo_property(sprite, property_name, old_value)
+	undo_redo.commit_action()
+	if property_name == "hframes" or property_name == "vframes":
+		_refresh_visual_editor(sprite)
 
 
 func _on_add_node_pressed() -> void:

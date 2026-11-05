@@ -16,6 +16,8 @@
 
 Плагин показывает дерево только если в редакторе открыта сцена, чей scene_file_path совпадает со scene_path выбранного определения. Это защищает от случайного изменения другой сцены. Добавление и удаление узлов регистрируются в EditorUndoRedoManager и входят в общую историю Ctrl+Z/Ctrl+Y. Сохранение сцены остаётся обычным действием редактора (Ctrl+S).
 
+Для выбранного Sprite2D доступна компактная визуальная панель: предпросмотр Texture2D, выбор текстуры из res://, HFrames/VFrames, Frame, Offset X/Y, Centered и Flip H/V. Изменения применяются через EditorUndoRedoManager, штатный Inspector остаётся доступен для остальных свойств. Пока панель не редактирует AnimatedSprite2D/SpriteFrames и не строит собственный collision editor.
+
 ### 2. Object System — runtime
 
 Путь: scripts/object_system/
