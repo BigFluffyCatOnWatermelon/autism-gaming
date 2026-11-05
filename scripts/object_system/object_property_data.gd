@@ -90,6 +90,7 @@ func _get_property_list() -> Array[Dictionary]:
 			result.append({
 				"name": group_name,
 				"type": TYPE_NIL,
+				"hint_string": _group_prefix(group_name),
 				"usage": PROPERTY_USAGE_GROUP
 			})
 		previous_group = group_name
@@ -151,7 +152,18 @@ func _find_definition_by_inspector_name(property_name: String) -> ObjectProperty
 
 
 func _inspector_property_name(definition: ObjectPropertyDefinition) -> String:
-	return definition.property_id.strip_edges()
+	var property_id := definition.property_id.strip_edges()
+	var group_name := definition.group_name.strip_edges()
+	if group_name.is_empty():
+		return property_id
+	return _group_prefix(group_name) + property_id
+
+
+func _group_prefix(group_name: String) -> String:
+	var prefix := group_name.to_snake_case()
+	if prefix.is_empty():
+		prefix = "group"
+	return prefix + "_"
 
 
 static func normalize_value(
