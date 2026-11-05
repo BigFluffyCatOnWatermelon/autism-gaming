@@ -426,9 +426,13 @@ static func _validate_definition(
 		var source_type := str(source_descriptor.get("value_type", ""))
 		if declared_type != source_type:
 			errors.append("Тип настройки '%s' возможности '%s' не совпадает с типом компонента '%s'." % [setting_key, definition.capability_id, component_id])
-		var level := _normalize_setting_level(str(descriptor.get("level", "")), bool(descriptor.get("advanced", false)))
-		if level not in ["Basic", "Advanced", "Expert"]:
-			errors.append("Неизвестный уровень настройки '%s' в возможности '%s'." % [setting_key, definition.capability_id])
+		var raw_level := str(descriptor.get("level", "")).strip_edges().to_lower()
+		if not raw_level.is_empty() and raw_level not in ["basic", "advanced", "expert"]:
+			errors.append("Неизвестный уровень настройки '%s' в возможности '%s': %s." % [
+				setting_key,
+				definition.capability_id,
+				raw_level
+			])
 		if bool(descriptor.get("has_range", false)):
 			if declared_type not in ["Integer", "Float"]:
 				errors.append("Диапазон настройки '%s' поддерживается только для Integer и Float." % setting_key)
