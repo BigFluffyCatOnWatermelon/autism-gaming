@@ -336,6 +336,8 @@ func _deferred_refresh_scene_tree() -> void:
 
 
 func _on_editor_selection_changed() -> void:
+	if _syncing_tree_selection:
+		return
 	var scene_root := _get_open_object_scene_root()
 	if scene_root == null:
 		return
@@ -1793,8 +1795,10 @@ func _on_scene_tree_item_selected() -> void:
 		_refresh_visual_editor(node)
 		return
 	var editor_selection := EditorInterface.get_selection()
+	_syncing_tree_selection = true
 	editor_selection.clear()
 	editor_selection.add_node(node)
+	_syncing_tree_selection = false
 	EditorInterface.edit_node(node)
 	_refresh_visual_editor(node)
 
