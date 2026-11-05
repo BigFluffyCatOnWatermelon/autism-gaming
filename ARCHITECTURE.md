@@ -25,9 +25,11 @@
 - ObjectDefinition — Resource-описание объекта и версия схемы.
 - ObjectPropertyDefinition — ID, отображаемое имя, тип, значение по умолчанию, группа и описание пользовательского свойства.
 - ObjectPropertyData — дочерний узел сцены с сериализуемыми определениями/значениями и динамическими типизированными полями Inspector.
-- ObjectComponentDefinition — подключаемый компонент, его скрипт и настройки.
-- ObjectComponent — базовый Node-контракт для runtime-компонентов.
-- ObjectFactory — создание экземпляра из сцены или типа корневого узла, применение значений и компонентов.
+- ObjectComponentDefinition — подключаемый компонент, категория, версия, скрипт и настройки.
+- ObjectComponentCatalog — каталог категорий и встроенных компонентов; сейчас доступен Health.
+- ObjectComponent — базовый Node-контракт с постоянным component_id и настройками.
+- HealthComponent — здоровье, урон, лечение, смерть, неуязвимость и сброс состояния.
+- ObjectFactory — создание экземпляра, разрешение компонентов по ID, применение настроек и поиск компонента.
 - ObjectRegistry — поиск определений и создание объектов по постоянному ID.
 
 Runtime не зависит от EditorPlugin и может использоваться при выключенном плагине.
@@ -51,9 +53,11 @@ ObjectFactory хранит пользовательские значения и 
 
 ## Компоненты
 
-Компонент описывается через ObjectComponentDefinition и реализуется скриптом, наследующим ObjectComponent. Компонент получает настройки через configure(Dictionary). Это позволяет добавлять Health, Damageable, Harvestable, DropTable, Audio и другие функции независимо от конкретного типа объекта.
+Компонент описывается через ObjectComponentDefinition и реализуется скриптом, наследующим ObjectComponent. Компонент получает настройки через configure(Dictionary); постоянный `component_id` позволяет найти экземпляр через `ObjectFactory.get_component()`.
 
-Первая версия содержит контракт и фабрику, но не полноценный каталог игровых компонентов и не редактор их настроек. Для пользовательских параметров используется штатный Inspector через `ObjectProperties`; остальные свойства узлов редактируются обычными средствами Godot.
+ObjectComponentCatalog содержит категории Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio и Procedural. Первый встроенный компонент — `health` (HealthComponent). Его можно получить через `ObjectComponentCatalog.create_definition("health")`, добавить в `ObjectDefinition.components` и создать вместе с объектом через ObjectFactory. Каталог задаёт базовые `max_health`, `starting_health`, `invulnerable` и `can_heal`; словарь settings конкретного объекта переопределяет только указанные ключи.
+
+HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. Компонент пока не подключён к игроку, ResourceNode или Debug Inspector. Визуального редактора добавления компонентов и контекстных настроек в Object Builder ещё нет; определения можно собирать через runtime API/ресурсы. Damageable, Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаются следующими компонентами.
 
 ## Определение, шаблон и экземпляр
 
