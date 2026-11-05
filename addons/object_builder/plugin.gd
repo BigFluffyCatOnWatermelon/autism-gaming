@@ -2097,7 +2097,7 @@ func _on_node_dialog_confirmed() -> void:
 	if selected_index < 0 or selected_index >= CHILD_NODE_TYPES.size():
 		_set_status("Не удалось определить тип дочернего узла.", true)
 		return
-	var node_type := CHILD_NODE_TYPES[selected_index]
+	var node_type: String = str(CHILD_NODE_TYPES[selected_index])
 	var created_object: Object = ClassDB.instantiate(node_type)
 	if not created_object is Node:
 		_set_status("Godot не смог создать узел типа " + node_type, true)
