@@ -981,6 +981,7 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 		empty_label.text = "У этой возможности пока нет дополнительных настроек."
 		form.add_child(empty_label)
 	_capability_advanced_settings_check.visible = has_advanced_settings
+	_on_capability_advanced_settings_toggled(false)
 
 	_popup_window_safely(_capability_settings_dialog, Vector2i(520, 460), 0.82)
 
