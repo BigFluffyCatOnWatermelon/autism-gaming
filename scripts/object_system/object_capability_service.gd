@@ -231,8 +231,8 @@ static func build_application_plan(
 			added_components.append(_component_plan_entry(next_binding))
 			continue
 		var current_binding := current_by_key[key] as ObjectComponentBinding
-		var before_settings := current_binding.component_definition.get_settings()
-		var after_settings := next_binding.component_definition.get_settings()
+		var before_settings := _effective_component_settings(current_binding.component_definition)
+		var after_settings := _effective_component_settings(next_binding.component_definition)
 		if before_settings != after_settings:
 			updated_components.append({
 				"component_id": component_id,
@@ -316,8 +316,37 @@ static func _component_plan_entry(binding: ObjectComponentBinding) -> Dictionary
 	return {
 		"component_id": component_id,
 		"display_name": ObjectComponentCatalog.get_component_display_name(component_id),
-		"target_node_path": str(binding.target_node_path)
+		"target_node_path": str(binding.target_node_path),
+		"settings": _effective_component_settings(binding.component_definition)
 	}
+
+
+static func _effective_component_settings(definition: ObjectComponentDefinition) -> Dictionary:
+	if definition == null:
+		return {}
+	var result := definition.get_settings()
+	for descriptor in definition.get_setting_definitions():
+		var setting_key := str(descriptor.get("key", ""))
+		if setting_key.is_empty() or result.has(setting_key):
+			continue
+		result[setting_key] = descriptor.get("default_value")
+	return result
+
+
+static func _component_setting_display_name(component_id: String, setting_key: String) -> String:
+	var definition := ObjectComponentCatalog.create_definition(component_id)
+	if definition == null:
+		return setting_key
+	for descriptor in definition.get_setting_definitions():
+		if str(descriptor.get("key", "")) == setting_key:
+			return str(descriptor.get("display_name", setting_key))
+	return setting_key
+
+
+static func _format_plan_setting_value(value: Variant) -> String:
+	if typeof(value) == TYPE_BOOL:
+		return "Да" if bool(value) else "Нет"
+	return str(value)
 
 
 static func _append_capability_summary(
@@ -345,7 +374,25 @@ static func _append_component_summary(
 	for entry in entries:
 		var node_path := str(entry.get("target_node_path", "."))
 		var target_text := "корневой узел" if node_path.is_empty() or node_path == "." else node_path
-		descriptions.append("%s (%s)" % [str(entry.get("display_name", entry.get("component_id", "компонент"))), target_text])
+		var description := "%s (%s)" % [
+			str(entry.get("display_name", entry.get("component_id", "компонент"))),
+			target_text
+		]
+		if entry.has("before") and entry.has("after"):
+			var component_id := str(entry.get("component_id", ""))
+			var before: Dictionary = entry.get("before", {})
+			var after: Dictionary = entry.get("after", {})
+			var setting_changes := PackedStringArray()
+			for setting_key in after:
+				if before.get(setting_key) == after[setting_key]:
+					continue
+				var setting_name := _component_setting_display_name(component_id, str(setting_key))
+				var previous_value := _format_plan_setting_value(before.get(setting_key))
+				var next_value := _format_plan_setting_value(after[setting_key])
+				setting_changes.append("%s: %s → %s" % [setting_name, previous_value, next_value])
+			if not setting_changes.is_empty():
+				description += "; " + ", ".join(setting_changes)
+		descriptions.append(description)
 	output.append("%s: %s." % [label, ", ".join(descriptions)])
 
 
