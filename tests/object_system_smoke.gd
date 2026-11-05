@@ -136,7 +136,8 @@ func _test_object_type_default() -> void:
 
 
 func _test_serialized_property_data() -> void:
-	var health := _make_property("health", "Integer", 100)
+	var health := _make_property("health_points", "Integer", 100)
+	health.display_name = "Hit Points"
 	health.group_name = "Combat"
 	health.has_range = true
 	health.minimum = 1
@@ -150,11 +151,11 @@ func _test_serialized_property_data() -> void:
 	root.add_child(property_data)
 	property_data.owner = root
 
-	_expect(property_data.get("combat_health") == 145, "dynamic Inspector getter returns stored custom value")
-	property_data.set("combat_health", 250)
-	_expect(property_data.get("combat_health") == 200, "dynamic Inspector setter accepts values and clamps the configured range")
-	_expect(property_data.get("combat_health") == 200, "dynamic Inspector setter clamps the configured range")
-	_expect(property_data._property_get_revert("combat_health") == 100, "dynamic Inspector revert value uses definition default")
+	_expect(property_data.get("combat_hit_points") == 145, "dynamic Inspector getter returns stored custom value")
+	property_data.set("combat_hit_points", 250)
+	_expect(property_data.get("combat_hit_points") == 200, "dynamic Inspector setter accepts values and clamps the configured range")
+	_expect(property_data.get("combat_hit_points") == 200, "dynamic Inspector setter clamps the configured range")
+	_expect(property_data._property_get_revert("combat_hit_points") == 100, "dynamic Inspector revert value uses definition default")
 
 	var packed := PackedScene.new()
 	_expect(packed.pack(root) == OK, "property data node can be packed into a scene")
