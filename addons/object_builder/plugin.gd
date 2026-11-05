@@ -40,6 +40,136 @@ const CHILD_NODE_TYPES := [
 	"AudioStreamPlayer2D",
 	"AnimationPlayer"
 ]
+const OBJECT_TYPE_PRESETS := {
+	"npc": {
+		"label": "Персонаж / NPC",
+		"description": "Персонаж с запасом здоровья, скоростью передвижения, радиусом взаимодействия и фракцией.",
+		"category": "Characters",
+		"root_type": "CharacterBody2D",
+		"properties": [
+			{"id": "health", "name": "Здоровье", "type": "Integer", "default": 100, "group": "Характеристики", "min": 0, "max": 9999},
+			{"id": "move_speed", "name": "Скорость передвижения", "type": "Float", "default": 80.0, "group": "Характеристики", "min": 0.0, "max": 1000.0},
+			{"id": "interaction_radius", "name": "Радиус взаимодействия", "type": "Float", "default": 48.0, "group": "Взаимодействие", "min": 0.0, "max": 1024.0},
+			{"id": "faction", "name": "Фракция", "type": "String", "default": "neutral", "group": "Поведение"}
+		]
+	},
+	"resource": {
+		"label": "Ресурс",
+		"description": "Добываемый объект: прочность, нужный инструмент, предмет и время восстановления.",
+		"category": "Nature",
+		"root_type": "StaticBody2D",
+		"properties": [
+			{"id": "health", "name": "Прочность", "type": "Integer", "default": 20, "group": "Добыча", "min": 1, "max": 9999},
+			{"id": "required_tool", "name": "Нужный инструмент", "type": "String", "default": "axe", "group": "Добыча"},
+			{"id": "drop_item_id", "name": "ID выпадающего предмета", "type": "String", "default": "", "group": "Добыча"},
+			{"id": "respawn_time", "name": "Время восстановления", "type": "Float", "default": 0.0, "group": "Поведение", "min": 0.0, "max": 86400.0}
+		]
+	},
+	"construction": {
+		"label": "Конструкция / постройка",
+		"description": "Здание или размещаемая конструкция с прочностью, блокировкой движения и стоимостью строительства.",
+		"category": "Buildings",
+		"root_type": "StaticBody2D",
+		"properties": [
+			{"id": "health", "name": "Прочность", "type": "Integer", "default": 200, "group": "Параметры", "min": 0, "max": 99999},
+			{"id": "blocks_movement", "name": "Блокирует движение", "type": "Boolean", "default": true, "group": "Коллизия"},
+			{"id": "build_cost", "name": "Стоимость строительства", "type": "Integer", "default": 0, "group": "Экономика", "min": 0, "max": 999999}
+		]
+	},
+	"item": {
+		"label": "Предмет",
+		"description": "Подбираемый предмет с размером стопки, весом и стоимостью.",
+		"category": "Items",
+		"root_type": "Area2D",
+		"properties": [
+			{"id": "stack_size", "name": "Размер стопки", "type": "Integer", "default": 1, "group": "Инвентарь", "min": 1, "max": 999},
+			{"id": "weight", "name": "Вес", "type": "Float", "default": 0.0, "group": "Инвентарь", "min": 0.0, "max": 9999.0},
+			{"id": "sell_price", "name": "Цена продажи", "type": "Integer", "default": 0, "group": "Экономика", "min": 0, "max": 999999}
+		]
+	},
+	"weapon": {
+		"label": "Оружие",
+		"description": "Боевой предмет с уроном, дистанцией атаки, перезарядкой и расходом выносливости.",
+		"category": "Equipment",
+		"root_type": "Area2D",
+		"properties": [
+			{"id": "damage", "name": "Урон", "type": "Integer", "default": 10, "group": "Бой", "min": 0, "max": 9999},
+			{"id": "attack_range", "name": "Дистанция атаки", "type": "Float", "default": 48.0, "group": "Бой", "min": 0.0, "max": 1024.0},
+			{"id": "attack_cooldown", "name": "Перезарядка атаки", "type": "Float", "default": 0.5, "group": "Бой", "min": 0.0, "max": 60.0},
+			{"id": "stamina_cost", "name": "Расход выносливости", "type": "Float", "default": 0.0, "group": "Бой", "min": 0.0, "max": 1000.0}
+		]
+	},
+	"tool": {
+		"label": "Инструмент",
+		"description": "Рабочий инструмент с силой воздействия, прочностью и интервалом использования.",
+		"category": "Equipment",
+		"root_type": "Area2D",
+		"properties": [
+			{"id": "damage", "name": "Сила воздействия", "type": "Integer", "default": 5, "group": "Работа", "min": 0, "max": 9999},
+			{"id": "durability", "name": "Прочность инструмента", "type": "Integer", "default": 100, "group": "Работа", "min": 0, "max": 99999},
+			{"id": "attack_cooldown", "name": "Интервал использования", "type": "Float", "default": 0.5, "group": "Работа", "min": 0.0, "max": 60.0}
+		]
+	},
+	"animal": {
+		"label": "Животное",
+		"description": "Живое существо с запасом здоровья, скоростью и параметрами приручения.",
+		"category": "Animals",
+		"root_type": "CharacterBody2D",
+		"properties": [
+			{"id": "health", "name": "Здоровье", "type": "Integer", "default": 30, "group": "Характеристики", "min": 1, "max": 9999},
+			{"id": "move_speed", "name": "Скорость передвижения", "type": "Float", "default": 60.0, "group": "Характеристики", "min": 0.0, "max": 1000.0},
+			{"id": "tameable", "name": "Можно приручить", "type": "Boolean", "default": false, "group": "Поведение"}
+		]
+	},
+	"interactive": {
+		"label": "Интерактивный объект",
+		"description": "Объект, с которым игрок взаимодействует в радиусе действия.",
+		"category": "Interactive",
+		"root_type": "Area2D",
+		"properties": [
+			{"id": "interaction_radius", "name": "Радиус взаимодействия", "type": "Float", "default": 48.0, "group": "Взаимодействие", "min": 0.0, "max": 1024.0},
+			{"id": "one_shot", "name": "Одноразовое взаимодействие", "type": "Boolean", "default": false, "group": "Взаимодействие"}
+		]
+	},
+	"decoration": {
+		"label": "Декорация",
+		"description": "Визуальный объект окружения с настройками сортировки и блокировки движения.",
+		"category": "Decorations",
+		"root_type": "Node2D",
+		"properties": [
+			{"id": "blocks_movement", "name": "Блокирует движение", "type": "Boolean", "default": false, "group": "Физика"},
+			{"id": "sorting_offset", "name": "Смещение сортировки", "type": "Float", "default": 0.0, "group": "Визуал", "min": -4096.0, "max": 4096.0}
+		]
+	},
+	"transport": {
+		"label": "Транспорт",
+		"description": "Транспортное средство с параметрами скорости и вместимости.",
+		"category": "Transport",
+		"root_type": "Node2D",
+		"properties": [
+			{"id": "move_speed", "name": "Скорость", "type": "Float", "default": 100.0, "group": "Транспорт", "min": 0.0, "max": 2000.0},
+			{"id": "capacity", "name": "Вместимость", "type": "Integer", "default": 1, "group": "Транспорт", "min": 1, "max": 999}
+		]
+	},
+	"effect": {
+		"label": "Эффект",
+		"description": "Визуальный или звуковой эффект с длительностью и интенсивностью.",
+		"category": "Effects",
+		"root_type": "Node2D",
+		"properties": [
+			{"id": "duration", "name": "Длительность", "type": "Float", "default": 1.0, "group": "Эффект", "min": 0.0, "max": 3600.0},
+			{"id": "intensity", "name": "Интенсивность", "type": "Float", "default": 1.0, "group": "Эффект", "min": 0.0, "max": 1000.0}
+		]
+	},
+	"other": {
+		"label": "Другой объект",
+		"description": "Универсальная заготовка без специализированного набора параметров.",
+		"category": "Other",
+		"root_type": "Node2D",
+		"properties": []
+	}
+}
+
 
 var _dock: MarginContainer
 var _search: LineEdit
@@ -51,7 +181,11 @@ var _name_edit: LineEdit
 var _id_edit: LineEdit
 var _category_edit: LineEdit
 var _root_type: OptionButton
+var _object_type_label: Label
 var _tags_edit: LineEdit
+var _new_object_dialog: AcceptDialog
+var _new_object_type_option: OptionButton
+var _new_object_type_hint: Label
 var _description_edit: TextEdit
 var _template_check: CheckBox
 var _favorite_button: Button
@@ -70,7 +204,7 @@ var _editing_property: ObjectPropertyDefinition
 var _template_dialog: AcceptDialog
 var _template_option: OptionButton
 var _node_dialog: AcceptDialog
-var _node_type_option: OptionButton
+var _node_type_list: ItemList
 var _node_name_edit: LineEdit
 var _scene_tree: Tree
 var _scene_tree_status: Label
@@ -96,6 +230,9 @@ var _animated_frame: SpinBox
 var _animated_speed: SpinBox
 var _status_label: Label
 var _open_scene_button: Button
+var _connected_scene_tree: SceneTree
+var _tree_refresh_queued := false
+var _syncing_tree_selection := false
 var _definitions: Array[ObjectDefinition] = []
 var _visible_definitions: Array[ObjectDefinition] = []
 var _templates: Array[ObjectDefinition] = []
@@ -109,13 +246,168 @@ func _enter_tree() -> void:
 	_load_local_state()
 	_build_ui()
 	add_control_to_dock(DOCK_SLOT_RIGHT_UL, _dock)
+	_connect_editor_sync()
 	_refresh_library()
 
 
 func _exit_tree() -> void:
+	_disconnect_editor_sync()
 	if _dock != null:
 		remove_control_from_docks(_dock)
 		_dock.queue_free()
+
+
+func _connect_editor_sync() -> void:
+	var editor_selection := EditorInterface.get_selection()
+	if not editor_selection.selection_changed.is_connected(_on_editor_selection_changed):
+		editor_selection.selection_changed.connect(_on_editor_selection_changed)
+
+	var inspector := EditorInterface.get_inspector()
+	if not inspector.property_edited.is_connected(_on_inspector_property_edited):
+		inspector.property_edited.connect(_on_inspector_property_edited)
+	if not inspector.edited_object_changed.is_connected(_on_inspector_edited_object_changed):
+		inspector.edited_object_changed.connect(_on_inspector_edited_object_changed)
+
+	if not scene_changed.is_connected(_on_editor_scene_changed):
+		scene_changed.connect(_on_editor_scene_changed)
+	if not scene_closed.is_connected(_on_editor_scene_closed):
+		scene_closed.connect(_on_editor_scene_closed)
+	_update_scene_tree_connection()
+
+
+func _disconnect_editor_sync() -> void:
+	var editor_selection := EditorInterface.get_selection()
+	if editor_selection.selection_changed.is_connected(_on_editor_selection_changed):
+		editor_selection.selection_changed.disconnect(_on_editor_selection_changed)
+
+	var inspector := EditorInterface.get_inspector()
+	if inspector.property_edited.is_connected(_on_inspector_property_edited):
+		inspector.property_edited.disconnect(_on_inspector_property_edited)
+	if inspector.edited_object_changed.is_connected(_on_inspector_edited_object_changed):
+		inspector.edited_object_changed.disconnect(_on_inspector_edited_object_changed)
+
+	if scene_changed.is_connected(_on_editor_scene_changed):
+		scene_changed.disconnect(_on_editor_scene_changed)
+	if scene_closed.is_connected(_on_editor_scene_closed):
+		scene_closed.disconnect(_on_editor_scene_closed)
+
+	if is_instance_valid(_connected_scene_tree):
+		if _connected_scene_tree.tree_changed.is_connected(_on_editor_tree_changed):
+			_connected_scene_tree.tree_changed.disconnect(_on_editor_tree_changed)
+	_connected_scene_tree = null
+
+
+func _update_scene_tree_connection() -> void:
+	var edited_root := EditorInterface.get_edited_scene_root()
+	var next_tree: SceneTree = edited_root.get_tree() if edited_root != null else null
+	if next_tree == _connected_scene_tree:
+		return
+	if is_instance_valid(_connected_scene_tree):
+		if _connected_scene_tree.tree_changed.is_connected(_on_editor_tree_changed):
+			_connected_scene_tree.tree_changed.disconnect(_on_editor_tree_changed)
+	_connected_scene_tree = next_tree
+	if is_instance_valid(_connected_scene_tree):
+		if not _connected_scene_tree.tree_changed.is_connected(_on_editor_tree_changed):
+			_connected_scene_tree.tree_changed.connect(_on_editor_tree_changed)
+
+
+func _on_editor_scene_changed(_scene_root: Node) -> void:
+	_update_scene_tree_connection()
+	call_deferred("_refresh_scene_tree")
+	call_deferred("_on_editor_selection_changed")
+
+
+func _on_editor_scene_closed(_path: String) -> void:
+	_update_scene_tree_connection()
+	call_deferred("_refresh_scene_tree")
+
+
+func _on_editor_tree_changed() -> void:
+	if _tree_refresh_queued:
+		return
+	_tree_refresh_queued = true
+	call_deferred("_deferred_refresh_scene_tree")
+
+
+func _deferred_refresh_scene_tree() -> void:
+	_tree_refresh_queued = false
+	_update_scene_tree_connection()
+	_refresh_scene_tree()
+
+
+func _on_editor_selection_changed() -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var selected_node := _get_editor_selected_scene_node(scene_root)
+	if selected_node == null:
+		_refresh_visual_editor(null)
+		return
+	_refresh_scene_tree()
+	_sync_scene_tree_selection(selected_node)
+
+
+func _on_inspector_edited_object_changed() -> void:
+	call_deferred("_on_editor_selection_changed")
+
+
+func _on_inspector_property_edited(_property_name: String) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var inspected_object := EditorInterface.get_inspector().get_edited_object()
+	var target_node: Node = null
+	if inspected_object is Node:
+		target_node = inspected_object as Node
+	else:
+		target_node = _get_editor_selected_scene_node(scene_root)
+	if target_node != null and (target_node == scene_root or scene_root.is_ancestor_of(target_node)):
+		_refresh_visual_editor(target_node)
+
+
+func _get_editor_selected_scene_node(scene_root: Node) -> Node:
+	if scene_root == null:
+		return null
+	for selected_node in EditorInterface.get_selection().get_selected_nodes():
+		if selected_node is Node:
+			var selected := selected_node as Node
+			if selected == scene_root or scene_root.is_ancestor_of(selected):
+				return selected
+	var inspected_object := EditorInterface.get_inspector().get_edited_object()
+	if inspected_object is Node:
+		var inspected_node := inspected_object as Node
+		if inspected_node == scene_root or scene_root.is_ancestor_of(inspected_node):
+			return inspected_node
+	return null
+
+
+func _sync_scene_tree_selection(node: Node) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var target_path := scene_root.get_path_to(node)
+	var item := _find_scene_tree_item(_scene_tree.get_root(), target_path)
+	if item == null:
+		return
+	_syncing_tree_selection = true
+	item.select(0)
+	_scene_tree.scroll_to_item(item)
+	_syncing_tree_selection = false
+	_refresh_visual_editor(node)
+
+
+func _find_scene_tree_item(parent_item: TreeItem, target_path: NodePath) -> TreeItem:
+	if parent_item == null:
+		return null
+	if parent_item.get_metadata(0) == target_path:
+		return parent_item
+	for child_item in parent_item.get_children():
+		var found_item := _find_scene_tree_item(child_item, target_path)
+		if found_item != null:
+			return found_item
+	return null
 
 
 func _build_ui() -> void:
@@ -218,7 +510,11 @@ func _build_ui() -> void:
 	_favorite_button.pressed.connect(_on_toggle_favorite_pressed)
 	favorite_row.add_child(_favorite_button)
 
-	_category_edit = _add_labeled_line_edit(editor, "Категория", "Например, Nature")
+	_object_type_label = Label.new()
+	_object_type_label.text = "Не выбран"
+	_add_labeled_control(editor, "Тип объекта", _object_type_label)
+
+	_category_edit = _add_labeled_line_edit(editor, "Категория библиотеки", "Например, Nature")
 	_tags_edit = _add_labeled_line_edit(editor, "Теги", "дерево, ресурс, лес")
 
 	_root_type = OptionButton.new()
@@ -316,6 +612,7 @@ func _build_ui() -> void:
 	editor.add_child(_status_label)
 
 	_build_property_dialog()
+	_build_new_object_dialog()
 	_build_template_dialog()
 	_build_node_dialog()
 
@@ -398,6 +695,100 @@ func _build_property_dialog() -> void:
 
 	_property_dialog.confirmed.connect(_on_property_dialog_confirmed)
 	_update_property_range_controls()
+
+
+func _build_new_object_dialog() -> void:
+	_new_object_dialog = AcceptDialog.new()
+	_new_object_dialog.title = "Новый объект · выбери тип"
+	add_child(_new_object_dialog)
+
+	var form := VBoxContainer.new()
+	_new_object_dialog.add_child(form)
+
+	_new_object_type_option = OptionButton.new()
+	_new_object_type_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for type_id in OBJECT_TYPE_PRESETS.keys():
+		var preset: Dictionary = OBJECT_TYPE_PRESETS[type_id]
+		_new_object_type_option.add_item(str(preset.get("label", type_id)))
+		_new_object_type_option.set_item_metadata(_new_object_type_option.item_count - 1, str(type_id))
+	_new_object_type_option.item_selected.connect(_on_new_object_type_selected)
+	_add_labeled_control(form, "Что создаём?", _new_object_type_option)
+
+	_new_object_type_hint = Label.new()
+	_new_object_type_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_new_object_type_hint.custom_minimum_size = Vector2(0, 58)
+	form.add_child(_new_object_type_hint)
+
+	var help_label := Label.new()
+	help_label.text = "После подтверждения появятся параметры, подходящие выбранному типу."
+	help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	form.add_child(help_label)
+
+	_new_object_dialog.confirmed.connect(_on_new_object_dialog_confirmed)
+	_new_object_type_option.select(0)
+	_update_new_object_type_hint()
+
+
+func _on_new_object_type_selected(_index: int) -> void:
+	_update_new_object_type_hint()
+
+
+func _update_new_object_type_hint() -> void:
+	if _new_object_type_hint == null or _new_object_type_option == null:
+		return
+	if _new_object_type_option.selected < 0:
+		_new_object_type_hint.text = ""
+		return
+	var type_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
+	var preset: Dictionary = OBJECT_TYPE_PRESETS.get(type_id, {})
+	var property_count := (preset.get("properties", []) as Array).size()
+	_new_object_type_hint.text = "%s\nКорневой узел: %s · Группа: %s · Стартовых параметров: %d" % [
+		str(preset.get("description", "")),
+		str(preset.get("root_type", "Node2D")),
+		str(preset.get("category", "Other")),
+		property_count
+	]
+
+
+func _on_new_object_dialog_confirmed() -> void:
+	if _new_object_type_option.selected < 0:
+		return
+	var type_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
+	var preset: Dictionary = OBJECT_TYPE_PRESETS.get(type_id, OBJECT_TYPE_PRESETS["other"])
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "object_%d_%d" % [
+		int(Time.get_unix_time_from_system()),
+		Time.get_ticks_msec()
+	]
+	definition.display_name = str(preset.get("label", "Новый объект"))
+	definition.description = str(preset.get("description", ""))
+	definition.object_type = type_id
+	definition.category = str(preset.get("category", "Other"))
+	definition.root_type = str(preset.get("root_type", "Node2D"))
+	definition.is_template = false
+
+	for property_data in preset.get("properties", []):
+		var property_definition := ObjectPropertyDefinition.new()
+		property_definition.property_id = str(property_data.get("id", ""))
+		property_definition.display_name = str(property_data.get("name", property_definition.property_id))
+		property_definition.value_type = str(property_data.get("type", "String"))
+		property_definition.default_value = property_data.get("default", "")
+		property_definition.group_name = str(property_data.get("group", "Основное"))
+		property_definition.description = str(property_data.get("description", ""))
+		property_definition.advanced = bool(property_data.get("advanced", false))
+		property_definition.has_range = property_data.has("min") and property_data.has("max")
+		if property_definition.has_range:
+			property_definition.minimum = float(property_data["min"])
+			property_definition.maximum = float(property_data["max"])
+		definition.custom_properties.append(property_definition)
+
+	_can_save_as_template = true
+	_load_definition(definition)
+	_set_status(
+		"Создан тип «%s». Ниже показаны его стартовые параметры — их можно менять и дополнять." % str(preset.get("label", type_id)),
+		false
+	)
 
 
 func _on_property_type_changed(_index: int) -> void:
@@ -604,21 +995,26 @@ func _build_node_dialog() -> void:
 	add_child(_node_dialog)
 
 	var form := VBoxContainer.new()
+	form.add_theme_constant_override("separation", 5)
 	_node_dialog.add_child(form)
 
-	_node_type_option = OptionButton.new()
+	var type_label := Label.new()
+	type_label.text = "Выбери тип узла:"
+	form.add_child(type_label)
+
+	_node_type_list = ItemList.new()
+	_node_type_list.custom_minimum_size = Vector2(0, 142)
+	_node_type_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_node_type_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_node_type_list.select_mode = ItemList.SELECT_SINGLE
 	for type_name in CHILD_NODE_TYPES:
-		_node_type_option.add_item(type_name)
-	_add_labeled_control(form, "Тип узла", _node_type_option)
+		_node_type_list.add_item(type_name)
+	form.add_child(_node_type_list)
 
 	_node_name_edit = LineEdit.new()
-	_node_name_edit.placeholder_text = "Имя создаваемого узла"
+	_node_name_edit.placeholder_text = "Имя (необязательно)"
 	_add_labeled_control(form, "Название", _node_name_edit)
 
-	var hint := Label.new()
-	hint.text = "Узел будет добавлен в открытую сцену объекта. Операцию можно отменить через Ctrl+Z."
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	form.add_child(hint)
 	_node_dialog.confirmed.connect(_on_node_dialog_confirmed)
 
 
@@ -775,8 +1171,9 @@ func _refresh_library_list() -> void:
 		_object_list.add_item(title_prefix + definition.display_name)
 		_object_list.set_item_tooltip(
 			_object_list.item_count - 1,
-			"%s\nID: %s\nТеги: %s" % [
+			"%s\nТип: %s\nID: %s\nТеги: %s" % [
 				definition.description,
+				_object_type_display_name(definition.object_type),
 				definition.object_id,
 				_join_tags(definition.tags)
 			]
@@ -785,6 +1182,11 @@ func _refresh_library_list() -> void:
 	if _visible_definitions.is_empty():
 		_object_list.add_item("Объекты не найдены")
 		_object_list.set_item_disabled(0, true)
+
+
+func _object_type_display_name(type_id: String) -> String:
+	var preset: Dictionary = OBJECT_TYPE_PRESETS.get(type_id, OBJECT_TYPE_PRESETS["other"])
+	return str(preset.get("label", "Другой объект"))
 
 
 func _find_definition(object_id: String) -> ObjectDefinition:
@@ -855,15 +1257,9 @@ func _refresh_favorite_button() -> void:
 
 
 func _on_new_object_pressed() -> void:
-	var definition := ObjectDefinition.new()
-	definition.object_id = "object_%d_%d" % [int(Time.get_unix_time_from_system()), Time.get_ticks_msec()]
-	definition.display_name = "Новый объект"
-	definition.category = "Nature"
-	definition.root_type = "Node2D"
-	definition.is_template = false
-	_can_save_as_template = true
-	_load_definition(definition)
-	_set_status("Новый объект ещё не сохранён.", false)
+	_new_object_type_option.select(0)
+	_update_new_object_type_hint()
+	_new_object_dialog.popup_centered(Vector2i(460, 250))
 
 
 func _on_create_from_template_pressed() -> void:
@@ -932,6 +1328,7 @@ func _clone_template_scene(template_definition: ObjectDefinition, target_definit
 func _load_definition(definition: ObjectDefinition) -> void:
 	_working_definition = definition.duplicate(true) as ObjectDefinition
 	_name_edit.text = _working_definition.display_name
+	_object_type_label.text = _object_type_display_name(_working_definition.object_type)
 	_id_edit.text = _working_definition.object_id
 	_category_edit.text = _working_definition.category
 	_tags_edit.text = _join_tags(_working_definition.tags)
@@ -992,15 +1389,18 @@ func _rebuild_property_list() -> void:
 					str(property_definition.minimum),
 					str(property_definition.maximum)
 				]
-			description_label.text = "%s  ·  %s  ·  %s%s" % [
+			description_label.text = "%s · %s%s" % [
 				property_definition.display_name,
 				property_definition.value_type,
-				str(property_definition.default_value),
 				property_suffix
 			]
 			description_label.clip_text = true
-			description_label.tooltip_text = property_definition.description
+			description_label.tooltip_text = "%s\nЗначение по умолчанию: %s" % [
+				property_definition.description,
+				str(property_definition.default_value)
+			]
 			row.add_child(description_label)
+			row.add_child(_make_property_default_control(property_definition))
 
 			var edit_button := Button.new()
 			edit_button.text = "✎"
@@ -1014,6 +1414,84 @@ func _rebuild_property_list() -> void:
 			remove_button.pressed.connect(_on_remove_property_pressed.bind(property_definition))
 			row.add_child(remove_button)
 			_property_list.add_child(row)
+
+
+func _make_property_default_control(property_definition: ObjectPropertyDefinition) -> Control:
+	if property_definition.value_type == "Integer" or property_definition.value_type == "Float":
+		var number_edit := SpinBox.new()
+		number_edit.custom_minimum_size = Vector2(88, 0)
+		number_edit.size_flags_horizontal = Control.SIZE_SHRINK_END
+		number_edit.step = 1.0 if property_definition.value_type == "Integer" else 0.1
+		number_edit.min_value = property_definition.minimum if property_definition.has_range else -1000000.0
+		number_edit.max_value = property_definition.maximum if property_definition.has_range else 1000000.0
+		number_edit.allow_greater = false
+		number_edit.allow_lesser = false
+		number_edit.set_value_no_signal(float(property_definition.default_value))
+		number_edit.value_changed.connect(_on_property_default_numeric_changed.bind(property_definition))
+		return number_edit
+
+	if property_definition.value_type == "Boolean":
+		var bool_edit := CheckBox.new()
+		bool_edit.custom_minimum_size = Vector2(48, 0)
+		bool_edit.button_pressed = bool(property_definition.default_value)
+		bool_edit.toggled.connect(_on_property_default_boolean_changed.bind(property_definition))
+		return bool_edit
+
+	var text_edit := LineEdit.new()
+	text_edit.custom_minimum_size = Vector2(88, 0)
+	text_edit.size_flags_horizontal = Control.SIZE_SHRINK_END
+	text_edit.text = _format_property_default_value(
+		property_definition.default_value,
+		property_definition.value_type
+	)
+	text_edit.tooltip_text = "Измени значение по умолчанию и нажми Enter"
+	text_edit.text_submitted.connect(_on_property_default_text_submitted.bind(property_definition))
+	text_edit.focus_exited.connect(_on_property_default_text_focus_exited.bind(text_edit, property_definition))
+	return text_edit
+
+
+func _on_property_default_numeric_changed(value: float, property_definition: ObjectPropertyDefinition) -> void:
+	if property_definition == null:
+		return
+	if property_definition.value_type == "Integer":
+		property_definition.default_value = int(round(value))
+	else:
+		property_definition.default_value = value
+	_set_status("Параметр изменён. Нажми «Сохранить в библиотеку», чтобы записать определение.", false)
+
+
+func _on_property_default_boolean_changed(value: bool, property_definition: ObjectPropertyDefinition) -> void:
+	if property_definition == null:
+		return
+	property_definition.default_value = value
+	_set_status("Параметр изменён. Нажми «Сохранить в библиотеку», чтобы записать определение.", false)
+
+
+func _on_property_default_text_submitted(value: String, property_definition: ObjectPropertyDefinition) -> void:
+	_commit_property_default_text(value, property_definition)
+
+
+func _on_property_default_text_focus_exited(text_edit: LineEdit, property_definition: ObjectPropertyDefinition) -> void:
+	if text_edit == null:
+		return
+	_commit_property_default_text(text_edit.text, property_definition)
+
+
+func _commit_property_default_text(value: String, property_definition: ObjectPropertyDefinition) -> void:
+	if property_definition == null:
+		return
+	if property_definition.value_type == "Vector2":
+		var parts := value.split(",")
+		if parts.size() != 2 or not parts[0].strip_edges().is_valid_float() or not parts[1].strip_edges().is_valid_float():
+			_set_status("Vector2 нужно вводить в формате: X, Y.", true)
+			return
+		property_definition.default_value = Vector2(
+			float(parts[0].strip_edges()),
+			float(parts[1].strip_edges())
+		)
+	else:
+		property_definition.default_value = value
+	_set_status("Параметр изменён. Нажми «Сохранить в библиотеку», чтобы записать определение.", false)
 
 
 func _on_add_property_pressed() -> void:
@@ -1273,6 +1751,7 @@ func _get_open_object_scene_root() -> Node:
 func _refresh_scene_tree() -> void:
 	if _scene_tree == null:
 		return
+	_update_scene_tree_connection()
 	_scene_tree.clear()
 	var scene_root := _get_open_object_scene_root()
 	if scene_root == null:
@@ -1289,7 +1768,12 @@ func _refresh_scene_tree() -> void:
 	root_item.set_tooltip_text(0, scene_root.get_path())
 	for child in scene_root.get_children():
 		_add_scene_tree_item(child, root_item, scene_root)
-	_scene_tree_status.text = "Изменения дерева используют Undo/Redo Godot. Сохраняй сцену обычным Ctrl+S."
+	_scene_tree_status.text = "Дерево синхронизируется со штатными Scene dock и Inspector. Ctrl+S сохраняет сцену."
+	var selected_node := _get_editor_selected_scene_node(scene_root)
+	if selected_node != null:
+		_sync_scene_tree_selection(selected_node)
+	else:
+		_refresh_visual_editor(null)
 
 
 func _add_scene_tree_item(node: Node, parent_item: TreeItem, scene_root: Node) -> void:
@@ -1303,8 +1787,15 @@ func _add_scene_tree_item(node: Node, parent_item: TreeItem, scene_root: Node) -
 
 func _on_scene_tree_item_selected() -> void:
 	var node := _get_selected_scene_tree_node()
-	if node != null:
-		EditorInterface.edit_node(node)
+	if node == null:
+		return
+	if _syncing_tree_selection:
+		_refresh_visual_editor(node)
+		return
+	var editor_selection := EditorInterface.get_selection()
+	editor_selection.clear()
+	editor_selection.add_node(node)
+	EditorInterface.edit_node(node)
 	_refresh_visual_editor(node)
 
 
@@ -1571,8 +2062,7 @@ func _commit_visual_node_property(
 	undo_redo.add_do_property(node, property_name, new_value)
 	undo_redo.add_undo_property(node, property_name, old_value)
 	undo_redo.commit_action()
-	if node is Sprite2D and (property_name == "hframes" or property_name == "vframes"):
-		_refresh_visual_editor(node)
+	_refresh_visual_editor(node)
 
 
 func _on_add_node_pressed() -> void:
@@ -1582,9 +2072,11 @@ func _on_add_node_pressed() -> void:
 	if _get_open_object_scene_root() == null:
 		_set_status("Сначала открой сцену этого объекта.", true)
 		return
-	_node_type_option.select(1)
+	var sprite_index := CHILD_NODE_TYPES.find("Sprite2D")
+	_node_type_list.select(maxi(0, sprite_index))
+	_node_type_list.ensure_current_is_visible()
 	_node_name_edit.text = ""
-	_node_dialog.popup_centered(Vector2i(430, 190))
+	_node_dialog.popup_centered(Vector2i(430, 300))
 
 
 func _on_node_dialog_confirmed() -> void:
@@ -1597,7 +2089,15 @@ func _on_node_dialog_confirmed() -> void:
 	if parent_node == null:
 		parent_node = scene_root
 
-	var node_type := _node_type_option.get_item_text(_node_type_option.selected)
+	var selected_types := _node_type_list.get_selected_items()
+	if selected_types.is_empty():
+		_set_status("Выбери тип дочернего узла.", true)
+		return
+	var selected_index := selected_types[0]
+	if selected_index < 0 or selected_index >= CHILD_NODE_TYPES.size():
+		_set_status("Не удалось определить тип дочернего узла.", true)
+		return
+	var node_type := CHILD_NODE_TYPES[selected_index]
 	var created_object: Object = ClassDB.instantiate(node_type)
 	if not created_object is Node:
 		_set_status("Godot не смог создать узел типа " + node_type, true)
