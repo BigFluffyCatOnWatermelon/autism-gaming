@@ -24,6 +24,7 @@ Object Builder — редакторский плагин для создания
 - Дочерний узел `ObjectProperties` с сериализуемыми определениями и значениями пользовательских свойств.
 - Динамические типизированные поля Inspector для пользовательских свойств; поддерживаются группы и числовые min/max.
 - Runtime API, который читает и меняет те же поля `ObjectProperties`, а не отдельную копию значений.
+- Каталог runtime-компонентов с категориями Appearance/Physics/Stats/Combat/Interaction/Destruction/Audio/Procedural; первый встроенный компонент — `health`.
 - Панель визуального редактора Sprite2D с предпросмотром текстуры, выбором изображения, сеткой кадров, смещением, центрированием и отражением.
 - Поддержка AnimatedSprite2D/SpriteFrames: загрузка ресурса, выбор анимации и кадра, предпросмотр кадра, Speed Scale от -10 до 10.
 
@@ -65,5 +66,18 @@ Object Builder — редакторский плагин для создания
     var tree := registry.instantiate_by_id("object_id", $World/Objects)
 
 Пользовательские значения доступны через ObjectFactory.get_custom_property(node, property_id, fallback), ObjectFactory.get_custom_property_definition(node, property_id) и ObjectFactory.set_custom_property(node, property_id, value). `set_custom_property()` возвращает bool: неправильный тип или неизвестный ID отклоняется, значение Integer/Float за min/max ограничивается. Некорректный override при создании заменяется default. Значения хранятся в `ObjectProperties` и сохраняются в `.tscn` вместе с узлом; запись этих значений в игровые save-файлы пока не подключена.
+
+Первый runtime-компонент — Health. Подключение по постоянному ID выглядит так:
+
+    var health_definition := ObjectComponentCatalog.create_definition("health")
+    health_definition.settings["max_health"] = 150.0
+    health_definition.settings["starting_health"] = 150.0
+    object_definition.components.append(health_definition)
+
+    var instance := ObjectFactory.instantiate(object_definition)
+    var health := ObjectFactory.get_component(instance, "health") as HealthComponent
+    health.apply_damage(10.0)
+
+Каталог задаёт defaults, а `settings` определения объекта переопределяет отдельные ключи. У Health доступны `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`. Сигналы: `health_changed`, `damaged`, `healed`, `died`. Важно: компонент пока подключается через runtime-определение/скрипт; кнопки добавления компонентов и визуального редактора их настроек в Object Builder ещё нет. Health пока не управляет существующими Player или ResourceNode.
 
 Плагин пока не переносит существующие ResourceNode и сцены Cozy Village автоматически. Не включай автоматическую миграцию: сначала создай копии и проверь объекты вручную.
