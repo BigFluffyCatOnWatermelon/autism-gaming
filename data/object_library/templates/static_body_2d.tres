@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/object_system/object_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+schema_version = 1
+object_id = "template_static_body_2d"
+display_name = "Статичный объект"
+description = "Заготовка для деревьев, камней, построек и других неподвижных объектов с физическим телом."
+category = "Nature"
+root_type = "StaticBody2D"
+is_template = true

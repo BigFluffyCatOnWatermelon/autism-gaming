@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ObjectDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/object_system/object_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+schema_version = 1
+object_id = "template_rigid_body_2d"
+display_name = "Физический объект"
+description = "Заготовка для предмета, который должен перемещаться под действием физики."
+category = "Items"
+root_type = "RigidBody2D"
+is_template = true

@@ -6,6 +6,17 @@
 
 Ландшафт переведён на редактируемые TileMapLayer/TileSet Godot. Автоматический спавн деревьев и камней удалён. Главная сцена стартует с пустым контейнером `World/Objects`; объекты добавляются вручную.
 
+## Object Builder
+
+- Добавлен плагин addons/object_builder, включённый в project.godot.
+- Реализован первый вертикальный срез: компактный док с поиском/категориями, создание пустых 2D-объектов и создание копий из шаблонов.
+- Доступны название, постоянный ID, категория, теги, описание и пользовательские свойства String/Integer/Float/Boolean/Vector2.
+- Runtime-часть вынесена в scripts/object_system: ObjectDefinition, ObjectPropertyDefinition, ObjectComponentDefinition, ObjectComponent, ObjectFactory и ObjectRegistry.
+- Определения сохраняются отдельно от сцен: data/object_library/objects, шаблоны — data/object_library/templates, сцены — data/object_library/scenes.
+- При повторной записи определения создаётся резервная копия .bak. Автоматической миграции существующих ResourceNode и Cozy Village сцен нет.
+- Встроенный node-tree editor, предпросмотр, каталог игровых компонентов и интеграция с Debug Inspector пока не реализованы.
+- Подробности: ROADMAP.md, ARCHITECTURE.md и addons/object_builder/README.md.
+
 ## Репозиторий и технологии
 
 - GitHub: https://github.com/BigFluffyCatOnWatermelon/autism-gaming
