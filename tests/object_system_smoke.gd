@@ -255,8 +255,20 @@ func _test_damageable_component() -> void:
 	if damageable_definition == null or health_definition == null:
 		return
 
-	damageable_definition.settings["damage_multiplier"] = 2.0
-	damageable_definition.settings["flat_reduction"] = 5.0
+	var multiplier_field := damageable_definition.get_inspector_property_name_for_setting("damage_multiplier")
+	var has_multiplier_field := false
+	for property_info in damageable_definition.get_property_list():
+		if str(property_info.get("name", "")) == multiplier_field:
+			has_multiplier_field = int(property_info.get("type", TYPE_NIL)) == TYPE_FLOAT
+	_expect(has_multiplier_field, "Damageable multiplier is exposed as a typed Inspector field")
+	_expect(
+		damageable_definition._set(StringName(multiplier_field), 2.0),
+		"Damageable multiplier can be configured through its Inspector field"
+	)
+	_expect(
+		damageable_definition.set_setting("flat_reduction", 5.0),
+		"Damageable flat reduction uses its validated settings API"
+	)
 	var definition := ObjectDefinition.new()
 	definition.object_id = "damageable_component_smoke_test"
 	definition.display_name = "Damageable Component Test"
