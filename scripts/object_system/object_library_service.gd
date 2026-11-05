@@ -66,10 +66,15 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 		else:
 			used_property_ids[property_id] = true
 		if property_definition.has_range:
-			if property_definition.value_type not in ["Integer", "Float"]:
+			if property_definition.value_type != "Integer" and property_definition.value_type != "Float":
 				errors.append("Диапазон поддерживается только для Integer и Float: " + property_id)
 			elif property_definition.minimum > property_definition.maximum:
 				errors.append("Минимум больше максимума у свойства: " + property_id)
+			elif property_definition.value_type == "Integer" and (
+					not is_equal_approx(property_definition.minimum, roundf(property_definition.minimum))
+					or not is_equal_approx(property_definition.maximum, roundf(property_definition.maximum))
+			):
+				errors.append("Границы Integer должны быть целыми числами: " + property_id)
 			else:
 				var numeric_default := float(property_definition.default_value)
 				if numeric_default < property_definition.minimum or numeric_default > property_definition.maximum:

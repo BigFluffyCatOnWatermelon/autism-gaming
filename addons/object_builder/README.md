@@ -1,4 +1,4 @@
-# Object Builder 0.2.1
+# Object Builder 0.2.2
 
 Object Builder — редакторский плагин для создания определений игровых объектов. Он не является частью игрового цикла: библиотека и runtime API продолжают работать, даже если плагин выключен.
 
@@ -16,6 +16,7 @@ Object Builder — редакторский плагин для создания
 - Избранное и последние 20 объектов с локальным хранением в метаданных редактора.
 - Базовое дерево узлов открытой сцены выбранного объекта.
 - Добавление и удаление дочерних узлов с поддержкой штатного Undo/Redo.
+- Runtime API типизированных значений пользовательских свойств, проверки типов и ограничений min/max.
 
 ## Использование
 
@@ -50,6 +51,6 @@ Object Builder — редакторский плагин для создания
     add_child(registry)
     var tree := registry.instantiate_by_id("object_id", $World/Objects)
 
-Пользовательские значения доступны через ObjectFactory.get_custom_property(node, property_id, fallback) и ObjectFactory.set_custom_property(node, property_id, value).
+Пользовательские значения доступны через ObjectFactory.get_custom_property(node, property_id, fallback), ObjectFactory.get_custom_property_definition(node, property_id) и ObjectFactory.set_custom_property(node, property_id, value). `set_custom_property()` возвращает bool: неправильный тип или неизвестный ID отклоняется, значение Integer/Float за min/max ограничивается. Некорректный override при создании заменяется default. Runtime-значения пока хранятся только в экземпляре и не записываются обратно в .tscn/savegame.
 
 Плагин пока не переносит существующие ResourceNode и сцены Cozy Village автоматически. Не включай автоматическую миграцию: сначала создай копии и проверь объекты вручную.

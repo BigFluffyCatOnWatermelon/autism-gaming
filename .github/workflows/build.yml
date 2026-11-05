@@ -33,6 +33,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object System smoke tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_system_smoke.gd 2>&1 | tee object-system-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-system-test.log; then
+            echo "Object System smoke tests reported an error."
+            exit 1
+          fi
+
       - name: Launch main scene and check runtime
         shell: bash
         run: |

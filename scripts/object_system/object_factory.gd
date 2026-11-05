@@ -25,14 +25,46 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	instance.set_meta("object_definition_version", definition.schema_version)
 
 	var values: Dictionary = {}
+	var property_definitions: Dictionary = {}
 	for property_definition in definition.custom_properties:
 		if property_definition == null or property_definition.property_id.is_empty():
 			continue
-		values[property_definition.property_id] = property_overrides.get(
-			property_definition.property_id,
+		var property_id := property_definition.property_id
+		property_definitions[property_id] = property_definition
+		var candidate: Variant = property_overrides.get(
+			property_id,
 			property_definition.default_value
 		)
+		var normalized := normalize_custom_property_value(property_definition, candidate)
+		if not normalized.ok:
+			push_warning(
+				"ObjectFactory: неверное значение свойства '%s' для объекта '%s': %s. Используется default."
+				% [property_id, definition.object_id, normalized.error]
+			)
+			normalized = normalize_custom_property_value(
+				property_definition,
+				property_definition.default_value
+			)
+			if not normalized.ok:
+				push_error(
+					"ObjectFactory: default свойства '%s' не соответствует его типу или диапазону."
+					% property_id
+				)
+				normalized = normalize_custom_property_value(
+					property_definition,
+					_get_type_default(property_definition.value_type)
+				)
+		values[property_id] = normalized.value
+
+	for override_id in property_overrides:
+		if not property_definitions.has(str(override_id)):
+			push_warning(
+				"ObjectFactory: override для неизвестного свойства '%s' проигнорирован."
+				% str(override_id)
+			)
+
 	instance.set_meta("object_custom_properties", values)
+	instance.set_meta("object_custom_property_definitions", property_definitions)
 
 	for component_definition in definition.components:
 		if component_definition == null or not component_definition.enabled:
@@ -56,16 +88,112 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	return instance
 
 
-static func get_custom_property(instance: Node, property_id: String, fallback: Variant = null) -> Variant:
+static func get_custom_property(
+	instance: Node,
+	property_id: String,
+	fallback: Variant = null
+) -> Variant:
 	if instance == null or not instance.has_meta("object_custom_properties"):
 		return fallback
 	var values: Dictionary = instance.get_meta("object_custom_properties", {})
 	return values.get(property_id, fallback)
 
 
-static func set_custom_property(instance: Node, property_id: String, value: Variant) -> void:
+static func get_custom_property_definition(
+	instance: Node,
+	property_id: String
+) -> ObjectPropertyDefinition:
+	if instance == null or not instance.has_meta("object_custom_property_definitions"):
+		return null
+	var definitions: Dictionary = instance.get_meta("object_custom_property_definitions", {})
+	return definitions.get(property_id) as ObjectPropertyDefinition
+
+
+static func set_custom_property(instance: Node, property_id: String, value: Variant) -> bool:
 	if instance == null:
-		return
+		return false
+	var property_definition := get_custom_property_definition(instance, property_id)
+	if property_definition == null:
+		push_warning("ObjectFactory: свойство не найдено: " + property_id)
+		return false
+
+	var normalized := normalize_custom_property_value(property_definition, value)
+	if not normalized.ok:
+		push_warning(
+			"ObjectFactory: значение свойства '%s' отклонено: %s"
+			% [property_id, normalized.error]
+		)
+		return false
+
 	var values: Dictionary = instance.get_meta("object_custom_properties", {})
-	values[property_id] = value
+	values[property_id] = normalized.value
 	instance.set_meta("object_custom_properties", values)
+	return true
+
+
+static func normalize_custom_property_value(
+	property_definition: ObjectPropertyDefinition,
+	value: Variant
+) -> Dictionary:
+	if property_definition == null:
+		return {"ok": false, "value": null, "error": "определение свойства отсутствует"}
+
+	var normalized_value: Variant = value
+	match property_definition.value_type:
+		"String":
+			if typeof(value) != TYPE_STRING:
+				return {"ok": false, "value": null, "error": "ожидалась строка"}
+		"Integer":
+			if typeof(value) == TYPE_INT:
+				normalized_value = int(value)
+			elif typeof(value) == TYPE_FLOAT and is_equal_approx(float(value), roundf(float(value))):
+				normalized_value = int(roundf(float(value)))
+			else:
+				return {"ok": false, "value": null, "error": "ожидалось целое число"}
+		"Float":
+			if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+				normalized_value = float(value)
+			else:
+				return {"ok": false, "value": null, "error": "ожидалось число"}
+		"Boolean":
+			if typeof(value) != TYPE_BOOL:
+				return {"ok": false, "value": null, "error": "ожидалось логическое значение"}
+		"Vector2":
+			if typeof(value) != TYPE_VECTOR2:
+				return {"ok": false, "value": null, "error": "ожидался Vector2"}
+		_:
+			return {"ok": false, "value": null, "error": "неизвестный тип свойства"}
+
+	if property_definition.has_range:
+		if property_definition.value_type == "Integer":
+			var lower_bound := int(ceil(property_definition.minimum))
+			var upper_bound := int(floor(property_definition.maximum))
+			if lower_bound > upper_bound:
+				return {"ok": false, "value": null, "error": "целочисленный диапазон пуст"}
+			normalized_value = clampi(int(normalized_value), lower_bound, upper_bound)
+		elif property_definition.value_type == "Float":
+			if property_definition.minimum > property_definition.maximum:
+				return {"ok": false, "value": null, "error": "минимум больше максимума"}
+			normalized_value = clampf(
+				float(normalized_value),
+				property_definition.minimum,
+				property_definition.maximum
+			)
+
+	return {"ok": true, "value": normalized_value, "error": ""}
+
+
+static func _get_type_default(type_name: String) -> Variant:
+	match type_name:
+		"String":
+			return ""
+		"Integer":
+			return 0
+		"Float":
+			return 0.0
+		"Boolean":
+			return false
+		"Vector2":
+			return Vector2.ZERO
+		_:
+			return null
