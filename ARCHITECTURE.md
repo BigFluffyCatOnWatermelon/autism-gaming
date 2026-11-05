@@ -26,10 +26,11 @@
 - ObjectPropertyDefinition — ID, отображаемое имя, тип, значение по умолчанию, группа и описание пользовательского свойства.
 - ObjectPropertyData — дочерний узел сцены с сериализуемыми определениями/значениями и динамическими типизированными полями Inspector.
 - ObjectComponentDefinition — подключаемый компонент, категория, версия, скрипт, схема типизированных настроек и сериализуемые значения.
-- ObjectComponentCatalog — каталог категорий и встроенных компонентов; сейчас доступны Health и Damageable.
+- ObjectComponentCatalog — каталог категорий и встроенных компонентов; сейчас доступны Health, Damageable и Attack.
 - ObjectComponent — базовый Node-контракт с постоянным component_id и настройками.
 - HealthComponent — здоровье, урон, лечение, смерть, неуязвимость и сброс состояния.
 - DamageableComponent — фильтрует входящий урон, применяет множитель/плоское снижение и передаёт итог в Health.
+- AttackComponent — наносит урон цели с Damageable, проверяет дальность и cooldown; итоговый урон модифицируется на стороне цели.
 - ComponentTestScene — изолированная сцена-песочница для Health/Damageable; создаёт тестовый объект через ObjectFactory и не меняет основную игровую сцену.
 - ObjectFactory — создание экземпляра, разрешение компонентов по ID, применение настроек и поиск компонента.
 - ObjectRegistry — поиск определений и создание объектов по постоянному ID.
@@ -57,15 +58,15 @@ ObjectFactory хранит пользовательские значения и 
 
 Компонент описывается через ObjectComponentDefinition и реализуется скриптом, наследующим ObjectComponent. Компонент получает настройки через configure(Dictionary); постоянный `component_id` позволяет найти экземпляр через `ObjectFactory.get_component()`.
 
-ObjectComponentCatalog содержит категории Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio и Procedural. Встроены `health` (HealthComponent, Stats) и `damageable` (DamageableComponent, Combat); другие категории зарезервированы под будущие компоненты. Каталог создаёт ObjectComponentDefinition с defaults и схемой настроек. Словарь `settings` переопределяет ключи каталога, а runtime-фабрика передаёт объединённые значения компоненту.
+ObjectComponentCatalog содержит категории Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio и Procedural. Встроены `health` (HealthComponent, Stats), `damageable` (DamageableComponent, Combat) и `attack` (AttackComponent, Combat); другие категории зарезервированы под будущие компоненты. Каталог создаёт ObjectComponentDefinition с defaults и схемой настроек. Словарь `settings` переопределяет ключи каталога, а runtime-фабрика передаёт объединённые значения компоненту.
 
 `ObjectComponentDefinition` предоставляет динамические типизированные поля штатного Inspector из схемы `setting_definitions`: String, Integer, Float, Boolean и Vector2, группы и числовые диапазоны. Значения сохраняются в `settings` как storage-only dictionary, чтобы не показывать дублирующий сырой словарь в Inspector. `set_setting()` проверяет типы и ограничивает числовые поля заданным диапазоном.
 
 В Object Builder раздел «Компоненты» позволяет выбрать категорию и компонент, добавить его в определение, включить/отключить или удалить. Кнопка Inspector открывает ресурс ObjectComponentDefinition для правки полей; после изменения нужно сохранить определение через «Сохранить в библиотеку». Компоненты создаются ObjectFactory во время runtime-инстанцирования, а не становятся дочерними узлами сохраняемой `.tscn`.
 
-HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. DamageableComponent предоставляет `receive_damage()`: вычисляет `max(0, incoming * multiplier - flat_reduction)`, передаёт итог в Health и излучает `damage_received` или `damage_blocked`. На одном объекте должен быть включён Health, иначе Damageable не сможет применить урон. Оба компонента пока не подключены к существующему игроку, ResourceNode или Debug Inspector.
+HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. DamageableComponent предоставляет `receive_damage()`: вычисляет `max(0, incoming * multiplier - flat_reduction)`, передаёт итог в Health и излучает `damage_received` или `damage_blocked`. AttackComponent предоставляет `perform_attack(target, source)`: проверяет cooldown, дальность и наличие Damageable на цели, затем передаёт ей урон. Attack не управляет анимациями или выбором цели — это ответственность игрового контроллера. Компоненты пока не подключены к существующему игроку, ResourceNode или Debug Inspector.
 
-Изолированная сцена `scenes/tests/component_test.tscn` показывает условный манекен с Health=100 и Damageable (multiplier=1.25, flat_reduction=2). Кнопки позволяют наносить два размера урона, лечить, сбрасывать объект, выключать получение урона и включать неуязвимость. `tests/component_test_scene_smoke.gd` запускает ту же сцену в headless CI и проверяет весь цикл до смерти/сброса; запуск вручную — F6 при открытой тестовой сцене. Эта песочница не является миграцией на текущего игрока или ResourceNode.
+Изолированная сцена `scenes/tests/component_test.tscn` содержит атакующий объект с Attack и манекен с Health=100 и Damageable (multiplier=1.25, flat_reduction=2). Кнопка «Атака 12» проверяет Attack → Damageable → Health; остальные действия проверяют прямой урон, лечение, блокировку и неуязвимость. Headless CI также проверяет cooldown и дальность; запуск вручную — F6 при открытой тестовой сцене. Песочница не мигрирует Player или ResourceNode.
 
 Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаются следующими компонентами.
 
@@ -85,4 +86,4 @@ Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаю�
 
 ## Границы 0.1.0
 
-Сейчас реализованы мастер типов, библиотека, дерево сцены, панели Sprite2D/AnimatedSprite2D, типизированные пользовательские свойства и редактор каталога компонентов с Inspector-настройками. Шаблоны пока не поддерживают общее наследование и синхронизацию вариантов. Следующие крупные этапы — расширение набора игровых компонентов, тестовые сцены, безопасная интеграция с игровыми объектами и миграции.
+Сейчас реализованы мастер типов, библиотека, дерево сцены, панели Sprite2D/AnimatedSprite2D, типизированные пользовательские свойства, каталог Health/Damageable/Attack и изолированная тестовая сцена компонентов. Шаблоны пока не поддерживают общее наследование и синхронизацию вариантов. Следующие крупные этапы — остальные компоненты, интеграция Attack с боевой системой и безопасная интеграция с игровыми объектами.

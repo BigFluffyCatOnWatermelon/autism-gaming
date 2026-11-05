@@ -1,3 +1,11 @@
+## 2026-11-05 — Object System 0.4.5: компонент Attack
+
+- Добавлен AttackComponent в категорию Combat: урон, дистанция, cooldown, проверка дистанции и флаг включения.
+- Attack вызывает Damageable цели, передаёт источник урона и выдаёт сигналы attack_performed / attack_failed.
+- Каталог и штатный Inspector Object Builder получили типизированные настройки Attack.
+- Песочница компонентов расширена атакующим объектом; кнопка «Атака 12» проверяет цепочку Attack → Damageable → Health.
+- CI проверяет успешную атаку, cooldown, дистанцию, отключение Attack и всю тестовую сцену; workflow run 42052352259 завершился успешно.
+
 ## 2026-11-05 — Object Builder 0.4.4: изолированная тестовая сцена компонентов
 
 - Добавлена отдельная сцена `scenes/tests/component_test.tscn` с тестовым манекеном, созданным через ObjectFactory с Health + Damageable.

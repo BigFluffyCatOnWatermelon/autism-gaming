@@ -4,7 +4,7 @@
 
 ## Object Builder
 
-Встроенный плагин для создания игровых объектов. Нажми «Новый» и сначала выбери тип: конструктор подставит подходящий корневой узел, категорию и стартовые параметры. В сцене выбери `ObjectProperties`, чтобы редактировать типовые параметры в штатном Inspector; в блоке «Компоненты» доступны Health и Damageable. Для проверки компонентов открой `scenes/tests/component_test.tscn` и запусти F6. Подробная инструкция: [addons/object_builder/README.md](addons/object_builder/README.md).
+Встроенный плагин для создания игровых объектов. Нажми «Новый» и сначала выбери тип: конструктор подставит подходящий корневой узел, категорию и стартовые параметры. В сцене выбери `ObjectProperties`, чтобы редактировать типовые параметры в штатном Inspector; в блоке «Компоненты» доступны Health, Damageable и Attack. Для проверки боевой цепочки открой `scenes/tests/component_test.tscn` и запусти F6. Подробная инструкция: [addons/object_builder/README.md](addons/object_builder/README.md).
 
 ## Запуск
 Открой project.godot через Godot Project Manager и нажми F5.
