@@ -11,6 +11,7 @@ func _initialize() -> void:
 	_test_serialized_property_data()
 	_test_component_catalog_and_health()
 	_test_damageable_component()
+	_test_attack_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 
@@ -184,8 +185,10 @@ func _test_component_catalog_and_health() -> void:
 	_expect(categories.size() == 8, "component catalog exposes the planned category groups")
 	_expect(ObjectComponentCatalog.get_component_ids("Stats").has("health"), "Health is listed in the Stats category")
 	_expect(ObjectComponentCatalog.get_component_ids("Combat").has("damageable"), "Damageable is listed in the Combat category")
+	_expect(ObjectComponentCatalog.get_component_ids("Combat").has("attack"), "Attack is listed in the Combat category")
 	_expect(ObjectComponentCatalog.has_component("HEALTH"), "catalog component IDs are case-insensitive")
 	_expect(ObjectComponentCatalog.has_component("Damageable"), "Damageable is available by its stable ID")
+	_expect(ObjectComponentCatalog.has_component("ATTACK"), "Attack is available by its stable ID")
 
 	var component_definition := ObjectComponentCatalog.create_definition("health")
 	_expect(component_definition != null, "catalog creates the Health component definition")
@@ -317,6 +320,81 @@ func _test_damageable_component() -> void:
 	)
 
 	instance.free()
+
+
+func _test_attack_component() -> void:
+	var attack_definition := ObjectComponentCatalog.create_definition("attack")
+	_expect(attack_definition != null, "catalog creates the Attack component definition")
+	if attack_definition == null:
+		return
+
+	var damage_field := attack_definition.get_inspector_property_name_for_setting("attack_damage")
+	var has_damage_field := false
+	for property_info in attack_definition.get_property_list():
+		if str(property_info.get("name", "")) == damage_field:
+			has_damage_field = int(property_info.get("type", TYPE_NIL)) == TYPE_FLOAT
+	_expect(has_damage_field, "Attack damage is exposed as a float Inspector property")
+	_expect(attack_definition.set_setting("attack_damage", 12.0), "Attack damage setting accepts a valid value")
+
+	var target_definition := ObjectDefinition.new()
+	target_definition.object_id = "attack_smoke_target"
+	target_definition.display_name = "Attack Smoke Target"
+	target_definition.category = "Other"
+	target_definition.root_type = "Node2D"
+	target_definition.components = [
+		ObjectComponentCatalog.create_definition("health"),
+		ObjectComponentCatalog.create_definition("damageable")
+	]
+	var target := ObjectFactory.instantiate(target_definition)
+	_expect(target != null, "Attack smoke target can be created")
+	if target == null:
+		return
+	target.position = Vector2(180.0, 0.0)
+
+	var attacker_definition := ObjectDefinition.new()
+	attacker_definition.object_id = "attack_smoke_attacker"
+	attacker_definition.display_name = "Attack Smoke Attacker"
+	attacker_definition.category = "Other"
+	attacker_definition.root_type = "Node2D"
+	attacker_definition.components = [attack_definition]
+	var attacker := ObjectFactory.instantiate(attacker_definition)
+	_expect(attacker != null, "Attack smoke attacker can be created")
+	if attacker == null:
+		target.free()
+		return
+	attacker.position = Vector2.ZERO
+
+	var attack := ObjectFactory.get_component(attacker, "attack") as AttackComponent
+	var health := ObjectFactory.get_component(target, "health") as HealthComponent
+	_expect(attack != null, "factory resolves Attack by stable ID")
+	_expect(health != null, "Attack smoke target has Health")
+	if attack != null and health != null:
+		_expect(
+			is_equal_approx(attack.perform_attack(target, attacker), 13.0),
+			"Attack applies configured damage through Damageable"
+		)
+		_expect(is_equal_approx(health.current_health, 87.0), "Attack reduces target Health through Damageable")
+		_expect(
+			is_equal_approx(attack.perform_attack(target, attacker), 0.0),
+			"Attack cooldown blocks an immediate second attack"
+		)
+		attacker.position = Vector2(-300.0, 0.0)
+		attack.reset_cooldown()
+		_expect(
+			is_equal_approx(attack.perform_attack(target, attacker), 0.0),
+			"Attack refuses a target outside configured range"
+		)
+		attack.set_attack_enabled(false)
+		attacker.position = Vector2.ZERO
+		attack.reset_cooldown()
+		_expect(
+			is_equal_approx(attack.perform_attack(target, attacker), 0.0),
+			"Attack can be disabled"
+		)
+		_expect(is_equal_approx(health.current_health, 87.0), "failed Attack attempts do not alter Health")
+
+	attacker.free()
+	target.free()
 
 
 func _test_component_definition_inspector_settings() -> void:

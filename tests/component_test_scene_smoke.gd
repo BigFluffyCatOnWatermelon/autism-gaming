@@ -56,6 +56,24 @@ func _run_tests() -> void:
 		_expect(scene_instance.is_test_alive(), "test scene reset restores a living state")
 		_expect(is_equal_approx(scene_instance.get_test_health(), 100.0), "test scene reset restores starting health")
 
+		var attack_damage: float = scene_instance.perform_test_attack()
+		_expect(is_equal_approx(attack_damage, 13.0), "Attack hits the target through Damageable")
+		_expect(is_equal_approx(scene_instance.get_test_health(), 87.0), "Attack reduces target Health")
+		_expect(
+			is_equal_approx(scene_instance.perform_test_attack(), 0.0),
+			"Attack cooldown blocks an immediate second strike"
+		)
+		scene_instance.reset_attack_cooldown()
+		scene_instance.set_attacker_distance(300.0)
+		_expect(
+			is_equal_approx(scene_instance.perform_test_attack(), 0.0),
+			"Attack refuses a target outside configured range"
+		)
+		scene_instance.set_attacker_distance(205.0)
+		scene_instance.reset_attack_cooldown()
+		scene_instance.reset_test_object()
+		_expect(is_equal_approx(scene_instance.get_test_health(), 100.0), "test scene restores the target after Attack tests")
+
 	scene_instance.queue_free()
 	await process_frame
 	_finish()

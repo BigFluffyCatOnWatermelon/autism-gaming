@@ -2,10 +2,13 @@ extends Node2D
 class_name ComponentTestScene
 
 const TARGET_CENTER := Vector2(650.0, 270.0)
+const ATTACKER_CENTER := Vector2(445.0, 270.0)
 
 var _test_object: Node
+var _attacker_object: Node
 var _health: HealthComponent
 var _damageable: DamageableComponent
+var _attack: AttackComponent
 var _health_bar: ProgressBar
 var _health_label: Label
 var _status_label: Label
@@ -64,6 +67,35 @@ func _create_test_object() -> void:
 	_damageable.damage_received.connect(_on_damage_received)
 	_damageable.damage_blocked.connect(_on_damage_blocked)
 
+	var attacker_definition := ObjectDefinition.new()
+	attacker_definition.object_id = "component_test_attacker"
+	attacker_definition.display_name = "Test Attacker"
+	attacker_definition.object_type = "other"
+	attacker_definition.category = "Other"
+	attacker_definition.root_type = "Node2D"
+	var attack_definition := ObjectComponentCatalog.create_definition("attack")
+	if attack_definition == null:
+		push_error("ComponentTestScene: Attack отсутствует в каталоге.")
+		return
+	attack_definition.settings["attack_damage"] = 12.0
+	attack_definition.settings["attack_range"] = 240.0
+	attack_definition.settings["cooldown"] = 0.4
+	attack_definition.settings["require_range"] = true
+	attacker_definition.components = [attack_definition]
+	_attacker_object = ObjectFactory.instantiate(attacker_definition)
+	if _attacker_object == null:
+		push_error("ComponentTestScene: не удалось создать атакующий объект.")
+		return
+	_attacker_object.name = "TestAttacker"
+	_attacker_object.position = ATTACKER_CENTER
+	add_child(_attacker_object)
+	_attack = ObjectFactory.get_component(_attacker_object, "attack") as AttackComponent
+	if _attack == null:
+		push_error("ComponentTestScene: у атакующего объекта отсутствует Attack.")
+		return
+	_attack.attack_performed.connect(_on_attack_performed)
+	_attack.attack_failed.connect(_on_attack_failed)
+
 
 func _build_ui() -> void:
 	var canvas := CanvasLayer.new()
@@ -97,7 +129,7 @@ func _build_ui() -> void:
 	content.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "Изолированный объект: Health + Damageable"
+	subtitle.text = "Атакующий объект → Health + Damageable"
 	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	subtitle.modulate = Color("#aebdca")
 	content.add_child(subtitle)
@@ -125,6 +157,11 @@ func _build_ui() -> void:
 	_add_action_button(damage_row, "Урон 10", _on_hit_ten_pressed)
 	_add_action_button(damage_row, "Урон 25", _on_hit_twenty_five_pressed)
 
+	var attack_row := HBoxContainer.new()
+	content.add_child(attack_row)
+	_add_action_button(attack_row, "Атака 12", _on_attack_pressed)
+	_add_action_button(attack_row, "Сброс атаки", _on_attack_reset_pressed)
+
 	var heal_row := HBoxContainer.new()
 	content.add_child(heal_row)
 	_add_action_button(heal_row, "Лечение 15", _on_heal_pressed)
@@ -147,7 +184,7 @@ func _build_ui() -> void:
 	content.add_child(_invulnerable_toggle)
 
 	var settings_label := Label.new()
-	settings_label.text = "Настройки Damageable: множитель 1.25 · снижение 2"
+	settings_label.text = "Attack: 12 урона · 240 px · 0.4 с перезарядки\nDamageable: множитель 1.25 · снижение 2"
 	settings_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	settings_label.modulate = Color("#aebdca")
 	content.add_child(settings_label)
@@ -191,6 +228,23 @@ func apply_test_damage(amount: float) -> float:
 	return applied
 
 
+func perform_test_attack() -> float:
+	if _attack == null or _test_object == null:
+		return 0.0
+	return _attack.perform_attack(_test_object, _attacker_object)
+
+
+func reset_attack_cooldown() -> void:
+	if _attack != null:
+		_attack.reset_cooldown()
+
+
+func set_attacker_distance(distance: float) -> void:
+	if _attacker_object == null or not _test_object is Node2D:
+		return
+	_attacker_object.position = (_test_object as Node2D).position + Vector2(-absf(distance), 0.0)
+
+
 func heal_test_object(amount: float) -> float:
 	if _health == null:
 		return 0.0
@@ -206,6 +260,8 @@ func reset_test_object() -> void:
 	_health.reset_health()
 	_health.invulnerable = false
 	_damageable.set_damage_enabled(true)
+	if _attack != null:
+		_attack.reset_cooldown()
 	if _damage_toggle != null:
 		_damage_toggle.set_pressed_no_signal(true)
 	if _invulnerable_toggle != null:
@@ -247,7 +303,7 @@ func is_test_alive() -> bool:
 
 
 func has_test_components() -> bool:
-	return _health != null and _damageable != null
+	return _health != null and _damageable != null and _attack != null and _attacker_object != null
 
 
 func _on_hit_ten_pressed() -> void:
@@ -256,6 +312,16 @@ func _on_hit_ten_pressed() -> void:
 
 func _on_hit_twenty_five_pressed() -> void:
 	apply_test_damage(25.0)
+
+
+func _on_attack_pressed() -> void:
+	perform_test_attack()
+
+
+func _on_attack_reset_pressed() -> void:
+	reset_attack_cooldown()
+	_last_action = "Перезарядка Attack сброшена."
+	_update_ui()
 
 
 func _on_heal_pressed() -> void:
@@ -293,6 +359,25 @@ func _on_damage_blocked(incoming_damage: float, _source: Node) -> void:
 	_update_ui()
 
 
+func _on_attack_performed(_target: Node, applied_damage: float) -> void:
+	_last_action = "Attack: нанесено %.1f урона." % applied_damage
+	_update_ui()
+
+
+func _on_attack_failed(_target: Node, reason: String) -> void:
+	var reason_labels := {
+		"target_missing": "цель не выбрана",
+		"attack_disabled": "атака отключена",
+		"cooldown": "перезарядка",
+		"attacker_missing": "нет атакующего объекта",
+		"out_of_range": "цель вне дистанции",
+		"target_not_damageable": "цель не принимает урон",
+		"damage_blocked": "урон заблокирован"
+	}
+	_last_action = "Attack отменена: %s." % str(reason_labels.get(reason, reason))
+	_update_ui()
+
+
 func _update_ui() -> void:
 	var current := get_test_health()
 	var maximum := get_test_max_health()
@@ -309,6 +394,11 @@ func _update_ui() -> void:
 func _draw() -> void:
 	draw_rect(Rect2(Vector2(390.0, 82.0), Vector2(540.0, 390.0)), Color("#202b35"), true)
 	draw_rect(Rect2(Vector2(390.0, 82.0), Vector2(540.0, 390.0)), Color("#526474"), false, 2.0)
+
+	draw_rect(Rect2(ATTACKER_CENTER + Vector2(-32.0, -54.0), Vector2(64.0, 116.0)), Color("#162330"), true)
+	draw_rect(Rect2(ATTACKER_CENTER + Vector2(-25.0, -47.0), Vector2(50.0, 100.0)), Color("#6e9fc5"), true)
+	draw_rect(Rect2(ATTACKER_CENTER + Vector2(18.0, -22.0), Vector2(38.0, 10.0)), Color("#bccbd6"), true)
+	draw_line(ATTACKER_CENTER + Vector2(55.0, -17.0), TARGET_CENTER + Vector2(-66.0, -17.0), Color("#74899a"), 2.0)
 
 	var body_color := Color("#b98a62")
 	if _health != null and not _health.is_alive():

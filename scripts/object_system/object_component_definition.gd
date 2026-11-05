@@ -44,6 +44,52 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 			"maximum": 1000000.0
 		})
 		return result
+	if normalized_id == "attack":
+		result.append({
+			"key": "attack_damage",
+			"display_name": "Урон атаки",
+			"value_type": "Float",
+			"default_value": 12.0,
+			"group_name": "Атака",
+			"has_range": true,
+			"minimum": 0.0,
+			"maximum": 1000000.0
+		})
+		result.append({
+			"key": "attack_range",
+			"display_name": "Дистанция атаки",
+			"value_type": "Float",
+			"default_value": 220.0,
+			"group_name": "Атака",
+			"has_range": true,
+			"minimum": 0.0,
+			"maximum": 100000.0
+		})
+		result.append({
+			"key": "cooldown",
+			"display_name": "Перезарядка",
+			"value_type": "Float",
+			"default_value": 0.4,
+			"group_name": "Атака",
+			"has_range": true,
+			"minimum": 0.0,
+			"maximum": 60.0
+		})
+		result.append({
+			"key": "require_range",
+			"display_name": "Проверять дистанцию",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "Ограничения"
+		})
+		result.append({
+			"key": "can_attack",
+			"display_name": "Разрешить атаку",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "Ограничения"
+		})
+		return result
 	if normalized_id != "health":
 		return result
 
