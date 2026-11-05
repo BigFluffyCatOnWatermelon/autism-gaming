@@ -2,6 +2,7 @@ extends SceneTree
 
 var failures := PackedStringArray()
 var health_died_signal_received := false
+var destructible_destroyed_received := false
 
 
 func _initialize() -> void:
@@ -12,6 +13,7 @@ func _initialize() -> void:
 	_test_component_catalog_and_health()
 	_test_damageable_component()
 	_test_attack_component()
+	_test_destructible_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 
@@ -401,6 +403,81 @@ func _test_attack_component() -> void:
 	test_world.free()
 
 
+func _test_destructible_component() -> void:
+	var component_definition := ObjectComponentCatalog.create_definition("destructible")
+	_expect(component_definition != null, "catalog creates the Destructible component definition")
+	if component_definition == null:
+		return
+
+	_expect(
+		ObjectComponentCatalog.get_component_ids("Destruction").has("destructible"),
+		"Destructible appears in the Destruction category"
+	)
+	_expect(component_definition.set_setting("hide_on_destroy", true), "Destructible accepts a typed Inspector setting")
+	_expect(not component_definition.set_setting("hide_on_destroy", 1), "Destructible rejects a setting with the wrong type")
+
+	var health_definition := ObjectComponentCatalog.create_definition("health")
+	var damageable_definition := ObjectComponentCatalog.create_definition("damageable")
+	health_definition.settings["max_health"] = 40.0
+	health_definition.settings["starting_health"] = 40.0
+
+	var object_definition := ObjectDefinition.new()
+	object_definition.object_id = "destructible_smoke_object"
+	object_definition.display_name = "Destructible Smoke Object"
+	object_definition.category = "Nature"
+	object_definition.root_type = "StaticBody2D"
+	object_definition.components = [health_definition, damageable_definition, component_definition]
+
+	var body := ObjectFactory.instantiate(object_definition) as StaticBody2D
+	_expect(body != null, "ObjectFactory creates a destructible physics object")
+	if body == null:
+		return
+
+	body.collision_layer = 5
+	body.collision_mask = 3
+	var collision_shape := CollisionShape2D.new()
+	collision_shape.shape = CircleShape2D.new()
+	body.add_child(collision_shape)
+
+	var test_world := Node2D.new()
+	root.add_child(test_world)
+	test_world.add_child(body)
+
+	var health := ObjectFactory.get_component(body, "health") as HealthComponent
+	var damageable := ObjectFactory.get_component(body, "damageable") as DamageableComponent
+	var destructible := ObjectFactory.get_component(body, "destructible") as DestructibleComponent
+	_expect(health != null, "destructible object has Health")
+	_expect(damageable != null, "destructible object has Damageable")
+	_expect(destructible != null, "factory resolves Destructible by stable ID")
+	if health == null or damageable == null or destructible == null:
+		test_world.free()
+		return
+
+	destructible_destroyed_received = false
+	destructible.destroyed.connect(_on_destructible_destroyed)
+	_expect(is_equal_approx(health.apply_damage(100.0), 40.0), "lethal damage removes remaining Health")
+	_expect(destructible.is_destroyed(), "Destructible reacts to Health.died")
+	_expect(destructible_destroyed_received, "Destructible emits its destroyed signal")
+	_expect(body.collision_layer == 0 and body.collision_mask == 0, "destruction disables physics layers and masks")
+	_expect(collision_shape.disabled, "destruction disables child CollisionShape2D")
+	_expect(not body.visible, "optional visibility setting hides the destroyed object")
+	_expect(not damageable.can_receive_damage, "destruction disables further incoming damage")
+	_expect(is_instance_valid(body), "destroyed object remains available for custom fall/stump behavior")
+
+	_expect(destructible.repair(), "Destructible can restore a destroyed object")
+	_expect(not destructible.is_destroyed(), "repair clears the destroyed state")
+	_expect(body.collision_layer == 5 and body.collision_mask == 3, "repair restores original collision layers and masks")
+	_expect(not collision_shape.disabled, "repair restores the original CollisionShape2D state")
+	_expect(body.visible, "repair restores the original visibility")
+	_expect(damageable.can_receive_damage, "repair restores the original damage setting")
+	_expect(is_equal_approx(health.current_health, 40.0), "repair restores configured starting Health")
+	_expect(not bool(body.get_meta("object_destroyed", true)), "repair clears the object's destroyed metadata")
+
+	_expect(destructible.destroy(body), "Destructible also supports manual destruction")
+	_expect(not destructible.destroy(body), "repeated destruction is ignored")
+	test_world.free()
+
+
 func _test_component_definition_inspector_settings() -> void:
 	var component_definition := ObjectComponentCatalog.create_definition("health")
 	_expect(component_definition != null, "Health definition exists for Inspector settings test")
@@ -500,6 +577,10 @@ func _make_property(
 
 func _on_health_component_died() -> void:
 	health_died_signal_received = true
+
+
+func _on_destructible_destroyed(_source: Node) -> void:
+	destructible_destroyed_received = true
 
 
 func _expect(condition: bool, description: String) -> void:

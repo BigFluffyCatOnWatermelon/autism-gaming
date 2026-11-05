@@ -4,6 +4,7 @@ class_name ObjectComponentCatalog
 const HEALTH_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/health_component.gd")
 const DAMAGEABLE_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/damageable_component.gd")
 const ATTACK_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/attack_component.gd")
+const DESTRUCTIBLE_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/destructible_component.gd")
 
 const CATEGORY_DEFINITIONS := [
 	{"id": "Appearance", "display_name": "Внешний вид"},
@@ -33,11 +34,13 @@ static func get_category_display_name(category_id: String) -> String:
 
 static func get_component_ids(category_id: String = "") -> PackedStringArray:
 	if category_id.is_empty():
-		return PackedStringArray(["health", "damageable", "attack"])
+		return PackedStringArray(["health", "damageable", "attack", "destructible"])
 	if category_id == "Stats":
 		return PackedStringArray(["health"])
 	if category_id == "Combat":
 		return PackedStringArray(["damageable", "attack"])
+	if category_id == "Destruction":
+		return PackedStringArray(["destructible"])
 	return PackedStringArray()
 
 
@@ -49,6 +52,8 @@ static func get_component_display_name(component_id: String) -> String:
 			return "Приём урона"
 		"attack":
 			return "Атака"
+		"destructible":
+			return "Разрушение"
 		_:
 			return component_id
 
@@ -61,17 +66,19 @@ static func get_component_description(component_id: String) -> String:
 			return "Принимает урон, применяет множитель и плоское снижение, передаёт результат компоненту Health."
 		"attack":
 			return "Наносит урон цели с Damageable, проверяет расстояние и перезарядку."
+		"destructible":
+			return "Реагирует на смерть Health, отключает коллизии и получение урона, сообщает о разрушении."
 		_:
 			return "Компонент без описания."
 
 
 static func has_component(component_id: String) -> bool:
-	return component_id.strip_edges().to_lower() in ["health", "damageable", "attack"]
+	return component_id.strip_edges().to_lower() in ["health", "damageable", "attack", "destructible"]
 
 
 static func create_definition(component_id: String) -> ObjectComponentDefinition:
 	var normalized_id := component_id.strip_edges().to_lower()
-	if normalized_id not in ["health", "damageable", "attack"]:
+	if normalized_id not in ["health", "damageable", "attack", "destructible"]:
 		return null
 
 	var definition := ObjectComponentDefinition.new()
@@ -86,6 +93,9 @@ static func create_definition(component_id: String) -> ObjectComponentDefinition
 			definition.component_script = DAMAGEABLE_COMPONENT_SCRIPT
 		"attack":
 			definition.component_script = ATTACK_COMPONENT_SCRIPT
+		"destructible":
+			definition.category = "Destruction"
+			definition.component_script = DESTRUCTIBLE_COMPONENT_SCRIPT
 	definition.setting_definitions = ObjectComponentDefinition.get_builtin_setting_definitions(normalized_id)
 	for setting_definition in definition.setting_definitions:
 		var setting_key := str(setting_definition.get("key", ""))

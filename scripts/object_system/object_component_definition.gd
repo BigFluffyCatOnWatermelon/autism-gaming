@@ -90,6 +90,60 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 			"group_name": "Ограничения"
 		})
 		return result
+	if normalized_id == "destructible":
+		result.append({
+			"key": "destroy_on_zero_health",
+			"display_name": "Разрушать при нулевом здоровье",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "Условия"
+		})
+		result.append({
+			"key": "disable_collision_on_destroy",
+			"display_name": "Отключать коллизии",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "После разрушения"
+		})
+		result.append({
+			"key": "disable_damage_on_destroy",
+			"display_name": "Отключать получение урона",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "После разрушения"
+		})
+		result.append({
+			"key": "hide_on_destroy",
+			"display_name": "Скрывать объект",
+			"value_type": "Boolean",
+			"default_value": false,
+			"group_name": "После разрушения"
+		})
+		result.append({
+			"key": "remove_on_destroy",
+			"display_name": "Удалять объект",
+			"value_type": "Boolean",
+			"default_value": false,
+			"group_name": "После разрушения"
+		})
+		result.append({
+			"key": "destroy_delay",
+			"display_name": "Задержка удаления",
+			"value_type": "Float",
+			"default_value": 0.0,
+			"group_name": "После разрушения",
+			"has_range": true,
+			"minimum": 0.0,
+			"maximum": 300.0
+		})
+		result.append({
+			"key": "restore_health_on_repair",
+			"display_name": "Восстанавливать здоровье при починке",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "Восстановление"
+		})
+		return result
 	if normalized_id != "health":
 		return result
 
