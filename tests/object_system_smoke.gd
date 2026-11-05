@@ -147,7 +147,7 @@ func _test_serialized_property_data() -> void:
 	root.name = "PropertyDataSmokeTest"
 	var property_data := ObjectPropertyData.new()
 	property_data.name = "ObjectProperties"
-	property_data.configure([health], {"health": 145}, false)
+	property_data.configure([health], {"health_points": 145}, false)
 	root.add_child(property_data)
 	property_data.owner = root
 
@@ -165,8 +165,8 @@ func _test_serialized_property_data() -> void:
 		var restored_data := restored_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
 		_expect(restored_data != null, "packed scene keeps the property data node")
 		if restored_data != null:
-			_expect(restored_data.get_custom_property("health") == 200, "custom values survive scene pack and instantiate")
-			_expect(restored_data.get_custom_property_definition("health") != null, "custom definitions survive scene pack and instantiate")
+			_expect(restored_data.get_custom_property("health_points") == 200, "custom values survive scene pack and instantiate")
+			_expect(restored_data.get_custom_property_definition("health_points") != null, "custom definitions survive scene pack and instantiate")
 		restored_root.free()
 	root.free()
 
