@@ -416,6 +416,8 @@ static func _validate_definition(
 		errors.append("У возможности '%s' должна быть категория с ID и названием." % definition.capability_id)
 	if definition.version < 1:
 		errors.append("Версия возможности '%s' должна быть не меньше 1." % definition.capability_id)
+	if definition.definition_schema_version < 1:
+		errors.append("Версия схемы определения '%s' должна быть не меньше 1." % definition.capability_id)
 	if definition.runtime_status not in ["Implemented", "Planned"]:
 		errors.append("У возможности '%s' неизвестный runtime_status: %s." % [
 			definition.capability_id,
