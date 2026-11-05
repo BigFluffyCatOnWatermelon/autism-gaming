@@ -65,6 +65,15 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 			errors.append("Повторяется ID свойства: " + property_id)
 		else:
 			used_property_ids[property_id] = true
+		if property_definition.has_range:
+			if property_definition.value_type not in ["Integer", "Float"]:
+				errors.append("Диапазон поддерживается только для Integer и Float: " + property_id)
+			elif property_definition.minimum > property_definition.maximum:
+				errors.append("Минимум больше максимума у свойства: " + property_id)
+			else:
+				var numeric_default := float(property_definition.default_value)
+				if numeric_default < property_definition.minimum or numeric_default > property_definition.maximum:
+					errors.append("Значение по умолчанию вне диапазона у свойства: " + property_id)
 	return errors
 
 

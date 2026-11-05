@@ -61,6 +61,12 @@ var _property_name_edit: LineEdit
 var _property_type_option: OptionButton
 var _property_default_edit: LineEdit
 var _property_group_edit: LineEdit
+var _property_description_edit: TextEdit
+var _property_advanced_check: CheckBox
+var _property_range_check: CheckBox
+var _property_minimum_edit: LineEdit
+var _property_maximum_edit: LineEdit
+var _editing_property: ObjectPropertyDefinition
 var _template_dialog: AcceptDialog
 var _template_option: OptionButton
 var _node_dialog: AcceptDialog
@@ -322,6 +328,7 @@ func _build_property_dialog() -> void:
 	_property_type_option = OptionButton.new()
 	for type_name in ["String", "Integer", "Float", "Boolean", "Vector2"]:
 		_property_type_option.add_item(type_name)
+	_property_type_option.item_selected.connect(_on_property_type_changed)
 	_add_labeled_control(form, "Тип", _property_type_option)
 
 	_property_default_edit = LineEdit.new()
@@ -332,7 +339,64 @@ func _build_property_dialog() -> void:
 	_property_group_edit.text = "Основное"
 	_add_labeled_control(form, "Группа инспектора", _property_group_edit)
 
+	_property_description_edit = TextEdit.new()
+	_property_description_edit.custom_minimum_size = Vector2(0, 54)
+	_property_description_edit.placeholder_text = "Подсказка о назначении свойства…"
+	_add_labeled_control(form, "Описание", _property_description_edit)
+
+	_property_advanced_check = CheckBox.new()
+	_property_advanced_check.text = "Дополнительный параметр"
+	_property_advanced_check.tooltip_text = "Отмечает настройку как редко используемую."
+	form.add_child(_property_advanced_check)
+
+	_property_range_check = CheckBox.new()
+	_property_range_check.text = "Ограничить числовой диапазон"
+	_property_range_check.toggled.connect(_on_property_range_toggled)
+	form.add_child(_property_range_check)
+
+	var range_row := HBoxContainer.new()
+	form.add_child(range_row)
+	var minimum_label := Label.new()
+	minimum_label.text = "Мин."
+	range_row.add_child(minimum_label)
+	_property_minimum_edit = LineEdit.new()
+	_property_minimum_edit.text = "0"
+	_property_minimum_edit.custom_minimum_size = Vector2(75, 0)
+	_property_minimum_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	range_row.add_child(_property_minimum_edit)
+
+	var maximum_label := Label.new()
+	maximum_label.text = "Макс."
+	range_row.add_child(maximum_label)
+	_property_maximum_edit = LineEdit.new()
+	_property_maximum_edit.text = "100"
+	_property_maximum_edit.custom_minimum_size = Vector2(75, 0)
+	_property_maximum_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	range_row.add_child(_property_maximum_edit)
+
 	_property_dialog.confirmed.connect(_on_property_dialog_confirmed)
+	_update_property_range_controls()
+
+
+func _on_property_type_changed(_index: int) -> void:
+	var type_name := _property_type_option.get_item_text(_property_type_option.selected)
+	var supports_range := type_name in ["Integer", "Float"]
+	_property_range_check.disabled = not supports_range
+	if not supports_range:
+		_property_range_check.button_pressed = false
+	_update_property_range_controls()
+
+
+func _on_property_range_toggled(_enabled: bool) -> void:
+	_update_property_range_controls()
+
+
+func _update_property_range_controls() -> void:
+	if _property_minimum_edit == null or _property_maximum_edit == null:
+		return
+	var range_enabled := _property_range_check.button_pressed and not _property_range_check.disabled
+	_property_minimum_edit.editable = range_enabled
+	_property_maximum_edit.editable = range_enabled
 
 
 func _build_template_dialog() -> void:
@@ -740,13 +804,28 @@ func _rebuild_property_list() -> void:
 			var row := HBoxContainer.new()
 			var description_label := Label.new()
 			description_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			description_label.text = "%s  ·  %s  ·  %s" % [
+			var property_suffix := " · Доп." if property_definition.advanced else ""
+			if property_definition.has_range:
+				property_suffix += " · [%s…%s]" % [
+					str(property_definition.minimum),
+					str(property_definition.maximum)
+				]
+			description_label.text = "%s  ·  %s  ·  %s%s" % [
 				property_definition.display_name,
 				property_definition.value_type,
-				str(property_definition.default_value)
+				str(property_definition.default_value),
+				property_suffix
 			]
 			description_label.clip_text = true
+			description_label.tooltip_text = property_definition.description
 			row.add_child(description_label)
+
+			var edit_button := Button.new()
+			edit_button.text = "✎"
+			edit_button.tooltip_text = "Изменить определение свойства"
+			edit_button.pressed.connect(_on_edit_property_pressed.bind(property_definition))
+			row.add_child(edit_button)
+
 			var remove_button := Button.new()
 			remove_button.text = "×"
 			remove_button.tooltip_text = "Удалить свойство из определения"
@@ -758,11 +837,59 @@ func _rebuild_property_list() -> void:
 func _on_add_property_pressed() -> void:
 	if _working_definition == null:
 		_on_new_object_pressed()
+	_editing_property = null
+	_property_dialog.title = "Новое пользовательское свойство"
 	_property_name_edit.text = ""
 	_property_type_option.select(2)
 	_property_default_edit.text = "0"
 	_property_group_edit.text = "Основное"
-	_property_dialog.popup_centered(Vector2i(420, 260))
+	_property_description_edit.text = ""
+	_property_advanced_check.button_pressed = false
+	_property_range_check.disabled = false
+	_property_range_check.button_pressed = false
+	_property_minimum_edit.text = "0"
+	_property_maximum_edit.text = "100"
+	_update_property_range_controls()
+	_property_dialog.popup_centered(Vector2i(470, 430))
+
+
+func _on_edit_property_pressed(property_definition: ObjectPropertyDefinition) -> void:
+	if _working_definition == null or property_definition == null:
+		return
+	_editing_property = property_definition
+	_property_dialog.title = "Редактировать пользовательское свойство"
+	_property_name_edit.text = property_definition.display_name
+	_select_property_type(property_definition.value_type)
+	_property_default_edit.text = _format_property_default_value(
+		property_definition.default_value,
+		property_definition.value_type
+	)
+	_property_group_edit.text = property_definition.group_name
+	_property_description_edit.text = property_definition.description
+	_property_advanced_check.button_pressed = property_definition.advanced
+	_property_range_check.disabled = property_definition.value_type != "Integer" and property_definition.value_type != "Float"
+	_property_range_check.button_pressed = property_definition.has_range
+	_property_minimum_edit.text = str(property_definition.minimum)
+	_property_maximum_edit.text = str(property_definition.maximum)
+	_update_property_range_controls()
+	_property_dialog.popup_centered(Vector2i(470, 430))
+
+
+func _select_property_type(type_name: String) -> void:
+	for index in range(_property_type_option.item_count):
+		if _property_type_option.get_item_text(index) == type_name:
+			_property_type_option.select(index)
+			_on_property_type_changed(index)
+			return
+	_property_type_option.select(0)
+	_on_property_type_changed(0)
+
+
+func _format_property_default_value(value: Variant, type_name: String) -> String:
+	if type_name == "Vector2" and value is Vector2:
+		var vector_value: Vector2 = value
+		return "%s, %s" % [str(vector_value.x), str(vector_value.y)]
+	return str(value)
 
 
 func _on_property_dialog_confirmed() -> void:
@@ -773,26 +900,48 @@ func _on_property_dialog_confirmed() -> void:
 		_set_status("У свойства должно быть название.", true)
 		return
 
-	var property_definition := ObjectPropertyDefinition.new()
-	property_definition.display_name = display_name
-	property_definition.property_id = _make_property_id(display_name)
-	var duplicate_index := 2
-	var base_id := property_definition.property_id
-	while _has_property_id(property_definition.property_id):
-		property_definition.property_id = base_id + "_" + str(duplicate_index)
-		duplicate_index += 1
+	var value_type := _property_type_option.get_item_text(_property_type_option.selected)
+	var default_value := _parse_default_value(_property_default_edit.text, value_type)
+	var supports_range := value_type in ["Integer", "Float"]
+	var has_range := supports_range and _property_range_check.button_pressed
+	var minimum_value := _property_minimum_edit.text.to_float()
+	var maximum_value := _property_maximum_edit.text.to_float()
 
-	property_definition.value_type = _property_type_option.get_item_text(_property_type_option.selected)
-	property_definition.default_value = _parse_default_value(
-		_property_default_edit.text,
-		property_definition.value_type
-	)
+	if has_range:
+		if minimum_value > maximum_value:
+			_set_status("Минимум диапазона не может быть больше максимума.", true)
+			return
+		var numeric_default := float(default_value)
+		if numeric_default < minimum_value or numeric_default > maximum_value:
+			_set_status("Значение по умолчанию должно входить в заданный диапазон.", true)
+			return
+
+	var property_definition := _editing_property
+	if property_definition == null:
+		property_definition = ObjectPropertyDefinition.new()
+		property_definition.property_id = _make_property_id(display_name)
+		var duplicate_index := 2
+		var base_id := property_definition.property_id
+		while _has_property_id(property_definition.property_id):
+			property_definition.property_id = base_id + "_" + str(duplicate_index)
+			duplicate_index += 1
+		_working_definition.custom_properties.append(property_definition)
+
+	property_definition.display_name = display_name
+	property_definition.value_type = value_type
+	property_definition.default_value = default_value
 	property_definition.group_name = _property_group_edit.text.strip_edges()
 	if property_definition.group_name.is_empty():
 		property_definition.group_name = "Основное"
-	_working_definition.custom_properties.append(property_definition)
+	property_definition.description = _property_description_edit.text
+	property_definition.advanced = _property_advanced_check.button_pressed
+	property_definition.has_range = has_range
+	property_definition.minimum = minimum_value
+	property_definition.maximum = maximum_value
+
+	_editing_property = null
 	_rebuild_property_list()
-	_set_status("Свойство добавлено. Нажми «Сохранить в библиотеку».", false)
+	_set_status("Свойство обновлено. Нажми «Сохранить в библиотеку».", false)
 
 
 func _has_property_id(property_id: String) -> bool:
