@@ -2,6 +2,7 @@
 extends Node
 class_name ObjectComponent
 
+var component_id: String = ""
 var settings: Dictionary = {}
 
 
@@ -12,6 +13,10 @@ func configure(values: Dictionary) -> void:
 
 func get_setting(key: String, fallback: Variant = null) -> Variant:
 	return settings.get(key, fallback)
+
+
+func get_settings() -> Dictionary:
+	return settings.duplicate(true)
 
 
 func _on_configured() -> void:
