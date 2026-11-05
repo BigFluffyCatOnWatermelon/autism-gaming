@@ -1725,9 +1725,9 @@ func _create_scene_for_definition() -> bool:
 
 	var property_data := ObjectPropertyData.new()
 	property_data.name = "ObjectProperties"
-	property_data.configure(_working_definition.custom_properties)
 	scene_root.add_child(property_data)
 	property_data.owner = scene_root
+	property_data.configure(_working_definition.custom_properties)
 
 	var packed_scene := PackedScene.new()
 	var pack_error := packed_scene.pack(scene_root)
