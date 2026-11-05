@@ -10,6 +10,7 @@ func _initialize() -> void:
 	_test_object_type_default()
 	_test_serialized_property_data()
 	_test_component_catalog_and_health()
+	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 
 	if failures.is_empty():
@@ -192,8 +193,12 @@ func _test_component_catalog_and_health() -> void:
 	_expect(component_definition.category == "Stats", "Health is grouped under Stats")
 
 	component_definition.component_script = null
-	component_definition.settings["max_health"] = 120.0
-	component_definition.settings["starting_health"] = 90.0
+	component_definition._set("health_max_health", 120.0)
+	component_definition._set("health_starting_health", 90.0)
+	_expect(
+		is_equal_approx(float(component_definition.settings.get("max_health", 0.0)), 120.0),
+		"dynamic Inspector edits are stored in the serializable settings dictionary"
+	)
 
 	var definition := ObjectDefinition.new()
 	definition.object_id = "health_component_smoke_test"
@@ -236,6 +241,51 @@ func _test_component_catalog_and_health() -> void:
 	_expect(is_equal_approx(component.apply_damage(10.0), 0.0), "invulnerable Health ignores damage")
 
 	instance.free()
+
+
+func _test_component_definition_inspector_settings() -> void:
+	var component_definition := ObjectComponentCatalog.create_definition("health")
+	_expect(component_definition != null, "Health definition exists for Inspector settings test")
+	if component_definition == null:
+		return
+
+	var has_max_health := false
+	var has_invulnerable := false
+	for property_info in component_definition.get_property_list():
+		var property_name := str(property_info.get("name", ""))
+		if property_name.ends_with("_max_health"):
+			has_max_health = true
+			_expect(int(property_info.get("type", TYPE_NIL)) == TYPE_FLOAT, "Health max is exposed as a float Inspector property")
+		if property_name.ends_with("_invulnerable"):
+			has_invulnerable = true
+			_expect(int(property_info.get("type", TYPE_NIL)) == TYPE_BOOL, "Health invulnerability is exposed as a boolean Inspector property")
+	_expect(has_max_health, "Health max setting is listed in the native Inspector")
+	_expect(has_invulnerable, "Health invulnerability setting is listed in the native Inspector")
+	_expect(is_equal_approx(float(component_definition.get("health_max_health")), 100.0), "component Inspector getter reads the catalog default")
+	_expect(component_definition._set("health_max_health", 250.0), "component Inspector setter accepts a valid setting")
+	_expect(is_equal_approx(float(component_definition.get_setting("max_health")), 250.0), "component settings API reads Inspector edits")
+	_expect(component_definition._property_get_revert("health_max_health") == 100.0, "component Inspector revert uses the catalog default")
+	_expect(not component_definition._set("health_max_health", "invalid"), "component setting rejects a value with the wrong type")
+	_expect(is_equal_approx(float(component_definition.get_setting("max_health")), 250.0), "rejected component setting leaves the previous value unchanged")
+
+	var object_definition := ObjectDefinition.new()
+	object_definition.object_id = "component_settings_serialization_test"
+	object_definition.display_name = "Component Settings Serialization Test"
+	object_definition.category = "Other"
+	object_definition.components = [component_definition]
+	var save_path := "user://component_settings_serialization_test.tres"
+	var save_error := ResourceSaver.save(object_definition, save_path)
+	_expect(save_error == OK, "ObjectDefinition with component settings can be saved")
+	if save_error == OK:
+		var loaded_definition := ResourceLoader.load(save_path, "", ResourceLoader.CACHE_MODE_REPLACE) as ObjectDefinition
+		_expect(loaded_definition != null, "saved ObjectDefinition with components can be loaded")
+		if loaded_definition != null and not loaded_definition.components.is_empty():
+			var loaded_component := loaded_definition.components[0]
+			_expect(
+				is_equal_approx(float(loaded_component.get_setting("max_health")), 250.0),
+				"component Inspector values survive ObjectDefinition serialization"
+			)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
 
 
 func _test_component_definition_validation() -> void:

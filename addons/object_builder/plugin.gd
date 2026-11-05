@@ -190,6 +190,10 @@ var _description_edit: TextEdit
 var _template_check: CheckBox
 var _favorite_button: Button
 var _property_list: VBoxContainer
+var _component_category_option: OptionButton
+var _component_option: OptionButton
+var _component_add_button: Button
+var _component_list: VBoxContainer
 var _property_dialog: AcceptDialog
 var _property_name_edit: LineEdit
 var _property_type_option: OptionButton
@@ -354,10 +358,18 @@ func _on_inspector_edited_object_changed() -> void:
 
 
 func _on_inspector_property_edited(_property_name: String) -> void:
+	var inspected_object := EditorInterface.get_inspector().get_edited_object()
+	if inspected_object is ObjectComponentDefinition and _working_definition != null:
+		for component_definition in _working_definition.components:
+			if component_definition == inspected_object:
+				_set_status(
+					"Настройки компонента изменены. Нажми «Сохранить в библиотеку», чтобы записать их.",
+					false
+				)
+				break
 	var scene_root := _get_open_object_scene_root()
 	if scene_root == null:
 		return
-	var inspected_object := EditorInterface.get_inspector().get_edited_object()
 	var target_node: Node = null
 	if inspected_object is Node:
 		target_node = inspected_object as Node
@@ -599,10 +611,7 @@ func _build_ui() -> void:
 	add_property_button.pressed.connect(_on_add_property_pressed)
 	editor.add_child(add_property_button)
 
-	var component_note := Label.new()
-	component_note.text = "Редактор компонентов и их настроек — следующий этап."
-	component_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	editor.add_child(component_note)
+	_build_component_editor(editor)
 
 	var save_button := Button.new()
 	save_button.text = "Сохранить в библиотеку"
@@ -617,6 +626,182 @@ func _build_ui() -> void:
 	_build_new_object_dialog()
 	_build_template_dialog()
 	_build_node_dialog()
+
+
+func _build_component_editor(parent: VBoxContainer) -> void:
+	var title := Label.new()
+	title.text = "КОМПОНЕНТЫ"
+	parent.add_child(title)
+
+	var hint := Label.new()
+	hint.text = "Компоненты добавляют объекту поведение. Типизированные настройки открываются в штатном Inspector и сохраняются вместе с определением."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parent.add_child(hint)
+
+	var picker_row := HBoxContainer.new()
+	parent.add_child(picker_row)
+
+	_component_category_option = OptionButton.new()
+	_component_category_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for category_definition in ObjectComponentCatalog.get_categories():
+		_component_category_option.add_item(str(category_definition.get("display_name", "")))
+		_component_category_option.set_item_metadata(
+			_component_category_option.item_count - 1,
+			str(category_definition.get("id", ""))
+		)
+	_component_category_option.item_selected.connect(_on_component_category_selected)
+	picker_row.add_child(_component_category_option)
+
+	_component_option = OptionButton.new()
+	_component_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	picker_row.add_child(_component_option)
+
+	_component_add_button = Button.new()
+	_component_add_button.text = "+ Добавить"
+	_component_add_button.pressed.connect(_on_component_add_pressed)
+	picker_row.add_child(_component_add_button)
+
+	_component_list = VBoxContainer.new()
+	_component_list.add_theme_constant_override("separation", 4)
+	parent.add_child(_component_list)
+
+	var selected_stats := 0
+	for index in range(_component_category_option.item_count):
+		if str(_component_category_option.get_item_metadata(index)) == "Stats":
+			selected_stats = index
+			break
+	_component_category_option.select(selected_stats)
+	_refresh_component_catalog_options()
+
+
+func _refresh_component_catalog_options() -> void:
+	if _component_category_option == null or _component_option == null:
+		return
+	var category_id := ""
+	if _component_category_option.selected >= 0:
+		category_id = str(_component_category_option.get_item_metadata(_component_category_option.selected))
+	_component_option.clear()
+	var component_ids := ObjectComponentCatalog.get_component_ids(category_id)
+	for component_id in component_ids:
+		_component_option.add_item(ObjectComponentCatalog.get_component_display_name(component_id))
+		_component_option.set_item_metadata(_component_option.item_count - 1, component_id)
+	var has_options := not component_ids.is_empty()
+	if not has_options:
+		_component_option.add_item("Нет доступных компонентов")
+	_component_option.disabled = not has_options
+	_component_add_button.disabled = not has_options
+	if has_options:
+		_component_option.select(0)
+
+
+func _on_component_category_selected(_index: int) -> void:
+	_refresh_component_catalog_options()
+
+
+func _on_component_add_pressed() -> void:
+	if _working_definition == null or _component_option == null or _component_option.disabled:
+		return
+	if _component_option.selected < 0:
+		return
+	var component_id := str(_component_option.get_item_metadata(_component_option.selected))
+	for existing_component in _working_definition.components:
+		if existing_component != null and existing_component.component_id.to_lower() == component_id.to_lower():
+			_set_status("Компонент «%s» уже добавлен." % ObjectComponentCatalog.get_component_display_name(component_id), true)
+			return
+
+	var component_definition := ObjectComponentCatalog.create_definition(component_id)
+	if component_definition == null:
+		_set_status("Компонент не найден в каталоге: " + component_id, true)
+		return
+	_working_definition.components.append(component_definition)
+	_rebuild_component_list()
+	_set_status("Компонент «%s» добавлен. Нажми «Сохранить в библиотеку»." % component_definition.display_name, false)
+
+
+func _rebuild_component_list() -> void:
+	if _component_list == null:
+		return
+	for child in _component_list.get_children():
+		_component_list.remove_child(child)
+		child.queue_free()
+
+	if _working_definition == null or _working_definition.components.is_empty():
+		var empty_label := Label.new()
+		empty_label.text = "Компоненты не добавлены."
+		_component_list.add_child(empty_label)
+		return
+
+	for component_definition in _working_definition.components:
+		if component_definition == null:
+			continue
+		var row := HBoxContainer.new()
+		var enabled_check := CheckBox.new()
+		enabled_check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		enabled_check.button_pressed = component_definition.enabled
+		enabled_check.text = component_definition.display_name
+		enabled_check.tooltip_text = "%s\nID: %s" % [
+			ObjectComponentCatalog.get_component_description(component_definition.component_id),
+			component_definition.component_id
+		]
+		enabled_check.toggled.connect(_on_component_enabled_toggled.bind(component_definition))
+		row.add_child(enabled_check)
+
+		var settings_button := Button.new()
+		settings_button.text = "Inspector"
+		settings_button.tooltip_text = "Открыть типизированные настройки компонента в штатном Inspector"
+		settings_button.pressed.connect(_on_component_settings_pressed.bind(component_definition))
+		row.add_child(settings_button)
+
+		var remove_button := Button.new()
+		remove_button.text = "×"
+		remove_button.tooltip_text = "Удалить компонент из определения"
+		remove_button.pressed.connect(_on_component_remove_pressed.bind(component_definition))
+		row.add_child(remove_button)
+		_component_list.add_child(row)
+
+
+func _on_component_enabled_toggled(enabled: bool, component_definition: ObjectComponentDefinition) -> void:
+	if component_definition == null:
+		return
+	component_definition.enabled = enabled
+	var state_text := "включён" if enabled else "отключён"
+	_set_status("Компонент %s %s. Нажми «Сохранить в библиотеку»." % [component_definition.display_name, state_text], false)
+
+
+func _on_component_settings_pressed(component_definition: ObjectComponentDefinition) -> void:
+	if component_definition == null:
+		return
+	EditorInterface.edit_resource(component_definition)
+	_set_status(
+		"Настройки «%s» открыты в Inspector. После изменений нажми «Сохранить в библиотеку»."
+		% component_definition.display_name,
+		false
+	)
+
+
+func _on_component_remove_pressed(component_definition: ObjectComponentDefinition) -> void:
+	if _working_definition == null or component_definition == null:
+		return
+	_working_definition.components.erase(component_definition)
+	_rebuild_component_list()
+	_set_status("Компонент удалён из определения. Нажми «Сохранить в библиотеку».", false)
+
+
+func _ensure_component_schemas() -> void:
+	if _working_definition == null:
+		return
+	for component_definition in _working_definition.components:
+		if component_definition == null:
+			continue
+		if component_definition.setting_definitions.is_empty():
+			component_definition.setting_definitions = ObjectComponentDefinition.get_builtin_setting_definitions(
+				component_definition.component_id
+			)
+		for setting_definition in component_definition.get_setting_definitions():
+			var setting_key := str(setting_definition.get("key", ""))
+			if not setting_key.is_empty() and not component_definition.settings.has(setting_key):
+				component_definition.settings[setting_key] = setting_definition.get("default_value")
+		component_definition.notify_property_list_changed()
 
 
 func _add_labeled_line_edit(parent: VBoxContainer, label_text: String, placeholder: String) -> LineEdit:
@@ -1336,6 +1521,7 @@ func _clone_template_scene(template_definition: ObjectDefinition, target_definit
 
 func _load_definition(definition: ObjectDefinition) -> void:
 	_working_definition = definition.duplicate(true) as ObjectDefinition
+	_ensure_component_schemas()
 	_name_edit.text = _working_definition.display_name
 	_object_type_label.text = _object_type_display_name(_working_definition.object_type)
 	_id_edit.text = _working_definition.object_id
@@ -1347,6 +1533,7 @@ func _load_definition(definition: ObjectDefinition) -> void:
 	_select_root_type(_working_definition.root_type)
 	_open_scene_button.disabled = _working_definition.scene_path.is_empty() or not FileAccess.file_exists(_working_definition.scene_path)
 	_rebuild_property_list()
+	_rebuild_component_list()
 	_refresh_favorite_button()
 	_refresh_scene_tree()
 

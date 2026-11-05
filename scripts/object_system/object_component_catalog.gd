@@ -35,6 +35,22 @@ static func get_component_ids(category_id: String = "") -> PackedStringArray:
 	return PackedStringArray()
 
 
+static func get_component_display_name(component_id: String) -> String:
+	match component_id.strip_edges().to_lower():
+		"health":
+			return "Здоровье"
+		_:
+			return component_id
+
+
+static func get_component_description(component_id: String) -> String:
+	match component_id.strip_edges().to_lower():
+		"health":
+			return "Запас здоровья, получение урона, лечение и сигнал смерти."
+		_:
+			return "Компонент без описания."
+
+
 static func has_component(component_id: String) -> bool:
 	return component_id.strip_edges().to_lower() == "health"
 
@@ -45,16 +61,15 @@ static func create_definition(component_id: String) -> ObjectComponentDefinition
 
 	var definition := ObjectComponentDefinition.new()
 	definition.component_id = "health"
-	definition.display_name = "Здоровье"
+	definition.display_name = get_component_display_name("health")
 	definition.category = "Stats"
 	definition.component_version = 1
 	definition.component_script = HEALTH_COMPONENT_SCRIPT
-	definition.settings = {
-		"max_health": 100.0,
-		"starting_health": 100.0,
-		"invulnerable": false,
-		"can_heal": true
-	}
+	definition.setting_definitions = ObjectComponentDefinition.get_builtin_setting_definitions("health")
+	for setting_definition in definition.setting_definitions:
+		var setting_key := str(setting_definition.get("key", ""))
+		if not setting_key.is_empty():
+			definition.settings[setting_key] = setting_definition.get("default_value")
 	return definition
 
 
