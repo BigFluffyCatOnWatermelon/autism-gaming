@@ -4,10 +4,11 @@ class_name ObjectCapabilityService
 ## Converts friendly capability choices into validated, dependency-complete component bindings.
 
 static func build_component_bindings(
-	selections: Array[ObjectCapabilitySelection]
+	selections: Array[ObjectCapabilitySelection],
+	scene_root: Node = null
 ) -> Array[ObjectComponentBinding]:
 	var result: Array[ObjectComponentBinding] = []
-	var validation_errors := validate_selections(selections)
+	var validation_errors := validate_selections(selections, scene_root)
 	if not validation_errors.is_empty():
 		return result
 
