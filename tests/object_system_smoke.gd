@@ -1,6 +1,7 @@
 extends SceneTree
 
 var failures := PackedStringArray()
+var health_died_signal_received := false
 
 
 func _initialize() -> void:
@@ -8,6 +9,8 @@ func _initialize() -> void:
 	_test_definition_range_validation()
 	_test_object_type_default()
 	_test_serialized_property_data()
+	_test_component_catalog_and_health()
+	_test_component_definition_validation()
 
 	if failures.is_empty():
 		print("OBJECT_SYSTEM_TESTS: PASS")
@@ -132,7 +135,7 @@ func _test_object_type_default() -> void:
 	definition.object_id = "object_type_smoke_test"
 	definition.display_name = "Typed Object"
 	definition.object_type = "resource"
-	_expect(ObjectLibraryService.validate_definition(definition).is_empty(), "typed definition passes validation")
+	_expect(ObjectLibraryService.validate_definition(definition).is_empty(), "typed definition passes definition validation")
 
 
 func _test_serialized_property_data() -> void:
@@ -174,6 +177,96 @@ func _test_serialized_property_data() -> void:
 	root.free()
 
 
+func _test_component_catalog_and_health() -> void:
+	var categories := ObjectComponentCatalog.get_categories()
+	_expect(categories.size() == 8, "component catalog exposes the planned category groups")
+	_expect(ObjectComponentCatalog.get_component_ids("Stats").has("health"), "Health is listed in the Stats category")
+	_expect(ObjectComponentCatalog.get_component_ids("Combat").is_empty(), "empty component categories remain available")
+	_expect(ObjectComponentCatalog.has_component("HEALTH"), "catalog component IDs are case-insensitive")
+
+	var component_definition := ObjectComponentCatalog.create_definition("health")
+	_expect(component_definition != null, "catalog creates the Health component definition")
+	if component_definition == null:
+		return
+	_expect(component_definition.component_script != null, "catalog definition supplies the Health script")
+	_expect(component_definition.category == "Stats", "Health is grouped under Stats")
+
+	component_definition.component_script = null
+	component_definition.settings["max_health"] = 120.0
+	component_definition.settings["starting_health"] = 90.0
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "health_component_smoke_test"
+	definition.display_name = "Health Component Test"
+	definition.category = "Other"
+	definition.components = [component_definition]
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates object with a catalog component")
+	if instance == null:
+		return
+
+	var component := ObjectFactory.get_component(instance, "health") as HealthComponent
+	_expect(component != null, "factory resolves component by its stable ID")
+	if component == null:
+		instance.free()
+		return
+
+	_expect(component.component_id == "health", "factory assigns the stable component ID")
+	_expect(is_equal_approx(component.max_health, 120.0), "Health settings override the catalog default")
+	_expect(is_equal_approx(component.current_health, 90.0), "Health starts at configured starting health")
+	_expect(ObjectFactory.has_component(instance, "health"), "factory can check for a component by ID")
+
+	health_died_signal_received = false
+	component.died.connect(_on_health_component_died)
+	_expect(is_equal_approx(component.apply_damage(25.0), 25.0), "Health applies non-lethal damage")
+	_expect(is_equal_approx(component.current_health, 65.0), "damage reduces current health")
+	_expect(is_equal_approx(component.heal(10.0), 10.0), "Health restores missing health")
+	_expect(is_equal_approx(component.current_health, 75.0), "healing increases current health")
+	component.set_max_health(60.0)
+	_expect(is_equal_approx(component.current_health, 60.0), "reducing max health clamps current health")
+	_expect(is_equal_approx(component.apply_damage(60.0), 60.0), "Health returns the exact lethal damage applied")
+	_expect(not component.is_alive(), "Health reports a dead component at zero health")
+	_expect(health_died_signal_received, "Health emits died exactly when health reaches zero")
+	_expect(is_equal_approx(component.heal(10.0), 0.0), "dead components cannot be healed by default")
+	component.reset_health()
+	_expect(component.is_alive(), "reset_health restores the configured starting health")
+	_expect(is_equal_approx(component.current_health, 60.0), "reset_health respects the current maximum")
+	component.invulnerable = true
+	_expect(is_equal_approx(component.apply_damage(10.0), 0.0), "invulnerable Health ignores damage")
+
+	instance.free()
+
+
+func _test_component_definition_validation() -> void:
+	var definition := ObjectDefinition.new()
+	definition.object_id = "component_validation_test"
+	definition.display_name = "Component Validation Test"
+	definition.category = "Other"
+	var health := ObjectComponentCatalog.create_definition("health")
+	definition.components = [health]
+	_expect(
+		ObjectLibraryService.validate_definition(definition).is_empty(),
+		"catalog component without an explicit script passes validation"
+	)
+
+	var duplicate := ObjectComponentCatalog.create_definition("health")
+	definition.components.append(duplicate)
+	_expect(
+		not ObjectLibraryService.validate_definition(definition).is_empty(),
+		"duplicate component IDs are rejected"
+	)
+
+	definition.components = []
+	var unknown := ObjectComponentDefinition.new()
+	unknown.component_id = "missing_component"
+	definition.components = [unknown]
+	_expect(
+		not ObjectLibraryService.validate_definition(definition).is_empty(),
+		"component without a script or catalog entry is rejected"
+	)
+
+
 func _make_property(
 	property_id: String,
 	value_type: String,
@@ -185,6 +278,10 @@ func _make_property(
 	definition.value_type = value_type
 	definition.default_value = default_value
 	return definition
+
+
+func _on_health_component_died() -> void:
+	health_died_signal_received = true
 
 
 func _expect(condition: bool, description: String) -> void:
