@@ -153,9 +153,12 @@ func _test_serialized_property_data() -> void:
 
 	_expect(property_data.get("combat_hit_points") == 145, "dynamic Inspector getter returns stored custom value")
 	property_data.set("combat_hit_points", 250)
-	_expect(property_data.get("combat_hit_points") == 200, "dynamic Inspector setter accepts values and clamps the configured range")
 	_expect(property_data.get("combat_hit_points") == 200, "dynamic Inspector setter clamps the configured range")
+	_expect(ObjectFactory.get_custom_property(root, "health_points") == 200, "runtime API reads edits made through Inspector")
+	_expect(root.get_meta("object_custom_properties", {}).get("health_points") == 200, "legacy metadata mirror follows Inspector edits")
 	_expect(property_data._property_get_revert("combat_hit_points") == 100, "dynamic Inspector revert value uses definition default")
+	_expect(ObjectFactory.set_custom_property(root, "health_points", 175), "runtime API writes the shared Inspector value")
+	_expect(property_data.get("combat_hit_points") == 175, "Inspector field reflects values written through runtime API")
 
 	var packed := PackedScene.new()
 	_expect(packed.pack(root) == OK, "property data node can be packed into a scene")
@@ -165,7 +168,7 @@ func _test_serialized_property_data() -> void:
 		var restored_data := restored_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
 		_expect(restored_data != null, "packed scene keeps the property data node")
 		if restored_data != null:
-			_expect(restored_data.get_custom_property("health_points") == 200, "custom values survive scene pack and instantiate")
+			_expect(restored_data.get_custom_property("health_points") == 175, "custom values survive scene pack and instantiate")
 			_expect(restored_data.get_custom_property_definition("health_points") != null, "custom definitions survive scene pack and instantiate")
 		restored_root.free()
 	root.free()
