@@ -3,12 +3,29 @@ class_name ObjectCapabilityCatalog
 
 ## Registry of user-facing capability cards. Built-in and extension definitions share one API.
 
+const CAPABILITY_LIBRARY_DATA = preload("res://scripts/object_system/object_capability_library_data.gd")
+
 const BUILTIN_CATEGORIES := [
 	{"id": "general", "display_name": "Основное", "order": 0},
-	{"id": "stats", "display_name": "Характеристики", "order": 10},
-	{"id": "interaction", "display_name": "Взаимодействие", "order": 20},
-	{"id": "combat", "display_name": "Бой", "order": 30},
-	{"id": "destruction", "display_name": "Разрушение", "order": 40}
+	{"id": "visual", "display_name": "Внешний вид", "order": 10},
+	{"id": "animation", "display_name": "Анимация", "order": 20},
+	{"id": "movement", "display_name": "Движение", "order": 30},
+	{"id": "physics", "display_name": "Физика", "order": 40},
+	{"id": "interaction", "display_name": "Взаимодействие", "order": 50},
+	{"id": "stats", "display_name": "Характеристики", "order": 60},
+	{"id": "combat", "display_name": "Бой", "order": 70},
+	{"id": "defense", "display_name": "Защита", "order": 80},
+	{"id": "destruction", "display_name": "Разрушение", "order": 90},
+	{"id": "harvesting", "display_name": "Добыча и сбор", "order": 100},
+	{"id": "items", "display_name": "Предметы", "order": 110},
+	{"id": "inventory", "display_name": "Инвентарь", "order": 120},
+	{"id": "containers", "display_name": "Контейнеры", "order": 130},
+	{"id": "construction", "display_name": "Строительство", "order": 140},
+	{"id": "ai", "display_name": "Поведение и AI", "order": 150},
+	{"id": "animals", "display_name": "Животные", "order": 160},
+	{"id": "audio_effects", "display_name": "Звук и эффекты", "order": 170},
+	{"id": "world_time", "display_name": "Время и события", "order": 180},
+	{"id": "world_generation", "display_name": "Генерация мира", "order": 190}
 ]
 
 static var _definitions: Dictionary = {}
@@ -270,6 +287,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	destructible.component_ids = PackedStringArray(["destructible"])
 	destructible.display_order = 10
 	result.append(destructible)
+	result.append_array(CAPABILITY_LIBRARY_DATA.create_definitions())
 	return result
 
 
