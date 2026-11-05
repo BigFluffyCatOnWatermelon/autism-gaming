@@ -384,7 +384,27 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	destructible.required_capability_ids = PackedStringArray(["has_health"])
 	destructible.component_ids = PackedStringArray(["destructible"])
 	destructible.display_order = 10
+	destructible.settings_schema = [
+		{"setting_key": "destroy_delay", "level": "Advanced"},
+		{"setting_key": "disable_collision_on_destroy", "level": "Advanced"},
+		{"setting_key": "disable_damage_on_destroy", "level": "Advanced"},
+		{"setting_key": "hide_on_destroy", "level": "Expert"},
+		{"setting_key": "remove_on_destroy", "level": "Expert"}
+	]
 	result.append(destructible)
+
+	health.settings_schema = [
+		{"setting_key": "can_heal", "level": "Advanced"},
+		{"setting_key": "invulnerable", "level": "Expert"}
+	]
+	damageable.settings_schema = [
+		{"setting_key": "flat_reduction", "level": "Advanced"}
+	]
+	attack.settings_schema = [
+		{"setting_key": "require_range", "level": "Advanced"},
+		{"setting_key": "can_attack", "level": "Advanced"}
+	]
+
 	result.append_array(CAPABILITY_LIBRARY_DATA.create_definitions())
 	return result
 
