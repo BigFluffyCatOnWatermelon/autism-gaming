@@ -39,10 +39,10 @@ func perform_attack(target: Node, source: Node = null) -> float:
 	if _cooldown_remaining > 0.0:
 		return _fail(target, "cooldown")
 
-	var attacker := get_parent()
+	var attacker := get_object_root()
 	if attacker == null:
 		return _fail(target, "attacker_missing")
-	if require_range and not _is_target_in_range(attacker, target):
+	if require_range and not _is_target_in_range(attacker, ObjectFactory.get_object_root(target)):
 		return _fail(target, "out_of_range")
 
 	var damageable := ObjectFactory.get_component(target, "damageable") as DamageableComponent

@@ -47,13 +47,7 @@ func set_damage_enabled(value: bool) -> void:
 
 
 func _find_health_component() -> HealthComponent:
-	var parent_node := get_parent()
-	if parent_node == null:
-		return null
-	for child in parent_node.get_children():
-		if child is HealthComponent:
-			return child as HealthComponent
-	return null
+	return ObjectFactory.get_component(get_object_root(), "health") as HealthComponent
 
 
 func _read_number(key: String, fallback: float) -> float:

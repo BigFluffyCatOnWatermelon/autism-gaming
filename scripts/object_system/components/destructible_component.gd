@@ -44,7 +44,7 @@ func _on_configured() -> void:
 func destroy(source: Node = null) -> bool:
 	if _is_destroyed:
 		return false
-	var target := get_parent()
+	var target := get_object_root()
 	if target == null:
 		return false
 
@@ -77,7 +77,7 @@ func repair() -> bool:
 
 	_generation += 1
 	_is_destroyed = false
-	var target := get_parent()
+	var target := get_object_root()
 	if target != null:
 		if disable_collision_on_destroy:
 			_restore_collision()
@@ -103,7 +103,7 @@ func is_destroyed() -> bool:
 
 
 func _bind_health() -> void:
-	var target := get_parent()
+	var target := get_object_root()
 	if target == null:
 		return
 	_health = ObjectFactory.get_component(target, "health") as HealthComponent
@@ -188,7 +188,7 @@ func _schedule_removal(target: Node) -> void:
 func _remove_destroyed_owner(generation: int) -> void:
 	if generation != _generation or not _is_destroyed:
 		return
-	var target := get_parent()
+	var target := get_object_root()
 	if target != null and is_instance_valid(target):
 		target.queue_free()
 

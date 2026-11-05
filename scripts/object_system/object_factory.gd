@@ -48,67 +48,187 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	instance.set_meta("object_custom_properties", values)
 	instance.set_meta("object_custom_property_definitions", property_definitions)
 
-	var attached_component_ids: Dictionary = {}
+	# Backward compatibility: old definitions place every component on the root.
+	var attached_legacy_component_ids: Dictionary = {}
 	for component_definition in definition.components:
 		if component_definition == null or not component_definition.enabled:
 			continue
-
 		var component_id := component_definition.component_id.strip_edges().to_lower()
-		if not component_id.is_empty() and attached_component_ids.has(component_id):
-			push_warning("ObjectFactory: повторный компонент '%s' пропущен." % component_id)
+		if not component_id.is_empty() and attached_legacy_component_ids.has(component_id):
+			push_warning("ObjectFactory: повторный legacy-компонент '%s' пропущен." % component_id)
+			continue
+		attached_legacy_component_ids[component_id] = true
+		_attach_component(
+			instance,
+			instance,
+			component_definition,
+			"legacy:" + component_id,
+			NodePath(".")
+		)
+
+	# New definitions can bind a component to any node in their packed scene.
+	var used_binding_ids: Dictionary = {}
+	for binding in definition.component_bindings:
+		if binding == null or not binding.enabled:
+			continue
+		if binding.component_definition == null or not binding.component_definition.enabled:
 			continue
 
-		var catalog_definition := ObjectComponentCatalog.create_definition(component_id)
-		var component_script := component_definition.component_script
-		var component_settings: Dictionary = {}
-		if catalog_definition != null:
-			if component_script == null:
-				component_script = catalog_definition.component_script
-			component_settings = catalog_definition.settings.duplicate(true)
-		for setting_key in component_definition.settings:
-			component_settings[setting_key] = component_definition.settings[setting_key]
+		var binding_id := binding.ensure_binding_id()
+		if used_binding_ids.has(binding_id):
+			push_error("ObjectFactory: повторяется ID привязки компонента '%s'." % binding_id)
+			instance.free()
+			return null
+		used_binding_ids[binding_id] = true
 
-		if component_script == null:
-			push_warning(
-				"ObjectFactory: скрипт компонента '%s' не назначен и отсутствует в каталоге."
-				% component_id
+		var target_node := binding.get_target_node(instance)
+		if target_node == null:
+			push_error(
+				"ObjectFactory: для компонента '%s' не найден узел '%s'. Привязка не перенесена на корень."
+				% [binding.get_component_id(), str(binding.target_node_path)]
 			)
-			continue
+			instance.free()
+			return null
 
-		var component_instance: Object = component_script.new()
-		if component_instance is ObjectComponent:
-			var component_node := component_instance as ObjectComponent
-			var node_name := component_definition.display_name.strip_edges()
-			if node_name.is_empty():
-				node_name = component_id
-			if node_name.is_empty():
-				node_name = "Component"
-			component_node.name = node_name.validate_node_name()
-			component_node.component_id = component_id
-			component_node.configure(component_settings)
-			instance.add_child(component_node)
-			if not component_id.is_empty():
-				attached_component_ids[component_id] = true
-		elif component_instance is Node:
-			push_warning(
-				"ObjectFactory: компонент '%s' не наследует ObjectComponent и пропущен."
-				% component_id
-			)
-			(component_instance as Node).free()
-		else:
-			push_warning("ObjectFactory: скрипт компонента не создал Node.")
+		_attach_component(
+			target_node,
+			instance,
+			binding.component_definition,
+			binding_id,
+			binding.target_node_path
+		)
+
 	return instance
+
+
+static func _attach_component(
+	target_node: Node,
+	object_root: Node,
+	component_definition: ObjectComponentDefinition,
+	binding_id: String,
+	target_node_path: NodePath
+) -> void:
+	if target_node == null or object_root == null or component_definition == null:
+		return
+
+	var component_id := component_definition.component_id.strip_edges().to_lower()
+	var catalog_definition := ObjectComponentCatalog.create_definition(component_id)
+	var component_script := component_definition.component_script
+	var component_settings: Dictionary = {}
+	if catalog_definition != null:
+		if component_script == null:
+			component_script = catalog_definition.component_script
+		component_settings = catalog_definition.settings.duplicate(true)
+	for setting_key in component_definition.settings:
+		component_settings[setting_key] = component_definition.settings[setting_key]
+
+	if component_script == null:
+		push_warning(
+			"ObjectFactory: скрипт компонента '%s' не назначен и отсутствует в каталоге."
+			% component_id
+		)
+		return
+
+	var component_instance: Object = component_script.new()
+	if not component_instance is ObjectComponent:
+		if component_instance is Node:
+			(component_instance as Node).free()
+		push_warning(
+			"ObjectFactory: компонент '%s' должен наследовать ObjectComponent."
+			% component_id
+		)
+		return
+
+	var component_node := component_instance as ObjectComponent
+	var node_name := component_definition.display_name.strip_edges()
+	if node_name.is_empty():
+		node_name = component_id
+	if node_name.is_empty():
+		node_name = "Component"
+	component_node.name = _make_unique_child_name(target_node, node_name.validate_node_name())
+	component_node.component_id = component_id
+	component_node.configure_context(object_root, binding_id, target_node_path)
+	component_node.configure(component_settings)
+	target_node.add_child(component_node)
+
+
+static func _make_unique_child_name(parent: Node, requested_name: String) -> String:
+	var base_name := requested_name if not requested_name.is_empty() else "Component"
+	var candidate := base_name
+	var suffix := 2
+	while parent.has_node(NodePath(candidate)):
+		candidate = "%s_%d" % [base_name, suffix]
+		suffix += 1
+	return candidate
+
+
+static func get_object_root(node: Node) -> Node:
+	if node == null:
+		return null
+	var current: Node = node
+	while current != null:
+		if current.has_meta("object_definition_id"):
+			return current
+		current = current.get_parent()
+	return node
 
 
 static func get_component(instance: Node, component_id: String) -> ObjectComponent:
 	if instance == null or component_id.strip_edges().is_empty():
 		return null
+	var matches := get_components(instance, component_id)
+	return matches[0] if not matches.is_empty() else null
+
+
+static func get_components(instance: Node, component_id: String = "") -> Array[ObjectComponent]:
+	var result: Array[ObjectComponent] = []
+	if instance == null:
+		return result
+	var object_root := get_object_root(instance)
+	if object_root == null:
+		return result
 	var normalized_id := component_id.strip_edges().to_lower()
-	for child in instance.get_children():
+	_collect_components(object_root, object_root, normalized_id, result)
+	return result
+
+
+static func _collect_components(
+	current: Node,
+	object_root: Node,
+	component_id: String,
+	output: Array[ObjectComponent]
+) -> void:
+	if current == null:
+		return
+	if current != object_root and current.has_meta("object_definition_id"):
+		return
+	if current is ObjectComponent:
+		var component := current as ObjectComponent
+		if component_id.is_empty() or component.component_id.strip_edges().to_lower() == component_id:
+			output.append(component)
+	for child in current.get_children():
+		if child is Node:
+			_collect_components(child as Node, object_root, component_id, output)
+
+
+static func get_component_on(target_node: Node, component_id: String) -> ObjectComponent:
+	if target_node == null or component_id.strip_edges().is_empty():
+		return null
+	var normalized_id := component_id.strip_edges().to_lower()
+	for child in target_node.get_children():
 		if child is ObjectComponent:
 			var component := child as ObjectComponent
-			if component.component_id.to_lower() == normalized_id:
+			if component.component_id.strip_edges().to_lower() == normalized_id:
 				return component
+	return null
+
+
+static func get_component_by_binding_id(instance: Node, binding_id: String) -> ObjectComponent:
+	if binding_id.strip_edges().is_empty():
+		return null
+	for component in get_components(instance):
+		if component.binding_id == binding_id:
+			return component
 	return null
 
 
@@ -123,12 +243,13 @@ static func get_custom_property(
 ) -> Variant:
 	if instance == null:
 		return fallback
-	var property_data := _get_property_data(instance)
+	var object_root := get_object_root(instance)
+	var property_data := _get_property_data(object_root)
 	if property_data != null:
 		return property_data.get_custom_property(property_id, fallback)
-	if not instance.has_meta("object_custom_properties"):
+	if not object_root.has_meta("object_custom_properties"):
 		return fallback
-	var values: Dictionary = instance.get_meta("object_custom_properties", {})
+	var values: Dictionary = object_root.get_meta("object_custom_properties", {})
 	return values.get(property_id, fallback)
 
 
@@ -138,26 +259,28 @@ static func get_custom_property_definition(
 ) -> ObjectPropertyDefinition:
 	if instance == null:
 		return null
-	var property_data := _get_property_data(instance)
+	var object_root := get_object_root(instance)
+	var property_data := _get_property_data(object_root)
 	if property_data != null:
 		return property_data.get_custom_property_definition(property_id)
-	if not instance.has_meta("object_custom_property_definitions"):
+	if not object_root.has_meta("object_custom_property_definitions"):
 		return null
-	var definitions: Dictionary = instance.get_meta("object_custom_property_definitions", {})
+	var definitions: Dictionary = object_root.get_meta("object_custom_property_definitions", {})
 	return definitions.get(property_id) as ObjectPropertyDefinition
 
 
 static func set_custom_property(instance: Node, property_id: String, value: Variant) -> bool:
 	if instance == null:
 		return false
-	var property_data := _get_property_data(instance)
+	var object_root := get_object_root(instance)
+	var property_data := _get_property_data(object_root)
 	if property_data != null:
 		if not property_data.set_custom_property(property_id, value):
 			return false
-		instance.set_meta("object_custom_properties", property_data.get_values())
+		object_root.set_meta("object_custom_properties", property_data.get_values())
 		return true
 
-	var property_definition := get_custom_property_definition(instance, property_id)
+	var property_definition := get_custom_property_definition(object_root, property_id)
 	if property_definition == null:
 		push_warning("ObjectFactory: свойство не найдено: " + property_id)
 		return false
@@ -170,9 +293,9 @@ static func set_custom_property(instance: Node, property_id: String, value: Vari
 		)
 		return false
 
-	var values: Dictionary = instance.get_meta("object_custom_properties", {})
+	var values: Dictionary = object_root.get_meta("object_custom_properties", {})
 	values[property_id] = normalized.value
-	instance.set_meta("object_custom_properties", values)
+	object_root.set_meta("object_custom_properties", values)
 	return true
 
 

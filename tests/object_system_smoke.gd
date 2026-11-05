@@ -20,6 +20,7 @@ func _run_tests() -> void:
 	await _test_destructible_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
+	await _test_component_node_bindings()
 
 	if failures.is_empty():
 		print("OBJECT_SYSTEM_TESTS: PASS")
@@ -566,6 +567,175 @@ func _test_component_definition_validation() -> void:
 		"component without a script or catalog entry is rejected"
 	)
 
+
+func _test_component_node_bindings() -> void:
+	var scene_root := Node2D.new()
+	scene_root.name = "BindingRoot"
+
+	var visuals := Node2D.new()
+	visuals.name = "Visuals"
+	scene_root.add_child(visuals)
+
+	var physics := StaticBody2D.new()
+	physics.name = "Physics"
+	var hitbox := CollisionShape2D.new()
+	hitbox.name = "Hitbox"
+	hitbox.shape = CircleShape2D.new()
+	physics.add_child(hitbox)
+	scene_root.add_child(physics)
+
+	var logic := Node.new()
+	logic.name = "Logic"
+	scene_root.add_child(logic)
+
+	var packed_scene := PackedScene.new()
+	_expect(packed_scene.pack(scene_root) == OK, "multi-part object scene can be packed")
+	scene_root.free()
+
+	var health_binding := ObjectComponentCatalog.create_binding("health", NodePath("Visuals"))
+	var damageable_binding := ObjectComponentCatalog.create_binding("damageable", NodePath("Physics"))
+	var destructible_binding := ObjectComponentCatalog.create_binding("destructible", NodePath("Logic"))
+	_expect(
+		health_binding != null and damageable_binding != null and destructible_binding != null,
+		"catalog can create component bindings for different object nodes"
+	)
+	if health_binding == null or damageable_binding == null or destructible_binding == null:
+		return
+
+	health_binding.binding_id = "health_on_visuals"
+	health_binding.component_definition.settings["max_health"] = 40.0
+	health_binding.component_definition.settings["starting_health"] = 40.0
+	damageable_binding.binding_id = "damageable_on_physics"
+	destructible_binding.binding_id = "destructible_on_logic"
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "multi_node_component_binding_smoke_test"
+	definition.display_name = "Multi Node Component Binding Test"
+	definition.category = "Other"
+	definition.scene = packed_scene
+	definition.component_bindings = [
+		health_binding,
+		damageable_binding,
+		destructible_binding
+	]
+
+	_expect(
+		ObjectLibraryService.validate_definition(definition).is_empty(),
+		"valid component bindings to different scene nodes pass validation"
+	)
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with multi-node component bindings")
+	if instance == null:
+		return
+
+	var visual_node := instance.get_node("Visuals")
+	var physics_node := instance.get_node("Physics")
+	var health := ObjectFactory.get_component(instance, "health") as HealthComponent
+	var damageable := ObjectFactory.get_component(instance, "damageable") as DamageableComponent
+	var destructible := ObjectFactory.get_component(instance, "destructible") as DestructibleComponent
+
+	_expect(health != null and health.get_parent() == visual_node, "Health is attached to the requested Visuals node")
+	_expect(
+		damageable != null and damageable.get_parent() == physics_node,
+		"Damageable is attached to the requested Physics node"
+	)
+	_expect(
+		destructible != null and destructible.get_parent() == instance.get_node("Logic"),
+		"Destructible is attached to the requested Logic node"
+	)
+	_expect(
+		health != null and health.get_object_root() == instance,
+		"nested component can resolve its owning object root"
+	)
+	_expect(
+		damageable != null and ObjectFactory.get_component_on(physics_node, "damageable") == damageable,
+		"component can be resolved directly on its assigned node"
+	)
+	_expect(
+		ObjectFactory.get_component_by_binding_id(instance, "health_on_visuals") == health,
+		"component can be resolved by its stable binding ID"
+	)
+	_expect(
+		ObjectFactory.get_components(instance).size() == 3,
+		"factory can enumerate all components across the object hierarchy"
+	)
+
+	var test_world := Node2D.new()
+	root.add_child(test_world)
+	test_world.add_child(instance)
+	await process_frame
+
+	if health != null and damageable != null and destructible != null:
+		_expect(
+			is_equal_approx(damageable.receive_damage(10.0), 10.0),
+			"Damageable on one node can find Health attached to another node"
+		)
+		_expect(
+			is_equal_approx(health.current_health, 30.0),
+			"cross-node damage reduces the shared object Health"
+		)
+		_expect(
+			is_equal_approx(damageable.receive_damage(100.0), 30.0),
+			"cross-node lethal damage reaches Health"
+		)
+		_expect(
+			destructible.is_destroyed(),
+			"Destructible on a third node reacts to the nested Health component"
+		)
+		_expect(
+			int(physics.collision_layer) == 0 and int(physics.collision_mask) == 0,
+			"nested Destructible disables collision on the owning object"
+		)
+		_expect(hitbox.disabled, "nested Destructible disables collision shapes on the owning object")
+		_expect(destructible.repair(), "nested Destructible can repair the owning object")
+		_expect(
+			int(physics.collision_layer) == 1 and int(physics.collision_mask) == 1,
+			"repair restores collision settings on a different node"
+		)
+		_expect(not hitbox.disabled, "repair restores the nested collision shape")
+		_expect(
+			is_equal_approx(health.current_health, 40.0),
+			"repair restores Health attached to a different node"
+		)
+
+	var invalid_path := damageable_binding.target_node_path
+	damageable_binding.target_node_path = NodePath("Missing/Node")
+	_expect(
+		not ObjectLibraryService.validate_definition(definition).is_empty(),
+		"validation reports a component binding whose target node does not exist"
+	)
+	damageable_binding.target_node_path = invalid_path
+
+	var duplicate_binding := ObjectComponentCatalog.create_binding("attack")
+	duplicate_binding.binding_id = health_binding.binding_id
+	definition.component_bindings.append(duplicate_binding)
+	_expect(
+		not ObjectLibraryService.validate_definition(definition).is_empty(),
+		"validation rejects duplicate component binding IDs"
+	)
+	definition.component_bindings.erase(duplicate_binding)
+
+	var save_path := "user://component_bindings_serialization_test.tres"
+	var save_error := ResourceSaver.save(definition, save_path)
+	_expect(save_error == OK, "component bindings and their scene can be serialized")
+	if save_error == OK:
+		var restored := ResourceLoader.load(
+			save_path,
+			"",
+			ResourceLoader.CACHE_MODE_REPLACE
+		) as ObjectDefinition
+		_expect(restored != null, "serialized component bindings can be loaded")
+		if restored != null:
+			_expect(restored.component_bindings.size() == 3, "all component bindings survive serialization")
+			if not restored.component_bindings.is_empty():
+				_expect(
+					restored.component_bindings[0].target_node_path == NodePath("Visuals"),
+					"component target NodePath survives serialization"
+				)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
+
+	test_world.free()
 
 func _make_property(
 	property_id: String,

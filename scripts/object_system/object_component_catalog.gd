@@ -104,6 +104,20 @@ static func create_definition(component_id: String) -> ObjectComponentDefinition
 	return definition
 
 
+static func create_binding(
+	component_id: String,
+	target_node_path: NodePath = NodePath(".")
+) -> ObjectComponentBinding:
+	var component_definition := create_definition(component_id)
+	if component_definition == null:
+		return null
+	var binding := ObjectComponentBinding.new()
+	binding.component_definition = component_definition
+	binding.target_node_path = target_node_path
+	binding.ensure_binding_id()
+	return binding
+
+
 static func create_all_definitions() -> Array[ObjectComponentDefinition]:
 	var result: Array[ObjectComponentDefinition] = []
 	for component_id in get_component_ids():

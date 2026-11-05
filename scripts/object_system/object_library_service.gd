@@ -85,31 +85,88 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 	var used_component_ids: Dictionary = {}
 	for component_definition in definition.components:
 		if component_definition == null:
-			errors.append("В списке компонентов есть пустая запись.")
+			errors.append("В списке legacy-компонентов есть пустая запись.")
 			continue
 		var component_id := component_definition.component_id.strip_edges().to_lower()
 		if component_id.is_empty():
 			errors.append("У компонента должен быть постоянный ID.")
 		elif used_component_ids.has(component_id):
-			errors.append("Повторяется ID компонента: " + component_id)
+			errors.append("Повторяется ID legacy-компонента: " + component_id)
 		else:
 			used_component_ids[component_id] = true
 		if component_definition.component_script == null and not ObjectComponentCatalog.has_component(component_id):
 			errors.append("У компонента '%s' нет скрипта и такого ID нет в каталоге." % component_id)
+
+	var used_binding_ids: Dictionary = {}
+	var validation_scene: Node = null
+	if definition.scene != null:
+		validation_scene = definition.scene.instantiate()
+		if validation_scene == null:
+			errors.append("Не удалось открыть сцену объекта для проверки привязок компонентов.")
+
+	for binding in definition.component_bindings:
+		if binding == null:
+			errors.append("В списке привязок компонентов есть пустая запись.")
+			continue
+		var binding_id := binding.binding_id.strip_edges()
+		if binding_id.is_empty():
+			errors.append("У привязки компонента должен быть постоянный ID.")
+		elif used_binding_ids.has(binding_id):
+			errors.append("Повторяется ID привязки компонента: " + binding_id)
+		else:
+			used_binding_ids[binding_id] = true
+
+		var component_definition := binding.component_definition
+		if component_definition == null:
+			errors.append("У привязки '%s' не выбрано поведение." % binding_id)
+			continue
+		var component_id := component_definition.component_id.strip_edges().to_lower()
+		if component_id.is_empty():
+			errors.append("У привязки '%s' не указан ID компонента." % binding_id)
+		elif component_definition.component_script == null and not ObjectComponentCatalog.has_component(component_id):
+			errors.append("У компонента '%s' нет скрипта и такого ID нет в каталоге." % component_id)
+
+		var target_path := str(binding.target_node_path)
+		if target_path.is_empty() or target_path == ".":
+			continue
+		if validation_scene == null:
+			errors.append(
+				"Привязка '%s' указывает на '%s', но у объекта нет сцены с таким узлом."
+				% [binding_id, target_path]
+			)
+		elif validation_scene.get_node_or_null(binding.target_node_path) == null:
+			errors.append(
+				"Для привязки '%s' не найден узел '%s'."
+				% [binding_id, target_path]
+			)
+
+	if validation_scene != null:
+		validation_scene.free()
 
 	return errors
 
 
 static func save_definition(definition: ObjectDefinition) -> Error:
 	definition.is_template = false
+	_prepare_definition_for_save(definition)
 	var target_path := OBJECTS_PATH.path_join(_safe_file_part(definition.object_id) + ".tres")
 	return _save_resource(definition, target_path)
 
 
 static func save_template(definition: ObjectDefinition) -> Error:
 	definition.is_template = true
+	_prepare_definition_for_save(definition)
 	var target_path := TEMPLATES_PATH.path_join(_safe_file_part(definition.object_id) + ".tres")
 	return _save_resource(definition, target_path)
+
+
+static func _prepare_definition_for_save(definition: ObjectDefinition) -> void:
+	if definition == null:
+		return
+	definition.schema_version = ObjectDefinition.CURRENT_SCHEMA_VERSION
+	for binding in definition.component_bindings:
+		if binding != null:
+			binding.ensure_binding_id()
 
 
 static func get_scene_path(object_id: String) -> String:
