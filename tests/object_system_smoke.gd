@@ -151,7 +151,8 @@ func _test_serialized_property_data() -> void:
 	property_data.owner = root
 
 	_expect(property_data.get("combat_health") == 145, "dynamic Inspector getter returns stored custom value")
-	_expect(property_data.set("combat_health", 250), "dynamic Inspector setter accepts valid custom value")
+	property_data.set("combat_health", 250)
+	_expect(property_data.get("combat_health") == 200, "dynamic Inspector setter accepts values and clamps the configured range")
 	_expect(property_data.get("combat_health") == 200, "dynamic Inspector setter clamps the configured range")
 	_expect(property_data._property_get_revert("combat_health") == 100, "dynamic Inspector revert value uses definition default")
 
