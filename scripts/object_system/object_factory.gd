@@ -74,6 +74,17 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 			NodePath(".")
 		)
 
+	# Validate friendly selections before creating any of their runtime components.
+	var capability_errors := ObjectCapabilityService.validate_selections(
+		definition.capabilities,
+		instance
+	)
+	if not capability_errors.is_empty():
+		for error_message in capability_errors:
+			push_error("ObjectFactory: " + error_message)
+		instance.free()
+		return null
+
 	# Explicit advanced bindings plus automatically resolved simple capabilities.
 	var all_bindings: Array[ObjectComponentBinding] = []
 	for binding in definition.component_bindings:

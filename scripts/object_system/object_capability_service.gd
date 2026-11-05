@@ -9,8 +9,6 @@ static func build_component_bindings(
 	var result: Array[ObjectComponentBinding] = []
 	var validation_errors := validate_selections(selections)
 	if not validation_errors.is_empty():
-		for error_message in validation_errors:
-			push_error("ObjectCapabilityService: " + error_message)
 		return result
 
 	var selections_by_id: Dictionary = {}
@@ -34,8 +32,6 @@ static func build_component_bindings(
 			resolution_errors
 		)
 	if not resolution_errors.is_empty():
-		for error_message in resolution_errors:
-			push_error("ObjectCapabilityService: " + error_message)
 		return result
 
 	var binding_indexes: Dictionary = {}
