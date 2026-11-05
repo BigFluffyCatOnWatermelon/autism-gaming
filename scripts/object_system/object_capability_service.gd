@@ -23,14 +23,20 @@ static func build_component_bindings(
 
 	var resolved_ids: Array[String] = []
 	var states: Dictionary = {}
+	var resolution_errors := PackedStringArray()
 	for selection in selections:
 		if selection == null or not selection.enabled:
 			continue
 		_append_with_dependencies(
 			selection.capability_id.strip_edges().to_lower(),
 			states,
-			resolved_ids
+			resolved_ids,
+			resolution_errors
 		)
+	if not resolution_errors.is_empty():
+		for error_message in resolution_errors:
+			push_error("ObjectCapabilityService: " + error_message)
+		return result
 
 	var binding_indexes: Dictionary = {}
 	for capability_id in resolved_ids:
