@@ -434,6 +434,25 @@ func _find_scene_tree_item(parent_item: TreeItem, target_path: NodePath) -> Tree
 
 
 
+func _create_scrollable_dialog_body(
+	dialog: AcceptDialog,
+	minimum_size: Vector2i
+) -> VBoxContainer:
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(minimum_size)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	dialog.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation", 7)
+	scroll.add_child(content)
+	return content
+
+
 func _popup_window_safely(window: Window, preferred_size: Vector2i, fallback_ratio: float = 0.82) -> void:
 	if window == null or not is_instance_valid(window):
 		return
@@ -1338,8 +1357,10 @@ func _build_new_object_dialog() -> void:
 	_new_object_dialog.title = "Новый объект · выбери тип"
 	add_child(_new_object_dialog)
 
-	var form := VBoxContainer.new()
-	_new_object_dialog.add_child(form)
+	var form := _create_scrollable_dialog_body(
+		_new_object_dialog,
+		Vector2i(420, 190)
+	)
 
 	_new_object_type_option = OptionButton.new()
 	_new_object_type_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1449,8 +1470,10 @@ func _build_template_dialog() -> void:
 	_template_dialog.title = "Создать объект из шаблона"
 	add_child(_template_dialog)
 
-	var form := VBoxContainer.new()
-	_template_dialog.add_child(form)
+	var form := _create_scrollable_dialog_body(
+		_template_dialog,
+		Vector2i(420, 150)
+	)
 	_template_option = OptionButton.new()
 	_add_labeled_control(form, "Шаблон", _template_option)
 
@@ -1626,9 +1649,11 @@ func _build_node_dialog() -> void:
 	_node_dialog.title = "Добавить дочерний узел"
 	add_child(_node_dialog)
 
-	var form := VBoxContainer.new()
+	var form := _create_scrollable_dialog_body(
+		_node_dialog,
+		Vector2i(430, 250)
+	)
 	form.add_theme_constant_override("separation", 5)
-	_node_dialog.add_child(form)
 
 	var type_label := Label.new()
 	type_label.text = "Выбери тип узла:"
