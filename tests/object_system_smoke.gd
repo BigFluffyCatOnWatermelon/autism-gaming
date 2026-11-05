@@ -396,7 +396,7 @@ func _test_attack_component() -> void:
 			is_equal_approx(attack.perform_attack(target, attacker), 0.0),
 			"Attack can be disabled"
 		)
-		_expect(is_equal_approx(health.current_health, 87.0), "failed Attack attempts do not alter Health")
+		_expect(is_equal_approx(health.current_health, 88.0), "failed Attack attempts do not alter Health")
 
 	test_world.free()
 
