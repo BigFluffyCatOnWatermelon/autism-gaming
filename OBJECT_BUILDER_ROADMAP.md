@@ -42,6 +42,7 @@
 Автоматические проверки:
 - [GitHub Actions run 42072254242](https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/42072254242) — проверка функций 0.5.1.
 - [GitHub Actions run 42074007218](https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/42074007218) — версия 0.5.2: импорт ресурсов, разбор скриптов, Object System smoke-тесты и запуск основной сцены завершились успешно. Геометрия окон всё ещё требует проверки в GUI Godot на разных разрешениях.
+- [GitHub Actions run 42078287732](https://github.com/BigFluffyCatOnWatermelon/autism-gaming/actions/runs/42078287732) — версия 0.5.3: проверены реестр профилей, регистрации расширений, планы выбора возможностей, импорт, разбор скриптов и запуск основной сцены; все этапы завершились успешно.
 
 ### Что пока не реализовано в 0.5.3
 
