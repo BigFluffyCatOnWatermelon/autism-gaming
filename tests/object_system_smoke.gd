@@ -22,6 +22,7 @@ func _run_tests() -> void:
 	_test_component_definition_validation()
 	await _test_simple_capability_resolution()
 	_test_capability_selection_plans()
+	_test_capability_schema_and_application_plan()
 	_test_capability_library_size_and_status()
 	await _test_component_node_bindings()
 	_test_creation_profile_registry()
@@ -1130,6 +1131,127 @@ func _test_capability_selection_plans() -> void:
 		"disabled legacy selections do not block object validation"
 	)
 
+
+
+func _test_capability_schema_and_application_plan() -> void:
+	var health_schema := ObjectCapabilityCatalog.get_settings_schema("has_health")
+	var has_max_health := false
+	for descriptor in health_schema:
+		if str(descriptor.get("setting_key", "")) == "max_health":
+			has_max_health = (
+				str(descriptor.get("component_id", "")) == "health"
+				and str(descriptor.get("value_type", "")) == "Float"
+				and str(descriptor.get("level", "")) in ["Basic", "Advanced", "Expert"]
+			)
+	_expect(
+		not health_schema.is_empty() and has_max_health,
+		"implemented capability exposes a typed settings schema sourced from its runtime component"
+	)
+
+	if not health_schema.is_empty():
+		health_schema[0]["display_name"] = "Изменение только копии"
+		var fresh_schema := ObjectCapabilityCatalog.get_settings_schema("has_health")
+		_expect(
+			str(fresh_schema[0].get("display_name", "")) != "Изменение только копии",
+			"capability settings schema is returned as a defensive deep copy"
+		)
+
+	var invalid_schema := ObjectCapabilityDefinition.new()
+	invalid_schema.capability_id = "registry_invalid_setting_schema"
+	invalid_schema.display_name = "Invalid Setting Schema"
+	invalid_schema.description = "Must fail validation."
+	invalid_schema.category_id = "general"
+	invalid_schema.category_name = "Основное"
+	invalid_schema.component_ids = PackedStringArray(["health"])
+	invalid_schema.settings_schema = [{
+		"component_id": "health",
+		"setting_key": "max_health",
+		"value_type": "String",
+		"level": "basic"
+	}]
+	var invalid_schema_errors := ObjectCapabilityCatalog.register_definitions(
+		[invalid_schema],
+		"invalid_schema_extension"
+	)
+	_expect(
+		not invalid_schema_errors.is_empty()
+		and not ObjectCapabilityCatalog.has_capability("registry_invalid_setting_schema"),
+		"registry rejects a capability whose declared setting type conflicts with its component schema"
+	)
+
+	var invalid_level := ObjectCapabilityDefinition.new()
+	invalid_level.capability_id = "registry_invalid_setting_level"
+	invalid_level.display_name = "Invalid Setting Level"
+	invalid_level.description = "Must fail validation."
+	invalid_level.category_id = "general"
+	invalid_level.category_name = "Основное"
+	invalid_level.component_ids = PackedStringArray(["health"])
+	invalid_level.settings_schema = [{
+		"component_id": "health",
+		"setting_key": "max_health",
+		"value_type": "Float",
+		"level": "impossible"
+	}]
+	var invalid_level_errors := ObjectCapabilityCatalog.register_definitions(
+		[invalid_level],
+		"invalid_level_extension"
+	)
+	_expect(
+		not invalid_level_errors.is_empty()
+		and not ObjectCapabilityCatalog.has_capability("registry_invalid_setting_level"),
+		"registry rejects unknown Basic/Advanced/Expert setting levels"
+	)
+
+	var empty_selections: Array[ObjectCapabilitySelection] = []
+	var planned: Dictionary = ObjectCapabilityService.plan_selection_change(
+		empty_selections,
+		"can_receive_damage",
+		true
+	)
+	_expect(bool(planned.get("ok", false)), "valid capability setup produces the next selection state")
+	if not bool(planned.get("ok", false)):
+		return
+
+	var planned_values: Array[ObjectCapabilitySelection] = []
+	var raw_values: Variant = planned.get("selections", [])
+	if raw_values is Array:
+		for value in raw_values:
+			if value is ObjectCapabilitySelection:
+				planned_values.append(value as ObjectCapabilitySelection)
+
+	var first_plan := ObjectCapabilityService.build_application_plan(empty_selections, planned_values)
+	var first_added: Array = first_plan.get("added_components", [])
+	_expect(
+		bool(first_plan.get("ok", false))
+		and bool(first_plan.get("changed", false))
+		and first_added.size() == 2,
+		"preflight reports both Health and Damageable before applying the selection"
+	)
+
+	var repeated_plan := ObjectCapabilityService.build_application_plan(planned_values, planned_values)
+	_expect(
+		bool(repeated_plan.get("ok", false))
+		and not bool(repeated_plan.get("changed", true))
+		and (repeated_plan.get("added_components", []) as Array).is_empty()
+		and (repeated_plan.get("removed_components", []) as Array).is_empty()
+		and (repeated_plan.get("updated_components", []) as Array).is_empty(),
+		"reapplying the same capability selection is idempotent and produces no duplicate component delta"
+	)
+
+	var changed_values: Array[ObjectCapabilitySelection] = []
+	for selection in planned_values:
+		var copied := selection.duplicate(true) as ObjectCapabilitySelection
+		if copied.capability_id == "has_health":
+			copied.set_component_setting("health", "max_health", 175.0)
+		changed_values.append(copied)
+	var settings_plan := ObjectCapabilityService.build_application_plan(planned_values, changed_values)
+	var updated_components: Array = settings_plan.get("updated_components", [])
+	_expect(
+		bool(settings_plan.get("ok", false))
+		and updated_components.size() == 1
+		and str(updated_components[0].get("component_id", "")) == "health",
+		"preflight detects component setting changes separately from added or removed modules"
+	)
 
 
 func _test_capability_library_size_and_status() -> void:
