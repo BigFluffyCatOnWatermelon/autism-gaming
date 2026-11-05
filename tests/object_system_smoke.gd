@@ -253,9 +253,16 @@ func _test_component_definition_inspector_settings() -> void:
 
 	var has_max_health := false
 	var has_invulnerable := false
+	var settings_are_storage_only := false
 	var max_health_field := ""
 	for property_info in component_definition.get_property_list():
 		var property_name := str(property_info.get("name", ""))
+		if property_name == "settings":
+			var usage := int(property_info.get("usage", 0))
+			settings_are_storage_only = (
+				(usage & PROPERTY_USAGE_STORAGE) != 0
+				and (usage & PROPERTY_USAGE_EDITOR) == 0
+			)
 		if property_name.ends_with("_max_health"):
 			has_max_health = true
 			max_health_field = property_name
@@ -265,6 +272,7 @@ func _test_component_definition_inspector_settings() -> void:
 			_expect(int(property_info.get("type", TYPE_NIL)) == TYPE_BOOL, "Health invulnerability is exposed as a boolean Inspector property")
 	_expect(has_max_health, "Health max setting is listed in the native Inspector")
 	_expect(has_invulnerable, "Health invulnerability setting is listed in the native Inspector")
+	_expect(settings_are_storage_only, "raw settings dictionary is saved but hidden from the Inspector")
 	_expect(is_equal_approx(float(component_definition._get(StringName(max_health_field))), 100.0), "component Inspector getter reads the catalog default")
 	_expect(component_definition._set(StringName(max_health_field), 250.0), "component Inspector setter accepts a valid setting")
 	_expect(is_equal_approx(float(component_definition.get_setting("max_health")), 250.0), "component settings API reads Inspector edits")

@@ -9,7 +9,7 @@ class_name ObjectComponentDefinition
 @export var enabled: bool = true
 @export var component_script: Script
 @export_storage var setting_definitions: Array[Dictionary] = []
-@export var settings: Dictionary = {}
+@export_storage var settings: Dictionary = {}
 
 
 static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
