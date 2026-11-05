@@ -261,6 +261,189 @@ static func _register_batch(
 	return errors
 
 
+## Resolves explicit bindings and adds required components before ObjectFactory attaches anything.
+## Validation is performed against the actual target nodes, so a failed plan never leaves a partial object.
+static func resolve_bindings(
+	bindings: Array,
+	object_root: Node
+) -> Dictionary:
+	_ensure_initialized()
+	var errors := PackedStringArray()
+	var resolved: Array[ObjectComponentBinding] = []
+	var used_binding_ids: Dictionary = {}
+	var component_ids: Dictionary = {}
+
+	if object_root == null:
+		return _binding_resolution_failure(["Не задан корневой узел объекта."])
+
+	for value in bindings:
+		if not value is ObjectComponentBinding:
+			errors.append("В списке привязок есть запись неверного типа.")
+			continue
+		var source_binding := value as ObjectComponentBinding
+		if not source_binding.enabled:
+			continue
+		if source_binding.component_definition == null:
+			errors.append("У привязки '%s' не выбрано поведение." % source_binding.binding_id)
+			continue
+		if not source_binding.component_definition.enabled:
+			continue
+
+		var binding := source_binding.duplicate(true) as ObjectComponentBinding
+		var component_id := _normalize_id(binding.component_definition.component_id)
+		if component_id.is_empty():
+			errors.append("У привязки '%s' отсутствует ID компонента." % binding.binding_id)
+			continue
+		if not has_component(component_id):
+			errors.append("Неизвестный компонент: " + component_id)
+			continue
+
+		var binding_id := binding.ensure_binding_id()
+		if used_binding_ids.has(binding_id):
+			errors.append("Повторяется ID привязки компонента '%s'." % binding_id)
+			continue
+		used_binding_ids[binding_id] = true
+
+		var target_node := binding.get_target_node(object_root)
+		if target_node == null:
+			errors.append(
+				"Для компонента «%s» не найден узел «%s». Привязка не перенесена на корень."
+				% [get_component_display_name(component_id), str(binding.target_node_path)]
+			)
+			continue
+
+		var registered_definition := create_definition(component_id)
+		if registered_definition == null:
+			errors.append("Не удалось загрузить определение компонента: " + component_id)
+			continue
+		var effective_definition := binding.component_definition
+		if effective_definition.component_script == null:
+			effective_definition.component_script = registered_definition.component_script
+		if effective_definition.component_script == null:
+			errors.append("У компонента «%s» отсутствует скрипт." % get_component_display_name(component_id))
+			continue
+		if not _script_creates_object_component(effective_definition.component_script):
+			errors.append("Скрипт компонента «%s» должен наследовать ObjectComponent." % get_component_display_name(component_id))
+			continue
+
+		var node_type_error := _validate_target_node_type(effective_definition, target_node)
+		if not node_type_error.is_empty():
+			errors.append(node_type_error)
+			continue
+
+		component_ids[component_id] = true
+		resolved.append(binding)
+
+	if not errors.is_empty():
+		return _binding_resolution_failure(errors)
+
+	# Resolve dependencies iteratively. A dependency already present anywhere in this object
+	# satisfies the requirement, so separate visual/physics/logic nodes remain independent.
+	var index := 0
+	while index < resolved.size():
+		var parent_binding := resolved[index]
+		var parent_definition := parent_binding.component_definition
+		var parent_component_id := parent_binding.get_component_id()
+		for required_id_value in parent_definition.required_component_ids:
+			var required_id := _normalize_id(str(required_id_value))
+			if component_ids.has(required_id):
+				continue
+			var required_definition := create_definition(required_id)
+			if required_definition == null:
+				errors.append(
+					"Компонент «%s» требует отсутствующий компонент «%s»."
+					% [get_component_display_name(parent_component_id), required_id]
+				)
+				continue
+
+			var dependency_binding := ObjectComponentBinding.new()
+			dependency_binding.component_definition = required_definition
+			dependency_binding.target_node_path = parent_binding.target_node_path
+			dependency_binding.binding_id = "auto_%s_%s" % [parent_binding.binding_id, required_id]
+			dependency_binding.ensure_binding_id()
+			var dependency_target := dependency_binding.get_target_node(object_root)
+			if dependency_target == null:
+				errors.append(
+					"Для обязательного компонента «%s» не найден узел «%s»."
+					% [required_definition.display_name, str(dependency_binding.target_node_path)]
+				)
+				continue
+			var dependency_type_error := _validate_target_node_type(required_definition, dependency_target)
+			if not dependency_type_error.is_empty():
+				errors.append(dependency_type_error)
+				continue
+			if not _script_creates_object_component(required_definition.component_script):
+				errors.append("Скрипт обязательного компонента «%s» некорректен." % required_definition.display_name)
+				continue
+			if used_binding_ids.has(dependency_binding.binding_id):
+				errors.append("Повторяется ID автоматической привязки '%s'." % dependency_binding.binding_id)
+				continue
+
+			used_binding_ids[dependency_binding.binding_id] = true
+			component_ids[required_id] = true
+			resolved.append(dependency_binding)
+		index += 1
+
+	if not errors.is_empty():
+		return _binding_resolution_failure(errors)
+
+	# Component incompatibilities apply to the whole object, not just a single node.
+	for binding in resolved:
+		var definition := binding.component_definition
+		var component_id := binding.get_component_id()
+		for incompatible_id_value in definition.incompatible_component_ids:
+			var incompatible_id := _normalize_id(str(incompatible_id_value))
+			if component_ids.has(incompatible_id):
+				errors.append(
+					"Компоненты «%s» и «%s» нельзя использовать в одном объекте."
+					% [get_component_display_name(component_id), get_component_display_name(incompatible_id)]
+				)
+
+	if not errors.is_empty():
+		return _binding_resolution_failure(errors)
+
+	return {
+		"ok": true,
+		"bindings": resolved,
+		"errors": PackedStringArray()
+	}
+
+
+static func _validate_target_node_type(
+	definition: ObjectComponentDefinition,
+	target_node: Node
+) -> String:
+	if definition == null or target_node == null or definition.supported_node_types.is_empty():
+		return ""
+	for supported_type_value in definition.supported_node_types:
+		var supported_type := str(supported_type_value).strip_edges()
+		if not supported_type.is_empty() and target_node.is_class(supported_type):
+			return ""
+	return "Компонент «%s» нельзя разместить на узле типа %s. Подходящие типы: %s." % [
+		definition.display_name if not definition.display_name.is_empty() else definition.component_id,
+		target_node.get_class(),
+		", ".join(definition.supported_node_types)
+	]
+
+
+static func _script_creates_object_component(script: Script) -> bool:
+	if script == null:
+		return false
+	var instance: Object = script.new()
+	var is_component := instance is ObjectComponent
+	if instance is Node:
+		(instance as Node).free()
+	return is_component
+
+
+static func _binding_resolution_failure(errors: PackedStringArray) -> Dictionary:
+	return {
+		"ok": false,
+		"bindings": [],
+		"errors": errors
+	}
+
+
 static func _make_builtin_definitions() -> Array[ObjectComponentDefinition]:
 	var result: Array[ObjectComponentDefinition] = []
 	for component_id in ["health", "damageable", "attack", "destructible"]:

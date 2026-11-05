@@ -715,6 +715,99 @@ func _test_extension_registries() -> void:
 		"custom component appears in its category list"
 	)
 
+	var dependency_component := custom_component.duplicate(true) as ObjectComponentDefinition
+	dependency_component.component_id = "registry_test_requires_health"
+	dependency_component.display_name = "Registry Test Dependent"
+	dependency_component.description = "Проверяет автоматическое подключение обязательного компонента."
+	dependency_component.supported_node_types = PackedStringArray(["StaticBody2D"])
+	dependency_component.required_component_ids = PackedStringArray(["registry_test_health"])
+	_expect(
+		ObjectComponentCatalog.register_definition(dependency_component, source_id),
+		"registry accepts a component with a supported node type and a required component"
+	)
+
+	var dependency_scene_root := Node2D.new()
+	dependency_scene_root.name = "DependencyRoot"
+	var dependency_physics := StaticBody2D.new()
+	dependency_physics.name = "Physics"
+	dependency_scene_root.add_child(dependency_physics)
+	dependency_physics.owner = dependency_scene_root
+	var dependency_packed_scene := PackedScene.new()
+	_expect(
+		dependency_packed_scene.pack(dependency_scene_root) == OK,
+		"component dependency scene with a physics node can be packed"
+	)
+	dependency_scene_root.free()
+
+	var dependency_binding := ObjectComponentBinding.new()
+	dependency_binding.binding_id = "registry_component_needs_health"
+	dependency_binding.component_definition = dependency_component.duplicate(true) as ObjectComponentDefinition
+	dependency_binding.target_node_path = NodePath("Physics")
+	var dependency_object := ObjectDefinition.new()
+	dependency_object.object_id = "component_node_type_dependency_smoke"
+	dependency_object.display_name = "Component Node Type Dependency Smoke"
+	dependency_object.category = "Other"
+	dependency_object.scene = dependency_packed_scene
+	dependency_object.component_bindings = [dependency_binding]
+
+	_expect(
+		ObjectLibraryService.validate_definition(dependency_object).is_empty(),
+		"component binding with supported StaticBody2D target and available dependency passes validation"
+	)
+	var dependency_instance := ObjectFactory.instantiate(dependency_object)
+	_expect(
+		dependency_instance != null,
+		"factory instantiates a component binding with its required component"
+	)
+	if dependency_instance != null:
+		var physics_node := dependency_instance.get_node("Physics")
+		var dependent_component := ObjectFactory.get_component(dependency_instance, "registry_test_requires_health")
+		var required_component := ObjectFactory.get_component(dependency_instance, "registry_test_health")
+		_expect(
+			dependent_component != null and dependent_component.get_parent() == physics_node,
+			"custom component attaches to its requested supported physics node"
+		)
+		_expect(
+			required_component != null and required_component.get_parent() == physics_node,
+			"factory automatically attaches the missing required component to the same node"
+		)
+		dependency_instance.free()
+
+	var unsupported_scene_root := Node2D.new()
+	unsupported_scene_root.name = "UnsupportedRoot"
+	var visual_node := Node2D.new()
+	visual_node.name = "Visuals"
+	unsupported_scene_root.add_child(visual_node)
+	visual_node.owner = unsupported_scene_root
+	var unsupported_packed_scene := PackedScene.new()
+	_expect(
+		unsupported_packed_scene.pack(unsupported_scene_root) == OK,
+		"unsupported target scene can be packed"
+	)
+	unsupported_scene_root.free()
+
+	var unsupported_binding := ObjectComponentBinding.new()
+	unsupported_binding.binding_id = "registry_component_wrong_node"
+	unsupported_binding.component_definition = dependency_component.duplicate(true) as ObjectComponentDefinition
+	unsupported_binding.target_node_path = NodePath("Visuals")
+	var unsupported_validation_root := unsupported_packed_scene.instantiate()
+	var unsupported_plan := ObjectComponentCatalog.resolve_bindings([unsupported_binding], unsupported_validation_root)
+	_expect(
+		not bool(unsupported_plan.get("ok", false)),
+		"component binding is rejected when its target node type is not supported"
+	)
+	unsupported_validation_root.free()
+	var unsupported_definition := ObjectDefinition.new()
+	unsupported_definition.object_id = "component_unsupported_node_type_smoke"
+	unsupported_definition.display_name = "Unsupported Node Type Smoke"
+	unsupported_definition.category = "Other"
+	unsupported_definition.scene = unsupported_packed_scene
+	unsupported_definition.component_bindings = [unsupported_binding]
+	_expect(
+		not ObjectLibraryService.validate_definition(unsupported_definition).is_empty(),
+		"library validation reports a component binding placed on an unsupported node type"
+	)
+
 	var custom_capability := ObjectCapabilityDefinition.new()
 	custom_capability.capability_id = "registry_test_durability"
 	custom_capability.display_name = "Проверочная прочность"

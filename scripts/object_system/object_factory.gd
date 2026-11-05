@@ -56,25 +56,7 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	instance.set_meta("object_custom_properties", values)
 	instance.set_meta("object_custom_property_definitions", property_definitions)
 
-	# Backward compatibility: old definitions place every component on the root.
-	var attached_legacy_component_ids: Dictionary = {}
-	for component_definition in definition.components:
-		if component_definition == null or not component_definition.enabled:
-			continue
-		var component_id := component_definition.component_id.strip_edges().to_lower()
-		if not component_id.is_empty() and attached_legacy_component_ids.has(component_id):
-			push_warning("ObjectFactory: повторный legacy-компонент '%s' пропущен." % component_id)
-			continue
-		attached_legacy_component_ids[component_id] = true
-		_attach_component(
-			instance,
-			instance,
-			component_definition,
-			"legacy:" + component_id,
-			NodePath(".")
-		)
-
-	# Validate friendly selections before creating any of their runtime components.
+	# Validate friendly capability choices before building the component plan.
 	var capability_errors := ObjectCapabilityService.validate_selections(
 		definition.capabilities,
 		instance
@@ -85,43 +67,69 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 		instance.free()
 		return null
 
-	# Explicit advanced bindings plus automatically resolved simple capabilities.
+	# Normalize the legacy root-level component array into the same binding model.
 	var all_bindings: Array[ObjectComponentBinding] = []
+	var attached_legacy_component_ids: Dictionary = {}
+	for component_definition in definition.components:
+		if component_definition == null or not component_definition.enabled:
+			continue
+		var component_id := component_definition.component_id.strip_edges().to_lower()
+		if component_id.is_empty():
+			push_error("ObjectFactory: у legacy-компонента отсутствует ID.")
+			instance.free()
+			return null
+		if attached_legacy_component_ids.has(component_id):
+			push_warning("ObjectFactory: повторный legacy-компонент '%s' пропущен." % component_id)
+			continue
+		attached_legacy_component_ids[component_id] = true
+
+		var legacy_binding := ObjectComponentBinding.new()
+		legacy_binding.binding_id = "legacy:" + component_id
+		legacy_binding.component_definition = component_definition.duplicate(true) as ObjectComponentDefinition
+		legacy_binding.target_node_path = NodePath(".")
+		all_bindings.append(legacy_binding)
+
+	# Explicit advanced bindings plus automatically resolved simple capabilities.
 	for binding in definition.component_bindings:
 		all_bindings.append(binding)
 	for generated_binding in ObjectCapabilityService.build_component_bindings(definition.capabilities):
 		all_bindings.append(generated_binding)
 
-	var used_binding_ids: Dictionary = {}
-	for binding in all_bindings:
-		if binding == null or not binding.enabled:
-			continue
-		if binding.component_definition == null or not binding.component_definition.enabled:
-			continue
+	# Resolve every target, supported node type, dependency and conflict before attaching
+	# the first component. A failed plan never returns a partially assembled object.
+	var binding_plan := ObjectComponentCatalog.resolve_bindings(all_bindings, instance)
+	if not bool(binding_plan.get("ok", false)):
+		var binding_errors: PackedStringArray = binding_plan.get("errors", PackedStringArray())
+		for error_message in binding_errors:
+			push_error("ObjectFactory: " + error_message)
+		instance.free()
+		return null
 
-		var binding_id := binding.ensure_binding_id()
-		if used_binding_ids.has(binding_id):
-			push_error("ObjectFactory: повторяется ID привязки компонента '%s'." % binding_id)
-			instance.free()
-			return null
-		used_binding_ids[binding_id] = true
+	var resolved_bindings: Array[ObjectComponentBinding] = []
+	var planned_bindings: Variant = binding_plan.get("bindings", [])
+	if planned_bindings is Array:
+		for value in planned_bindings:
+			if value is ObjectComponentBinding:
+				resolved_bindings.append(value as ObjectComponentBinding)
 
+	for binding in resolved_bindings:
 		var target_node := binding.get_target_node(instance)
 		if target_node == null:
 			push_error(
-				"ObjectFactory: для компонента '%s' не найден узел '%s'. Привязка не перенесена на корень."
-				% [binding.get_component_id(), str(binding.target_node_path)]
+				"ObjectFactory: целевой узел привязки '%s' исчез после проверки."
+				% binding.binding_id
 			)
 			instance.free()
 			return null
-
-		_attach_component(
+		if not _attach_component(
 			target_node,
 			instance,
 			binding.component_definition,
-			binding_id,
+			binding.binding_id,
 			binding.target_node_path
-		)
+		):
+			instance.free()
+			return null
 
 	return instance
 
@@ -132,9 +140,10 @@ static func _attach_component(
 	component_definition: ObjectComponentDefinition,
 	binding_id: String,
 	target_node_path: NodePath
-) -> void:
+) -> bool:
 	if target_node == null or object_root == null or component_definition == null:
-		return
+		push_error("ObjectFactory: невозможно подключить пустую привязку компонента.")
+		return false
 
 	var component_id := component_definition.component_id.strip_edges().to_lower()
 	var catalog_definition := ObjectComponentCatalog.create_definition(component_id)
@@ -148,21 +157,21 @@ static func _attach_component(
 		component_settings[setting_key] = component_definition.settings[setting_key]
 
 	if component_script == null:
-		push_warning(
-			"ObjectFactory: скрипт компонента '%s' не назначен и отсутствует в каталоге."
+		push_error(
+			"ObjectFactory: скрипт компонента '%s' не назначен и отсутствует в реестре."
 			% component_id
 		)
-		return
+		return false
 
 	var component_instance: Object = component_script.new()
 	if not component_instance is ObjectComponent:
 		if component_instance is Node:
 			(component_instance as Node).free()
-		push_warning(
+		push_error(
 			"ObjectFactory: компонент '%s' должен наследовать ObjectComponent."
 			% component_id
 		)
-		return
+		return false
 
 	var component_node := component_instance as ObjectComponent
 	var node_name := component_definition.display_name.strip_edges()
@@ -175,6 +184,7 @@ static func _attach_component(
 	component_node.configure_context(object_root, binding_id, target_node_path)
 	component_node.configure(component_settings)
 	target_node.add_child(component_node)
+	return true
 
 
 static func _make_unique_child_name(parent: Node, requested_name: String) -> String:

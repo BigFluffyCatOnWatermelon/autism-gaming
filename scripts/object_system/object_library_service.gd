@@ -156,6 +156,17 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 				% [binding_id, target_path]
 			)
 
+	var all_bindings: Array[ObjectComponentBinding] = []
+	for legacy_definition in definition.components:
+		if legacy_definition == null or not legacy_definition.enabled:
+			continue
+		var legacy_binding := ObjectComponentBinding.new()
+		legacy_binding.component_definition = legacy_definition
+		legacy_binding.binding_id = "legacy:" + legacy_definition.component_id.strip_edges().to_lower()
+		legacy_binding.target_node_path = NodePath(".")
+		all_bindings.append(legacy_binding)
+	for binding in definition.component_bindings:
+		all_bindings.append(binding)
 	for generated_binding in ObjectCapabilityService.build_component_bindings(definition.capabilities):
 		if generated_binding == null:
 			continue
@@ -164,9 +175,24 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 			errors.append("ID привязки повторяется между возможностью и ручной настройкой: " + generated_id)
 		else:
 			used_binding_ids[generated_id] = true
+		all_bindings.append(generated_binding)
+
+	# Resolve against the actual draft scene. If no scene exists yet, create a temporary
+	# root of the declared class so root-level supported_node_types are still checked.
+	if validation_scene == null and ClassDB.class_exists(definition.root_type):
+		var temporary_root: Object = ClassDB.instantiate(definition.root_type)
+		if temporary_root is Node:
+			validation_scene = temporary_root as Node
 
 	if validation_scene != null:
+		var binding_plan := ObjectComponentCatalog.resolve_bindings(all_bindings, validation_scene)
+		if not bool(binding_plan.get("ok", false)):
+			var binding_errors: PackedStringArray = binding_plan.get("errors", PackedStringArray())
+			for binding_error in binding_errors:
+				errors.append(binding_error)
 		validation_scene.free()
+	elif not all_bindings.is_empty():
+		errors.append("Не удалось создать корневой узел для проверки компонентов.")
 
 	return errors
 
