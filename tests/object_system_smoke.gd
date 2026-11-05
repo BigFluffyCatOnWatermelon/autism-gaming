@@ -6,6 +6,7 @@ var failures := PackedStringArray()
 func _initialize() -> void:
 	_test_runtime_property_values()
 	_test_definition_range_validation()
+	_test_object_type_default()
 
 	if failures.is_empty():
 		print("OBJECT_SYSTEM_TESTS: PASS")
@@ -112,6 +113,15 @@ func _test_definition_range_validation() -> void:
 	integer_property.minimum = 0.5
 	var errors := ObjectLibraryService.validate_definition(definition)
 	_expect(not errors.is_empty(), "fractional integer boundary fails definition validation")
+
+
+func _test_object_type_default() -> void:
+	var definition := ObjectDefinition.new()
+	_expect(definition.object_type == "other", "new object definitions default to generic type")
+	definition.object_id = "object_type_smoke_test"
+	definition.display_name = "Typed Object"
+	definition.object_type = "resource"
+	_expect(ObjectLibraryService.validate_definition(definition).is_empty(), "typed definition passes validation")
 
 
 func _make_property(
