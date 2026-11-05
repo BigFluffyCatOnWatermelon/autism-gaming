@@ -258,12 +258,6 @@ static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> 
 	var explicit_by_key: Dictionary = {}
 	var invalid_schema_index := 0
 	for descriptor in definition.settings_schema:
-		if descriptor.has("_duplicate_schema_key"):
-			errors.append("В схеме возможности '%s' повторяется настройка '%s'." % [
-				definition.capability_id,
-				str(descriptor.get("_duplicate_schema_key", ""))
-			])
-			continue
 		var component_id := _normalize_id(str(descriptor.get("component_id", "")))
 		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
 		if component_id.is_empty() and definition.component_ids.size() == 1:
@@ -439,6 +433,12 @@ static func _validate_definition(
 
 	var setting_schema_keys: Dictionary = {}
 	for descriptor in definition.settings_schema:
+		if descriptor.has("_duplicate_schema_key"):
+			errors.append("В схеме возможности '%s' повторяется настройка '%s'." % [
+				definition.capability_id,
+				str(descriptor.get("_duplicate_schema_key", ""))
+			])
+			continue
 		var component_id := _normalize_id(str(descriptor.get("component_id", "")))
 		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
 		if component_id.is_empty() or setting_key.is_empty():
