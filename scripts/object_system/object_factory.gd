@@ -89,7 +89,7 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	var all_bindings: Array[ObjectComponentBinding] = []
 	for binding in definition.component_bindings:
 		all_bindings.append(binding)
-	for generated_binding in ObjectCapabilityService.build_component_bindings(definition.capabilities, instance):
+	for generated_binding in ObjectCapabilityService.build_component_bindings(definition.capabilities):
 		all_bindings.append(generated_binding)
 
 	var used_binding_ids: Dictionary = {}
