@@ -256,14 +256,30 @@ static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> 
 		return
 
 	var explicit_by_key: Dictionary = {}
+	var invalid_schema_index := 0
 	for descriptor in definition.settings_schema:
+		if descriptor.has("_duplicate_schema_key"):
+			errors.append("В схеме возможности '%s' повторяется настройка '%s'." % [
+				definition.capability_id,
+				str(descriptor.get("_duplicate_schema_key", ""))
+			])
+			continue
 		var component_id := _normalize_id(str(descriptor.get("component_id", "")))
 		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
 		if component_id.is_empty() and definition.component_ids.size() == 1:
 			component_id = _normalize_id(str(definition.component_ids[0]))
 		if component_id.is_empty() or setting_key.is_empty():
+			explicit_by_key["__invalid_schema_%d" % invalid_schema_index] = descriptor.duplicate(true)
+			invalid_schema_index += 1
 			continue
-		explicit_by_key["%s@%s" % [component_id, setting_key]] = descriptor.duplicate(true)
+		var schema_key := "%s@%s" % [component_id, setting_key]
+		if explicit_by_key.has(schema_key):
+			var duplicate_descriptor: Dictionary = descriptor.duplicate(true)
+			duplicate_descriptor["_duplicate_schema_key"] = schema_key
+			explicit_by_key["__duplicate_schema_%d" % invalid_schema_index] = duplicate_descriptor
+			invalid_schema_index += 1
+		else:
+			explicit_by_key[schema_key] = descriptor.duplicate(true)
 
 	var resolved_schema: Array[Dictionary] = []
 	var consumed: Dictionary = {}
@@ -441,8 +457,17 @@ static func _validate_definition(
 		if bool(descriptor.get("has_range", false)):
 			if declared_type not in ["Integer", "Float"]:
 				errors.append("Диапазон настройки '%s' поддерживается только для Integer и Float." % setting_key)
-			elif float(descriptor.get("minimum", 0.0)) > float(descriptor.get("maximum", 0.0)):
-				errors.append("Минимум больше максимума у настройки '%s'." % setting_key)
+			else:
+				var minimum := float(descriptor.get("minimum", 0.0))
+				var maximum := float(descriptor.get("maximum", 0.0))
+				if minimum > maximum:
+					errors.append("Минимум больше максимума у настройки '%s'." % setting_key)
+				var default_value: Variant = descriptor.get("default_value", source_descriptor.get("default_value"))
+				if typeof(default_value) == TYPE_INT or typeof(default_value) == TYPE_FLOAT:
+					if float(default_value) < minimum or float(default_value) > maximum:
+						errors.append("Значение по умолчанию настройки '%s' выходит за её диапазон." % setting_key)
+				if descriptor.has("step") and float(descriptor["step"]) <= 0.0:
+					errors.append("Шаг настройки '%s' должен быть больше нуля." % setting_key)
 
 	var dependency_ids: Dictionary = {}
 	for dependency_id in definition.required_capability_ids:
