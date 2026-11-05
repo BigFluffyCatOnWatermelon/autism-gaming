@@ -81,12 +81,15 @@
 
 ### Этап 6 — Каталог компонентов
 - [x] Базовый контракт ObjectComponent и описание компонента.
-- [ ] Каталог категорий Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio, Procedural.
-- [ ] Компоненты Health, Damageable, Attack, Destructible, DropTable, Harvestable, Interactable и Pickup.
-- [ ] Редактор настроек компонента с контекстными группами.
+- [x] Каталог категорий Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio, Procedural.
+- [x] Первый встроенный компонент Health: настройки, здоровье, урон, лечение, смерть, неуязвимость и сигналы.
+- [x] Разрешение встроенного компонента по постоянному ID через ObjectComponentCatalog и поиск экземпляра через ObjectFactory.
+- [ ] Компоненты Damageable, Attack, Destructible, DropTable, Harvestable, Interactable и Pickup.
+- [ ] Редактор настроек компонента с контекстными группами в Object Builder.
 
 ### Этап 7 — Проверка и интеграция
 - [x] Headless smoke-тесты ObjectFactory: создание экземпляров, типы, значения по умолчанию, диапазоны и некорректные overrides.
+- [x] Smoke-тест каталога компонентов, подключения Health по ID, урона, лечения, смерти, сброса здоровья и валидации дубликатов.
 - [ ] Изолированная тестовая сцена объекта.
 - [ ] Предварительная проверка обязательных узлов, ресурсов и конфликтов ID.
 - [ ] Интеграция с Debug Inspector.
