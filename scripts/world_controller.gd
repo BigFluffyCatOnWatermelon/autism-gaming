@@ -697,7 +697,7 @@ func _attack(secondary: bool) -> void:
 	attack["weapon_id"] = weapon_id
 	if float(attack_cooldowns.get(cooldown_key, 0.0)) > 0.0:
 		return
-	var attack_origin: Vector2 = player.get_ground_position()
+	var attack_origin: Vector2 = player.get_attack_position()
 	var aim_origin: Vector2 = player.get_aim_position()
 	var aim_vector: Vector2 = get_global_mouse_position() - aim_origin
 	if aim_vector.length_squared() < 0.001:
@@ -754,8 +754,27 @@ func _attack(secondary: bool) -> void:
 		_log("Удар: %s" % weapon_id)
 
 func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_degrees: float, effect_width: float) -> void:
+	if player == null:
+		return
+	var attack_anchor := player.get_node_or_null("AttackPivot") as Node2D
+	if attack_anchor == null:
+		attack_anchor = player
 	var visual_reach := maxf(22.0, reach * float(config.combat.effect_reach_scale))
 	var base_color := Color("#cceaff") if mode == "thrust" else (Color("#e8b96f") if mode == "swing" else Color("#e9edbd"))
+
+	# Parent the fading trail to the movable player anchor so it travels with the character.
+	var effect_root := Node2D.new()
+	effect_root.name = "AttackTrail"
+	effect_root.position = Vector2.ZERO
+	effect_root.rotation = direction.angle()
+	# Player is scaled in the main scene; compensate so configured reach stays in world pixels.
+	var anchor_scale := attack_anchor.global_scale
+	var safe_scale_x := anchor_scale.x if absf(anchor_scale.x) > 0.001 else 1.0
+	var safe_scale_y := anchor_scale.y if absf(anchor_scale.y) > 0.001 else 1.0
+	effect_root.scale = Vector2(1.0 / safe_scale_x, 1.0 / safe_scale_y)
+	effect_root.z_index = 5
+	attack_anchor.add_child(effect_root)
+
 	for layer_index in range(3):
 		var effect := Line2D.new()
 		effect.width = effect_width * [2.5, 1.55, 0.72][layer_index]
@@ -763,21 +782,20 @@ func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_deg
 		effect.antialiased = true
 		effect.begin_cap_mode = Line2D.LINE_CAP_ROUND
 		effect.end_cap_mode = Line2D.LINE_CAP_ROUND
-		effect.position = player.get_ground_position()
-		effect.z_index = player.z_index + 5
 		if mode == "slash" or mode == "swing":
 			var points := PackedVector2Array()
-			var center_angle := direction.angle()
 			for step in range(13):
-				var angle := center_angle + deg_to_rad(-arc_degrees * 0.5 + arc_degrees * float(step) / 12.0)
+				var angle := deg_to_rad(-arc_degrees * 0.5 + arc_degrees * float(step) / 12.0)
 				points.append(Vector2.from_angle(angle) * (visual_reach - 6.0))
 			effect.points = points
 		else:
-			effect.points = PackedVector2Array([direction * 12.0, direction * visual_reach])
-		add_child(effect)
-		var tween := create_tween()
-		tween.tween_property(effect, "modulate:a", 0.0, 0.15 + float(layer_index) * 0.025)
-		tween.tween_callback(effect.queue_free)
+			effect.points = PackedVector2Array([Vector2.RIGHT * 12.0, Vector2.RIGHT * visual_reach])
+		effect_root.add_child(effect)
+
+	var tween := create_tween()
+	tween.tween_property(effect_root, "modulate:a", 0.0, 0.175)
+	tween.tween_callback(effect_root.queue_free)
+
 
 func _fire_arrow(weapon: Dictionary) -> void:
 	if weapon.is_empty() or float(attack_cooldowns.get("bow", 0.0)) > 0.0:
@@ -1402,6 +1420,9 @@ func _build_debug_properties(entry: Dictionary) -> Array[Dictionary]:
 		result.append(_debug_property("resource.swing_strength", "Сила раскачивания", node.swing_strength, 0.0, 10.0, 0.1))
 		result.append(_debug_property("resource.destruction_duration", "Длительность разрушения", node.destruction_duration, 0.05, 5.0, 0.05))
 		result.append(_debug_property("resource.fall_angle_degrees", "Угол падения дерева", node.fall_angle_degrees, 1.0, 120.0, 1.0))
+		if node.resource_type == "tree" or node.resource_type == "stump":
+			result.append(_debug_property("resource.stump_height", "Высота процедурного пня", node.stump_height, 4.0, 64.0, 1.0))
+			result.append(_debug_property("resource.stump_width", "Ширина процедурного пня", node.stump_width, 6.0, 48.0, 1.0))
 		result.append(_debug_property("resource.resistance_cutting", "Сопротивление: режущий", node.damage_resistances.get("cutting", 1.0), 0.0, 5.0, 0.05))
 		result.append(_debug_property("resource.resistance_piercing", "Сопротивление: колющий", node.damage_resistances.get("piercing", 1.0), 0.0, 5.0, 0.05))
 		result.append(_debug_property("resource.resistance_crushing", "Сопротивление: дробящий", node.damage_resistances.get("crushing", 1.0), 0.0, 5.0, 0.05))
@@ -1529,6 +1550,10 @@ func _on_debug_value_changed(path: String, value: float) -> void:
 				node.destruction_duration = value
 			"resource.fall_angle_degrees":
 				node.fall_angle_degrees = value
+			"resource.stump_height":
+				node.stump_height = value
+			"resource.stump_width":
+				node.stump_width = value
 			"resource.resistance_cutting":
 				node.damage_resistances["cutting"] = value
 			"resource.resistance_piercing":
@@ -1672,6 +1697,8 @@ func _reset_debug_selection() -> void:
 		node.swing_strength = float(config.resources.swing_strength)
 		node.destruction_duration = float(config.resources.destruction_duration)
 		node.fall_angle_degrees = float(config.resources.fall_angle_degrees)
+		node.stump_height = 16.0
+		node.stump_width = 15.0
 		node.damage_resistances = {
 			"cutting": float(config.resources.resistance_cutting),
 			"piercing": float(config.resources.resistance_piercing),
