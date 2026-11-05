@@ -1,4 +1,4 @@
-# Object Builder 0.4.2
+# Object Builder 0.4.3
 
 Object Builder — редакторский плагин для создания определений игровых объектов. Он не является частью игрового цикла: библиотека и runtime API продолжают работать, даже если плагин выключен.
 
@@ -24,7 +24,7 @@ Object Builder — редакторский плагин для создания
 - Дочерний узел `ObjectProperties` с сериализуемыми определениями и значениями пользовательских свойств.
 - Динамические типизированные поля Inspector для пользовательских свойств; поддерживаются группы и числовые min/max.
 - Runtime API, который читает и меняет те же поля `ObjectProperties`, а не отдельную копию значений.
-- Каталог компонентов с категориями Appearance/Physics/Stats/Combat/Interaction/Destruction/Audio/Procedural и выбором доступных компонентов.
+- Каталог компонентов с категориями Appearance/Physics/Stats/Combat/Interaction/Destruction/Audio/Procedural и выбором доступных компонентов: Health и Damageable.
 - Редактор списка компонентов: добавление, включение/отключение и удаление компонентов из определения объекта.
 - Типизированные настройки компонентов в штатном Inspector; схема полей и значения сохраняются в ресурсе ObjectDefinition.
 - Панель визуального редактора Sprite2D с предпросмотром текстуры, выбором изображения, сеткой кадров, смещением, центрированием и отражением.
@@ -62,12 +62,13 @@ Object Builder — редакторский плагин для создания
 ## Компоненты в Object Builder
 
 1. Выбери объект в библиотеке или создай новый.
-2. В блоке «Компоненты» выбери категорию «Характеристики», затем компонент «Здоровье» и нажми «+ Добавить».
-3. В списке компонентов можно снять флажок, чтобы временно отключить компонент, или нажать «×», чтобы удалить его из определения.
-4. Нажми «Inspector» напротив компонента. В штатном Inspector откроются его настройки: максимальное и начальное здоровье, неуязвимость и разрешение лечения. Числовые поля имеют заданные диапазоны.
-5. После правок вернись в Object Builder и нажми «Сохранить в библиотеку». Настройки компонента записываются в `ObjectDefinition` (`.tres`), а не в отдельный игровой save-файл.
+2. В блоке «Компоненты» выбери категорию «Характеристики», добавь «Здоровье».
+3. Для объектов, которые должны принимать урон, выбери категорию «Бой» и добавь «Приём урона» (Damageable). Этот компонент требует Health на том же объекте.
+4. Сними флажок компонента, чтобы временно отключить его, или нажми «×», чтобы удалить из определения.
+5. Кнопка «Inspector» открывает настройки выбранного компонента. У Health это максимальное/начальное здоровье, неуязвимость и разрешение лечения. У Damageable — разрешение принимать урон, множитель и плоское снижение урона.
+6. После правок вернись в Object Builder и нажми «Сохранить в библиотеку». Настройки записываются в `ObjectDefinition` (`.tres`), а не в отдельный игровой save-файл.
 
-При создании runtime-экземпляра `ObjectFactory` добавляет включённые компоненты к корневому узлу. Они не создаются как дочерние узлы редактируемой `.tscn`: их состав определяется ресурсом объекта. Сейчас доступен только Health; остальные категории отображаются как будущие разделы каталога. Health пока не подключён автоматически к существующим Player и ResourceNode.
+При создании runtime-экземпляра `ObjectFactory` добавляет включённые компоненты к корневому узлу. Они не становятся дочерними узлами редактируемой `.tscn`: их состав определяется ресурсом объекта. Damageable ищет Health среди компонентов того же объекта; без Health он не может уменьшить здоровье. Ни Health, ни Damageable пока не подключены автоматически к существующим Player и ResourceNode.
 
 ## Runtime API
 
@@ -79,17 +80,16 @@ Object Builder — редакторский плагин для создания
 
 Пользовательские значения доступны через ObjectFactory.get_custom_property(node, property_id, fallback), ObjectFactory.get_custom_property_definition(node, property_id) и ObjectFactory.set_custom_property(node, property_id, value). `set_custom_property()` возвращает bool: неправильный тип или неизвестный ID отклоняется, значение Integer/Float за min/max ограничивается. Некорректный override при создании заменяется default. Значения хранятся в `ObjectProperties` и сохраняются в `.tscn` вместе с узлом; запись этих значений в игровые save-файлы пока не подключена.
 
-Первый runtime-компонент — Health. Подключение по постоянному ID выглядит так:
+Runtime-пример: получить Damageable у созданного объекта и передать ему урон:
 
     var health_definition := ObjectComponentCatalog.create_definition("health")
-    health_definition.settings["max_health"] = 150.0
-    health_definition.settings["starting_health"] = 150.0
-    object_definition.components.append(health_definition)
+    var damageable_definition := ObjectComponentCatalog.create_definition("damageable")
+    object_definition.components = [health_definition, damageable_definition]
 
     var instance := ObjectFactory.instantiate(object_definition)
-    var health := ObjectFactory.get_component(instance, "health") as HealthComponent
-    health.apply_damage(10.0)
+    var damageable := ObjectFactory.get_component(instance, "damageable") as DamageableComponent
+    var applied_damage := damageable.receive_damage(20.0, attacker)
 
-Каталог задаёт defaults, а `settings` определения объекта переопределяет отдельные ключи. У Health доступны `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`. Сигналы: `health_changed`, `damaged`, `healed`, `died`. Добавление, отключение, удаление и редактирование настроек компонента доступны через панель «Компоненты» Object Builder. Health пока не управляет существующими Player или ResourceNode.
+Каталог задаёт defaults, а `settings` определения объекта переопределяет отдельные ключи. У Health доступны `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`; сигналы: `health_changed`, `damaged`, `healed`, `died`. Damageable предоставляет `receive_damage(amount, source)`, возвращает фактически снятое здоровье, применяет формулу `max(0, amount * damage_multiplier - flat_reduction)` и выдаёт сигналы `damage_received` / `damage_blocked`. Его можно отключить через `can_receive_damage`. Добавление, отключение, удаление и редактирование настроек доступны через панель «Компоненты» Object Builder.
 
 Плагин пока не переносит существующие ResourceNode и сцены Cozy Village автоматически. Не включай автоматическую миграцию: сначала создай копии и проверь объекты вручную.

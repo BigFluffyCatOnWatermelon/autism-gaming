@@ -26,9 +26,10 @@
 - ObjectPropertyDefinition — ID, отображаемое имя, тип, значение по умолчанию, группа и описание пользовательского свойства.
 - ObjectPropertyData — дочерний узел сцены с сериализуемыми определениями/значениями и динамическими типизированными полями Inspector.
 - ObjectComponentDefinition — подключаемый компонент, категория, версия, скрипт, схема типизированных настроек и сериализуемые значения.
-- ObjectComponentCatalog — каталог категорий и встроенных компонентов; сейчас доступен Health.
+- ObjectComponentCatalog — каталог категорий и встроенных компонентов; сейчас доступны Health и Damageable.
 - ObjectComponent — базовый Node-контракт с постоянным component_id и настройками.
 - HealthComponent — здоровье, урон, лечение, смерть, неуязвимость и сброс состояния.
+- DamageableComponent — фильтрует входящий урон, применяет множитель/плоское снижение и передаёт итог в Health.
 - ObjectFactory — создание экземпляра, разрешение компонентов по ID, применение настроек и поиск компонента.
 - ObjectRegistry — поиск определений и создание объектов по постоянному ID.
 
@@ -55,13 +56,13 @@ ObjectFactory хранит пользовательские значения и 
 
 Компонент описывается через ObjectComponentDefinition и реализуется скриптом, наследующим ObjectComponent. Компонент получает настройки через configure(Dictionary); постоянный `component_id` позволяет найти экземпляр через `ObjectFactory.get_component()`.
 
-ObjectComponentCatalog содержит категории Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio и Procedural. Пока встроен только `health` (HealthComponent); остальные категории зарезервированы под будущие компоненты. Каталог создаёт ObjectComponentDefinition с defaults и схемой настроек. Словарь `settings` переопределяет ключи каталога, а runtime-фабрика передаёт объединённые значения компоненту.
+ObjectComponentCatalog содержит категории Appearance, Physics, Stats, Combat, Interaction, Destruction, Audio и Procedural. Встроены `health` (HealthComponent, Stats) и `damageable` (DamageableComponent, Combat); другие категории зарезервированы под будущие компоненты. Каталог создаёт ObjectComponentDefinition с defaults и схемой настроек. Словарь `settings` переопределяет ключи каталога, а runtime-фабрика передаёт объединённые значения компоненту.
 
 `ObjectComponentDefinition` предоставляет динамические типизированные поля штатного Inspector из схемы `setting_definitions`: String, Integer, Float, Boolean и Vector2, группы и числовые диапазоны. Значения сохраняются в `settings` как storage-only dictionary, чтобы не показывать дублирующий сырой словарь в Inspector. `set_setting()` проверяет типы и ограничивает числовые поля заданным диапазоном.
 
 В Object Builder раздел «Компоненты» позволяет выбрать категорию и компонент, добавить его в определение, включить/отключить или удалить. Кнопка Inspector открывает ресурс ObjectComponentDefinition для правки полей; после изменения нужно сохранить определение через «Сохранить в библиотеку». Компоненты создаются ObjectFactory во время runtime-инстанцирования, а не становятся дочерними узлами сохраняемой `.tscn`.
 
-HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. Он пока не подключён к существующему игроку, ResourceNode или Debug Inspector. Damageable, Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаются следующими компонентами.
+HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. DamageableComponent предоставляет `receive_damage()`: вычисляет `max(0, incoming * multiplier - flat_reduction)`, передаёт итог в Health и излучает `damage_received` или `damage_blocked`. На одном объекте должен быть включён Health, иначе Damageable не сможет применить урон. Оба компонента пока не подключены к существующему игроку, ResourceNode или Debug Inspector. Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаются следующими.
 
 ## Определение, шаблон и экземпляр
 
