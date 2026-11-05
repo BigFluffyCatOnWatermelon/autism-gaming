@@ -272,7 +272,7 @@ static func build_application_plan(
 	if not changed:
 		summary.append("Состав объекта не изменится.")
 	else:
-		summary.push_front("Будет применён следующий план:")
+		summary.insert(0, "Будет применён следующий план:")
 
 	return {
 		"ok": true,
