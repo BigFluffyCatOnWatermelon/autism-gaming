@@ -14,7 +14,9 @@
 - Runtime-часть вынесена в scripts/object_system: ObjectDefinition, ObjectPropertyDefinition, ObjectComponentDefinition, ObjectComponent, ObjectFactory и ObjectRegistry.
 - Определения сохраняются отдельно от сцен: data/object_library/objects, шаблоны — data/object_library/templates, сцены — data/object_library/scenes.
 - При повторной записи определения создаётся резервная копия .bak. Автоматической миграции существующих ResourceNode и Cozy Village сцен нет.
-- Встроенный node-tree editor, предпросмотр, каталог игровых компонентов и интеграция с Debug Inspector пока не реализованы.
+- Добавлены локальное избранное, история последних 20 открывавшихся объектов и фильтр по тегам; эти предпочтения хранятся в проектных метаданных Godot EditorSettings вне репозитория.
+- В Object Builder добавлено базовое дерево узлов открытой сцены выбранного объекта. Можно выделять узлы, добавлять типовые 2D-узлы и удалять дочерние узлы через штатную историю Undo/Redo; сохранение сцены выполняется через Ctrl+S.
+- Полноценный инспектор параметров узлов, предпросмотр спрайтов/анимаций, визуальная настройка точки основания/креплений, каталог игровых компонентов и интеграция с Debug Inspector пока не реализованы.
 - Подробности: ROADMAP.md, ARCHITECTURE.md и addons/object_builder/README.md.
 
 ## Репозиторий и технологии
