@@ -6,6 +6,10 @@ var destructible_destroyed_received := false
 
 
 func _initialize() -> void:
+	call_deferred("_run_tests")
+
+
+func _run_tests() -> void:
 	_test_runtime_property_values()
 	_test_definition_range_validation()
 	_test_object_type_default()
@@ -13,7 +17,7 @@ func _initialize() -> void:
 	_test_component_catalog_and_health()
 	_test_damageable_component()
 	_test_attack_component()
-	_test_destructible_component()
+	await _test_destructible_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 
@@ -442,6 +446,7 @@ func _test_destructible_component() -> void:
 	var test_world := Node2D.new()
 	root.add_child(test_world)
 	test_world.add_child(body)
+	await process_frame
 
 	var health := ObjectFactory.get_component(body, "health") as HealthComponent
 	var damageable := ObjectFactory.get_component(body, "damageable") as DamageableComponent
