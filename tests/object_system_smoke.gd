@@ -23,6 +23,7 @@ func _run_tests() -> void:
 	await _test_simple_capability_resolution()
 	_test_capability_selection_plans()
 	await _test_component_node_bindings()
+	_test_creation_profile_registry()
 	await _test_extension_registries()
 
 	if failures.is_empty():
@@ -570,6 +571,90 @@ func _test_component_definition_validation() -> void:
 		"component without a script or catalog entry is rejected"
 	)
 
+
+
+
+
+func _test_creation_profile_registry() -> void:
+	var profile_ids := ObjectCreationProfileRegistry.get_profile_ids()
+	_expect(profile_ids.size() == 12, "all twelve built-in creation profiles are registered")
+	_expect(
+		profile_ids.has("npc") and profile_ids.has("resource") and profile_ids.has("weapon")
+		and profile_ids.has("other"),
+		"built-in profiles cover common object categories and generic objects"
+	)
+	_expect(
+		not ObjectCreationProfileRegistry.has_profile(""),
+		"blank creation is an explicit no-profile choice, not a mandatory profile"
+	)
+
+	var generic := ObjectCreationProfileRegistry.get_definition("other")
+	_expect(generic != null, "generic creation profile can be loaded")
+	if generic != null:
+		_expect(
+			generic.suggested_root_type == "Node2D"
+			and generic.suggested_category == "Other"
+			and generic.suggested_properties.is_empty(),
+			"generic profile creates a clean object without preset properties"
+		)
+
+	var weapon := ObjectCreationProfileRegistry.get_definition("weapon")
+	_expect(weapon != null, "weapon profile can be loaded from the registry")
+	if weapon != null:
+		_expect(
+			weapon.suggested_category == "Equipment"
+			and weapon.suggested_root_type == "Area2D"
+			and not weapon.suggested_properties.is_empty(),
+			"weapon profile exposes category, suggested root and starter properties"
+		)
+		if not weapon.suggested_properties.is_empty():
+			_expect(
+				weapon.suggested_properties[0].property_id == "damage",
+				"weapon starter property keeps its stable property ID"
+			)
+
+	var first_copy := ObjectCreationProfileRegistry.get_definition("weapon")
+	var second_copy := ObjectCreationProfileRegistry.get_definition("weapon")
+	if first_copy != null and second_copy != null and not first_copy.suggested_properties.is_empty():
+		first_copy.suggested_properties[0].display_name = "Изменено только в копии"
+		_expect(
+			second_copy.suggested_properties[0].display_name != "Изменено только в копии",
+			"editing a retrieved profile copy does not mutate the registry"
+		)
+
+	var custom_profile := ObjectCreationProfileDefinition.new()
+	custom_profile.profile_id = "smoke_custom_profile"
+	custom_profile.display_name = "Профиль smoke-теста"
+	custom_profile.description = "Внешний профиль не ограничивает возможности."
+	custom_profile.suggested_category = "Other"
+	custom_profile.suggested_root_type = "Node2D"
+	custom_profile.suggested_properties = [_make_property("custom_value", "Integer", 7)]
+	var source_id := "object_builder_profile_smoke_test"
+	_expect(
+		ObjectCreationProfileRegistry.register_definition(custom_profile, source_id),
+		"extension can register a custom creation profile"
+	)
+	_expect(
+		ObjectCreationProfileRegistry.has_profile("smoke_custom_profile")
+		and ObjectCreationProfileRegistry.get_source_id("smoke_custom_profile") == source_id,
+		"custom creation profile is discoverable with its source"
+	)
+
+	var builtin_override := custom_profile.duplicate(true) as ObjectCreationProfileDefinition
+	builtin_override.profile_id = "npc"
+	_expect(
+		not ObjectCreationProfileRegistry.register_definition(builtin_override, source_id),
+		"extension cannot override a built-in creation profile"
+	)
+	_expect(
+		ObjectCreationProfileRegistry.unregister_source(source_id).is_empty()
+		and not ObjectCreationProfileRegistry.has_profile("smoke_custom_profile"),
+		"unregistering an extension removes only its own creation profiles"
+	)
+	_expect(
+		ObjectCreationProfileRegistry.validate_registry().is_empty(),
+		"creation profile registry validates after extension registration and removal"
+	)
 
 
 

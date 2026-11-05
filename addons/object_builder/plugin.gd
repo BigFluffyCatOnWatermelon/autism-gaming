@@ -40,137 +40,6 @@ const CHILD_NODE_TYPES := [
 	"AudioStreamPlayer2D",
 	"AnimationPlayer"
 ]
-const OBJECT_TYPE_PRESETS := {
-	"npc": {
-		"label": "Персонаж / NPC",
-		"description": "Персонаж с запасом здоровья, скоростью передвижения, радиусом взаимодействия и фракцией.",
-		"category": "Characters",
-		"root_type": "CharacterBody2D",
-		"properties": [
-			{"id": "health", "name": "Здоровье", "type": "Integer", "default": 100, "group": "Характеристики", "min": 0, "max": 9999},
-			{"id": "move_speed", "name": "Скорость передвижения", "type": "Float", "default": 80.0, "group": "Характеристики", "min": 0.0, "max": 1000.0},
-			{"id": "interaction_radius", "name": "Радиус взаимодействия", "type": "Float", "default": 48.0, "group": "Взаимодействие", "min": 0.0, "max": 1024.0},
-			{"id": "faction", "name": "Фракция", "type": "String", "default": "neutral", "group": "Поведение"}
-		]
-	},
-	"resource": {
-		"label": "Ресурс",
-		"description": "Добываемый объект: прочность, нужный инструмент, предмет и время восстановления.",
-		"category": "Nature",
-		"root_type": "StaticBody2D",
-		"properties": [
-			{"id": "health", "name": "Прочность", "type": "Integer", "default": 20, "group": "Добыча", "min": 1, "max": 9999},
-			{"id": "required_tool", "name": "Нужный инструмент", "type": "String", "default": "axe", "group": "Добыча"},
-			{"id": "drop_item_id", "name": "ID выпадающего предмета", "type": "String", "default": "", "group": "Добыча"},
-			{"id": "respawn_time", "name": "Время восстановления", "type": "Float", "default": 0.0, "group": "Поведение", "min": 0.0, "max": 86400.0}
-		]
-	},
-	"construction": {
-		"label": "Конструкция / постройка",
-		"description": "Здание или размещаемая конструкция с прочностью, блокировкой движения и стоимостью строительства.",
-		"category": "Buildings",
-		"root_type": "StaticBody2D",
-		"properties": [
-			{"id": "health", "name": "Прочность", "type": "Integer", "default": 200, "group": "Параметры", "min": 0, "max": 99999},
-			{"id": "blocks_movement", "name": "Блокирует движение", "type": "Boolean", "default": true, "group": "Коллизия"},
-			{"id": "build_cost", "name": "Стоимость строительства", "type": "Integer", "default": 0, "group": "Экономика", "min": 0, "max": 999999}
-		]
-	},
-	"item": {
-		"label": "Предмет",
-		"description": "Подбираемый предмет с размером стопки, весом и стоимостью.",
-		"category": "Items",
-		"root_type": "Area2D",
-		"properties": [
-			{"id": "stack_size", "name": "Размер стопки", "type": "Integer", "default": 1, "group": "Инвентарь", "min": 1, "max": 999},
-			{"id": "weight", "name": "Вес", "type": "Float", "default": 0.0, "group": "Инвентарь", "min": 0.0, "max": 9999.0},
-			{"id": "sell_price", "name": "Цена продажи", "type": "Integer", "default": 0, "group": "Экономика", "min": 0, "max": 999999}
-		]
-	},
-	"weapon": {
-		"label": "Оружие",
-		"description": "Боевой предмет с уроном, дистанцией атаки, перезарядкой и расходом выносливости.",
-		"category": "Equipment",
-		"root_type": "Area2D",
-		"properties": [
-			{"id": "damage", "name": "Урон", "type": "Integer", "default": 10, "group": "Бой", "min": 0, "max": 9999},
-			{"id": "attack_range", "name": "Дистанция атаки", "type": "Float", "default": 48.0, "group": "Бой", "min": 0.0, "max": 1024.0},
-			{"id": "attack_cooldown", "name": "Перезарядка атаки", "type": "Float", "default": 0.5, "group": "Бой", "min": 0.0, "max": 60.0},
-			{"id": "stamina_cost", "name": "Расход выносливости", "type": "Float", "default": 0.0, "group": "Бой", "min": 0.0, "max": 1000.0}
-		]
-	},
-	"tool": {
-		"label": "Инструмент",
-		"description": "Рабочий инструмент с силой воздействия, прочностью и интервалом использования.",
-		"category": "Equipment",
-		"root_type": "Area2D",
-		"properties": [
-			{"id": "damage", "name": "Сила воздействия", "type": "Integer", "default": 5, "group": "Работа", "min": 0, "max": 9999},
-			{"id": "durability", "name": "Прочность инструмента", "type": "Integer", "default": 100, "group": "Работа", "min": 0, "max": 99999},
-			{"id": "attack_cooldown", "name": "Интервал использования", "type": "Float", "default": 0.5, "group": "Работа", "min": 0.0, "max": 60.0}
-		]
-	},
-	"animal": {
-		"label": "Животное",
-		"description": "Живое существо с запасом здоровья, скоростью и параметрами приручения.",
-		"category": "Animals",
-		"root_type": "CharacterBody2D",
-		"properties": [
-			{"id": "health", "name": "Здоровье", "type": "Integer", "default": 30, "group": "Характеристики", "min": 1, "max": 9999},
-			{"id": "move_speed", "name": "Скорость передвижения", "type": "Float", "default": 60.0, "group": "Характеристики", "min": 0.0, "max": 1000.0},
-			{"id": "tameable", "name": "Можно приручить", "type": "Boolean", "default": false, "group": "Поведение"}
-		]
-	},
-	"interactive": {
-		"label": "Интерактивный объект",
-		"description": "Объект, с которым игрок взаимодействует в радиусе действия.",
-		"category": "Interactive",
-		"root_type": "Area2D",
-		"properties": [
-			{"id": "interaction_radius", "name": "Радиус взаимодействия", "type": "Float", "default": 48.0, "group": "Взаимодействие", "min": 0.0, "max": 1024.0},
-			{"id": "one_shot", "name": "Одноразовое взаимодействие", "type": "Boolean", "default": false, "group": "Взаимодействие"}
-		]
-	},
-	"decoration": {
-		"label": "Декорация",
-		"description": "Визуальный объект окружения с настройками сортировки и блокировки движения.",
-		"category": "Decorations",
-		"root_type": "Node2D",
-		"properties": [
-			{"id": "blocks_movement", "name": "Блокирует движение", "type": "Boolean", "default": false, "group": "Физика"},
-			{"id": "sorting_offset", "name": "Смещение сортировки", "type": "Float", "default": 0.0, "group": "Визуал", "min": -4096.0, "max": 4096.0}
-		]
-	},
-	"transport": {
-		"label": "Транспорт",
-		"description": "Транспортное средство с параметрами скорости и вместимости.",
-		"category": "Transport",
-		"root_type": "Node2D",
-		"properties": [
-			{"id": "move_speed", "name": "Скорость", "type": "Float", "default": 100.0, "group": "Транспорт", "min": 0.0, "max": 2000.0},
-			{"id": "capacity", "name": "Вместимость", "type": "Integer", "default": 1, "group": "Транспорт", "min": 1, "max": 999}
-		]
-	},
-	"effect": {
-		"label": "Эффект",
-		"description": "Визуальный или звуковой эффект с длительностью и интенсивностью.",
-		"category": "Effects",
-		"root_type": "Node2D",
-		"properties": [
-			{"id": "duration", "name": "Длительность", "type": "Float", "default": 1.0, "group": "Эффект", "min": 0.0, "max": 3600.0},
-			{"id": "intensity", "name": "Интенсивность", "type": "Float", "default": 1.0, "group": "Эффект", "min": 0.0, "max": 1000.0}
-		]
-	},
-	"other": {
-		"label": "Другой объект",
-		"description": "Универсальная заготовка без специализированного набора параметров.",
-		"category": "Other",
-		"root_type": "Node2D",
-		"properties": []
-	}
-}
-
-
 var _dock: MarginContainer
 var _search: LineEdit
 var _mode_filter: OptionButton
@@ -1396,10 +1265,17 @@ func _build_new_object_dialog() -> void:
 
 	_new_object_type_option = OptionButton.new()
 	_new_object_type_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for type_id in OBJECT_TYPE_PRESETS.keys():
-		var preset: Dictionary = OBJECT_TYPE_PRESETS[type_id]
-		_new_object_type_option.add_item(str(preset.get("label", type_id)))
-		_new_object_type_option.set_item_metadata(_new_object_type_option.item_count - 1, str(type_id))
+	_new_object_type_option.add_item("Без профиля · обычный объект")
+	_new_object_type_option.set_item_metadata(0, "")
+	for profile_id in ObjectCreationProfileRegistry.get_profile_ids():
+		var profile := ObjectCreationProfileRegistry.get_definition(profile_id)
+		if profile == null:
+			continue
+		_new_object_type_option.add_item(profile.display_name)
+		_new_object_type_option.set_item_metadata(
+			_new_object_type_option.item_count - 1,
+			profile.profile_id
+		)
 	_new_object_type_option.item_selected.connect(_on_new_object_type_selected)
 	_add_labeled_control(form, "Что создаём?", _new_object_type_option)
 
@@ -1428,52 +1304,53 @@ func _update_new_object_type_hint() -> void:
 	if _new_object_type_option.selected < 0:
 		_new_object_type_hint.text = ""
 		return
-	var type_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
-	var preset: Dictionary = OBJECT_TYPE_PRESETS.get(type_id, {})
-	_new_object_type_hint.text = "%s\nЭто только стартовая подсказка — позже можно добавить любые возможности." % [
-		str(preset.get("description", ""))
+	var profile_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
+	if profile_id.is_empty():
+		_new_object_type_hint.text = "Обычный объект без стартового набора параметров. После создания можно добавить любые возможности."
+		return
+	var profile := ObjectCreationProfileRegistry.get_definition(profile_id)
+	if profile == null:
+		_new_object_type_hint.text = "Этот профиль больше недоступен. Можно выбрать другой или начать без профиля."
+		return
+	_new_object_type_hint.text = "%s\nПрофиль предлагает настройки, но не ограничивает возможности объекта." % [
+		profile.description
 	]
 
 
 func _on_new_object_dialog_confirmed() -> void:
 	if _new_object_type_option.selected < 0:
 		return
-	var type_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
-	var preset: Dictionary = OBJECT_TYPE_PRESETS.get(type_id, OBJECT_TYPE_PRESETS["other"])
+	var profile_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
+	var profile := ObjectCreationProfileRegistry.get_definition(profile_id) if not profile_id.is_empty() else null
 
 	var definition := ObjectDefinition.new()
 	definition.object_id = "object_%d_%d" % [
 		int(Time.get_unix_time_from_system()),
 		Time.get_ticks_msec()
 	]
-	definition.display_name = str(preset.get("label", "Новый объект"))
-	definition.description = str(preset.get("description", ""))
-	definition.object_type = type_id
-	definition.category = str(preset.get("category", "Other"))
-	definition.root_type = str(preset.get("root_type", "Node2D"))
+	definition.display_name = profile.display_name if profile != null else "Новый объект"
+	definition.description = profile.description if profile != null else ""
+	definition.object_type = profile.profile_id if profile != null else "other"
+	definition.category = profile.suggested_category if profile != null else "Other"
+	definition.root_type = profile.suggested_root_type if profile != null else "Node2D"
 	definition.is_template = false
 
-	for property_data in preset.get("properties", []):
-		var property_definition := ObjectPropertyDefinition.new()
-		property_definition.property_id = str(property_data.get("id", ""))
-		property_definition.display_name = str(property_data.get("name", property_definition.property_id))
-		property_definition.value_type = str(property_data.get("type", "String"))
-		property_definition.default_value = property_data.get("default", "")
-		property_definition.group_name = str(property_data.get("group", "Основное"))
-		property_definition.description = str(property_data.get("description", ""))
-		property_definition.advanced = bool(property_data.get("advanced", false))
-		property_definition.has_range = property_data.has("min") and property_data.has("max")
-		if property_definition.has_range:
-			property_definition.minimum = float(property_data["min"])
-			property_definition.maximum = float(property_data["max"])
-		definition.custom_properties.append(property_definition)
+	if profile != null:
+		for property_template in profile.suggested_properties:
+			if property_template != null:
+				definition.custom_properties.append(
+					property_template.duplicate(true) as ObjectPropertyDefinition
+				)
 
 	_can_save_as_template = true
 	_load_definition(definition)
-	_set_status(
-		"Создан тип «%s». Ниже показаны его стартовые параметры — их можно менять и дополнять." % str(preset.get("label", type_id)),
-		false
-	)
+	if profile == null:
+		_set_status("Создан обычный объект без профиля. Теперь можно добавить любой набор возможностей.", false)
+	else:
+		_set_status(
+			"Создан объект «%s». Стартовые настройки можно свободно менять и дополнять." % profile.display_name,
+			false
+		)
 
 
 func _on_property_type_changed(_index: int) -> void:
@@ -1874,8 +1751,10 @@ func _refresh_library_list() -> void:
 
 
 func _object_type_display_name(type_id: String) -> String:
-	var preset: Dictionary = OBJECT_TYPE_PRESETS.get(type_id, OBJECT_TYPE_PRESETS["other"])
-	return str(preset.get("label", "Другой объект"))
+	var profile_name := ObjectCreationProfileRegistry.get_display_name(type_id)
+	if not profile_name.is_empty():
+		return profile_name
+	return "Другой объект" if type_id.strip_edges().is_empty() or type_id == "other" else type_id.capitalize()
 
 
 func _find_definition(object_id: String) -> ObjectDefinition:
@@ -2197,6 +2076,7 @@ func _commit_property_default_text(value: String, property_definition: ObjectPro
 func _on_add_property_pressed() -> void:
 	if _working_definition == null:
 		_on_new_object_pressed()
+		return
 	_editing_property = null
 	_property_dialog.title = "Новое пользовательское свойство"
 	_property_name_edit.text = ""
