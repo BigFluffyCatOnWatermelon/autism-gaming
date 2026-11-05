@@ -649,10 +649,8 @@ func _build_capability_settings_dialog() -> void:
 	_capability_change_dialog.title = "Подтвердить изменение объекта"
 	_capability_change_dialog.ok_button_text = "Применить"
 	_capability_change_dialog.confirmed.connect(_on_capability_change_confirmed)
-	_capability_change_dialog.close_requested.connect(_on_capability_change_canceled)
-	var cancel_button := _capability_change_dialog.add_cancel_button("Отмена")
-	if cancel_button != null:
-		cancel_button.pressed.connect(_on_capability_change_canceled)
+	_capability_change_dialog.canceled.connect(_on_capability_change_canceled)
+	_capability_change_dialog.add_cancel_button("Отмена")
 	add_child(_capability_change_dialog)
 
 
