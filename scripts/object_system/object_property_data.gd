@@ -42,6 +42,7 @@ func configure(
 
 	stored_values = next_values
 	notify_property_list_changed()
+	_sync_legacy_metadata()
 
 
 func get_custom_property(property_id: String, fallback: Variant = null) -> Variant:
@@ -67,11 +68,24 @@ func set_custom_property(property_id: String, value: Variant) -> bool:
 		)
 		return false
 	stored_values[property_id] = normalized.value
+	_sync_legacy_metadata()
 	return true
 
 
 func get_values() -> Dictionary:
 	return stored_values.duplicate(true)
+
+
+func _sync_legacy_metadata() -> void:
+	var property_parent := get_parent()
+	if property_parent == null:
+		return
+	property_parent.set_meta("object_custom_properties", get_values())
+	var definitions: Dictionary = {}
+	for definition in property_definitions:
+		if definition != null and not definition.property_id.is_empty():
+			definitions[definition.property_id] = definition
+	property_parent.set_meta("object_custom_property_definitions", definitions)
 
 
 func _get_property_list() -> Array[Dictionary]:
@@ -128,6 +142,7 @@ func _set(property: StringName, value: Variant) -> bool:
 	if not normalized.ok:
 		return false
 	stored_values[definition.property_id] = normalized.value
+	_sync_legacy_metadata()
 	return true
 
 
