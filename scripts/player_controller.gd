@@ -217,6 +217,7 @@ var sprite: Sprite2D
 var shadow: Sprite2D
 var camera: Camera2D
 var held_item_sprite: Sprite2D
+var attack_pivot: Node2D
 
 func configure(settings: Dictionary) -> void:
 	game_config = settings
@@ -280,6 +281,14 @@ func _ready() -> void:
 	held_item_sprite.z_index = 2
 	held_item_sprite.visible = false
 
+	# Dedicated editor-movable anchor for melee hit detection and attached attack trails.
+	attack_pivot = get_node_or_null("AttackPivot") as Node2D
+	if attack_pivot == null:
+		attack_pivot = Node2D.new()
+		attack_pivot.name = "AttackPivot"
+		add_child(attack_pivot)
+		attack_pivot.position = Vector2(0.0, 18.0)
+
 	camera = get_node_or_null("Camera2D") as Camera2D
 	if camera == null:
 		camera = Camera2D.new()
@@ -300,6 +309,13 @@ const HAND_OFFSET := Vector2(0.0, 3.0)
 
 func get_ground_position() -> Vector2:
 	return to_global(GROUND_ANCHOR)
+
+## World-space origin for melee range checks and attack visuals.
+## Move Player/AttackPivot in the scene Inspector to tune attacks without editing code.
+func get_attack_position() -> Vector2:
+	if is_instance_valid(attack_pivot):
+		return attack_pivot.global_position
+	return get_ground_position()
 
 func get_foot_sort_y() -> float:
 	return get_ground_position().y

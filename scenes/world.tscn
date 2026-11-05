@@ -70,6 +70,9 @@ z_index = 2
 texture_filter = 1
 scale = Vector2(0.72, 0.72)
 
+[node name="AttackPivot" type="Node2D" parent="Player"]
+position = Vector2(0, 18)
+
 [node name="Camera2D" type="Camera2D" parent="Player" unique_id=752304100]
 zoom = Vector2(1.85, 1.85)
 position_smoothing_speed = 8.0
