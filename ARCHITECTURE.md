@@ -30,6 +30,7 @@
 - ObjectComponent — базовый Node-контракт с постоянным component_id и настройками.
 - HealthComponent — здоровье, урон, лечение, смерть, неуязвимость и сброс состояния.
 - DamageableComponent — фильтрует входящий урон, применяет множитель/плоское снижение и передаёт итог в Health.
+- ComponentTestScene — изолированная сцена-песочница для Health/Damageable; создаёт тестовый объект через ObjectFactory и не меняет основную игровую сцену.
 - ObjectFactory — создание экземпляра, разрешение компонентов по ID, применение настроек и поиск компонента.
 - ObjectRegistry — поиск определений и создание объектов по постоянному ID.
 
@@ -62,7 +63,11 @@ ObjectComponentCatalog содержит категории Appearance, Physics, 
 
 В Object Builder раздел «Компоненты» позволяет выбрать категорию и компонент, добавить его в определение, включить/отключить или удалить. Кнопка Inspector открывает ресурс ObjectComponentDefinition для правки полей; после изменения нужно сохранить определение через «Сохранить в библиотеку». Компоненты создаются ObjectFactory во время runtime-инстанцирования, а не становятся дочерними узлами сохраняемой `.tscn`.
 
-HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. DamageableComponent предоставляет `receive_damage()`: вычисляет `max(0, incoming * multiplier - flat_reduction)`, передаёт итог в Health и излучает `damage_received` или `damage_blocked`. На одном объекте должен быть включён Health, иначе Damageable не сможет применить урон. Оба компонента пока не подключены к существующему игроку, ResourceNode или Debug Inspector. Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаются следующими.
+HealthComponent предоставляет `apply_damage()`, `heal()`, `set_current_health()`, `set_max_health()`, `reset_health()`, `is_alive()` и `get_health_ratio()`, а также сигналы `health_changed`, `damaged`, `healed` и `died`. DamageableComponent предоставляет `receive_damage()`: вычисляет `max(0, incoming * multiplier - flat_reduction)`, передаёт итог в Health и излучает `damage_received` или `damage_blocked`. На одном объекте должен быть включён Health, иначе Damageable не сможет применить урон. Оба компонента пока не подключены к существующему игроку, ResourceNode или Debug Inspector.
+
+Изолированная сцена `scenes/tests/component_test.tscn` показывает условный манекен с Health=100 и Damageable (multiplier=1.25, flat_reduction=2). Кнопки позволяют наносить два размера урона, лечить, сбрасывать объект, выключать получение урона и включать неуязвимость. `tests/component_test_scene_smoke.gd` запускает ту же сцену в headless CI и проверяет весь цикл до смерти/сброса; запуск вручную — F6 при открытой тестовой сцене. Эта песочница не является миграцией на текущего игрока или ResourceNode.
+
+Attack, Destructible, DropTable, Harvestable, Interactable и Pickup остаются следующими компонентами.
 
 ## Определение, шаблон и экземпляр
 
