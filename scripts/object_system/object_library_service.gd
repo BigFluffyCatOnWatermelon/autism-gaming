@@ -81,6 +81,22 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 				var numeric_default := float(property_definition.default_value)
 				if numeric_default < property_definition.minimum or numeric_default > property_definition.maximum:
 					errors.append("Значение по умолчанию вне диапазона у свойства: " + property_id)
+
+	var used_component_ids: Dictionary = {}
+	for component_definition in definition.components:
+		if component_definition == null:
+			errors.append("В списке компонентов есть пустая запись.")
+			continue
+		var component_id := component_definition.component_id.strip_edges().to_lower()
+		if component_id.is_empty():
+			errors.append("У компонента должен быть постоянный ID.")
+		elif used_component_ids.has(component_id):
+			errors.append("Повторяется ID компонента: " + component_id)
+		else:
+			used_component_ids[component_id] = true
+		if component_definition.component_script == null and not ObjectComponentCatalog.has_component(component_id):
+			errors.append("У компонента '%s' нет скрипта и такого ID нет в каталоге." % component_id)
+
 	return errors
 
 
