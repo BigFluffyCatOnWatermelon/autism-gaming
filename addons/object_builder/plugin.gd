@@ -69,6 +69,9 @@ var _capability_list: VBoxContainer
 var _capability_settings_dialog: AcceptDialog
 var _capability_setting_controls: Array[Dictionary] = []
 var _editing_capability_selection: ObjectCapabilitySelection
+var _capability_change_dialog: AcceptDialog
+var _pending_capability_values: Array[ObjectCapabilitySelection] = []
+var _pending_capability_summary := PackedStringArray()
 var _simple_preview: TextureRect
 var _capability_settings_scroll: ScrollContainer
 var _property_dialog_scroll: ScrollContainer
@@ -642,6 +645,16 @@ func _build_capability_settings_dialog() -> void:
 	_capability_settings_dialog.confirmed.connect(_on_capability_settings_confirmed)
 	add_child(_capability_settings_dialog)
 
+	_capability_change_dialog = AcceptDialog.new()
+	_capability_change_dialog.title = "Подтвердить изменение объекта"
+	_capability_change_dialog.ok_button_text = "Применить"
+	_capability_change_dialog.confirmed.connect(_on_capability_change_confirmed)
+	_capability_change_dialog.close_requested.connect(_on_capability_change_canceled)
+	var cancel_button := _capability_change_dialog.add_cancel_button("Отмена")
+	if cancel_button != null:
+		cancel_button.pressed.connect(_on_capability_change_canceled)
+	add_child(_capability_change_dialog)
+
 
 func _on_capability_search_changed(_value: String) -> void:
 	_rebuild_capability_list()
@@ -777,28 +790,52 @@ func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
 			if value is ObjectCapabilitySelection:
 				next_values.append(value as ObjectCapabilitySelection)
 
-	var added_ids: PackedStringArray = plan.get("added_capability_ids", PackedStringArray())
-	var disabled_ids: PackedStringArray = plan.get("disabled_capability_ids", PackedStringArray())
-	_commit_working_capabilities(next_values, "Изменить возможности объекта")
+	var application_plan := ObjectCapabilityService.build_application_plan(
+		_working_definition.capabilities,
+		next_values
+	)
+	if not bool(application_plan.get("ok", false)):
+		_rebuild_capability_list()
+		var application_errors: PackedStringArray = application_plan.get("errors", PackedStringArray())
+		_set_status("Нельзя применить изменение: " + "; ".join(application_errors), true)
+		return
+	if not bool(application_plan.get("changed", false)):
+		_rebuild_capability_list()
+		return
 
-	var capability := ObjectCapabilityCatalog.get_definition(capability_id)
-	var action_text := "добавлена" if enabled else "отключена"
-	var status_message := "Возможность «%s» %s." % [
-		capability.display_name if capability != null else capability_id,
-		action_text
-	]
-	if enabled and added_ids.size() > 1:
-		var dependency_names := PackedStringArray()
-		for added_id in added_ids:
-			if added_id == capability_id:
-				continue
-			var dependency := ObjectCapabilityCatalog.get_definition(added_id)
-			dependency_names.append(dependency.display_name if dependency != null else added_id)
-		if not dependency_names.is_empty():
-			status_message += " Автоматически добавлены зависимости: " + ", ".join(dependency_names) + "."
-	elif not enabled and disabled_ids.size() > 1:
-		status_message += " Больше не нужные автоматические зависимости отключены."
-	_set_status(status_message, false)
+	_pending_capability_values = _duplicate_capability_selections(next_values)
+	_pending_capability_summary = application_plan.get("summary_lines", PackedStringArray())
+	_capability_change_dialog.dialog_text = "\n".join(_pending_capability_summary)
+	_rebuild_capability_list()
+	_popup_window_safely(_capability_change_dialog, Vector2i(560, 360), 0.82)
+
+
+func _on_capability_change_confirmed() -> void:
+	if _working_definition == null or _pending_capability_values.is_empty():
+		_on_capability_change_canceled()
+		return
+	# Revalidate immediately before committing; the scene or registry may have changed
+	# while the confirmation dialog was open.
+	var application_plan := ObjectCapabilityService.build_application_plan(
+		_working_definition.capabilities,
+		_pending_capability_values
+	)
+	if not bool(application_plan.get("ok", false)):
+		var errors: PackedStringArray = application_plan.get("errors", PackedStringArray())
+		_set_status("Изменение не применено: " + "; ".join(errors), true)
+		_on_capability_change_canceled()
+		return
+	_commit_working_capabilities(_pending_capability_values, "Изменить возможности объекта")
+	_set_status("Изменения применены. Нажми «Сохранить объект», чтобы записать их в библиотеку.", false)
+	_pending_capability_values.clear()
+	_pending_capability_summary.clear()
+	_rebuild_capability_list()
+
+
+func _on_capability_change_canceled() -> void:
+	_pending_capability_values.clear()
+	_pending_capability_summary.clear()
+	_rebuild_capability_list()
 
 
 func _duplicate_capability_selections(
@@ -861,16 +898,13 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 	_capability_settings_scroll.add_child(form)
 	_capability_setting_controls.clear()
 
-	for component_id in capability.component_ids:
-		var component_definition := ObjectComponentCatalog.create_definition(component_id)
-		if component_definition == null:
+	for descriptor in ObjectCapabilityCatalog.get_settings_schema(capability_id):
+		var component_id := str(descriptor.get("component_id", "")).strip_edges().to_lower()
+		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", "")))
+		if setting_key.is_empty() or component_id.is_empty():
 			continue
 		var component_settings := _editing_capability_selection.get_component_settings(component_id)
-		for descriptor in component_definition.get_setting_definitions():
-			var setting_key := str(descriptor.get("key", ""))
-			if setting_key.is_empty():
-				continue
-			var row := HBoxContainer.new()
+		var row := HBoxContainer.new()
 			form.add_child(row)
 			var setting_label := Label.new()
 			setting_label.text = str(descriptor.get("display_name", setting_key))
