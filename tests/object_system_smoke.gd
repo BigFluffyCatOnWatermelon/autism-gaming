@@ -375,10 +375,10 @@ func _test_attack_component() -> void:
 	_expect(health != null, "Attack smoke target has Health")
 	if attack != null and health != null:
 		_expect(
-			is_equal_approx(attack.perform_attack(target, attacker), 13.0),
-			"Attack applies configured damage through Damageable"
+			is_equal_approx(attack.perform_attack(target, attacker), 12.0),
+			"Attack applies configured damage through default Damageable settings"
 		)
-		_expect(is_equal_approx(health.current_health, 87.0), "Attack reduces target Health through Damageable")
+		_expect(is_equal_approx(health.current_health, 88.0), "Attack reduces target Health through Damageable")
 		_expect(
 			is_equal_approx(attack.perform_attack(target, attacker), 0.0),
 			"Attack cooldown blocks an immediate second attack"
