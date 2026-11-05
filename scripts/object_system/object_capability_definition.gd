@@ -12,6 +12,8 @@ class_name ObjectCapabilityDefinition
 @export var icon: String = "sparkles"
 @export var keywords: PackedStringArray = PackedStringArray()
 @export var required_capability_ids: PackedStringArray = PackedStringArray()
+@export var incompatible_capability_ids: PackedStringArray = PackedStringArray()
 @export var component_ids: PackedStringArray = PackedStringArray()
 @export var available_in_simple_mode: bool = true
-@export var version: int = 1
+@export_range(0, 100000, 1) var display_order: int = 100
+@export_range(1, 1000, 1) var version: int = 1

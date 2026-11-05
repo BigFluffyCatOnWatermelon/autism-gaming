@@ -22,6 +22,7 @@ func _run_tests() -> void:
 	_test_component_definition_validation()
 	await _test_simple_capability_resolution()
 	await _test_component_node_bindings()
+	await _test_extension_registries()
 
 	if failures.is_empty():
 		print("OBJECT_SYSTEM_TESTS: PASS")
@@ -568,6 +569,205 @@ func _test_component_definition_validation() -> void:
 		"component without a script or catalog entry is rejected"
 	)
 
+
+
+
+func _test_extension_registries() -> void:
+	var source_id := "object_builder_registry_smoke"
+
+	var custom_component := ObjectComponentDefinition.new()
+	custom_component.component_id = "registry_test_health"
+	custom_component.display_name = "Registry Test Health"
+	custom_component.description = "Временная проверка внешней регистрации компонента."
+	custom_component.category = "Stats"
+	custom_component.category_id = "Stats"
+	custom_component.category_display_name = "Характеристики"
+	custom_component.component_version = 1
+	custom_component.component_script = load(
+		"res://scripts/object_system/components/health_component.gd"
+	) as Script
+	custom_component.setting_definitions = ObjectComponentDefinition.get_builtin_setting_definitions("health")
+	for descriptor in custom_component.setting_definitions:
+		custom_component.settings[str(descriptor.get("key", ""))] = descriptor.get("default_value")
+
+	_expect(
+		ObjectComponentCatalog.register_definition(custom_component, source_id),
+		"extension registry accepts a valid custom component definition"
+	)
+	_expect(
+		ObjectComponentCatalog.has_component("registry_test_health"),
+		"registered custom component becomes discoverable by ID"
+	)
+	_expect(
+		ObjectComponentCatalog.get_source_id("registry_test_health") == source_id,
+		"component registry remembers the owning extension source"
+	)
+	_expect(
+		ObjectComponentCatalog.create_definition("registry_test_health") != null,
+		"registered custom component can be instantiated as a definition"
+	)
+	_expect(
+		ObjectComponentCatalog.get_component_ids("Stats").has("registry_test_health"),
+		"custom component appears in its category list"
+	)
+
+	var custom_capability := ObjectCapabilityDefinition.new()
+	custom_capability.capability_id = "registry_test_durability"
+	custom_capability.display_name = "Проверочная прочность"
+	custom_capability.description = "Проверяет регистрацию пользовательской возможности."
+	custom_capability.category_id = "stats"
+	custom_capability.category_name = "Характеристики"
+	custom_capability.icon = "shield"
+	custom_capability.keywords = PackedStringArray(["прочность", "проверка"])
+	custom_capability.component_ids = PackedStringArray(["registry_test_health"])
+	custom_capability.available_in_simple_mode = true
+	custom_capability.version = 1
+
+	_expect(
+		ObjectCapabilityCatalog.register_definition(custom_capability, source_id),
+		"extension registry accepts a capability that references a registered component"
+	)
+	_expect(
+		ObjectCapabilityCatalog.has_capability("registry_test_durability"),
+		"registered custom capability becomes discoverable by ID"
+	)
+	_expect(
+		ObjectCapabilityCatalog.get_source_id("registry_test_durability") == source_id,
+		"capability registry remembers the owning extension source"
+	)
+	_expect(
+		ObjectCapabilityCatalog.get_capability_ids("stats").has("registry_test_durability"),
+		"custom capability appears in the simple-mode category list"
+	)
+	var category_found := false
+	for category in ObjectCapabilityCatalog.get_categories():
+		if str(category.get("id", "")) == "stats":
+			category_found = str(category.get("display_name", "")) == "Характеристики"
+	_expect(category_found, "capability registry exposes custom category metadata")
+
+	var selection := ObjectCapabilityCatalog.create_selection("registry_test_durability")
+	_expect(selection != null, "custom capability can create a saved user selection")
+	if selection != null:
+		selection.set_component_setting("registry_test_health", "max_health", 73.0)
+		selection.set_component_setting("registry_test_health", "starting_health", 73.0)
+		var definition := ObjectDefinition.new()
+		definition.object_id = "custom_registry_runtime_smoke"
+		definition.display_name = "Custom Registry Runtime Smoke"
+		definition.category = "Other"
+		definition.capabilities = [selection]
+
+		_expect(
+			ObjectLibraryService.validate_definition(definition).is_empty(),
+			"object using a custom capability passes library validation"
+		)
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null, "ObjectFactory resolves a custom registered capability")
+		if instance != null:
+			var test_world := Node2D.new()
+			root.add_child(test_world)
+			test_world.add_child(instance)
+			await process_frame
+			var custom_health := ObjectFactory.get_component(instance, "registry_test_health") as HealthComponent
+			_expect(custom_health != null, "custom component script is attached by its registered ID")
+			if custom_health != null:
+				_expect(
+					is_equal_approx(custom_health.max_health, 73.0)
+					and is_equal_approx(custom_health.current_health, 73.0),
+					"custom capability settings reach the registered component instance"
+				)
+			test_world.free()
+
+	var reserved_component := ObjectComponentDefinition.new()
+	reserved_component.component_id = "health"
+	reserved_component.display_name = "Attempted Override"
+	reserved_component.component_script = custom_component.component_script
+	_expect(
+		not ObjectComponentCatalog.register_definition(reserved_component, "another_extension"),
+		"extension cannot shadow a built-in component ID"
+	)
+
+	var unknown_dependency := ObjectCapabilityDefinition.new()
+	unknown_dependency.capability_id = "registry_test_bad_dependency"
+	unknown_dependency.display_name = "Bad Dependency"
+	unknown_dependency.description = "Should not register."
+	unknown_dependency.category_id = "general"
+	unknown_dependency.category_name = "Основное"
+	unknown_dependency.required_capability_ids = PackedStringArray(["does_not_exist"])
+	_expect(
+		not ObjectCapabilityCatalog.register_definition(unknown_dependency, "bad_extension"),
+		"capability with an unknown dependency is rejected"
+	)
+	_expect(
+		not ObjectCapabilityCatalog.has_capability("registry_test_bad_dependency"),
+		"failed capability registration does not partially modify the registry"
+	)
+
+	var cycle_a := ObjectCapabilityDefinition.new()
+	cycle_a.capability_id = "registry_cycle_a"
+	cycle_a.display_name = "Cycle A"
+	cycle_a.description = "Dependency cycle test."
+	cycle_a.category_id = "general"
+	cycle_a.category_name = "Основное"
+	cycle_a.required_capability_ids = PackedStringArray(["registry_cycle_b"])
+	var cycle_b := ObjectCapabilityDefinition.new()
+	cycle_b.capability_id = "registry_cycle_b"
+	cycle_b.display_name = "Cycle B"
+	cycle_b.description = "Dependency cycle test."
+	cycle_b.category_id = "general"
+	cycle_b.category_name = "Основное"
+	cycle_b.required_capability_ids = PackedStringArray(["registry_cycle_a"])
+	_expect(
+		not ObjectCapabilityCatalog.register_definitions([cycle_a, cycle_b], "cycle_extension").is_empty(),
+		"capability registry rejects a dependency cycle in an atomic batch"
+	)
+	_expect(
+		not ObjectCapabilityCatalog.has_capability("registry_cycle_a")
+		and not ObjectCapabilityCatalog.has_capability("registry_cycle_b"),
+		"failed dependency batch leaves no partially registered cards"
+	)
+
+	var conflict_a := ObjectCapabilityDefinition.new()
+	conflict_a.capability_id = "registry_conflict_a"
+	conflict_a.display_name = "Conflict A"
+	conflict_a.description = "Conflict validation test."
+	conflict_a.category_id = "general"
+	conflict_a.category_name = "Основное"
+	conflict_a.incompatible_capability_ids = PackedStringArray(["registry_conflict_b"])
+	var conflict_b := ObjectCapabilityDefinition.new()
+	conflict_b.capability_id = "registry_conflict_b"
+	conflict_b.display_name = "Conflict B"
+	conflict_b.description = "Conflict validation test."
+	conflict_b.category_id = "general"
+	conflict_b.category_name = "Основное"
+	conflict_b.incompatible_capability_ids = PackedStringArray(["registry_conflict_a"])
+	_expect(
+		ObjectCapabilityCatalog.register_definitions([conflict_a, conflict_b], "conflict_extension").is_empty(),
+		"registry accepts a mutually declared pair of incompatible capabilities"
+	)
+	var conflict_selection_a := ObjectCapabilityCatalog.create_selection("registry_conflict_a")
+	var conflict_selection_b := ObjectCapabilityCatalog.create_selection("registry_conflict_b")
+	_expect(
+		not ObjectCapabilityService.validate_selections([conflict_selection_a, conflict_selection_b]).is_empty(),
+		"selected incompatible capabilities are rejected before object creation"
+	)
+	_expect(
+		ObjectCapabilityCatalog.unregister_source("conflict_extension").is_empty(),
+		"extension can unregister a capability source after its objects are no longer registered"
+	)
+
+	_expect(
+		ObjectCapabilityCatalog.unregister_source(source_id).is_empty(),
+		"extension can unregister its capability definitions"
+	)
+	_expect(
+		ObjectComponentCatalog.unregister_source(source_id).is_empty(),
+		"extension can unregister components after dependent capability cards are removed"
+	)
+	_expect(
+		not ObjectCapabilityCatalog.has_capability("registry_test_durability")
+		and not ObjectComponentCatalog.has_component("registry_test_health"),
+		"unregistering an extension removes all definitions owned by that source"
+	)
 
 
 func _test_simple_capability_resolution() -> void:

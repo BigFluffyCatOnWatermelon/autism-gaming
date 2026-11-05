@@ -4,7 +4,14 @@ class_name ObjectComponentDefinition
 
 @export var component_id: String = ""
 @export var display_name: String = ""
+@export_multiline var description: String = ""
 @export_enum("Appearance", "Physics", "Stats", "Combat", "Interaction", "Destruction", "Audio", "Procedural") var category: String = "Stats"
+## Optional custom category metadata. Empty values use the built-in category enum above.
+@export var category_id: String = ""
+@export var category_display_name: String = ""
+@export var supported_node_types: PackedStringArray = PackedStringArray()
+@export var required_component_ids: PackedStringArray = PackedStringArray()
+@export var incompatible_component_ids: PackedStringArray = PackedStringArray()
 @export_range(1, 1000, 1) var component_version: int = 1
 @export var enabled: bool = true
 @export var component_script: Script
@@ -258,74 +265,8 @@ func set_setting(key: String, value: Variant) -> bool:
 			normalized = clampf(float(normalized), minimum, maximum)
 
 	settings[key] = normalized
+	notify_property_list_changed()
 	return true
-
-
-func _get_property_list() -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
-	var previous_group := ""
-	var used_names := {}
-	for descriptor in get_setting_definitions():
-		var key := str(descriptor.get("key", "")).strip_edges()
-		if key.is_empty():
-			continue
-		var property_name := _inspector_property_name(descriptor)
-		if property_name.is_empty() or used_names.has(property_name):
-			continue
-
-		var group_name := str(descriptor.get("group_name", "")).strip_edges()
-		if not group_name.is_empty() and group_name != previous_group:
-			result.append({
-				"name": group_name,
-				"type": TYPE_NIL,
-				"hint_string": _group_prefix(group_name),
-				"usage": PROPERTY_USAGE_GROUP
-			})
-		previous_group = group_name
-
-		var value_type := str(descriptor.get("value_type", ""))
-		var property_info: Dictionary = {
-			"name": property_name,
-			"type": _variant_type(value_type),
-			"usage": PROPERTY_USAGE_DEFAULT
-		}
-		if bool(descriptor.get("has_range", false)) and value_type in ["Integer", "Float"]:
-			var step_value := "1" if value_type == "Integer" else "0.01"
-			property_info["hint"] = PROPERTY_HINT_RANGE
-			property_info["hint_string"] = "%s,%s,%s" % [
-				str(descriptor.get("minimum", 0.0)),
-				str(descriptor.get("maximum", 100.0)),
-				step_value
-			]
-		result.append(property_info)
-		used_names[property_name] = true
-	return result
-
-
-func _get(property: StringName) -> Variant:
-	var descriptor := _find_setting_by_inspector_name(str(property))
-	if descriptor.is_empty():
-		return null
-	var key := str(descriptor.get("key", ""))
-	return settings.get(key, descriptor.get("default_value"))
-
-
-func _set(property: StringName, value: Variant) -> bool:
-	var descriptor := _find_setting_by_inspector_name(str(property))
-	if descriptor.is_empty():
-		return false
-	return set_setting(str(descriptor.get("key", "")), value)
-
-
-func _property_can_revert(property: StringName) -> bool:
-	return not _find_setting_by_inspector_name(str(property)).is_empty()
-
-
-func _property_get_revert(property: StringName) -> Variant:
-	var descriptor := _find_setting_by_inspector_name(str(property))
-	if descriptor.is_empty():
-		return null
-	return descriptor.get("default_value")
 
 
 func _find_setting_definition(key: String) -> Dictionary:
@@ -335,32 +276,91 @@ func _find_setting_definition(key: String) -> Dictionary:
 	return {}
 
 
-func _find_setting_by_inspector_name(property_name: String) -> Dictionary:
+func _get_property_list() -> Array[Dictionary]:
+	var properties: Array[Dictionary] = []
 	for descriptor in get_setting_definitions():
-		if _inspector_property_name(descriptor) == property_name:
-			return descriptor
-	return {}
+		var property_name := _inspector_property_name(descriptor)
+		var property_type := _variant_type_for_setting(str(descriptor.get("value_type", "")))
+		if property_name.is_empty() or property_type == TYPE_NIL:
+			continue
+		var hints := PROPERTY_HINT_NONE
+		var hint_string := ""
+		if bool(descriptor.get("has_range", false)) and (
+			str(descriptor.get("value_type", "")) == "Integer"
+			or str(descriptor.get("value_type", "")) == "Float"
+		):
+			hints = PROPERTY_HINT_RANGE
+			hint_string = "%s,%s" % [
+				str(descriptor.get("minimum", 0.0)),
+				str(descriptor.get("maximum", 1000000.0))
+			]
+		properties.append({
+			"name": property_name,
+			"type": property_type,
+			"hint": hints,
+			"hint_string": hint_string,
+			"usage": PROPERTY_USAGE_DEFAULT
+		})
+	return properties
+
+
+func _get(property: StringName) -> Variant:
+	var key := _setting_key_from_inspector_property(str(property))
+	if key.is_empty():
+		return null
+	var descriptor := _find_setting_definition(key)
+	return settings.get(key, descriptor.get("default_value"))
+
+
+func _set(property: StringName, value: Variant) -> bool:
+	var key := _setting_key_from_inspector_property(str(property))
+	if key.is_empty():
+		return false
+	return set_setting(key, value)
+
+
+func _property_can_revert(property: StringName) -> bool:
+	var key := _setting_key_from_inspector_property(str(property))
+	if key.is_empty():
+		return false
+	return true
+
+
+func _property_get_revert(property: StringName) -> Variant:
+	var key := _setting_key_from_inspector_property(str(property))
+	if key.is_empty():
+		return null
+	var descriptor := _find_setting_definition(key)
+	return descriptor.get("default_value")
 
 
 func _inspector_property_name(descriptor: Dictionary) -> String:
-	var key := str(descriptor.get("key", "")).strip_edges()
-	if key.is_empty():
+	var key := str(descriptor.get("key", ""))
+	var prefix := _sanitize_identifier(component_id)
+	if key.is_empty() or prefix.is_empty():
 		return ""
-	var group_name := str(descriptor.get("group_name", "")).strip_edges()
-	if group_name.is_empty():
-		return key.to_snake_case()
-	return _group_prefix(group_name) + key.to_snake_case()
+	return "%s_%s" % [prefix, key]
 
 
-func _group_prefix(group_name: String) -> String:
-	var prefix := group_name.to_snake_case()
-	if prefix.is_empty():
-		prefix = "settings"
-	return prefix + "_"
+func _setting_key_from_inspector_property(property_name: String) -> String:
+	var prefix := _sanitize_identifier(component_id) + "_"
+	if not property_name.begins_with(prefix):
+		return ""
+	return property_name.trim_prefix(prefix)
 
 
-func _variant_type(type_name: String) -> int:
-	match type_name:
+func _sanitize_identifier(value: String) -> String:
+	var result := ""
+	for character in value.to_lower():
+		if character in "abcdefghijklmnopqrstuvwxyz0123456789_":
+			result += character
+		elif not result.ends_with("_"):
+			result += "_"
+	return result.strip_edges().trim_prefix("_").trim_suffix("_")
+
+
+func _variant_type_for_setting(value_type: String) -> int:
+	match value_type:
 		"String":
 			return TYPE_STRING
 		"Integer":
