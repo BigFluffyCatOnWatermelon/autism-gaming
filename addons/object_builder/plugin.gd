@@ -75,6 +75,8 @@ var _node_name_edit: LineEdit
 var _scene_tree: Tree
 var _scene_tree_status: Label
 var _visual_panel: VBoxContainer
+var _sprite_visual_controls: VBoxContainer
+var _animated_visual_controls: VBoxContainer
 var _visual_type_label: Label
 var _visual_preview: TextureRect
 var _texture_path_edit: LineEdit
@@ -87,6 +89,11 @@ var _sprite_centered: CheckBox
 var _sprite_flip_h: CheckBox
 var _sprite_flip_v: CheckBox
 var _texture_dialog: FileDialog
+var _frames_dialog: FileDialog
+var _frames_path_edit: LineEdit
+var _animation_option: OptionButton
+var _animated_frame: SpinBox
+var _animated_speed: SpinBox
 var _status_label: Label
 var _open_scene_button: Button
 var _definitions: Array[ObjectDefinition] = []
@@ -453,8 +460,11 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	_visual_preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_visual_panel.add_child(_visual_preview)
 
+	_sprite_visual_controls = VBoxContainer.new()
+	_visual_panel.add_child(_sprite_visual_controls)
+
 	var texture_row := HBoxContainer.new()
-	_visual_panel.add_child(texture_row)
+	_sprite_visual_controls.add_child(texture_row)
 	_texture_path_edit = LineEdit.new()
 	_texture_path_edit.placeholder_text = "res://путь/к/текстуре.png"
 	_texture_path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -467,7 +477,7 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	texture_row.add_child(browse_button)
 
 	var grid_row := HBoxContainer.new()
-	_visual_panel.add_child(grid_row)
+	_sprite_visual_controls.add_child(grid_row)
 	_sprite_hframes = _make_visual_spin_box(1.0, 128.0, 1.0)
 	_sprite_hframes.value_changed.connect(_on_sprite_grid_value_changed.bind("hframes"))
 	_add_compact_labeled_control(grid_row, "H", _sprite_hframes)
@@ -479,7 +489,7 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	_add_compact_labeled_control(grid_row, "Кадр", _sprite_frame)
 
 	var offset_row := HBoxContainer.new()
-	_visual_panel.add_child(offset_row)
+	_sprite_visual_controls.add_child(offset_row)
 	_sprite_offset_x = _make_visual_spin_box(-4096.0, 4096.0, 1.0)
 	_sprite_offset_x.value_changed.connect(_on_sprite_offset_changed.bind("x"))
 	_add_compact_labeled_control(offset_row, "Offset X", _sprite_offset_x)
@@ -488,7 +498,7 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	_add_compact_labeled_control(offset_row, "Y", _sprite_offset_y)
 
 	var toggles_row := HBoxContainer.new()
-	_visual_panel.add_child(toggles_row)
+	_sprite_visual_controls.add_child(toggles_row)
 	_sprite_centered = CheckBox.new()
 	_sprite_centered.text = "По центру"
 	_sprite_centered.toggled.connect(_on_sprite_toggle_changed.bind("centered"))
@@ -505,7 +515,48 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	var hint := Label.new()
 	hint.text = "Изменения проходят через Undo/Redo. Для записи сцены нажми Ctrl+S."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_visual_panel.add_child(hint)
+	_sprite_visual_controls.add_child(hint)
+
+	_animated_visual_controls = VBoxContainer.new()
+	_animated_visual_controls.visible = false
+	_animated_visual_controls.add_theme_constant_override("separation", 5)
+	_visual_panel.add_child(_animated_visual_controls)
+
+	var frames_title := Label.new()
+	frames_title.text = "КАДРЫ АНИМАЦИИ"
+	_animated_visual_controls.add_child(frames_title)
+
+	var frames_row := HBoxContainer.new()
+	_animated_visual_controls.add_child(frames_row)
+	_frames_path_edit = LineEdit.new()
+	_frames_path_edit.placeholder_text = "res://путь/к/sprite_frames.tres"
+	_frames_path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_frames_path_edit.text_submitted.connect(_on_sprite_frames_path_submitted)
+	frames_row.add_child(_frames_path_edit)
+
+	var frames_browse_button := Button.new()
+	frames_browse_button.text = "SpriteFrames…"
+	frames_browse_button.pressed.connect(_on_browse_sprite_frames_pressed)
+	frames_row.add_child(frames_browse_button)
+
+	_animation_option = OptionButton.new()
+	_animation_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_animation_option.item_selected.connect(_on_animated_animation_selected)
+	_add_labeled_control(_animated_visual_controls, "Анимация", _animation_option)
+
+	var animation_row := HBoxContainer.new()
+	_animated_visual_controls.add_child(animation_row)
+	_animated_frame = _make_visual_spin_box(0.0, 16383.0, 1.0)
+	_animated_frame.value_changed.connect(_on_animated_frame_changed)
+	_add_compact_labeled_control(animation_row, "Кадр", _animated_frame)
+	_animated_speed = _make_visual_spin_box(-10.0, 10.0, 0.1)
+	_animated_speed.value_changed.connect(_on_animated_speed_changed)
+	_add_compact_labeled_control(animation_row, "Скорость", _animated_speed)
+
+	var animated_hint := Label.new()
+	animated_hint.text = "Здесь можно выбрать анимацию и кадр для проверки. Для автоматического воспроизведения настрой Autoplay в Inspector."
+	animated_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_animated_visual_controls.add_child(animated_hint)
 
 	_texture_dialog = FileDialog.new()
 	_texture_dialog.title = "Выбрать текстуру"
@@ -516,6 +567,16 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	])
 	_texture_dialog.file_selected.connect(_on_texture_file_selected)
 	add_child(_texture_dialog)
+
+	_frames_dialog = FileDialog.new()
+	_frames_dialog.title = "Выбрать ресурс SpriteFrames"
+	_frames_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_frames_dialog.access = FileDialog.ACCESS_RESOURCES
+	_frames_dialog.filters = PackedStringArray([
+		"*.tres, *.res ; Ресурсы Godot"
+	])
+	_frames_dialog.file_selected.connect(_on_sprite_frames_file_selected)
+	add_child(_frames_dialog)
 
 
 func _make_visual_spin_box(minimum: float, maximum: float, step_value: float) -> SpinBox:
@@ -1250,13 +1311,20 @@ func _on_scene_tree_item_selected() -> void:
 func _refresh_visual_editor(node: Node) -> void:
 	if _visual_panel == null:
 		return
-	if not node is Sprite2D:
-		_visual_panel.visible = false
+	if node is Sprite2D:
+		_refresh_static_sprite_editor(node as Sprite2D)
 		return
+	if node is AnimatedSprite2D:
+		_refresh_animated_sprite_editor(node as AnimatedSprite2D)
+		return
+	_visual_panel.visible = false
 
-	var sprite := node as Sprite2D
+
+func _refresh_static_sprite_editor(sprite: Sprite2D) -> void:
 	_visual_panel.visible = true
-	_visual_type_label.text = "Выбран узел: %s" % str(sprite.get_path())
+	_sprite_visual_controls.visible = true
+	_animated_visual_controls.visible = false
+	_visual_type_label.text = "Sprite2D · %s" % str(sprite.get_path())
 	_texture_path_edit.text = sprite.texture.resource_path if sprite.texture != null else ""
 	_visual_preview.texture = sprite.texture
 	_sprite_hframes.set_value_no_signal(float(sprite.hframes))
@@ -1268,6 +1336,55 @@ func _refresh_visual_editor(node: Node) -> void:
 	_sprite_centered.set_pressed_no_signal(sprite.centered)
 	_sprite_flip_h.set_pressed_no_signal(sprite.flip_h)
 	_sprite_flip_v.set_pressed_no_signal(sprite.flip_v)
+
+
+func _refresh_animated_sprite_editor(sprite: AnimatedSprite2D) -> void:
+	_visual_panel.visible = true
+	_sprite_visual_controls.visible = false
+	_animated_visual_controls.visible = true
+	_visual_type_label.text = "AnimatedSprite2D · %s" % str(sprite.get_path())
+
+	var frames := sprite.sprite_frames
+	_frames_path_edit.text = frames.resource_path if frames != null else ""
+	_animation_option.clear()
+	if frames == null:
+		_animation_option.disabled = true
+		_animated_frame.editable = false
+		_visual_preview.texture = null
+		return
+
+	var animation_names := frames.get_animation_names()
+	for animation_name in animation_names:
+		_animation_option.add_item(str(animation_name))
+		_animation_option.set_item_metadata(
+			_animation_option.item_count - 1,
+			str(animation_name)
+		)
+	_animation_option.disabled = animation_names.is_empty()
+	if animation_names.is_empty():
+		_animated_frame.editable = false
+		_visual_preview.texture = null
+		return
+
+	var selected_animation := str(sprite.animation)
+	var selected_index := 0
+	for index in range(_animation_option.item_count):
+		if str(_animation_option.get_item_metadata(index)) == selected_animation:
+			selected_index = index
+			break
+	_animation_option.select(selected_index)
+
+	var resolved_animation := StringName(str(_animation_option.get_item_metadata(selected_index)))
+	var frame_count := frames.get_frame_count(resolved_animation)
+	_animated_frame.editable = frame_count > 0
+	_animated_frame.max_value = maxf(0.0, float(frame_count - 1))
+	var frame_index := clampi(sprite.frame, 0, maxi(0, frame_count - 1))
+	_animated_frame.set_value_no_signal(float(frame_index))
+	_animated_speed.set_value_no_signal(sprite.speed_scale)
+	if frame_count > 0:
+		_visual_preview.texture = frames.get_frame_texture(resolved_animation, frame_index)
+	else:
+		_visual_preview.texture = null
 
 
 func _get_selected_scene_tree_node() -> Node:
@@ -1324,6 +1441,76 @@ func _get_selected_sprite_node() -> Sprite2D:
 	return null
 
 
+func _get_selected_animated_sprite_node() -> AnimatedSprite2D:
+	var selected_node := _get_selected_scene_tree_node()
+	if selected_node is AnimatedSprite2D:
+		return selected_node as AnimatedSprite2D
+	return null
+
+
+func _on_browse_sprite_frames_pressed() -> void:
+	if _get_selected_animated_sprite_node() == null:
+		_set_status("Выбери AnimatedSprite2D в дереве сцены.", true)
+		return
+	_frames_dialog.popup_centered(Vector2i(820, 620))
+
+
+func _on_sprite_frames_file_selected(path: String) -> void:
+	_apply_sprite_frames_path(path)
+
+
+func _on_sprite_frames_path_submitted(path: String) -> void:
+	_apply_sprite_frames_path(path)
+
+
+func _apply_sprite_frames_path(path: String) -> void:
+	var sprite := _get_selected_animated_sprite_node()
+	if sprite == null:
+		_set_status("Выбранный узел больше не является AnimatedSprite2D.", true)
+		return
+	var clean_path := path.strip_edges()
+	if clean_path.is_empty() or not clean_path.begins_with("res://"):
+		_set_status("Укажи путь к SpriteFrames внутри проекта, начиная с res://.", true)
+		return
+	var loaded_frames: SpriteFrames = ResourceLoader.load(clean_path) as SpriteFrames
+	if loaded_frames == null:
+		_set_status("Не удалось загрузить SpriteFrames: " + clean_path, true)
+		return
+	_commit_visual_node_property(sprite, "sprite_frames", loaded_frames, "назначить SpriteFrames")
+	_refresh_visual_editor(sprite)
+	_set_status("SpriteFrames назначен. Сохрани сцену через Ctrl+S.", false)
+
+
+func _on_animated_animation_selected(index: int) -> void:
+	var sprite := _get_selected_animated_sprite_node()
+	if sprite == null or sprite.sprite_frames == null:
+		return
+	if index < 0 or index >= _animation_option.item_count:
+		return
+	var animation_name := StringName(str(_animation_option.get_item_metadata(index)))
+	_commit_visual_node_property(sprite, "animation", animation_name, "выбрать анимацию")
+	_refresh_visual_editor(sprite)
+
+
+func _on_animated_frame_changed(value: float) -> void:
+	var sprite := _get_selected_animated_sprite_node()
+	if sprite == null or sprite.sprite_frames == null:
+		return
+	var frame_count := sprite.sprite_frames.get_frame_count(sprite.animation)
+	if frame_count <= 0:
+		return
+	var frame_index := clampi(int(round(value)), 0, frame_count - 1)
+	_commit_visual_node_property(sprite, "frame", frame_index, "выбрать кадр анимации")
+	_refresh_visual_editor(sprite)
+
+
+func _on_animated_speed_changed(value: float) -> void:
+	var sprite := _get_selected_animated_sprite_node()
+	if sprite == null:
+		return
+	_commit_visual_node_property(sprite, "speed_scale", value, "изменить скорость анимации")
+
+
 func _on_sprite_grid_value_changed(value: float, property_name: String) -> void:
 	var sprite := _get_selected_sprite_node()
 	if sprite == null:
@@ -1361,9 +1548,18 @@ func _commit_sprite_property(
 	new_value: Variant,
 	action_label: String
 ) -> void:
-	if sprite == null or not is_instance_valid(sprite):
+	_commit_visual_node_property(sprite, property_name, new_value, action_label)
+
+
+func _commit_visual_node_property(
+	node: Node,
+	property_name: String,
+	new_value: Variant,
+	action_label: String
+) -> void:
+	if node == null or not is_instance_valid(node):
 		return
-	var old_value: Variant = sprite.get(property_name)
+	var old_value: Variant = node.get(property_name)
 	if old_value == new_value:
 		return
 	var scene_root := _get_open_object_scene_root()
@@ -1372,11 +1568,11 @@ func _commit_sprite_property(
 		return
 	var undo_redo := EditorInterface.get_editor_undo_redo()
 	undo_redo.create_action("Object Builder: " + action_label, 0, scene_root)
-	undo_redo.add_do_property(sprite, property_name, new_value)
-	undo_redo.add_undo_property(sprite, property_name, old_value)
+	undo_redo.add_do_property(node, property_name, new_value)
+	undo_redo.add_undo_property(node, property_name, old_value)
 	undo_redo.commit_action()
-	if property_name == "hframes" or property_name == "vframes":
-		_refresh_visual_editor(sprite)
+	if node is Sprite2D and (property_name == "hframes" or property_name == "vframes"):
+		_refresh_visual_editor(node)
 
 
 func _on_add_node_pressed() -> void:
