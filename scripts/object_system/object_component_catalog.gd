@@ -17,11 +17,13 @@ const CATEGORY_DEFINITIONS := [
 	{"id": "Procedural", "display_name": "Процедурная генерация"}
 ]
 
-static var _custom_definitions: Dictionary = {}
-static var _custom_sources: Dictionary = {}
+## One registry stores built-ins and extension components under the same data contract.
+static var _definitions: Dictionary = {}
+static var _sources: Dictionary = {}
+static var _initialized: bool = false
 
 
-## Registers one extension component. IDs are global and cannot shadow built-ins or another source.
+## Registers one extension component. Built-in IDs are reserved.
 static func register_definition(
 	definition: ObjectComponentDefinition,
 	source_id: String = "extension"
@@ -34,71 +36,22 @@ static func register_definitions(
 	definitions: Array,
 	source_id: String = "extension"
 ) -> PackedStringArray:
-	var errors := PackedStringArray()
+	_ensure_initialized()
+	return _register_batch(definitions, source_id, false)
+
+
+## Removes all definitions from one source only when no registered capability depends on them.
+static func unregister_source(source_id: String) -> PackedStringArray:
+	_ensure_initialized()
 	var normalized_source := source_id.strip_edges()
 	if normalized_source.is_empty():
-		errors.append("Для регистрации компонентов нужен непустой source_id.")
-		return errors
+		return PackedStringArray(["Для отключения компонентов нужен непустой source_id."])
+	if normalized_source == "builtin":
+		return PackedStringArray(["Встроенные компоненты нельзя отключить как расширение."])
 
-	var incoming: Dictionary = {}
-	for value in definitions:
-		if not value is ObjectComponentDefinition:
-			errors.append("Реестр компонентов принимает только ObjectComponentDefinition.")
-			continue
-		var definition := value as ObjectComponentDefinition
-		var component_id := _normalize_id(definition.component_id)
-		if not _is_valid_id(component_id):
-			errors.append("Некорректный ID компонента: " + definition.component_id)
-			continue
-		if _is_builtin_id(component_id):
-			errors.append("Нельзя переопределить встроенный компонент: " + component_id)
-			continue
-		if incoming.has(component_id):
-			errors.append("В пакете повторяется ID компонента: " + component_id)
-			continue
-		if _custom_definitions.has(component_id) and str(_custom_sources.get(component_id, "")) != normalized_source:
-			errors.append("ID компонента уже зарегистрирован другим источником: " + component_id)
-			continue
-		var existing := _custom_definitions.get(component_id) as ObjectComponentDefinition
-		if existing != null and existing.component_version > definition.component_version:
-			errors.append("Нельзя понизить версию компонента '%s' с %d до %d." % [
-				component_id,
-				existing.component_version,
-				definition.component_version
-			])
-			continue
-		var copy := definition.duplicate(true) as ObjectComponentDefinition
-		copy.component_id = component_id
-		incoming[component_id] = copy
-
-	if not errors.is_empty():
-		return errors
-
-	var candidate := _custom_definitions.duplicate(true)
-	for component_id in incoming:
-		candidate[component_id] = incoming[component_id]
-
-	for component_id in incoming:
-		var definition := candidate[component_id] as ObjectComponentDefinition
-		errors.append_array(_validate_custom_definition(definition, candidate))
-
-	if errors.is_empty():
-		errors.append_array(_validate_dependency_graph(candidate))
-	if not errors.is_empty():
-		return errors
-
-	for component_id in incoming:
-		_custom_definitions[component_id] = incoming[component_id]
-		_custom_sources[component_id] = normalized_source
-	return errors
-
-
-## Removes all components registered by one source, unless another capability still depends on them.
-static func unregister_source(source_id: String) -> PackedStringArray:
-	var normalized_source := source_id.strip_edges()
 	var remove_ids := PackedStringArray()
-	for component_id in _custom_sources:
-		if str(_custom_sources[component_id]) == normalized_source:
+	for component_id in _sources:
+		if str(_sources[component_id]) == normalized_source:
 			remove_ids.append(str(component_id))
 	if remove_ids.is_empty():
 		return PackedStringArray()
@@ -115,16 +68,32 @@ static func unregister_source(source_id: String) -> PackedStringArray:
 				])
 
 	for component_id in remove_ids:
-		_custom_definitions.erase(component_id)
-		_custom_sources.erase(component_id)
+		_definitions.erase(component_id)
+		_sources.erase(component_id)
 	return PackedStringArray()
 
 
+static func validate_registry() -> PackedStringArray:
+	_ensure_initialized()
+	var errors := PackedStringArray()
+	for component_id in _definitions:
+		var definition := _definitions[component_id] as ObjectComponentDefinition
+		if definition == null:
+			errors.append("В реестре есть пустое определение компонента: " + str(component_id))
+			continue
+		errors.append_array(_validate_definition(definition, _definitions))
+	if errors.is_empty():
+		errors.append_array(_validate_dependency_graph(_definitions))
+	return errors
+
+
 static func get_source_id(component_id: String) -> String:
-	return str(_custom_sources.get(_normalize_id(component_id), "builtin" if _is_builtin_id(_normalize_id(component_id)) else ""))
+	_ensure_initialized()
+	return str(_sources.get(_normalize_id(component_id), ""))
 
 
 static func get_categories() -> Array[Dictionary]:
+	_ensure_initialized()
 	var result: Array[Dictionary] = []
 	var seen: Dictionary = {}
 	for category in CATEGORY_DEFINITIONS:
@@ -155,19 +124,15 @@ static func get_category_display_name(category_id: String) -> String:
 
 
 static func get_component_ids(category_id: String = "") -> PackedStringArray:
-	var result := PackedStringArray(["health", "damageable", "attack", "destructible"])
-	for custom_id in _custom_definitions:
-		result.append(str(custom_id))
-	if not category_id.is_empty():
-		var filtered := PackedStringArray()
-		for component_id in result:
-			var definition := create_definition(component_id)
-			if definition == null:
-				continue
-			var resolved_category := definition.category_id if not definition.category_id.is_empty() else definition.category
-			if resolved_category == category_id:
-				filtered.append(component_id)
-		result = filtered
+	_ensure_initialized()
+	var result := PackedStringArray()
+	for component_id in _definitions:
+		var definition := _definitions[component_id] as ObjectComponentDefinition
+		if definition == null:
+			continue
+		var resolved_category := definition.category_id if not definition.category_id.is_empty() else definition.category
+		if category_id.is_empty() or resolved_category == category_id:
+			result.append(str(component_id))
 	result.sort()
 	return result
 
@@ -183,43 +148,16 @@ static func get_component_description(component_id: String) -> String:
 
 
 static func has_component(component_id: String) -> bool:
-	var normalized_id := _normalize_id(component_id)
-	return _is_builtin_id(normalized_id) or _custom_definitions.has(normalized_id)
+	_ensure_initialized()
+	return _definitions.has(_normalize_id(component_id))
 
 
 static func create_definition(component_id: String) -> ObjectComponentDefinition:
-	var normalized_id := _normalize_id(component_id)
-	if _custom_definitions.has(normalized_id):
-		return (_custom_definitions[normalized_id] as ObjectComponentDefinition).duplicate(true) as ObjectComponentDefinition
-	if not _is_builtin_id(normalized_id):
+	_ensure_initialized()
+	var definition := _definitions.get(_normalize_id(component_id)) as ObjectComponentDefinition
+	if definition == null:
 		return null
-
-	var definition := ObjectComponentDefinition.new()
-	definition.component_id = normalized_id
-	definition.display_name = _get_builtin_display_name(normalized_id)
-	definition.description = _get_builtin_description(normalized_id)
-	definition.category = "Stats" if normalized_id == "health" else "Combat"
-	definition.category_id = definition.category
-	definition.category_display_name = _get_builtin_category_display_name(definition.category)
-	definition.component_version = 1
-	match normalized_id:
-		"health":
-			definition.component_script = HEALTH_COMPONENT_SCRIPT
-		"damageable":
-			definition.component_script = DAMAGEABLE_COMPONENT_SCRIPT
-		"attack":
-			definition.component_script = ATTACK_COMPONENT_SCRIPT
-		"destructible":
-			definition.category = "Destruction"
-			definition.category_id = "Destruction"
-			definition.category_display_name = "Разрушение"
-			definition.component_script = DESTRUCTIBLE_COMPONENT_SCRIPT
-	definition.setting_definitions = ObjectComponentDefinition.get_builtin_setting_definitions(normalized_id)
-	for setting_definition in definition.setting_definitions:
-		var setting_key := str(setting_definition.get("key", ""))
-		if not setting_key.is_empty():
-			definition.settings[setting_key] = setting_definition.get("default_value")
-	return definition
+	return definition.duplicate(true) as ObjectComponentDefinition
 
 
 static func create_binding(
@@ -245,7 +183,116 @@ static func create_all_definitions() -> Array[ObjectComponentDefinition]:
 	return result
 
 
-static func _validate_custom_definition(
+static func _ensure_initialized() -> void:
+	if _initialized:
+		return
+	_initialized = true
+	var errors := _register_batch(_make_builtin_definitions(), "builtin", true)
+	if not errors.is_empty():
+		for error_message in errors:
+			push_error("ObjectComponentCatalog: встроенный реестр компонентов повреждён: " + error_message)
+
+
+## Shared registration pipeline used by built-in and extension definitions.
+## Only the private initialization path may reserve built-in IDs.
+static func _register_batch(
+	definitions: Array,
+	source_id: String,
+	allow_builtin_ids: bool
+) -> PackedStringArray:
+	var errors := PackedStringArray()
+	var normalized_source := source_id.strip_edges()
+	if normalized_source.is_empty():
+		errors.append("Для регистрации компонентов нужен непустой source_id.")
+		return errors
+
+	var incoming: Dictionary = {}
+	for value in definitions:
+		if not value is ObjectComponentDefinition:
+			errors.append("Реестр компонентов принимает только ObjectComponentDefinition.")
+			continue
+		var definition := value as ObjectComponentDefinition
+		var component_id := _normalize_id(definition.component_id)
+		if not _is_valid_id(component_id):
+			errors.append("Некорректный ID компонента: " + definition.component_id)
+			continue
+		if _is_builtin_id(component_id) and not allow_builtin_ids:
+			errors.append("Нельзя переопределить встроенный компонент: " + component_id)
+			continue
+		if incoming.has(component_id):
+			errors.append("В пакете повторяется ID компонента: " + component_id)
+			continue
+		if _definitions.has(component_id) and str(_sources.get(component_id, "")) != normalized_source:
+			errors.append("ID компонента уже зарегистрирован другим источником: " + component_id)
+			continue
+
+		var existing := _definitions.get(component_id) as ObjectComponentDefinition
+		if existing != null and existing.component_version > definition.component_version:
+			errors.append("Нельзя понизить версию компонента '%s' с %d до %d." % [
+				component_id,
+				existing.component_version,
+				definition.component_version
+			])
+			continue
+
+		var copy := definition.duplicate(true) as ObjectComponentDefinition
+		copy.component_id = component_id
+		incoming[component_id] = copy
+
+	if not errors.is_empty():
+		return errors
+
+	var candidate := _definitions.duplicate(true)
+	for component_id in incoming:
+		candidate[component_id] = incoming[component_id]
+
+	for component_id in incoming:
+		var candidate_definition := candidate[component_id] as ObjectComponentDefinition
+		errors.append_array(_validate_definition(candidate_definition, candidate))
+
+	if errors.is_empty():
+		errors.append_array(_validate_dependency_graph(candidate))
+	if not errors.is_empty():
+		return errors
+
+	for component_id in incoming:
+		_definitions[component_id] = incoming[component_id]
+		_sources[component_id] = normalized_source
+	return errors
+
+
+static func _make_builtin_definitions() -> Array[ObjectComponentDefinition]:
+	var result: Array[ObjectComponentDefinition] = []
+	for component_id in ["health", "damageable", "attack", "destructible"]:
+		var definition := ObjectComponentDefinition.new()
+		definition.component_id = component_id
+		definition.display_name = _get_builtin_display_name(component_id)
+		definition.description = _get_builtin_description(component_id)
+		definition.category = "Stats" if component_id == "health" else "Combat"
+		if component_id == "destructible":
+			definition.category = "Destruction"
+		definition.category_id = definition.category
+		definition.category_display_name = _get_builtin_category_display_name(definition.category)
+		definition.component_version = 1
+		match component_id:
+			"health":
+				definition.component_script = HEALTH_COMPONENT_SCRIPT
+			"damageable":
+				definition.component_script = DAMAGEABLE_COMPONENT_SCRIPT
+			"attack":
+				definition.component_script = ATTACK_COMPONENT_SCRIPT
+			"destructible":
+				definition.component_script = DESTRUCTIBLE_COMPONENT_SCRIPT
+		definition.setting_definitions = ObjectComponentDefinition.get_builtin_setting_definitions(component_id)
+		for descriptor in definition.setting_definitions:
+			var key := str(descriptor.get("key", ""))
+			if not key.is_empty():
+				definition.settings[key] = descriptor.get("default_value")
+		result.append(definition)
+	return result
+
+
+static func _validate_definition(
 	definition: ObjectComponentDefinition,
 	candidate: Dictionary
 ) -> PackedStringArray:
@@ -257,7 +304,8 @@ static func _validate_custom_definition(
 	if definition.category_id.strip_edges().is_empty() and definition.category.strip_edges().is_empty():
 		errors.append("У компонента '%s' должна быть указана категория." % definition.component_id)
 	if not definition.category_id.strip_edges().is_empty() and definition.category_display_name.strip_edges().is_empty():
-		errors.append("У пользовательской категории компонента '%s' отсутствует название." % definition.component_id)
+		errors.append("У категории компонента '%s' отсутствует название." % definition.component_id)
+
 	if definition.component_script == null:
 		errors.append("У компонента '%s' не назначен скрипт." % definition.component_id)
 	else:
@@ -267,9 +315,20 @@ static func _validate_custom_definition(
 		if instance is Node:
 			(instance as Node).free()
 
-	var setting_ids: Dictionary = {}
+	var seen_node_types: Dictionary = {}
+	for node_type in definition.supported_node_types:
+		var normalized_type := str(node_type).strip_edges()
+		if normalized_type.is_empty():
+			errors.append("У компонента '%s' есть пустой supported_node_type." % definition.component_id)
+		elif seen_node_types.has(normalized_type):
+			errors.append("У компонента '%s' повторяется supported_node_type '%s'." % [definition.component_id, normalized_type])
+		elif not ClassDB.class_exists(normalized_type):
+			errors.append("Компонент '%s' поддерживает неизвестный класс узла '%s'." % [definition.component_id, normalized_type])
+		seen_node_types[normalized_type] = true
+
 	var probe := definition.duplicate(true) as ObjectComponentDefinition
 	probe.settings = {}
+	var setting_ids: Dictionary = {}
 	for descriptor in probe.get_setting_definitions():
 		var key := str(descriptor.get("key", "")).strip_edges()
 		if key.is_empty():
@@ -308,6 +367,14 @@ static func _validate_custom_definition(
 	for dependency_id in required_ids:
 		if incompatible_ids.has(dependency_id):
 			errors.append("Компонент '%s' одновременно требует и запрещает '%s'." % [definition.component_id, dependency_id])
+
+	for incompatible_id in incompatible_ids:
+		var incompatible_definition := candidate.get(incompatible_id) as ObjectComponentDefinition
+		if incompatible_definition != null and not incompatible_definition.incompatible_component_ids.has(definition.component_id):
+			errors.append(
+				"Конфликт между компонентами '%s' и '%s' должен быть указан с обеих сторон."
+				% [definition.component_id, incompatible_id]
+			)
 	return errors
 
 
@@ -337,8 +404,6 @@ static func _visit_component(
 	states[component_id] = 1
 	for dependency_id in definition.required_component_ids:
 		var normalized_dependency := _normalize_id(str(dependency_id))
-		if _is_builtin_id(normalized_dependency):
-			continue
 		if not candidate.has(normalized_dependency):
 			errors.append("Компонент '%s' требует неизвестный компонент '%s'." % [component_id, normalized_dependency])
 			return false

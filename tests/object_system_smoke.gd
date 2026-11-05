@@ -659,6 +659,24 @@ func _test_creation_profile_registry() -> void:
 
 
 func _test_extension_registries() -> void:
+	_expect(
+		ObjectComponentCatalog.get_source_id("health") == "builtin",
+		"built-in Health is registered in the shared component registry"
+	)
+	_expect(
+		ObjectComponentCatalog.get_source_id("destructible") == "builtin",
+		"built-in Destructible is registered in the shared component registry"
+	)
+	_expect(
+		ObjectComponentCatalog.create_definition("health") != null
+		and ObjectComponentCatalog.get_component_ids("Stats").has("health"),
+		"built-in components are discovered through the same registry query API as extensions"
+	)
+	_expect(
+		not ObjectComponentCatalog.unregister_source("builtin").is_empty(),
+		"built-in component registry source is protected from extension removal"
+	)
+
 	var source_id := "object_builder_registry_smoke"
 
 	var custom_component := ObjectComponentDefinition.new()
