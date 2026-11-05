@@ -635,7 +635,8 @@ func _test_component_node_bindings() -> void:
 		return
 
 	var visual_node := instance.get_node("Visuals")
-	var physics_node := instance.get_node("Physics")
+	var physics_node := instance.get_node("Physics") as StaticBody2D
+	var hitbox_instance := instance.get_node("Physics/Hitbox") as CollisionShape2D
 	var health := ObjectFactory.get_component(instance, "health") as HealthComponent
 	var damageable := ObjectFactory.get_component(instance, "damageable") as DamageableComponent
 	var destructible := ObjectFactory.get_component(instance, "destructible") as DestructibleComponent
@@ -689,16 +690,16 @@ func _test_component_node_bindings() -> void:
 			"Destructible on a third node reacts to the nested Health component"
 		)
 		_expect(
-			int(physics.collision_layer) == 0 and int(physics.collision_mask) == 0,
+			int(physics_node.collision_layer) == 0 and int(physics_node.collision_mask) == 0,
 			"nested Destructible disables collision on the owning object"
 		)
-		_expect(hitbox.disabled, "nested Destructible disables collision shapes on the owning object")
+		_expect(hitbox_instance.disabled, "nested Destructible disables collision shapes on the owning object")
 		_expect(destructible.repair(), "nested Destructible can repair the owning object")
 		_expect(
-			int(physics.collision_layer) == 1 and int(physics.collision_mask) == 1,
+			int(physics_node.collision_layer) == 1 and int(physics_node.collision_mask) == 1,
 			"repair restores collision settings on a different node"
 		)
-		_expect(not hitbox.disabled, "repair restores the nested collision shape")
+		_expect(not hitbox_instance.disabled, "repair restores the nested collision shape")
 		_expect(
 			is_equal_approx(health.current_health, 40.0),
 			"repair restores Health attached to a different node"
