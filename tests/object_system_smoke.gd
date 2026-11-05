@@ -345,10 +345,14 @@ func _test_attack_component() -> void:
 		ObjectComponentCatalog.create_definition("health"),
 		ObjectComponentCatalog.create_definition("damageable")
 	]
+	var test_world := Node2D.new()
+	root.add_child(test_world)
 	var target := ObjectFactory.instantiate(target_definition)
 	_expect(target != null, "Attack smoke target can be created")
 	if target == null:
+		test_world.free()
 		return
+	test_world.add_child(target)
 	target.position = Vector2(180.0, 0.0)
 
 	var attacker_definition := ObjectDefinition.new()
@@ -360,8 +364,9 @@ func _test_attack_component() -> void:
 	var attacker := ObjectFactory.instantiate(attacker_definition)
 	_expect(attacker != null, "Attack smoke attacker can be created")
 	if attacker == null:
-		target.free()
+		test_world.free()
 		return
+	test_world.add_child(attacker)
 	attacker.position = Vector2.ZERO
 
 	var attack := ObjectFactory.get_component(attacker, "attack") as AttackComponent
@@ -393,8 +398,7 @@ func _test_attack_component() -> void:
 		)
 		_expect(is_equal_approx(health.current_health, 87.0), "failed Attack attempts do not alter Health")
 
-	attacker.free()
-	target.free()
+	test_world.free()
 
 
 func _test_component_definition_inspector_settings() -> void:
