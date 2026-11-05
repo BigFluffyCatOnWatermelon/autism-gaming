@@ -99,8 +99,17 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 
 	var used_binding_ids: Dictionary = {}
 	var validation_scene: Node = null
-	if definition.scene != null:
-		validation_scene = definition.scene.instantiate()
+	var validation_packed_scene: PackedScene = null
+	if not definition.scene_path.strip_edges().is_empty() and ResourceLoader.exists(definition.scene_path):
+		validation_packed_scene = ResourceLoader.load(
+			definition.scene_path,
+			"",
+			ResourceLoader.CACHE_MODE_REPLACE
+		) as PackedScene
+	if validation_packed_scene == null:
+		validation_packed_scene = definition.scene
+	if validation_packed_scene != null:
+		validation_scene = validation_packed_scene.instantiate()
 		if validation_scene == null:
 			errors.append("Не удалось открыть сцену объекта для проверки привязок компонентов.")
 

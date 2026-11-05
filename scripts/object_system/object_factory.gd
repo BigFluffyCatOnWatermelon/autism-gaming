@@ -8,7 +8,15 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 		return null
 
 	var instance: Node = null
-	if definition.scene != null:
+	if not definition.scene_path.strip_edges().is_empty() and ResourceLoader.exists(definition.scene_path):
+		var saved_scene := ResourceLoader.load(
+			definition.scene_path,
+			"",
+			ResourceLoader.CACHE_MODE_REPLACE
+		) as PackedScene
+		if saved_scene != null:
+			instance = saved_scene.instantiate()
+	if instance == null and definition.scene != null:
 		instance = definition.scene.instantiate()
 	if instance == null:
 		var created: Object = ClassDB.instantiate(definition.root_type)

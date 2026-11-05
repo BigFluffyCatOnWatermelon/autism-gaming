@@ -194,6 +194,13 @@ var _component_category_option: OptionButton
 var _component_option: OptionButton
 var _component_add_button: Button
 var _component_list: VBoxContainer
+var _capability_search: LineEdit
+var _capability_category_option: OptionButton
+var _capability_list: VBoxContainer
+var _capability_settings_dialog: AcceptDialog
+var _capability_setting_controls: Array[Dictionary] = []
+var _editing_capability_selection: ObjectCapabilitySelection
+var _simple_preview: TextureRect
 var _property_dialog: AcceptDialog
 var _property_name_edit: LineEdit
 var _property_type_option: OptionButton
@@ -427,7 +434,7 @@ func _find_scene_tree_item(parent_item: TreeItem, target_path: NodePath) -> Tree
 func _build_ui() -> void:
 	_dock = MarginContainer.new()
 	_dock.name = "Object Builder"
-	_dock.custom_minimum_size = Vector2(580, 390)
+	_dock.custom_minimum_size = Vector2(720, 480)
 	for margin_name in ["left", "top", "right", "bottom"]:
 		_dock.add_theme_constant_override("margin_" + margin_name, 8)
 
@@ -442,8 +449,8 @@ func _build_ui() -> void:
 	toolbar.add_child(title)
 
 	var new_button := Button.new()
-	new_button.text = "Новый"
-	new_button.tooltip_text = "Создать пустой объект"
+	new_button.text = "Создать объект"
+	new_button.tooltip_text = "Начать создание нового игрового объекта"
 	new_button.pressed.connect(_on_new_object_pressed)
 	toolbar.add_child(new_button)
 
@@ -454,7 +461,7 @@ func _build_ui() -> void:
 
 	var refresh_button := Button.new()
 	refresh_button.text = "↻"
-	refresh_button.tooltip_text = "Обновить библиотеку и дерево сцены"
+	refresh_button.tooltip_text = "Обновить библиотеку"
 	refresh_button.pressed.connect(_on_refresh_pressed)
 	toolbar.add_child(refresh_button)
 
@@ -463,11 +470,11 @@ func _build_ui() -> void:
 	layout.add_child(split)
 
 	var library_panel := VBoxContainer.new()
-	library_panel.custom_minimum_size = Vector2(190, 0)
+	library_panel.custom_minimum_size = Vector2(210, 0)
 	split.add_child(library_panel)
 
 	_search = LineEdit.new()
-	_search.placeholder_text = "Поиск по имени, ID, описанию…"
+	_search.placeholder_text = "Найти объект…"
 	_search.text_changed.connect(_on_search_changed)
 	library_panel.add_child(_search)
 
@@ -497,61 +504,116 @@ func _build_ui() -> void:
 	_object_list.item_selected.connect(_on_library_item_selected)
 	library_panel.add_child(_object_list)
 
-	var editor_scroll := ScrollContainer.new()
-	editor_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	editor_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	editor_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	split.add_child(editor_scroll)
+	var editor_tabs := TabContainer.new()
+	editor_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	editor_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	split.add_child(editor_tabs)
 
-	var editor := VBoxContainer.new()
-	editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	editor.add_theme_constant_override("separation", 7)
-	editor_scroll.add_child(editor)
+	var simple_scroll := ScrollContainer.new()
+	simple_scroll.name = "Простой режим"
+	simple_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	simple_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	simple_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	editor_tabs.add_child(simple_scroll)
 
-	var basics_title := Label.new()
-	basics_title.text = "ОСНОВНОЕ"
-	editor.add_child(basics_title)
+	var simple_editor := VBoxContainer.new()
+	simple_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	simple_editor.add_theme_constant_override("separation", 10)
+	simple_scroll.add_child(simple_editor)
 
-	_name_edit = _add_labeled_line_edit(editor, "Название", "Например, Дуб")
-	_id_edit = _add_labeled_line_edit(editor, "Постоянный ID", "Создаётся автоматически")
-	_id_edit.editable = false
+	var simple_heading := Label.new()
+	simple_heading.text = "СОЗДАЙ СВОЙ ОБЪЕКТ"
+	simple_heading.add_theme_font_size_override("font_size", 18)
+	simple_editor.add_child(simple_heading)
+
+	_name_edit = _add_labeled_line_edit(simple_editor, "Название", "Например, Волшебный сундук")
+
+	_description_edit = TextEdit.new()
+	_description_edit.custom_minimum_size = Vector2(0, 54)
+	_description_edit.placeholder_text = "Что это за объект? (необязательно)"
+	_add_labeled_control(simple_editor, "Описание", _description_edit)
 
 	var favorite_row := HBoxContainer.new()
-	editor.add_child(favorite_row)
+	simple_editor.add_child(favorite_row)
 	_favorite_button = Button.new()
 	_favorite_button.text = "☆ В избранное"
 	_favorite_button.tooltip_text = "Сохраняется локально в настройках редактора этого проекта."
 	_favorite_button.pressed.connect(_on_toggle_favorite_pressed)
 	favorite_row.add_child(_favorite_button)
 
+	var appearance_title := Label.new()
+	appearance_title.text = "ВНЕШНИЙ ВИД"
+	appearance_title.add_theme_font_size_override("font_size", 16)
+	simple_editor.add_child(appearance_title)
+
+	_simple_preview = TextureRect.new()
+	_simple_preview.custom_minimum_size = Vector2(0, 150)
+	_simple_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_simple_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_simple_preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_simple_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	simple_editor.add_child(_simple_preview)
+
+	var add_image_button := Button.new()
+	add_image_button.text = "+ Добавить изображение"
+	add_image_button.tooltip_text = "Добавить картинку или ещё одну часть объекта"
+	add_image_button.pressed.connect(_on_simple_add_image_pressed)
+	simple_editor.add_child(add_image_button)
+
+	_build_capability_editor(simple_editor)
+
+	var save_button := Button.new()
+	save_button.text = "Сохранить объект"
+	save_button.pressed.connect(_on_save_pressed)
+	simple_editor.add_child(save_button)
+
+	_status_label = Label.new()
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	simple_editor.add_child(_status_label)
+
+	var advanced_scroll := ScrollContainer.new()
+	advanced_scroll.name = "Расширенный режим"
+	advanced_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	advanced_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	advanced_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	editor_tabs.add_child(advanced_scroll)
+
+	var advanced_editor := VBoxContainer.new()
+	advanced_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	advanced_editor.add_theme_constant_override("separation", 7)
+	advanced_scroll.add_child(advanced_editor)
+
+	var advanced_title := Label.new()
+	advanced_title.text = "ТЕХНИЧЕСКИЕ НАСТРОЙКИ"
+	advanced_title.add_theme_font_size_override("font_size", 16)
+	advanced_editor.add_child(advanced_title)
+
+	_id_edit = _add_labeled_line_edit(advanced_editor, "Постоянный ID", "Создаётся автоматически")
+	_id_edit.editable = false
+
 	_object_type_label = Label.new()
 	_object_type_label.text = "Не выбран"
-	_add_labeled_control(editor, "Тип объекта", _object_type_label)
+	_add_labeled_control(advanced_editor, "Стартовый профиль", _object_type_label)
 
-	_category_edit = _add_labeled_line_edit(editor, "Категория библиотеки", "Например, Nature")
-	_tags_edit = _add_labeled_line_edit(editor, "Теги", "дерево, ресурс, лес")
+	_category_edit = _add_labeled_line_edit(advanced_editor, "Категория библиотеки", "Например, Nature")
+	_tags_edit = _add_labeled_line_edit(advanced_editor, "Теги", "дерево, ресурс, лес")
 
 	_root_type = OptionButton.new()
 	for root_type in ROOT_TYPES:
 		_root_type.add_item(root_type)
-	_add_labeled_control(editor, "Тип корневого узла", _root_type)
+	_add_labeled_control(advanced_editor, "Тип корневого узла", _root_type)
 
 	_template_check = CheckBox.new()
 	_template_check.text = "Сохранить как шаблон"
 	_template_check.tooltip_text = "Сохранит новую заготовку отдельно от игровых объектов."
-	editor.add_child(_template_check)
-
-	_description_edit = TextEdit.new()
-	_description_edit.custom_minimum_size = Vector2(0, 68)
-	_description_edit.placeholder_text = "Краткое описание объекта…"
-	_add_labeled_control(editor, "Описание", _description_edit)
+	advanced_editor.add_child(_template_check)
 
 	var scene_title := Label.new()
-	scene_title.text = "СТРУКТУРА СЦЕНЫ"
-	editor.add_child(scene_title)
+	scene_title.text = "ДЕРЕВО СЦЕНЫ"
+	advanced_editor.add_child(scene_title)
 
 	var scene_toolbar := HBoxContainer.new()
-	editor.add_child(scene_toolbar)
+	advanced_editor.add_child(scene_toolbar)
 	var add_node_button := Button.new()
 	add_node_button.text = "+ Дочерний узел"
 	add_node_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -577,18 +639,18 @@ func _build_ui() -> void:
 	_scene_tree.hide_root = false
 	_scene_tree.select_mode = Tree.SELECT_SINGLE
 	_scene_tree.item_selected.connect(_on_scene_tree_item_selected)
-	editor.add_child(_scene_tree)
+	advanced_editor.add_child(_scene_tree)
 
 	_scene_tree_status = Label.new()
 	_scene_tree_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	editor.add_child(_scene_tree_status)
+	advanced_editor.add_child(_scene_tree_status)
 
-	_build_visual_editor(editor)
+	_build_visual_editor(advanced_editor)
 
 	var open_scene_row := HBoxContainer.new()
-	editor.add_child(open_scene_row)
+	advanced_editor.add_child(open_scene_row)
 	_open_scene_button = Button.new()
-	_open_scene_button.text = "Открыть сцену"
+	_open_scene_button.text = "Открыть исходную сцену"
 	_open_scene_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_open_scene_button.disabled = true
 	_open_scene_button.pressed.connect(_on_open_scene_pressed)
@@ -596,36 +658,377 @@ func _build_ui() -> void:
 
 	var properties_title := Label.new()
 	properties_title.text = "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА"
-	editor.add_child(properties_title)
+	advanced_editor.add_child(properties_title)
 
 	var properties_hint := Label.new()
-	properties_hint.text = "Свойства хранятся отдельно от скриптов и группируются по назначению."
+	properties_hint.text = "Расширенные типизированные свойства и их значения по умолчанию."
 	properties_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	editor.add_child(properties_hint)
+	advanced_editor.add_child(properties_hint)
 
 	_property_list = VBoxContainer.new()
-	editor.add_child(_property_list)
+	advanced_editor.add_child(_property_list)
 
 	var add_property_button := Button.new()
 	add_property_button.text = "+ Добавить свойство"
 	add_property_button.pressed.connect(_on_add_property_pressed)
-	editor.add_child(add_property_button)
+	advanced_editor.add_child(add_property_button)
 
-	_build_component_editor(editor)
-
-	var save_button := Button.new()
-	save_button.text = "Сохранить в библиотеку"
-	save_button.pressed.connect(_on_save_pressed)
-	editor.add_child(save_button)
-
-	_status_label = Label.new()
-	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	editor.add_child(_status_label)
+	_build_component_editor(advanced_editor)
 
 	_build_property_dialog()
+	_build_capability_settings_dialog()
 	_build_new_object_dialog()
 	_build_template_dialog()
 	_build_node_dialog()
+
+
+func _build_capability_editor(parent: VBoxContainer) -> void:
+	var title := Label.new()
+	title.text = "ЧТО ДОЛЖЕН УМЕТЬ ОБЪЕКТ?"
+	title.add_theme_font_size_override("font_size", 16)
+	parent.add_child(title)
+
+	var hint := Label.new()
+	hint.text = "Выбирай возможности обычными словами. Нужные игровые системы плагин подключит сам."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parent.add_child(hint)
+
+	_capability_search = LineEdit.new()
+	_capability_search.placeholder_text = "Найти возможность…"
+	_capability_search.text_changed.connect(_on_capability_search_changed)
+	parent.add_child(_capability_search)
+
+	_capability_category_option = OptionButton.new()
+	_capability_category_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_capability_category_option.add_item("Все возможности")
+	_capability_category_option.set_item_metadata(0, "")
+	_capability_category_option.select(0)
+	for category in ObjectCapabilityCatalog.get_categories():
+		_capability_category_option.add_item(str(category.get("display_name", "")))
+		_capability_category_option.set_item_metadata(
+			_capability_category_option.item_count - 1,
+			str(category.get("id", ""))
+		)
+	_capability_category_option.item_selected.connect(_on_capability_category_selected)
+	parent.add_child(_capability_category_option)
+
+	_capability_list = VBoxContainer.new()
+	_capability_list.add_theme_constant_override("separation", 6)
+	parent.add_child(_capability_list)
+
+	_rebuild_capability_list()
+
+
+func _build_capability_settings_dialog() -> void:
+	_capability_settings_dialog = AcceptDialog.new()
+	_capability_settings_dialog.title = "Настройки возможности"
+	_capability_settings_dialog.confirmed.connect(_on_capability_settings_confirmed)
+	add_child(_capability_settings_dialog)
+
+
+func _on_capability_search_changed(_value: String) -> void:
+	_rebuild_capability_list()
+
+
+func _on_capability_category_selected(_index: int) -> void:
+	_rebuild_capability_list()
+
+
+func _find_capability_selection(capability_id: String) -> ObjectCapabilitySelection:
+	if _working_definition == null:
+		return null
+	for selection in _working_definition.capabilities:
+		if selection != null and selection.capability_id == capability_id:
+			return selection
+	return null
+
+
+func _rebuild_capability_list() -> void:
+	if _capability_list == null:
+		return
+	for child in _capability_list.get_children():
+		_capability_list.remove_child(child)
+		child.queue_free()
+
+	if _working_definition == null:
+		var empty_label := Label.new()
+		empty_label.text = "Сначала создай объект или выбери его в библиотеке."
+		_capability_list.add_child(empty_label)
+		return
+
+	var category_id := ""
+	if _capability_category_option != null and _capability_category_option.selected >= 0:
+		category_id = str(_capability_category_option.get_item_metadata(_capability_category_option.selected))
+	var query := _capability_search.text.strip_edges().to_lower() if _capability_search != null else ""
+	var capability_ids := ObjectCapabilityCatalog.get_capability_ids(category_id)
+	var visible_count := 0
+
+	for capability_id in capability_ids:
+		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
+		if capability == null:
+			continue
+		var searchable := (
+			capability.display_name + " " + capability.description + " "
+			+ " ".join(capability.keywords)
+		).to_lower()
+		if not query.is_empty() and not searchable.contains(query):
+			continue
+
+		visible_count += 1
+		var selection := _find_capability_selection(capability_id)
+		var is_enabled := selection != null and selection.enabled
+
+		var card := PanelContainer.new()
+		_capability_list.add_child(card)
+		var card_content := VBoxContainer.new()
+		card_content.add_theme_constant_override("separation", 3)
+		card.add_child(card_content)
+
+		var card_header := HBoxContainer.new()
+		card_content.add_child(card_header)
+
+		var enabled_check := CheckBox.new()
+		enabled_check.text = capability.display_name
+		enabled_check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		enabled_check.button_pressed = is_enabled
+		enabled_check.toggled.connect(_on_capability_toggled.bind(capability_id))
+		card_header.add_child(enabled_check)
+
+		var settings_button := Button.new()
+		settings_button.text = "Настроить"
+		settings_button.disabled = not is_enabled
+		settings_button.pressed.connect(_on_capability_settings_pressed.bind(capability_id))
+		card_header.add_child(settings_button)
+
+		var description := Label.new()
+		description.text = capability.description
+		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		description.modulate = Color(0.78, 0.78, 0.78)
+		card_content.add_child(description)
+
+	if visible_count == 0:
+		var empty_label := Label.new()
+		empty_label.text = "Ничего не найдено. Измени запрос или выбери другую категорию."
+		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_capability_list.add_child(empty_label)
+
+
+func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
+	if _working_definition == null:
+		return
+	var next_values: Array[ObjectCapabilitySelection] = _working_definition.capabilities.duplicate()
+	var existing := _find_capability_selection(capability_id)
+	if existing == null:
+		if enabled:
+			var new_selection := ObjectCapabilityCatalog.create_selection(capability_id)
+			if new_selection != null:
+				next_values.append(new_selection)
+	else:
+		var updated := existing.duplicate(true) as ObjectCapabilitySelection
+		updated.enabled = enabled
+		var existing_index := next_values.find(existing)
+		if existing_index >= 0:
+			next_values[existing_index] = updated
+	_commit_working_capabilities(next_values, "Изменить возможности объекта")
+	var capability := ObjectCapabilityCatalog.get_definition(capability_id)
+	var action_text := "добавлена" if enabled else "отключена"
+	_set_status(
+		"Возможность «%s» %s. Зависимые игровые системы подключаются автоматически." % [
+			capability.display_name if capability != null else capability_id,
+			action_text
+		],
+		false
+	)
+
+
+func _commit_working_capabilities(
+	next_values: Array[ObjectCapabilitySelection],
+	action_name: String
+) -> void:
+	if _working_definition == null:
+		return
+	var previous_values: Array[ObjectCapabilitySelection] = _working_definition.capabilities.duplicate()
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: " + action_name, 0, _working_definition)
+	undo_redo.add_do_method(self, "_apply_working_capabilities", next_values.duplicate())
+	undo_redo.add_undo_method(self, "_apply_working_capabilities", previous_values)
+	undo_redo.commit_action()
+
+
+func _apply_working_capabilities(values: Array[ObjectCapabilitySelection]) -> void:
+	if _working_definition == null:
+		return
+	_working_definition.capabilities = values.duplicate()
+	_rebuild_capability_list()
+
+
+func _on_capability_settings_pressed(capability_id: String) -> void:
+	if _working_definition == null:
+		return
+	_editing_capability_selection = _find_capability_selection(capability_id)
+	if _editing_capability_selection == null or not _editing_capability_selection.enabled:
+		return
+
+	var capability := ObjectCapabilityCatalog.get_definition(capability_id)
+	if capability == null:
+		return
+
+	_capability_settings_dialog.title = capability.display_name + " · настройки"
+	for previous_child in _capability_settings_dialog.get_children():
+		if previous_child is VBoxContainer:
+			_capability_settings_dialog.remove_child(previous_child)
+			previous_child.queue_free()
+	var form := VBoxContainer.new()
+	form.add_theme_constant_override("separation", 7)
+	_capability_settings_dialog.add_child(form)
+	_capability_setting_controls.clear()
+
+	for component_id in capability.component_ids:
+		var component_definition := ObjectComponentCatalog.create_definition(component_id)
+		if component_definition == null:
+			continue
+		var component_settings := _editing_capability_selection.get_component_settings(component_id)
+		for descriptor in component_definition.get_setting_definitions():
+			var setting_key := str(descriptor.get("key", ""))
+			if setting_key.is_empty():
+				continue
+			var row := HBoxContainer.new()
+			form.add_child(row)
+			var setting_label := Label.new()
+			setting_label.text = str(descriptor.get("display_name", setting_key))
+			setting_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			setting_label.tooltip_text = str(descriptor.get("description", ""))
+			row.add_child(setting_label)
+
+			var value_type := str(descriptor.get("value_type", ""))
+			var current_value: Variant = component_settings.get(
+				setting_key,
+				descriptor.get("default_value")
+			)
+			var control: Control
+			match value_type:
+				"Integer", "Float":
+					var spin := SpinBox.new()
+					spin.min_value = float(descriptor.get("minimum", 0.0)) if descriptor.has("minimum") else -1000000.0
+					spin.max_value = float(descriptor.get("maximum", 1000000.0)) if descriptor.has("maximum") else 1000000.0
+					spin.step = 1.0 if value_type == "Integer" else 0.1
+					spin.value = float(current_value)
+					spin.custom_minimum_size = Vector2(120, 0)
+					control = spin
+				"Boolean":
+					var check := CheckBox.new()
+					check.button_pressed = bool(current_value)
+					control = check
+				"String":
+					var line := LineEdit.new()
+					line.text = str(current_value)
+					line.custom_minimum_size = Vector2(150, 0)
+					control = line
+				_:
+					var unsupported := Label.new()
+					unsupported.text = "Подробная настройка"
+					unsupported.tooltip_text = "Для этого параметра пока нет простого редактора."
+					control = unsupported
+			row.add_child(control)
+			_capability_setting_controls.append({
+				"component_id": component_id,
+				"setting_key": setting_key,
+				"value_type": value_type,
+				"control": control
+			})
+
+	if form.get_child_count() == 0:
+		var empty_label := Label.new()
+		empty_label.text = "У этой возможности пока нет дополнительных настроек."
+		form.add_child(empty_label)
+
+	_capability_settings_dialog.popup_centered(Vector2i(520, 460))
+
+
+func _on_capability_settings_confirmed() -> void:
+	if _working_definition == null or _editing_capability_selection == null:
+		return
+	var updated := _editing_capability_selection.duplicate(true) as ObjectCapabilitySelection
+	for entry in _capability_setting_controls:
+		var control: Control = entry.get("control") as Control
+		if control == null:
+			continue
+		var value: Variant
+		match str(entry.get("value_type", "")):
+			"Integer":
+				value = int(round((control as SpinBox).value))
+			"Float":
+				value = (control as SpinBox).value
+			"Boolean":
+				value = (control as CheckBox).button_pressed
+			"String":
+				value = (control as LineEdit).text
+			_:
+				continue
+		updated.set_component_setting(
+			str(entry.get("component_id", "")),
+			str(entry.get("setting_key", "")),
+			value
+		)
+
+	var next_values: Array[ObjectCapabilitySelection] = _working_definition.capabilities.duplicate()
+	var index := next_values.find(_editing_capability_selection)
+	if index >= 0:
+		next_values[index] = updated
+		_commit_working_capabilities(next_values, "Изменить настройки возможности")
+		_set_status("Настройки обновлены. Нажми «Сохранить объект», чтобы записать изменения.", false)
+	_editing_capability_selection = null
+	_capability_setting_controls.clear()
+	for child in _capability_settings_dialog.get_children():
+		if child is VBoxContainer:
+			child.queue_free()
+
+
+func _on_simple_add_image_pressed() -> void:
+	if _working_definition == null:
+		_set_status("Сначала создай объект.", true)
+		return
+	if _working_definition.scene_path.is_empty() or not FileAccess.file_exists(_working_definition.scene_path):
+		if not _create_scene_for_definition():
+			return
+
+	EditorInterface.open_scene_from_path(_working_definition.scene_path)
+	await get_tree().process_frame
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		_set_status("Не удалось открыть сцену объекта.", true)
+		return
+
+	var visuals := scene_root.get_node_or_null("Visuals")
+	if visuals == null:
+		var new_visuals := Node2D.new()
+		new_visuals.name = "Visuals"
+		var undo_redo := EditorInterface.get_editor_undo_redo()
+		undo_redo.create_action("Object Builder: добавить область внешнего вида", 0, scene_root)
+		undo_redo.add_do_method(scene_root, "add_child", new_visuals)
+		undo_redo.add_do_method(new_visuals, "set_owner", scene_root)
+		undo_redo.add_undo_method(scene_root, "remove_child", new_visuals)
+		undo_redo.add_do_reference(new_visuals)
+		undo_redo.commit_action()
+		visuals = new_visuals
+
+	var sprite := Sprite2D.new()
+	sprite.name = "Image"
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: добавить изображение", 0, scene_root)
+	undo_redo.add_do_method(visuals, "add_child", sprite)
+	undo_redo.add_do_method(sprite, "set_owner", scene_root)
+	undo_redo.add_undo_method(visuals, "remove_child", sprite)
+	undo_redo.add_do_reference(sprite)
+	undo_redo.commit_action()
+
+	_refresh_scene_tree()
+	_sync_scene_tree_selection(sprite)
+	EditorInterface.get_selection().clear()
+	EditorInterface.get_selection().add_node(sprite)
+	EditorInterface.edit_node(sprite)
+	_texture_dialog.popup_centered(Vector2i(820, 620))
+	_set_status("Изображение добавлено. Его можно перемещать в 2D-редакторе Godot.", false)
 
 
 func _build_component_editor(parent: VBoxContainer) -> void:
@@ -928,12 +1331,8 @@ func _update_new_object_type_hint() -> void:
 		return
 	var type_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
 	var preset: Dictionary = OBJECT_TYPE_PRESETS.get(type_id, {})
-	var property_count := (preset.get("properties", []) as Array).size()
-	_new_object_type_hint.text = "%s\nКорневой узел: %s · Группа: %s · Стартовых параметров: %d" % [
-		str(preset.get("description", "")),
-		str(preset.get("root_type", "Node2D")),
-		str(preset.get("category", "Other")),
-		property_count
+	_new_object_type_hint.text = "%s\nЭто только стартовая подсказка — позже можно добавить любые возможности." % [
+		str(preset.get("description", ""))
 	]
 
 
@@ -1023,7 +1422,7 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	parent.add_child(_visual_panel)
 
 	var title := Label.new()
-	title.text = "ВИЗУАЛЬНЫЙ ЭЛЕМЕНТ · SPRITE2D"
+	title.text = "ВНЕШНИЙ ВИД · РАСШИРЕННЫЕ НАСТРОЙКИ"
 	_visual_panel.add_child(title)
 
 	_visual_type_label = Label.new()
@@ -1534,6 +1933,8 @@ func _load_definition(definition: ObjectDefinition) -> void:
 	_open_scene_button.disabled = _working_definition.scene_path.is_empty() or not FileAccess.file_exists(_working_definition.scene_path)
 	_rebuild_property_list()
 	_rebuild_component_list()
+	_rebuild_capability_list()
+	_simple_preview.texture = _working_definition.preview_texture
 	_refresh_favorite_button()
 	_refresh_scene_tree()
 
@@ -1842,6 +2243,7 @@ func _on_remove_property_pressed(property_definition: ObjectPropertyDefinition) 
 func _on_save_pressed() -> void:
 	if _working_definition == null:
 		_on_new_object_pressed()
+		return
 	_working_definition.display_name = _name_edit.text.strip_edges()
 	_working_definition.category = _category_edit.text.strip_edges()
 	_working_definition.description = _description_edit.text
@@ -1855,14 +2257,34 @@ func _on_save_pressed() -> void:
 			tags.append(tag)
 	_working_definition.tags = tags
 
-	var validation_errors := ObjectLibraryService.validate_definition(_working_definition)
-	if not validation_errors.is_empty():
-		_set_status("Нельзя сохранить: " + "; ".join(validation_errors), true)
-		return
+	if _simple_preview != null and _simple_preview.texture != null:
+		_working_definition.preview_texture = _simple_preview.texture
+
+	var open_scene_root := _get_open_object_scene_root()
+	var scene_properties_synced := false
+	if open_scene_root != null:
+		_sync_scene_property_data(open_scene_root)
+		var scene_save_error := EditorInterface.save_scene()
+		if scene_save_error != OK:
+			_set_status("Не удалось сохранить сцену объекта. Код ошибки: %d" % scene_save_error, true)
+			return
+		scene_properties_synced = true
+		var refreshed_scene := ResourceLoader.load(
+			_working_definition.scene_path,
+			"",
+			ResourceLoader.CACHE_MODE_REPLACE
+		) as PackedScene
+		if refreshed_scene != null:
+			_working_definition.scene = refreshed_scene
 
 	if _working_definition.scene_path.is_empty() or not FileAccess.file_exists(_working_definition.scene_path):
 		if not _create_scene_for_definition():
 			return
+
+	var validation_errors := ObjectLibraryService.validate_definition(_working_definition)
+	if not validation_errors.is_empty():
+		_set_status("Нельзя сохранить: " + "; ".join(validation_errors), true)
+		return
 
 	var save_error: Error
 	if _working_definition.is_template:
@@ -1873,12 +2295,6 @@ func _on_save_pressed() -> void:
 		_set_status("Не удалось сохранить объект. Код ошибки: %d" % save_error, true)
 		return
 
-	var scene_properties_synced := false
-	var open_scene_root := _get_open_object_scene_root()
-	if open_scene_root != null:
-		_sync_scene_property_data(open_scene_root)
-		scene_properties_synced = true
-
 	_id_edit.text = _working_definition.object_id
 	_open_scene_button.disabled = false
 	_can_save_as_template = false
@@ -1888,7 +2304,7 @@ func _on_save_pressed() -> void:
 	else:
 		_set_status("Объект сохранён в библиотеку: %s" % _working_definition.display_name, false)
 	if scene_properties_synced:
-		_set_status("Определение сохранено. Узел ObjectProperties обновлён — нажми Ctrl+S, чтобы сохранить сцену.", false)
+		_set_status("Объект и его сцена сохранены.", false)
 	_refresh_library()
 	_load_definition(_working_definition)
 
@@ -2066,7 +2482,9 @@ func _refresh_static_sprite_editor(sprite: Sprite2D) -> void:
 	_visual_panel.visible = true
 	_sprite_visual_controls.visible = true
 	_animated_visual_controls.visible = false
-	_visual_type_label.text = "Sprite2D · %s" % str(sprite.get_path())
+	_visual_type_label.text = "Выбрано изображение: %s" % sprite.name
+	if _simple_preview != null:
+		_simple_preview.texture = sprite.texture
 	_texture_path_edit.text = sprite.texture.resource_path if sprite.texture != null else ""
 	_visual_preview.texture = sprite.texture
 	_sprite_hframes.set_value_no_signal(float(sprite.hframes))
@@ -2084,7 +2502,7 @@ func _refresh_animated_sprite_editor(sprite: AnimatedSprite2D) -> void:
 	_visual_panel.visible = true
 	_sprite_visual_controls.visible = false
 	_animated_visual_controls.visible = true
-	_visual_type_label.text = "AnimatedSprite2D · %s" % str(sprite.get_path())
+	_visual_type_label.text = "Выбрана анимация: %s" % sprite.name
 
 	var frames := sprite.sprite_frames
 	_frames_path_edit.text = frames.resource_path if frames != null else ""
@@ -2125,6 +2543,8 @@ func _refresh_animated_sprite_editor(sprite: AnimatedSprite2D) -> void:
 	_animated_speed.set_value_no_signal(sprite.speed_scale)
 	if frame_count > 0:
 		_visual_preview.texture = frames.get_frame_texture(resolved_animation, frame_index)
+		if _simple_preview != null:
+			_simple_preview.texture = _visual_preview.texture
 	else:
 		_visual_preview.texture = null
 
