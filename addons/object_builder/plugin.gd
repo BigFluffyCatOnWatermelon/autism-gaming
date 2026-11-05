@@ -905,49 +905,49 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 			continue
 		var component_settings := _editing_capability_selection.get_component_settings(component_id)
 		var row := HBoxContainer.new()
-			form.add_child(row)
-			var setting_label := Label.new()
-			setting_label.text = str(descriptor.get("display_name", setting_key))
-			setting_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			setting_label.tooltip_text = str(descriptor.get("description", ""))
-			row.add_child(setting_label)
+		form.add_child(row)
+		var setting_label := Label.new()
+		setting_label.text = str(descriptor.get("display_name", setting_key))
+		setting_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		setting_label.tooltip_text = str(descriptor.get("description", ""))
+		row.add_child(setting_label)
 
-			var value_type := str(descriptor.get("value_type", ""))
-			var current_value: Variant = component_settings.get(
-				setting_key,
-				descriptor.get("default_value")
-			)
-			var control: Control
-			match value_type:
-				"Integer", "Float":
-					var spin := SpinBox.new()
-					spin.min_value = float(descriptor.get("minimum", 0.0)) if descriptor.has("minimum") else -1000000.0
-					spin.max_value = float(descriptor.get("maximum", 1000000.0)) if descriptor.has("maximum") else 1000000.0
-					spin.step = 1.0 if value_type == "Integer" else 0.1
-					spin.value = float(current_value)
-					spin.custom_minimum_size = Vector2(120, 0)
-					control = spin
-				"Boolean":
-					var check := CheckBox.new()
-					check.button_pressed = bool(current_value)
-					control = check
-				"String":
-					var line := LineEdit.new()
-					line.text = str(current_value)
-					line.custom_minimum_size = Vector2(150, 0)
-					control = line
-				_:
-					var unsupported := Label.new()
-					unsupported.text = "Подробная настройка"
-					unsupported.tooltip_text = "Для этого параметра пока нет простого редактора."
-					control = unsupported
-			row.add_child(control)
-			_capability_setting_controls.append({
-				"component_id": component_id,
-				"setting_key": setting_key,
-				"value_type": value_type,
-				"control": control
-			})
+		var value_type := str(descriptor.get("value_type", ""))
+		var current_value: Variant = component_settings.get(
+			setting_key,
+			descriptor.get("default_value")
+		)
+		var control: Control
+		match value_type:
+			"Integer", "Float":
+				var spin := SpinBox.new()
+				spin.min_value = float(descriptor.get("minimum", 0.0)) if descriptor.has("minimum") else -1000000.0
+				spin.max_value = float(descriptor.get("maximum", 1000000.0)) if descriptor.has("maximum") else 1000000.0
+				spin.step = float(descriptor.get("step", 1.0 if value_type == "Integer" else 0.1))
+				spin.value = float(current_value)
+				spin.custom_minimum_size = Vector2(120, 0)
+				control = spin
+			"Boolean":
+				var check := CheckBox.new()
+				check.button_pressed = bool(current_value)
+				control = check
+			"String":
+				var line := LineEdit.new()
+				line.text = str(current_value)
+				line.custom_minimum_size = Vector2(150, 0)
+				control = line
+			_:
+				var unsupported := Label.new()
+				unsupported.text = "Подробная настройка"
+				unsupported.tooltip_text = "Для этого параметра пока нет простого редактора."
+				control = unsupported
+		row.add_child(control)
+		_capability_setting_controls.append({
+			"component_id": component_id,
+			"setting_key": setting_key,
+			"value_type": value_type,
+			"control": control
+		})
 
 	if form.get_child_count() == 0:
 		var empty_label := Label.new()
