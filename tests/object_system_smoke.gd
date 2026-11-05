@@ -147,9 +147,9 @@ func _test_serialized_property_data() -> void:
 	root.name = "PropertyDataSmokeTest"
 	var property_data := ObjectPropertyData.new()
 	property_data.name = "ObjectProperties"
-	property_data.configure([health], {"health_points": 145}, false)
 	root.add_child(property_data)
 	property_data.owner = root
+	property_data.configure([health], {"health_points": 145}, false)
 
 	_expect(property_data.get("combat_hit_points") == 145, "dynamic Inspector getter returns stored custom value")
 	property_data.set("combat_hit_points", 250)
