@@ -201,6 +201,8 @@ var _capability_settings_dialog: AcceptDialog
 var _capability_setting_controls: Array[Dictionary] = []
 var _editing_capability_selection: ObjectCapabilitySelection
 var _simple_preview: TextureRect
+var _capability_settings_scroll: ScrollContainer
+var _property_dialog_scroll: ScrollContainer
 var _property_dialog: AcceptDialog
 var _property_name_edit: LineEdit
 var _property_type_option: OptionButton
@@ -429,6 +431,33 @@ func _find_scene_tree_item(parent_item: TreeItem, target_path: NodePath) -> Tree
 		if found_item != null:
 			return found_item
 	return null
+
+
+
+func _popup_window_safely(window: Window, preferred_size: Vector2i, fallback_ratio: float = 0.82) -> void:
+	if window == null or not is_instance_valid(window):
+		return
+
+	# Limit every popup to the usable area of the monitor that currently hosts Godot.
+	var screen_index := DisplayServer.window_get_current_screen()
+	var usable_rect := DisplayServer.screen_get_usable_rect(screen_index)
+	var usable_size := usable_rect.size
+	if usable_size.x <= 0 or usable_size.y <= 0:
+		window.popup_centered_clamped(preferred_size, fallback_ratio)
+		return
+
+	var maximum_size := Vector2i(
+		mini(usable_size.x, maxi(240, int(floor(float(usable_size.x) * 0.90)))),
+		mini(usable_size.y, maxi(180, int(floor(float(usable_size.y) * 0.84))))
+	)
+	window.max_size = maximum_size
+
+	var requested_size := Vector2i(
+		mini(preferred_size.x, maximum_size.x),
+		mini(preferred_size.y, maximum_size.y)
+	)
+	window.size = requested_size
+	window.popup_centered_clamped(requested_size, fallback_ratio)
 
 
 func _build_ui() -> void:
@@ -874,13 +903,20 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 		return
 
 	_capability_settings_dialog.title = capability.display_name + " · настройки"
-	for previous_child in _capability_settings_dialog.get_children():
-		if previous_child is VBoxContainer:
-			_capability_settings_dialog.remove_child(previous_child)
-			previous_child.queue_free()
+	if _capability_settings_scroll != null and is_instance_valid(_capability_settings_scroll):
+		_capability_settings_dialog.remove_child(_capability_settings_scroll)
+		_capability_settings_scroll.queue_free()
+	_capability_settings_scroll = ScrollContainer.new()
+	_capability_settings_scroll.custom_minimum_size = Vector2(460, 320)
+	_capability_settings_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_capability_settings_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_capability_settings_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_capability_settings_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_capability_settings_dialog.add_child(_capability_settings_scroll)
 	var form := VBoxContainer.new()
+	form.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	form.add_theme_constant_override("separation", 7)
-	_capability_settings_dialog.add_child(form)
+	_capability_settings_scroll.add_child(form)
 	_capability_setting_controls.clear()
 
 	for component_id in capability.component_ids:
@@ -942,7 +978,7 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 		empty_label.text = "У этой возможности пока нет дополнительных настроек."
 		form.add_child(empty_label)
 
-	_capability_settings_dialog.popup_centered(Vector2i(520, 460))
+	_popup_window_safely(_capability_settings_dialog, Vector2i(520, 460), 0.82)
 
 
 func _on_capability_settings_confirmed() -> void:
@@ -979,9 +1015,10 @@ func _on_capability_settings_confirmed() -> void:
 		_set_status("Настройки обновлены. Нажми «Сохранить объект», чтобы записать изменения.", false)
 	_editing_capability_selection = null
 	_capability_setting_controls.clear()
-	for child in _capability_settings_dialog.get_children():
-		if child is VBoxContainer:
-			child.queue_free()
+	if _capability_settings_scroll != null and is_instance_valid(_capability_settings_scroll):
+		_capability_settings_dialog.remove_child(_capability_settings_scroll)
+		_capability_settings_scroll.queue_free()
+	_capability_settings_scroll = null
 
 
 func _on_simple_add_image_pressed() -> void:
@@ -1027,7 +1064,7 @@ func _on_simple_add_image_pressed() -> void:
 	EditorInterface.get_selection().clear()
 	EditorInterface.get_selection().add_node(sprite)
 	EditorInterface.edit_node(sprite)
-	_texture_dialog.popup_centered(Vector2i(820, 620))
+	_popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
 	_set_status("Изображение добавлено. Его можно перемещать в 2D-редакторе Godot.", false)
 
 
@@ -1227,8 +1264,17 @@ func _build_property_dialog() -> void:
 	_property_dialog.title = "Новое пользовательское свойство"
 	add_child(_property_dialog)
 
+	_property_dialog_scroll = ScrollContainer.new()
+	_property_dialog_scroll.custom_minimum_size = Vector2(420, 320)
+	_property_dialog_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_property_dialog_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_property_dialog_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_property_dialog_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_property_dialog.add_child(_property_dialog_scroll)
+
 	var form := VBoxContainer.new()
-	_property_dialog.add_child(form)
+	form.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_property_dialog_scroll.add_child(form)
 
 	_property_name_edit = LineEdit.new()
 	_property_name_edit.placeholder_text = "Например, Максимальное здоровье"
@@ -1845,7 +1891,7 @@ func _refresh_favorite_button() -> void:
 func _on_new_object_pressed() -> void:
 	_new_object_type_option.select(0)
 	_update_new_object_type_hint()
-	_new_object_dialog.popup_centered(Vector2i(460, 250))
+	_popup_window_safely(_new_object_dialog, Vector2i(460, 250), 0.82)
 
 
 func _on_create_from_template_pressed() -> void:
@@ -1857,7 +1903,7 @@ func _on_create_from_template_pressed() -> void:
 	for template_definition in _templates:
 		_template_option.add_item(template_definition.display_name)
 	_template_option.select(0)
-	_template_dialog.popup_centered(Vector2i(440, 170))
+	_popup_window_safely(_template_dialog, Vector2i(440, 170), 0.82)
 
 
 func _on_template_dialog_confirmed() -> void:
@@ -2107,7 +2153,7 @@ func _on_add_property_pressed() -> void:
 	_property_minimum_edit.text = "0"
 	_property_maximum_edit.text = "100"
 	_update_property_range_controls()
-	_property_dialog.popup_centered(Vector2i(470, 430))
+	_popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
 
 
 func _on_edit_property_pressed(property_definition: ObjectPropertyDefinition) -> void:
@@ -2129,7 +2175,7 @@ func _on_edit_property_pressed(property_definition: ObjectPropertyDefinition) ->
 	_property_minimum_edit.text = str(property_definition.minimum)
 	_property_maximum_edit.text = str(property_definition.maximum)
 	_update_property_range_controls()
-	_property_dialog.popup_centered(Vector2i(470, 430))
+	_popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
 
 
 func _select_property_type(type_name: String) -> void:
@@ -2566,7 +2612,7 @@ func _on_browse_texture_pressed() -> void:
 	if _get_selected_sprite_node() == null:
 		_set_status("Выбери Sprite2D в дереве сцены.", true)
 		return
-	_texture_dialog.popup_centered(Vector2i(820, 620))
+	_popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
 
 
 func _on_texture_file_selected(path: String) -> void:
@@ -2614,7 +2660,7 @@ func _on_browse_sprite_frames_pressed() -> void:
 	if _get_selected_animated_sprite_node() == null:
 		_set_status("Выбери AnimatedSprite2D в дереве сцены.", true)
 		return
-	_frames_dialog.popup_centered(Vector2i(820, 620))
+	_popup_window_safely(_frames_dialog, Vector2i(820, 620), 0.88)
 
 
 func _on_sprite_frames_file_selected(path: String) -> void:
@@ -2747,7 +2793,7 @@ func _on_add_node_pressed() -> void:
 	_node_type_list.select(maxi(0, sprite_index))
 	_node_type_list.ensure_current_is_visible()
 	_node_name_edit.text = ""
-	_node_dialog.popup_centered(Vector2i(430, 300))
+	_popup_window_safely(_node_dialog, Vector2i(430, 300), 0.82)
 
 
 func _on_node_dialog_confirmed() -> void:
