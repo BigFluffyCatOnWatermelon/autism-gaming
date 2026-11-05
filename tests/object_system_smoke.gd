@@ -1229,12 +1229,15 @@ func _test_capability_schema_and_application_plan() -> void:
 	)
 
 	var repeated_plan := ObjectCapabilityService.build_application_plan(planned_values, planned_values)
+	var repeated_added: Array = repeated_plan.get("added_components", [])
+	var repeated_removed: Array = repeated_plan.get("removed_components", [])
+	var repeated_updated: Array = repeated_plan.get("updated_components", [])
 	_expect(
 		bool(repeated_plan.get("ok", false))
 		and not bool(repeated_plan.get("changed", true))
-		and (repeated_plan.get("added_components", []) as Array).is_empty()
-		and (repeated_plan.get("removed_components", []) as Array).is_empty()
-		and (repeated_plan.get("updated_components", []) as Array).is_empty(),
+		and repeated_added.is_empty()
+		and repeated_removed.is_empty()
+		and repeated_updated.is_empty(),
 		"reapplying the same capability selection is idempotent and produces no duplicate component delta"
 	)
 
