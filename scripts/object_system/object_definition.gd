@@ -2,7 +2,7 @@
 extends Resource
 class_name ObjectDefinition
 
-const CURRENT_SCHEMA_VERSION := 3
+const CURRENT_SCHEMA_VERSION := 4
 
 @export var schema_version: int = CURRENT_SCHEMA_VERSION
 @export var object_id: String = ""
@@ -22,5 +22,8 @@ const CURRENT_SCHEMA_VERSION := 3
 ## Legacy root-level component definitions. Kept for existing library data and API users.
 @export var components: Array[ObjectComponentDefinition] = []
 
-## New component placements. Each binding can target any node in the object scene.
+## Explicit component placements for advanced editing.
 @export var component_bindings: Array[ObjectComponentBinding] = []
+
+## Friendly choices made in the Simple Builder. Runtime resolves them into bindings.
+@export var capabilities: Array[ObjectCapabilitySelection] = []

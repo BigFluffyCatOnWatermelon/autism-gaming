@@ -104,6 +104,13 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 		if validation_scene == null:
 			errors.append("Не удалось открыть сцену объекта для проверки привязок компонентов.")
 
+	var capability_errors := ObjectCapabilityService.validate_selections(
+		definition.capabilities,
+		validation_scene
+	)
+	for capability_error in capability_errors:
+		errors.append(capability_error)
+
 	for binding in definition.component_bindings:
 		if binding == null:
 			errors.append("В списке привязок компонентов есть пустая запись.")
@@ -139,6 +146,15 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 				"Для привязки '%s' не найден узел '%s'."
 				% [binding_id, target_path]
 			)
+
+	for generated_binding in ObjectCapabilityService.build_component_bindings(definition.capabilities):
+		if generated_binding == null:
+			continue
+		var generated_id := generated_binding.binding_id
+		if used_binding_ids.has(generated_id):
+			errors.append("ID привязки повторяется между возможностью и ручной настройкой: " + generated_id)
+		else:
+			used_binding_ids[generated_id] = true
 
 	if validation_scene != null:
 		validation_scene.free()

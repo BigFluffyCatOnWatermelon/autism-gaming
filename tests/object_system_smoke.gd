@@ -20,6 +20,7 @@ func _run_tests() -> void:
 	await _test_destructible_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
+	await _test_simple_capability_resolution()
 	await _test_component_node_bindings()
 
 	if failures.is_empty():
@@ -566,6 +567,123 @@ func _test_component_definition_validation() -> void:
 		not ObjectLibraryService.validate_definition(definition).is_empty(),
 		"component without a script or catalog entry is rejected"
 	)
+
+
+
+func _test_simple_capability_resolution() -> void:
+	var health_selection := ObjectCapabilityCatalog.create_selection("has_health")
+	var damage_selection := ObjectCapabilityCatalog.create_selection("can_receive_damage")
+	var destruction_selection := ObjectCapabilityCatalog.create_selection("breaks_when_health_empty")
+	_expect(
+		health_selection != null and damage_selection != null and destruction_selection != null,
+		"simple capability catalogue creates friendly selections"
+	)
+	if health_selection == null or damage_selection == null or destruction_selection == null:
+		return
+
+	health_selection.set_component_setting("health", "max_health", 35.0)
+	health_selection.set_component_setting("health", "starting_health", 35.0)
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "simple_capability_smoke_test"
+	definition.display_name = "Simple Capability Test"
+	definition.category = "Other"
+	definition.capabilities = [damage_selection, destruction_selection, health_selection]
+
+	var validation_errors := ObjectLibraryService.validate_definition(definition)
+	_expect(validation_errors.is_empty(), "valid friendly capability selections pass object validation")
+
+	var generated_bindings := ObjectCapabilityService.build_component_bindings(definition.capabilities)
+	var generated_component_ids := PackedStringArray()
+	for binding in generated_bindings:
+		generated_component_ids.append(binding.get_component_id())
+	_expect(
+		generated_component_ids.size() == 3
+		and generated_component_ids.has("health")
+		and generated_component_ids.has("damageable")
+		and generated_component_ids.has("destructible"),
+		"capability dependency resolution adds Health automatically and creates the requested mechanics"
+	)
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "ObjectFactory instantiates an object from simple capability selections")
+	if instance == null:
+		return
+
+	var test_world := Node2D.new()
+	root.add_child(test_world)
+	test_world.add_child(instance)
+	await process_frame
+
+	var health := ObjectFactory.get_component(instance, "health") as HealthComponent
+	var damageable := ObjectFactory.get_component(instance, "damageable") as DamageableComponent
+	var destructible := ObjectFactory.get_component(instance, "destructible") as DestructibleComponent
+	_expect(health != null, "friendly capability selection resolves Health at runtime")
+	_expect(damageable != null, "friendly capability selection resolves Damageable at runtime")
+	_expect(destructible != null, "friendly capability selection resolves Destructible at runtime")
+	if health != null and damageable != null and destructible != null:
+		_expect(
+			is_equal_approx(health.max_health, 35.0) and is_equal_approx(health.current_health, 35.0),
+			"simple capability setting is applied to the hidden Health component"
+		)
+		_expect(
+			is_equal_approx(damageable.receive_damage(35.0), 35.0),
+			"object created from simple choices can receive damage"
+		)
+		_expect(
+			destructible.is_destroyed(),
+			"object created from simple choices becomes destroyed when health reaches zero"
+		)
+	test_world.free()
+
+	var disabled_selection := ObjectCapabilityCatalog.create_selection("can_attack")
+	disabled_selection.enabled = false
+	var disabled_definition := ObjectDefinition.new()
+	disabled_definition.object_id = "disabled_capability_smoke_test"
+	disabled_definition.display_name = "Disabled Capability Test"
+	disabled_definition.category = "Other"
+	disabled_definition.capabilities = [disabled_selection]
+	var disabled_instance := ObjectFactory.instantiate(disabled_definition)
+	_expect(
+		disabled_instance != null and not ObjectFactory.has_component(disabled_instance, "attack"),
+		"disabled capability does not create hidden runtime components"
+	)
+	if disabled_instance != null:
+		disabled_instance.free()
+
+	var duplicate_selection := ObjectCapabilityCatalog.create_selection("has_health")
+	definition.capabilities.append(duplicate_selection)
+	_expect(
+		not ObjectLibraryService.validate_definition(definition).is_empty(),
+		"duplicate simple capability selections are rejected"
+	)
+	definition.capabilities.erase(duplicate_selection)
+
+	var unknown_selection := ObjectCapabilitySelection.new()
+	unknown_selection.capability_id = "unknown_capability"
+	definition.capabilities.append(unknown_selection)
+	_expect(
+		not ObjectLibraryService.validate_definition(definition).is_empty(),
+		"unknown capability IDs are rejected"
+	)
+	definition.capabilities.erase(unknown_selection)
+
+	var save_path := "user://simple_capability_serialization_test.tres"
+	var save_error := ResourceSaver.save(definition, save_path)
+	_expect(save_error == OK, "simple capability selections can be serialized")
+	if save_error == OK:
+		var restored := ResourceLoader.load(
+			save_path,
+			"",
+			ResourceLoader.CACHE_MODE_REPLACE
+		) as ObjectDefinition
+		_expect(restored != null, "serialized simple capability object can be loaded")
+		if restored != null:
+			_expect(
+				restored.capabilities.size() == 3,
+				"all friendly selections survive ObjectDefinition serialization"
+			)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
 
 
 func _test_component_node_bindings() -> void:

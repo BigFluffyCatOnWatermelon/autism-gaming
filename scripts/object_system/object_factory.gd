@@ -66,9 +66,15 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 			NodePath(".")
 		)
 
-	# New definitions can bind a component to any node in their packed scene.
-	var used_binding_ids: Dictionary = {}
+	# Explicit advanced bindings plus automatically resolved simple capabilities.
+	var all_bindings: Array[ObjectComponentBinding] = []
 	for binding in definition.component_bindings:
+		all_bindings.append(binding)
+	for generated_binding in ObjectCapabilityService.build_component_bindings(definition.capabilities):
+		all_bindings.append(generated_binding)
+
+	var used_binding_ids: Dictionary = {}
+	for binding in all_bindings:
 		if binding == null or not binding.enabled:
 			continue
 		if binding.component_definition == null or not binding.component_definition.enabled:
