@@ -262,14 +262,21 @@ static func build_application_plan(
 	_append_component_summary(summary, "Добавляются игровые модули", added_components)
 	_append_component_summary(summary, "Удаляются игровые модули", removed_components)
 	_append_component_summary(summary, "Меняются настройки модулей", updated_components)
-	if summary.is_empty():
+	var changed := (
+		not added_capabilities.is_empty()
+		or not removed_capabilities.is_empty()
+		or not added_components.is_empty()
+		or not removed_components.is_empty()
+		or not updated_components.is_empty()
+	)
+	if not changed:
 		summary.append("Состав объекта не изменится.")
 	else:
 		summary.push_front("Будет применён следующий план:")
 
 	return {
 		"ok": true,
-		"changed": not summary.size() == 1 or summary[0] != "Состав объекта не изменится.",
+		"changed": changed,
 		"errors": PackedStringArray(),
 		"added_capability_ids": added_capabilities,
 		"removed_capability_ids": removed_capabilities,
