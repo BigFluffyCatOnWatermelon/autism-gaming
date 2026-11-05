@@ -7,7 +7,7 @@
 - Через дерево можно добавлять распространённые узлы (Sprite2D, AnimatedSprite2D, Marker2D, CollisionShape2D, Area2D, StaticBody2D, AudioStreamPlayer2D и другие), а также удалять выбранные дочерние узлы.
 - Добавление и удаление интегрированы с EditorUndoRedoManager: операции отменяются/повторяются штатными Ctrl+Z/Ctrl+Y. Сохранение сцены выполняется через Ctrl+S.
 - Обновлены ROADMAP, ARCHITECTURE, TASKS, PROJECT_STATE и инструкции Object Builder.
-- Требуется headless CI и ручная проверка UI, дерева сцены, Undo/Redo и сохранения объектов в Godot 4.7.2.
+- GitHub Actions run 42025742681 успешно прошёл импорт ресурсов, разбор скриптов и headless-запуск главной сцены. Ручная проверка UI, дерева сцены, Undo/Redo и сохранения объектов в Godot 4.7.2 остаётся необходимой.
 
 ## 2026-11-05 — Object Builder 0.1.0: основа конструктора объектов
 
