@@ -64,6 +64,13 @@ func get_setting_definitions() -> Array[Dictionary]:
 	return result
 
 
+func get_inspector_property_name_for_setting(key: String) -> String:
+	var descriptor := _find_setting_definition(key)
+	if descriptor.is_empty():
+		return ""
+	return _inspector_property_name(descriptor)
+
+
 func get_setting(key: String, fallback: Variant = null) -> Variant:
 	return settings.get(key, fallback)
 

@@ -193,8 +193,10 @@ func _test_component_catalog_and_health() -> void:
 	_expect(component_definition.category == "Stats", "Health is grouped under Stats")
 
 	component_definition.component_script = null
-	component_definition._set("health_max_health", 120.0)
-	component_definition._set("health_starting_health", 90.0)
+	var max_health_field := component_definition.get_inspector_property_name_for_setting("max_health")
+	var starting_health_field := component_definition.get_inspector_property_name_for_setting("starting_health")
+	component_definition._set(StringName(max_health_field), 120.0)
+	component_definition._set(StringName(starting_health_field), 90.0)
 	_expect(
 		is_equal_approx(float(component_definition.settings.get("max_health", 0.0)), 120.0),
 		"dynamic Inspector edits are stored in the serializable settings dictionary"
@@ -251,21 +253,23 @@ func _test_component_definition_inspector_settings() -> void:
 
 	var has_max_health := false
 	var has_invulnerable := false
+	var max_health_field := ""
 	for property_info in component_definition.get_property_list():
 		var property_name := str(property_info.get("name", ""))
 		if property_name.ends_with("_max_health"):
 			has_max_health = true
+			max_health_field = property_name
 			_expect(int(property_info.get("type", TYPE_NIL)) == TYPE_FLOAT, "Health max is exposed as a float Inspector property")
 		if property_name.ends_with("_invulnerable"):
 			has_invulnerable = true
 			_expect(int(property_info.get("type", TYPE_NIL)) == TYPE_BOOL, "Health invulnerability is exposed as a boolean Inspector property")
 	_expect(has_max_health, "Health max setting is listed in the native Inspector")
 	_expect(has_invulnerable, "Health invulnerability setting is listed in the native Inspector")
-	_expect(is_equal_approx(float(component_definition.get("health_max_health")), 100.0), "component Inspector getter reads the catalog default")
-	_expect(component_definition._set("health_max_health", 250.0), "component Inspector setter accepts a valid setting")
+	_expect(is_equal_approx(float(component_definition._get(StringName(max_health_field))), 100.0), "component Inspector getter reads the catalog default")
+	_expect(component_definition._set(StringName(max_health_field), 250.0), "component Inspector setter accepts a valid setting")
 	_expect(is_equal_approx(float(component_definition.get_setting("max_health")), 250.0), "component settings API reads Inspector edits")
-	_expect(component_definition._property_get_revert("health_max_health") == 100.0, "component Inspector revert uses the catalog default")
-	_expect(not component_definition._set("health_max_health", "invalid"), "component setting rejects a value with the wrong type")
+	_expect(component_definition._property_get_revert(StringName(max_health_field)) == 100.0, "component Inspector revert uses the catalog default")
+	_expect(not component_definition._set(StringName(max_health_field), "invalid"), "component setting rejects a value with the wrong type")
 	_expect(is_equal_approx(float(component_definition.get_setting("max_health")), 250.0), "rejected component setting leaves the previous value unchanged")
 
 	var object_definition := ObjectDefinition.new()
