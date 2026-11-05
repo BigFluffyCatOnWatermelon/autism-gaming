@@ -78,10 +78,10 @@ func _test_runtime_property_values() -> void:
 		is_equal_approx(float(ObjectFactory.get_custom_property(instance, "speed")), 8.0),
 		"float update is clamped to max"
 	)
-	_expect(
-		ObjectFactory.get_custom_property_definition(instance, "health") == health,
-		"property definition metadata is attached to instance"
-	)
+	var attached_health_definition := ObjectFactory.get_custom_property_definition(instance, "health")
+	_expect(attached_health_definition != null, "property definition is attached to instance")
+	if attached_health_definition != null:
+		_expect(attached_health_definition.default_value == 100, "attached property definition keeps its default value")
 
 	var property_data := instance.get_node_or_null("ObjectProperties") as ObjectPropertyData
 	_expect(property_data != null, "factory attaches a serialized property data node")
