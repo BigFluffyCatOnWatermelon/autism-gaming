@@ -291,6 +291,12 @@ static func validate_selections(
 		if capability == null:
 			errors.append("Неизвестная возможность: " + capability_id)
 			continue
+		if capability.runtime_status != "Implemented":
+			errors.append(
+				"Механика «%s» пока находится в разработке и не может быть включена."
+				% capability.display_name
+			)
+			continue
 
 		var target_path := str(selection.target_node_path)
 		if not target_path.is_empty() and target_path != ".":

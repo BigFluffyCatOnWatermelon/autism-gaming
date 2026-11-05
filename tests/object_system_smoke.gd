@@ -22,6 +22,7 @@ func _run_tests() -> void:
 	_test_component_definition_validation()
 	await _test_simple_capability_resolution()
 	_test_capability_selection_plans()
+	_test_capability_library_size_and_status()
 	await _test_component_node_bindings()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1127,6 +1128,82 @@ func _test_capability_selection_plans() -> void:
 	_expect(
 		ObjectCapabilityService.validate_selections([disabled_invalid]).is_empty(),
 		"disabled legacy selections do not block object validation"
+	)
+
+
+
+func _test_capability_library_size_and_status() -> void:
+	var all_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
+	var simple_ids := ObjectCapabilityCatalog.get_capability_ids("", true)
+	_expect(
+		all_ids.size() == 200,
+		"built-in mechanics library exposes exactly 200 entries"
+	)
+	_expect(
+		simple_ids.size() == 200,
+		"all 200 mechanics are searchable in the simple-mode catalogue"
+	)
+
+	var seen_ids: Dictionary = {}
+	var category_counts: Dictionary = {}
+	var implemented_count := 0
+	var planned_count := 0
+	var planned_without_runtime: bool = true
+
+	for capability_id in all_ids:
+		_expect(
+			not seen_ids.has(capability_id),
+			"mechanics catalogue contains unique ID: " + capability_id
+		)
+		seen_ids[capability_id] = true
+		var definition := ObjectCapabilityCatalog.get_definition(capability_id)
+		if definition == null:
+			planned_without_runtime = false
+			continue
+		category_counts[definition.category_id] = int(category_counts.get(definition.category_id, 0)) + 1
+		if definition.runtime_status == "Implemented":
+			implemented_count += 1
+		elif definition.runtime_status == "Planned":
+			planned_count += 1
+			if not definition.component_ids.is_empty():
+				planned_without_runtime = false
+		else:
+			planned_without_runtime = false
+
+	_expect(
+		implemented_count == 4 and planned_count == 196,
+		"catalogue explicitly distinguishes four runtime mechanics and 196 planned mechanics"
+	)
+	_expect(
+		planned_without_runtime,
+		"planned entries do not advertise missing runtime components"
+	)
+	_expect(
+		category_counts.size() == 20,
+		"mechanics catalogue exposes twenty distinct categories"
+	)
+	for category_id in category_counts:
+		_expect(
+			int(category_counts[category_id]) == 10,
+			"category '%s' contains exactly ten mechanics" % str(category_id)
+		)
+
+	var movement_capability := ObjectCapabilityCatalog.get_definition("can_move")
+	_expect(
+		movement_capability != null and movement_capability.runtime_status == "Planned",
+		"new movement mechanic is discoverable and visibly marked as planned"
+	)
+	if movement_capability != null:
+		var movement_selection := ObjectCapabilityCatalog.create_selection("can_move")
+		_expect(
+			not ObjectCapabilityService.validate_selections([movement_selection]).is_empty(),
+			"planned mechanics cannot be enabled as if their runtime behavior already existed"
+		)
+
+	var health_capability := ObjectCapabilityCatalog.get_definition("has_health")
+	_expect(
+		health_capability != null and health_capability.runtime_status == "Implemented",
+		"existing Health mechanic remains enabled and is not downgraded"
 	)
 
 

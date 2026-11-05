@@ -679,6 +679,18 @@ func _rebuild_capability_list() -> void:
 	var query := _capability_search.text.strip_edges().to_lower() if _capability_search != null else ""
 	var capability_ids := ObjectCapabilityCatalog.get_capability_ids(category_id)
 	var visible_count := 0
+	var ready_count := 0
+	for catalog_id in ObjectCapabilityCatalog.get_capability_ids("", false):
+		var catalog_definition := ObjectCapabilityCatalog.get_definition(catalog_id)
+		if catalog_definition != null and catalog_definition.runtime_status == "Implemented":
+			ready_count += 1
+	var summary := Label.new()
+	summary.text = "Механик в библиотеке: %d · доступно сейчас: %d" % [
+		ObjectCapabilityCatalog.get_capability_ids("", false).size(),
+		ready_count
+	]
+	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_capability_list.add_child(summary)
 
 	for capability_id in capability_ids:
 		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
@@ -704,19 +716,29 @@ func _rebuild_capability_list() -> void:
 		var card_header := HBoxContainer.new()
 		card_content.add_child(card_header)
 
+		var is_implemented := capability.runtime_status == "Implemented"
 		var enabled_check := CheckBox.new()
 		enabled_check.text = capability.display_name
 		if selection != null and selection.automatically_added:
 			enabled_check.text += " · автоматически"
 			enabled_check.tooltip_text = "Эта возможность нужна другой выбранной возможности. Её нельзя отключить, пока она используется."
+		elif not is_implemented:
+			enabled_check.tooltip_text = "Механика уже есть в каталоге, но её runtime-поведение ещё разрабатывается."
 		enabled_check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		enabled_check.button_pressed = is_enabled
-		enabled_check.toggled.connect(_on_capability_toggled.bind(capability_id))
+		enabled_check.disabled = not is_implemented
+		if is_implemented:
+			enabled_check.toggled.connect(_on_capability_toggled.bind(capability_id))
 		card_header.add_child(enabled_check)
+
+		var state_label := Label.new()
+		state_label.text = "Готово" if is_implemented else "В разработке"
+		state_label.tooltip_text = capability.implementation_note
+		card_header.add_child(state_label)
 
 		var settings_button := Button.new()
 		settings_button.text = "Настроить"
-		settings_button.disabled = not is_enabled
+		settings_button.disabled = not is_enabled or not is_implemented
 		settings_button.pressed.connect(_on_capability_settings_pressed.bind(capability_id))
 		card_header.add_child(settings_button)
 
