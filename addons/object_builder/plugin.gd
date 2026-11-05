@@ -1309,6 +1309,13 @@ func _clone_template_scene(template_definition: ObjectDefinition, target_definit
 	var scene_root := source_scene.instantiate()
 	scene_root.set_meta("object_definition_id", target_definition.object_id)
 	scene_root.set_meta("object_category", target_definition.category)
+	var property_data := scene_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
+	if property_data == null:
+		property_data = ObjectPropertyData.new()
+		property_data.name = "ObjectProperties"
+		scene_root.add_child(property_data)
+	property_data.configure(target_definition.custom_properties, {}, true)
+	property_data.owner = scene_root
 	var copied_scene := PackedScene.new()
 	_set_owner_recursive(scene_root, scene_root)
 	var pack_error := copied_scene.pack(scene_root)
@@ -1679,6 +1686,12 @@ func _on_save_pressed() -> void:
 		_set_status("Не удалось сохранить объект. Код ошибки: %d" % save_error, true)
 		return
 
+	var scene_properties_synced := false
+	var open_scene_root := _get_open_object_scene_root()
+	if open_scene_root != null:
+		_sync_scene_property_data(open_scene_root)
+		scene_properties_synced = true
+
 	_id_edit.text = _working_definition.object_id
 	_open_scene_button.disabled = false
 	_can_save_as_template = false
@@ -1687,6 +1700,8 @@ func _on_save_pressed() -> void:
 		_set_status("Шаблон сохранён. Его можно выбрать кнопкой «Из шаблона».", false)
 	else:
 		_set_status("Объект сохранён в библиотеку: %s" % _working_definition.display_name, false)
+	if scene_properties_synced:
+		_set_status("Определение сохранено. Узел ObjectProperties обновлён — нажми Ctrl+S, чтобы сохранить сцену.", false)
 	_refresh_library()
 	_load_definition(_working_definition)
 
@@ -1708,6 +1723,12 @@ func _create_scene_for_definition() -> bool:
 	scene_root.add_child(visuals)
 	visuals.owner = scene_root
 
+	var property_data := ObjectPropertyData.new()
+	property_data.name = "ObjectProperties"
+	property_data.configure(_working_definition.custom_properties)
+	scene_root.add_child(property_data)
+	property_data.owner = scene_root
+
 	var packed_scene := PackedScene.new()
 	var pack_error := packed_scene.pack(scene_root)
 	scene_root.free()
@@ -1725,6 +1746,44 @@ func _create_scene_for_definition() -> bool:
 	_working_definition.scene_path = scene_path
 	EditorInterface.get_resource_filesystem().scan()
 	return true
+
+
+func _sync_scene_property_data(scene_root: Node) -> void:
+	if scene_root == null or _working_definition == null:
+		return
+	var property_data := scene_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
+	if property_data == null:
+		property_data = ObjectPropertyData.new()
+		property_data.name = "ObjectProperties"
+		var undo_redo := EditorInterface.get_editor_undo_redo()
+		undo_redo.create_action("Object Builder: добавить узел параметров объекта", 0, scene_root)
+		undo_redo.add_do_method(scene_root, "add_child", property_data)
+		undo_redo.add_do_method(property_data, "set_owner", scene_root)
+		undo_redo.add_undo_method(scene_root, "remove_child", property_data)
+		undo_redo.add_do_reference(property_data)
+		undo_redo.commit_action()
+
+	var previous_definitions := property_data.property_definitions.duplicate(true)
+	var previous_values := property_data.get_values()
+	var next_definitions := _working_definition.custom_properties.duplicate(true)
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: обновить параметры объекта", 0, scene_root)
+	undo_redo.add_do_method(
+		property_data,
+		"configure",
+		next_definitions,
+		previous_values,
+		true
+	)
+	undo_redo.add_undo_method(
+		property_data,
+		"configure",
+		previous_definitions,
+		previous_values,
+		false
+	)
+	undo_redo.commit_action()
+	_refresh_scene_tree()
 
 
 func _on_open_scene_pressed() -> void:
@@ -1780,7 +1839,8 @@ func _refresh_scene_tree() -> void:
 
 func _add_scene_tree_item(node: Node, parent_item: TreeItem, scene_root: Node) -> void:
 	var item := _scene_tree.create_item(parent_item)
-	item.set_text(0, "%s  <%s>" % [node.name, node.get_class()])
+	var display_name := "Параметры объекта" if node is ObjectPropertyData else node.name
+	item.set_text(0, "%s  <%s>" % [display_name, node.get_class()])
 	item.set_metadata(0, scene_root.get_path_to(node))
 	item.set_tooltip_text(0, str(node.get_path()))
 	for child in node.get_children():
