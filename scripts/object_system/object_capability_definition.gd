@@ -18,4 +18,11 @@ class_name ObjectCapabilityDefinition
 @export_enum("Implemented", "Planned") var runtime_status: String = "Implemented"
 @export_multiline var implementation_note: String = ""
 @export_range(0, 100000, 1) var display_order: int = 100
+## Version of the capability behaviour/contract. Increment when its meaning changes.
 @export_range(1, 1000, 1) var version: int = 1
+## Version of the serialized definition schema. Kept separate from the capability version.
+@export_range(1, 1000, 1) var definition_schema_version: int = 1
+
+## Typed, user-facing settings exposed by this capability. Empty schemas are generated
+## from the settings of its registered runtime components.
+@export_storage var settings_schema: Array[Dictionary] = []
