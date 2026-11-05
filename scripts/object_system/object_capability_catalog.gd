@@ -82,6 +82,7 @@ static func register_definitions(
 			continue
 		var copy := definition.duplicate(true) as ObjectCapabilityDefinition
 		copy.capability_id = capability_id
+		_prepare_settings_schema(copy)
 		incoming[capability_id] = copy
 
 	if not errors.is_empty():
@@ -218,6 +219,17 @@ static func has_capability(capability_id: String) -> bool:
 	return _definitions.has(_normalize_id(capability_id))
 
 
+## Returns a deep copy of the user-facing settings contract for one capability.
+static func get_settings_schema(capability_id: String) -> Array[Dictionary]:
+	var definition := get_definition(capability_id)
+	var result: Array[Dictionary] = []
+	if definition == null:
+		return result
+	for descriptor in definition.settings_schema:
+		result.append(descriptor.duplicate(true))
+	return result
+
+
 static func create_selection(capability_id: String) -> ObjectCapabilitySelection:
 	var normalized_id := _normalize_id(capability_id)
 	if not has_capability(normalized_id):
@@ -232,8 +244,73 @@ static func _ensure_initialized() -> void:
 		return
 	_initialized = true
 	for definition in _make_builtin_definitions():
+		_prepare_settings_schema(definition)
 		_definitions[definition.capability_id] = definition
 		_sources[definition.capability_id] = "builtin"
+
+
+## Build a capability-level settings contract from component definitions while
+## allowing extensions to override presentation metadata without duplicating runtime data.
+static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> void:
+	if definition == null:
+		return
+
+	var explicit_by_key: Dictionary = {}
+	for descriptor in definition.settings_schema:
+		var component_id := _normalize_id(str(descriptor.get("component_id", "")))
+		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
+		if component_id.is_empty() and definition.component_ids.size() == 1:
+			component_id = _normalize_id(str(definition.component_ids[0]))
+		if component_id.is_empty() or setting_key.is_empty():
+			continue
+		explicit_by_key["%s@%s" % [component_id, setting_key]] = descriptor.duplicate(true)
+
+	var resolved_schema: Array[Dictionary] = []
+	var consumed: Dictionary = {}
+	for component_id_value in definition.component_ids:
+		var component_id := _normalize_id(str(component_id_value))
+		var component_definition := ObjectComponentCatalog.create_definition(component_id)
+		if component_definition == null:
+			continue
+		for component_descriptor in component_definition.get_setting_definitions():
+			var setting_key := str(component_descriptor.get("key", "")).strip_edges()
+			if setting_key.is_empty():
+				continue
+			var schema_key := "%s@%s" % [component_id, setting_key]
+			var resolved: Dictionary = component_descriptor.duplicate(true)
+			resolved["component_id"] = component_id
+			resolved["setting_key"] = setting_key
+			var override: Dictionary = explicit_by_key.get(schema_key, {})
+			for override_key in override:
+				resolved[str(override_key)] = override[override_key]
+		resolved["level"] = _normalize_setting_level(str(resolved.get("level", "")), bool(resolved.get("advanced", false)))
+		resolved["advanced"] = str(resolved["level"]) != "Basic"
+		resolved_schema.append(resolved)
+		consumed[schema_key] = true
+
+	# Keep invalid/unknown explicit entries so the registry can report them instead of
+	# silently discarding extension authoring mistakes.
+	for schema_key in explicit_by_key:
+		if consumed.has(schema_key):
+			continue
+		var unresolved: Dictionary = explicit_by_key[schema_key].duplicate(true)
+		unresolved["component_id"] = str(unresolved.get("component_id", ""))
+		unresolved["setting_key"] = str(unresolved.get("setting_key", unresolved.get("key", "")))
+		resolved_schema.append(unresolved)
+
+	definition.settings_schema = resolved_schema
+
+
+static func _normalize_setting_level(value: String, advanced: bool = false) -> String:
+	var normalized := value.strip_edges().to_lower()
+	match normalized:
+		"basic":
+			return "Basic"
+		"advanced":
+			return "Advanced"
+		"expert":
+			return "Expert"
+	return "Advanced" if advanced else "Basic"
 
 
 static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
@@ -318,6 +395,45 @@ static func _validate_definition(
 		component_ids[normalized_component_id] = true
 		if not ObjectComponentCatalog.has_component(normalized_component_id):
 			errors.append("Возможность '%s' ссылается на неизвестный компонент '%s'." % [definition.capability_id, normalized_component_id])
+
+	var setting_schema_keys: Dictionary = {}
+	for descriptor in definition.settings_schema:
+		var component_id := _normalize_id(str(descriptor.get("component_id", "")))
+		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
+		if component_id.is_empty() or setting_key.is_empty():
+			errors.append("У схемы настроек возможности '%s' должен быть указан компонент и ключ настройки." % definition.capability_id)
+			continue
+		if not component_ids.has(component_id):
+			errors.append("Схема возможности '%s' ссылается на компонент '%s', которым она не управляет." % [definition.capability_id, component_id])
+			continue
+		var schema_key := "%s@%s" % [component_id, setting_key]
+		if setting_schema_keys.has(schema_key):
+			errors.append("В схеме возможности '%s' повторяется настройка '%s'." % [definition.capability_id, schema_key])
+			continue
+		setting_schema_keys[schema_key] = true
+		var component_definition := ObjectComponentCatalog.create_definition(component_id)
+		if component_definition == null:
+			continue
+		var source_descriptor: Dictionary = {}
+		for candidate_descriptor in component_definition.get_setting_definitions():
+			if str(candidate_descriptor.get("key", "")) == setting_key:
+				source_descriptor = candidate_descriptor
+				break
+		if source_descriptor.is_empty():
+			errors.append("Возможность '%s' описывает неизвестную настройку '%s' компонента '%s'." % [definition.capability_id, setting_key, component_id])
+			continue
+		var declared_type := str(descriptor.get("value_type", source_descriptor.get("value_type", "")))
+		var source_type := str(source_descriptor.get("value_type", ""))
+		if declared_type != source_type:
+			errors.append("Тип настройки '%s' возможности '%s' не совпадает с типом компонента '%s'." % [setting_key, definition.capability_id, component_id])
+		var level := _normalize_setting_level(str(descriptor.get("level", "")), bool(descriptor.get("advanced", false)))
+		if level not in ["Basic", "Advanced", "Expert"]:
+			errors.append("Неизвестный уровень настройки '%s' в возможности '%s'." % [setting_key, definition.capability_id])
+		if bool(descriptor.get("has_range", false)):
+			if declared_type not in ["Integer", "Float"]:
+				errors.append("Диапазон настройки '%s' поддерживается только для Integer и Float." % setting_key)
+			elif float(descriptor.get("minimum", 0.0)) > float(descriptor.get("maximum", 0.0)):
+				errors.append("Минимум больше максимума у настройки '%s'." % setting_key)
 
 	var dependency_ids: Dictionary = {}
 	for dependency_id in definition.required_capability_ids:
