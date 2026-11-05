@@ -14,7 +14,37 @@ class_name ObjectComponentDefinition
 
 static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	if id.strip_edges().to_lower() != "health":
+	var normalized_id := id.strip_edges().to_lower()
+	if normalized_id == "damageable":
+		result.append({
+			"key": "can_receive_damage",
+			"display_name": "Принимать урон",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "Защита"
+		})
+		result.append({
+			"key": "damage_multiplier",
+			"display_name": "Множитель входящего урона",
+			"value_type": "Float",
+			"default_value": 1.0,
+			"group_name": "Сопротивление",
+			"has_range": true,
+			"minimum": 0.0,
+			"maximum": 10.0
+		})
+		result.append({
+			"key": "flat_reduction",
+			"display_name": "Плоское снижение урона",
+			"value_type": "Float",
+			"default_value": 0.0,
+			"group_name": "Сопротивление",
+			"has_range": true,
+			"minimum": 0.0,
+			"maximum": 1000000.0
+		})
+		return result
+	if normalized_id != "health":
 		return result
 
 	result.append({

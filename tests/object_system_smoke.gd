@@ -10,6 +10,7 @@ func _initialize() -> void:
 	_test_object_type_default()
 	_test_serialized_property_data()
 	_test_component_catalog_and_health()
+	_test_damageable_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 
@@ -182,8 +183,9 @@ func _test_component_catalog_and_health() -> void:
 	var categories := ObjectComponentCatalog.get_categories()
 	_expect(categories.size() == 8, "component catalog exposes the planned category groups")
 	_expect(ObjectComponentCatalog.get_component_ids("Stats").has("health"), "Health is listed in the Stats category")
-	_expect(ObjectComponentCatalog.get_component_ids("Combat").is_empty(), "empty component categories remain available")
+	_expect(ObjectComponentCatalog.get_component_ids("Combat").has("damageable"), "Damageable is listed in the Combat category")
 	_expect(ObjectComponentCatalog.has_component("HEALTH"), "catalog component IDs are case-insensitive")
+	_expect(ObjectComponentCatalog.has_component("Damageable"), "Damageable is available by its stable ID")
 
 	var component_definition := ObjectComponentCatalog.create_definition("health")
 	_expect(component_definition != null, "catalog creates the Health component definition")
@@ -241,6 +243,66 @@ func _test_component_catalog_and_health() -> void:
 	_expect(is_equal_approx(component.current_health, 60.0), "reset_health respects the current maximum")
 	component.invulnerable = true
 	_expect(is_equal_approx(component.apply_damage(10.0), 0.0), "invulnerable Health ignores damage")
+
+	instance.free()
+
+
+func _test_damageable_component() -> void:
+	var damageable_definition := ObjectComponentCatalog.create_definition("damageable")
+	var health_definition := ObjectComponentCatalog.create_definition("health")
+	_expect(damageable_definition != null, "catalog creates the Damageable component definition")
+	_expect(health_definition != null, "catalog creates Health dependency for Damageable")
+	if damageable_definition == null or health_definition == null:
+		return
+
+	damageable_definition.settings["damage_multiplier"] = 2.0
+	damageable_definition.settings["flat_reduction"] = 5.0
+	var definition := ObjectDefinition.new()
+	definition.object_id = "damageable_component_smoke_test"
+	definition.display_name = "Damageable Component Test"
+	definition.category = "Other"
+	definition.components = [damageable_definition, health_definition]
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates object with Damageable and Health")
+	if instance == null:
+		return
+
+	var damageable := ObjectFactory.get_component(instance, "damageable") as DamageableComponent
+	var health := ObjectFactory.get_component(instance, "health") as HealthComponent
+	_expect(damageable != null, "factory resolves Damageable by stable ID")
+	_expect(health != null, "factory resolves Health alongside Damageable")
+	if damageable == null or health == null:
+		instance.free()
+		return
+
+	_expect(
+		is_equal_approx(damageable.receive_damage(20.0), 35.0),
+		"Damageable applies multiplier and flat damage reduction"
+	)
+	_expect(
+		is_equal_approx(health.current_health, 65.0),
+		"Damageable forwards adjusted damage to Health"
+	)
+	damageable.can_receive_damage = false
+	_expect(
+		is_equal_approx(damageable.receive_damage(10.0), 0.0),
+		"Damageable can block incoming damage"
+	)
+	_expect(
+		is_equal_approx(health.current_health, 65.0),
+		"blocked damage does not reduce Health"
+	)
+	damageable.can_receive_damage = true
+	health.invulnerable = true
+	_expect(
+		is_equal_approx(damageable.receive_damage(10.0), 0.0),
+		"Damageable respects Health invulnerability"
+	)
+	_expect(
+		is_equal_approx(health.current_health, 65.0),
+		"Health invulnerability is preserved through Damageable"
+	)
 
 	instance.free()
 
