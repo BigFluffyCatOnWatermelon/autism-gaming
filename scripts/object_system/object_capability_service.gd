@@ -3,12 +3,195 @@ class_name ObjectCapabilityService
 
 ## Converts friendly capability choices into validated, dependency-complete component bindings.
 
-static func build_component_bindings(
+## Builds a complete selection change before the editor mutates the ObjectDefinition.
+## Required capabilities are added automatically; orphaned automatic dependencies are disabled.
+static func plan_selection_change(
+	current_selections: Array[ObjectCapabilitySelection],
+	capability_id: String,
+	enable: bool
+) -> Dictionary:
+	var normalized_id := capability_id.strip_edges().to_lower()
+	var target_definition := ObjectCapabilityCatalog.get_definition(normalized_id)
+	if target_definition == null:
+		return _failed_selection_plan(["Неизвестная возможность: " + normalized_id])
+
+	var next_values: Array[ObjectCapabilitySelection] = []
+	for selection in current_selections:
+		if selection == null:
+			continue
+		next_values.append(selection.duplicate(true) as ObjectCapabilitySelection)
+
+	var target_index := _find_selection_index(next_values, normalized_id)
+	var added_ids := PackedStringArray()
+	var disabled_ids := PackedStringArray()
+
+	if enable:
+		if target_index < 0:
+			var new_selection := ObjectCapabilityCatalog.create_selection(normalized_id)
+			if new_selection == null:
+				return _failed_selection_plan(["Не удалось создать выбранную возможность: " + normalized_id])
+			new_selection.automatically_added = false
+			next_values.append(new_selection)
+			added_ids.append(normalized_id)
+		else:
+			var target_selection := next_values[target_index]
+			target_selection.enabled = true
+			target_selection.automatically_added = false
+
+		var dependency_errors := PackedStringArray()
+		var dependency_states: Dictionary = {}
+		if not _ensure_required_selections(normalized_id, next_values, dependency_states, added_ids, dependency_errors):
+			return _failed_selection_plan(dependency_errors)
+	else:
+		if target_index < 0 or not next_values[target_index].enabled:
+			return {
+				"ok": true,
+				"selections": next_values,
+				"added_capability_ids": added_ids,
+				"disabled_capability_ids": disabled_ids,
+				"errors": PackedStringArray()
+			}
+
+		var blocking_names := PackedStringArray()
+		for selection in next_values:
+			if selection == null or not selection.enabled or selection.capability_id == normalized_id:
+				continue
+			if _capability_requires(selection.capability_id, normalized_id, {}):
+				var dependent := ObjectCapabilityCatalog.get_definition(selection.capability_id)
+				blocking_names.append(dependent.display_name if dependent != null else selection.capability_id)
+
+		if not blocking_names.is_empty():
+			return _failed_selection_plan([
+				"Нельзя отключить «%s»: от неё зависят %s. Сначала отключи эти возможности."
+				% [target_definition.display_name, ", ".join(blocking_names)]
+			])
+
+		next_values[target_index].enabled = false
+		next_values[target_index].automatically_added = false
+		disabled_ids.append(normalized_id)
+
+		for selection in next_values:
+			if selection == null or not selection.enabled or not selection.automatically_added:
+				continue
+			if not _is_required_by_active_selection(selection.capability_id, next_values):
+				selection.enabled = false
+				disabled_ids.append(selection.capability_id)
+
+	var validation_errors := validate_selections(next_values)
+	if not validation_errors.is_empty():
+		return _failed_selection_plan(validation_errors)
+
+	return {
+		"ok": true,
+		"selections": next_values,
+		"added_capability_ids": added_ids,
+		"disabled_capability_ids": disabled_ids,
+		"errors": PackedStringArray()
+	}
+
+
+static func _ensure_required_selections(
+	capability_id: String,
 	selections: Array[ObjectCapabilitySelection],
-	scene_root: Node = null
+	states: Dictionary,
+	added_ids: PackedStringArray,
+	errors: PackedStringArray
+) -> bool:
+	if states.get(capability_id, 0) == 2:
+		return true
+	if states.get(capability_id, 0) == 1:
+		errors.append("Обнаружен цикл зависимостей возможностей: " + capability_id)
+		return false
+
+	var definition := ObjectCapabilityCatalog.get_definition(capability_id)
+	if definition == null:
+		errors.append("Неизвестная зависимость возможности: " + capability_id)
+		return false
+
+	states[capability_id] = 1
+	for dependency_id_value in definition.required_capability_ids:
+		var dependency_id := str(dependency_id_value).strip_edges().to_lower()
+		var dependency_index := _find_selection_index(selections, dependency_id)
+		if dependency_index < 0:
+			var dependency_selection := ObjectCapabilityCatalog.create_selection(dependency_id)
+			if dependency_selection == null:
+				errors.append("Невозможно автоматически добавить зависимость: " + dependency_id)
+				return false
+			dependency_selection.automatically_added = true
+			selections.append(dependency_selection)
+			added_ids.append(dependency_id)
+		else:
+			var dependency_selection := selections[dependency_index]
+			if not dependency_selection.enabled:
+				dependency_selection.enabled = true
+				dependency_selection.automatically_added = true
+				added_ids.append(dependency_id)
+
+		if not _ensure_required_selections(dependency_id, selections, states, added_ids, errors):
+			return false
+
+	states[capability_id] = 2
+	return true
+
+
+static func _capability_requires(
+	capability_id: String,
+	required_id: String,
+	visited: Dictionary
+) -> bool:
+	if visited.has(capability_id):
+		return false
+	visited[capability_id] = true
+	var definition := ObjectCapabilityCatalog.get_definition(capability_id)
+	if definition == null:
+		return false
+	for dependency_id_value in definition.required_capability_ids:
+		var dependency_id := str(dependency_id_value).strip_edges().to_lower()
+		if dependency_id == required_id:
+			return true
+		if _capability_requires(dependency_id, required_id, visited):
+			return true
+	return false
+
+
+static func _is_required_by_active_selection(
+	capability_id: String,
+	selections: Array[ObjectCapabilitySelection]
+) -> bool:
+	for selection in selections:
+		if selection == null or not selection.enabled or selection.capability_id == capability_id:
+			continue
+		if _capability_requires(selection.capability_id, capability_id, {}):
+			return true
+	return false
+
+
+static func _find_selection_index(
+	selections: Array[ObjectCapabilitySelection],
+	capability_id: String
+) -> int:
+	for index in range(selections.size()):
+		var selection := selections[index]
+		if selection != null and selection.capability_id.strip_edges().to_lower() == capability_id:
+			return index
+	return -1
+
+
+static func _failed_selection_plan(errors: PackedStringArray) -> Dictionary:
+	return {
+		"ok": false,
+		"selections": [],
+		"added_capability_ids": PackedStringArray(),
+		"disabled_capability_ids": PackedStringArray(),
+		"errors": errors
+	}
+
+
+static func build_component_bindings(
+	selections: Array[ObjectCapabilitySelection]
 ) -> Array[ObjectComponentBinding]:
 	var result: Array[ObjectComponentBinding] = []
-	var validation_errors := validate_selections(selections, scene_root)
+	var validation_errors := validate_selections(selections)
 	if not validation_errors.is_empty():
 		return result
 
@@ -92,6 +275,8 @@ static func validate_selections(
 	for selection in selections:
 		if selection == null:
 			errors.append("В списке возможностей есть пустая запись.")
+			continue
+		if not selection.enabled:
 			continue
 		var capability_id := selection.capability_id.strip_edges().to_lower()
 		if capability_id.is_empty():

@@ -21,6 +21,7 @@ func _run_tests() -> void:
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 	await _test_simple_capability_resolution()
+	_test_capability_selection_plans()
 	await _test_component_node_bindings()
 	await _test_extension_registries()
 
@@ -767,6 +768,168 @@ func _test_extension_registries() -> void:
 		not ObjectCapabilityCatalog.has_capability("registry_test_durability")
 		and not ObjectComponentCatalog.has_component("registry_test_health"),
 		"unregistering an extension removes all definitions owned by that source"
+	)
+
+
+
+func _test_capability_selection_plans() -> void:
+	var empty_selections: Array[ObjectCapabilitySelection] = []
+	var add_damage_plan := ObjectCapabilityService.plan_selection_change(
+		empty_selections,
+		"can_receive_damage",
+		true
+	)
+	_expect(
+		bool(add_damage_plan.get("ok", false)),
+		"adding a capability with one dependency produces a valid change plan"
+	)
+	if not bool(add_damage_plan.get("ok", false)):
+		return
+
+	var planned_values: Array[ObjectCapabilitySelection] = []
+	var raw_values: Variant = add_damage_plan.get("selections", [])
+	if raw_values is Array:
+		for value in raw_values:
+			if value is ObjectCapabilitySelection:
+				planned_values.append(value as ObjectCapabilitySelection)
+
+	_expect(planned_values.size() == 2, "adding Damageable automatically includes its Health dependency")
+	var health_selection: ObjectCapabilitySelection
+	var damage_selection: ObjectCapabilitySelection
+	for selection in planned_values:
+		if selection.capability_id == "has_health":
+			health_selection = selection
+		elif selection.capability_id == "can_receive_damage":
+			damage_selection = selection
+	_expect(
+		health_selection != null and health_selection.enabled and health_selection.automatically_added,
+		"automatically required Health selection is marked as dependency-managed"
+	)
+	_expect(
+		damage_selection != null and damage_selection.enabled and not damage_selection.automatically_added,
+		"user-selected capability is not marked as an automatic dependency"
+	)
+
+	var generated_bindings := ObjectCapabilityService.build_component_bindings(planned_values)
+	_expect(
+		generated_bindings.size() == 2,
+		"dependency-complete selection plan produces both runtime component bindings"
+	)
+	var generated_ids := PackedStringArray()
+	for binding in generated_bindings:
+		generated_ids.append(binding.get_component_id())
+	_expect(
+		generated_ids.has("health") and generated_ids.has("damageable"),
+		"selection plan resolves both Health and Damageable"
+	)
+
+	var forbidden_disable_plan := ObjectCapabilityService.plan_selection_change(
+		planned_values,
+		"has_health",
+		false
+	)
+	_expect(
+		not bool(forbidden_disable_plan.get("ok", false)),
+		"required capability cannot be disabled while an active capability depends on it"
+	)
+	var forbidden_errors: PackedStringArray = forbidden_disable_plan.get("errors", PackedStringArray())
+	_expect(
+		not forbidden_errors.is_empty() and str(forbidden_errors[0]).contains("Сначала отключи"),
+		"blocked dependency change explains which feature must be disabled first"
+	)
+	_expect(
+		health_selection.enabled and damage_selection.enabled,
+		"failed change plan leaves the original selection list untouched"
+	)
+
+	var remove_damage_plan := ObjectCapabilityService.plan_selection_change(
+		planned_values,
+		"can_receive_damage",
+		false
+	)
+	_expect(
+		bool(remove_damage_plan.get("ok", false)),
+		"dependent capability can be disabled before its automatic dependency"
+	)
+	var after_remove: Array[ObjectCapabilitySelection] = []
+	var remove_values: Variant = remove_damage_plan.get("selections", [])
+	if remove_values is Array:
+		for value in remove_values:
+			if value is ObjectCapabilitySelection:
+				after_remove.append(value as ObjectCapabilitySelection)
+	var health_after_remove: ObjectCapabilitySelection
+	var damage_after_remove: ObjectCapabilitySelection
+	for selection in after_remove:
+		if selection.capability_id == "has_health":
+			health_after_remove = selection
+		elif selection.capability_id == "can_receive_damage":
+			damage_after_remove = selection
+	_expect(
+		damage_after_remove != null and not damage_after_remove.enabled,
+		"disabling a capability retains it as a disabled choice"
+	)
+	_expect(
+		health_after_remove != null and not health_after_remove.enabled,
+		"orphaned automatic dependency is disabled with its last dependent"
+	)
+
+	var manual_health_plan := ObjectCapabilityService.plan_selection_change(
+		empty_selections,
+		"has_health",
+		true
+	)
+	var manual_values: Array[ObjectCapabilitySelection] = []
+	var manual_raw: Variant = manual_health_plan.get("selections", [])
+	if manual_raw is Array:
+		for value in manual_raw:
+			if value is ObjectCapabilitySelection:
+				manual_values.append(value as ObjectCapabilitySelection)
+	var add_damage_to_manual_plan := ObjectCapabilityService.plan_selection_change(
+		manual_values,
+		"can_receive_damage",
+		true
+	)
+	var manual_with_damage: Array[ObjectCapabilitySelection] = []
+	var manual_with_damage_raw: Variant = add_damage_to_manual_plan.get("selections", [])
+	if manual_with_damage_raw is Array:
+		for value in manual_with_damage_raw:
+			if value is ObjectCapabilitySelection:
+				manual_with_damage.append(value as ObjectCapabilitySelection)
+	var remove_manual_damage_plan := ObjectCapabilityService.plan_selection_change(
+		manual_with_damage,
+		"can_receive_damage",
+		false
+	)
+	var manual_health_remains := false
+	var manual_health_is_still_manual := false
+	var remaining_raw: Variant = remove_manual_damage_plan.get("selections", [])
+	if remaining_raw is Array:
+		for value in remaining_raw:
+			if value is ObjectCapabilitySelection and value.capability_id == "has_health":
+				manual_health_remains = (value as ObjectCapabilitySelection).enabled
+				manual_health_is_still_manual = not (value as ObjectCapabilitySelection).automatically_added
+	_expect(
+		bool(remove_manual_damage_plan.get("ok", false))
+		and manual_health_remains
+		and manual_health_is_still_manual,
+		"manually selected Health remains enabled after the dependent capability is removed"
+	)
+
+	var invalid_selection := ObjectCapabilityCatalog.create_selection("unknown_capability")
+	var invalid_plan := ObjectCapabilityService.plan_selection_change(
+		empty_selections,
+		"unknown_capability",
+		true
+	)
+	_expect(
+		not bool(invalid_plan.get("ok", false)),
+		"unknown capability change is rejected before mutating selections"
+	)
+	var disabled_invalid := ObjectCapabilityCatalog.create_selection("unknown_capability")
+	disabled_invalid.enabled = false
+	_expect(
+		ObjectCapabilityService.validate_selections([disabled_invalid]).is_empty(),
+		"disabled legacy selections do not block object validation"
 	)
 
 

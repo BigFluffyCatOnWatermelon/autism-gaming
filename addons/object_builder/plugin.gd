@@ -837,6 +837,9 @@ func _rebuild_capability_list() -> void:
 
 		var enabled_check := CheckBox.new()
 		enabled_check.text = capability.display_name
+		if selection != null and selection.automatically_added:
+			enabled_check.text += " · автоматически"
+			enabled_check.tooltip_text = "Эта возможность нужна другой выбранной возможности. Её нельзя отключить, пока она используется."
 		enabled_check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		enabled_check.button_pressed = is_enabled
 		enabled_check.toggled.connect(_on_capability_toggled.bind(capability_id))
@@ -864,29 +867,57 @@ func _rebuild_capability_list() -> void:
 func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
 	if _working_definition == null:
 		return
-	var next_values: Array[ObjectCapabilitySelection] = _working_definition.capabilities.duplicate()
-	var existing := _find_capability_selection(capability_id)
-	if existing == null:
-		if enabled:
-			var new_selection := ObjectCapabilityCatalog.create_selection(capability_id)
-			if new_selection != null:
-				next_values.append(new_selection)
-	else:
-		var updated := existing.duplicate(true) as ObjectCapabilitySelection
-		updated.enabled = enabled
-		var existing_index := next_values.find(existing)
-		if existing_index >= 0:
-			next_values[existing_index] = updated
+
+	var plan := ObjectCapabilityService.plan_selection_change(
+		_working_definition.capabilities,
+		capability_id,
+		enabled
+	)
+	if not bool(plan.get("ok", false)):
+		_rebuild_capability_list()
+		var errors: PackedStringArray = plan.get("errors", PackedStringArray())
+		_set_status("Изменение не применено: " + "; ".join(errors), true)
+		return
+
+	var next_values: Array[ObjectCapabilitySelection] = []
+	var planned_values: Variant = plan.get("selections", [])
+	if planned_values is Array:
+		for value in planned_values:
+			if value is ObjectCapabilitySelection:
+				next_values.append(value as ObjectCapabilitySelection)
+
+	var added_ids: PackedStringArray = plan.get("added_capability_ids", PackedStringArray())
+	var disabled_ids: PackedStringArray = plan.get("disabled_capability_ids", PackedStringArray())
 	_commit_working_capabilities(next_values, "Изменить возможности объекта")
+
 	var capability := ObjectCapabilityCatalog.get_definition(capability_id)
 	var action_text := "добавлена" if enabled else "отключена"
-	_set_status(
-		"Возможность «%s» %s. Зависимые игровые системы подключаются автоматически." % [
-			capability.display_name if capability != null else capability_id,
-			action_text
-		],
-		false
-	)
+	var status_message := "Возможность «%s» %s." % [
+		capability.display_name if capability != null else capability_id,
+		action_text
+	]
+	if enabled and added_ids.size() > 1:
+		var dependency_names := PackedStringArray()
+		for added_id in added_ids:
+			if added_id == capability_id:
+				continue
+			var dependency := ObjectCapabilityCatalog.get_definition(added_id)
+			dependency_names.append(dependency.display_name if dependency != null else added_id)
+		if not dependency_names.is_empty():
+			status_message += " Автоматически добавлены зависимости: " + ", ".join(dependency_names) + "."
+	elif not enabled and disabled_ids.size() > 1:
+		status_message += " Больше не нужные автоматические зависимости отключены."
+	_set_status(status_message, false)
+
+
+func _duplicate_capability_selections(
+	values: Array[ObjectCapabilitySelection]
+) -> Array[ObjectCapabilitySelection]:
+	var result: Array[ObjectCapabilitySelection] = []
+	for selection in values:
+		if selection != null:
+			result.append(selection.duplicate(true) as ObjectCapabilitySelection)
+	return result
 
 
 func _commit_working_capabilities(
@@ -895,10 +926,11 @@ func _commit_working_capabilities(
 ) -> void:
 	if _working_definition == null:
 		return
-	var previous_values: Array[ObjectCapabilitySelection] = _working_definition.capabilities.duplicate()
+	var previous_values := _duplicate_capability_selections(_working_definition.capabilities)
+	var applied_values := _duplicate_capability_selections(next_values)
 	var undo_redo := EditorInterface.get_editor_undo_redo()
 	undo_redo.create_action("Object Builder: " + action_name, 0, _working_definition)
-	undo_redo.add_do_method(self, "_apply_working_capabilities", next_values.duplicate())
+	undo_redo.add_do_method(self, "_apply_working_capabilities", applied_values)
 	undo_redo.add_undo_method(self, "_apply_working_capabilities", previous_values)
 	undo_redo.commit_action()
 
@@ -906,7 +938,7 @@ func _commit_working_capabilities(
 func _apply_working_capabilities(values: Array[ObjectCapabilitySelection]) -> void:
 	if _working_definition == null:
 		return
-	_working_definition.capabilities = values.duplicate()
+	_working_definition.capabilities = _duplicate_capability_selections(values)
 	_rebuild_capability_list()
 
 

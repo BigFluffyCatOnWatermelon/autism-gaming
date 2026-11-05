@@ -6,6 +6,8 @@ class_name ObjectCapabilitySelection
 
 @export var capability_id: String = ""
 @export var enabled: bool = true
+## True when this choice was added only because an enabled capability requires it.
+@export var automatically_added: bool = false
 @export var target_node_path: NodePath = NodePath(".")
 @export_storage var settings_by_component: Dictionary = {}
 
