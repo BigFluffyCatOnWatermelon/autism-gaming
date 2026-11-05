@@ -925,7 +925,8 @@ func _test_capability_selection_plans() -> void:
 		not bool(invalid_plan.get("ok", false)),
 		"unknown capability change is rejected before mutating selections"
 	)
-	var disabled_invalid := ObjectCapabilityCatalog.create_selection("unknown_capability")
+	var disabled_invalid := ObjectCapabilitySelection.new()
+	disabled_invalid.capability_id = "unknown_capability"
 	disabled_invalid.enabled = false
 	_expect(
 		ObjectCapabilityService.validate_selections([disabled_invalid]).is_empty(),
