@@ -48,26 +48,72 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	instance.set_meta("object_custom_properties", values)
 	instance.set_meta("object_custom_property_definitions", property_definitions)
 
+	var attached_component_ids: Dictionary = {}
 	for component_definition in definition.components:
 		if component_definition == null or not component_definition.enabled:
 			continue
-		if component_definition.component_script == null:
+
+		var component_id := component_definition.component_id.strip_edges().to_lower()
+		if not component_id.is_empty() and attached_component_ids.has(component_id):
+			push_warning("ObjectFactory: повторный компонент '%s' пропущен." % component_id)
 			continue
-		var component_instance: Object = component_definition.component_script.new()
+
+		var catalog_definition := ObjectComponentCatalog.create_definition(component_id)
+		var component_script := component_definition.component_script
+		var component_settings: Dictionary = {}
+		if catalog_definition != null:
+			if component_script == null:
+				component_script = catalog_definition.component_script
+			component_settings = catalog_definition.settings.duplicate(true)
+		for setting_key in component_definition.settings:
+			component_settings[setting_key] = component_definition.settings[setting_key]
+
+		if component_script == null:
+			push_warning(
+				"ObjectFactory: скрипт компонента '%s' не назначен и отсутствует в каталоге."
+				% component_id
+			)
+			continue
+
+		var component_instance: Object = component_script.new()
 		if component_instance is ObjectComponent:
 			var component_node := component_instance as ObjectComponent
-			component_node.name = component_definition.display_name.validate_node_name()
-			component_node.configure(component_definition.settings)
+			var node_name := component_definition.display_name.strip_edges()
+			if node_name.is_empty():
+				node_name = component_id
+			if node_name.is_empty():
+				node_name = "Component"
+			component_node.name = node_name.validate_node_name()
+			component_node.component_id = component_id
+			component_node.configure(component_settings)
 			instance.add_child(component_node)
+			if not component_id.is_empty():
+				attached_component_ids[component_id] = true
 		elif component_instance is Node:
 			push_warning(
 				"ObjectFactory: компонент '%s' не наследует ObjectComponent и пропущен."
-				% component_definition.component_id
+				% component_id
 			)
 			(component_instance as Node).free()
 		else:
 			push_warning("ObjectFactory: скрипт компонента не создал Node.")
 	return instance
+
+
+static func get_component(instance: Node, component_id: String) -> ObjectComponent:
+	if instance == null or component_id.strip_edges().is_empty():
+		return null
+	var normalized_id := component_id.strip_edges().to_lower()
+	for child in instance.get_children():
+		if child is ObjectComponent:
+			var component := child as ObjectComponent
+			if component.component_id.to_lower() == normalized_id:
+				return component
+	return null
+
+
+static func has_component(instance: Node, component_id: String) -> bool:
+	return get_component(instance, component_id) != null
 
 
 static func get_custom_property(
