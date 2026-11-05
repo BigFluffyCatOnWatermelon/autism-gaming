@@ -588,6 +588,11 @@ func _test_component_node_bindings() -> void:
 	logic.name = "Logic"
 	scene_root.add_child(logic)
 
+	visuals.owner = scene_root
+	physics.owner = scene_root
+	hitbox.owner = scene_root
+	logic.owner = scene_root
+
 	var packed_scene := PackedScene.new()
 	_expect(packed_scene.pack(scene_root) == OK, "multi-part object scene can be packed")
 	scene_root.free()
