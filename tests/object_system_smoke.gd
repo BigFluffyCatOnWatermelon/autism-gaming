@@ -7,6 +7,7 @@ func _initialize() -> void:
 	_test_runtime_property_values()
 	_test_definition_range_validation()
 	_test_object_type_default()
+	_test_serialized_property_data()
 
 	if failures.is_empty():
 		print("OBJECT_SYSTEM_TESTS: PASS")
@@ -82,6 +83,16 @@ func _test_runtime_property_values() -> void:
 		"property definition metadata is attached to instance"
 	)
 
+	var property_data := instance.get_node_or_null("ObjectProperties") as ObjectPropertyData
+	_expect(property_data != null, "factory attaches a serialized property data node")
+	if property_data != null:
+		var inspector_has_health := false
+		for property_info in property_data.get_property_list():
+			if str(property_info.get("name", "")).ends_with("_health"):
+				inspector_has_health = true
+				_expect(int(property_info.get("type", TYPE_NIL)) == TYPE_INT, "health is exposed as an integer Inspector property")
+		_expect(inspector_has_health, "custom property is exposed in the native Inspector property list")
+
 	instance.free()
 
 	var invalid_override_instance := ObjectFactory.instantiate(definition, {"health": "invalid"})
@@ -122,6 +133,40 @@ func _test_object_type_default() -> void:
 	definition.display_name = "Typed Object"
 	definition.object_type = "resource"
 	_expect(ObjectLibraryService.validate_definition(definition).is_empty(), "typed definition passes validation")
+
+
+func _test_serialized_property_data() -> void:
+	var health := _make_property("health", "Integer", 100)
+	health.group_name = "Combat"
+	health.has_range = true
+	health.minimum = 1
+	health.maximum = 200
+
+	var root := Node2D.new()
+	root.name = "PropertyDataSmokeTest"
+	var property_data := ObjectPropertyData.new()
+	property_data.name = "ObjectProperties"
+	property_data.configure([health], {"health": 145}, false)
+	root.add_child(property_data)
+	property_data.owner = root
+
+	_expect(property_data.get("combat_health") == 145, "dynamic Inspector getter returns stored custom value")
+	_expect(property_data.set("combat_health", 250), "dynamic Inspector setter accepts valid custom value")
+	_expect(property_data.get("combat_health") == 200, "dynamic Inspector setter clamps the configured range")
+	_expect(property_data._property_get_revert("combat_health") == 100, "dynamic Inspector revert value uses definition default")
+
+	var packed := PackedScene.new()
+	_expect(packed.pack(root) == OK, "property data node can be packed into a scene")
+	var restored_root := packed.instantiate()
+	_expect(restored_root != null, "packed object scene can be instantiated")
+	if restored_root != null:
+		var restored_data := restored_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
+		_expect(restored_data != null, "packed scene keeps the property data node")
+		if restored_data != null:
+			_expect(restored_data.get_custom_property("health") == 200, "custom values survive scene pack and instantiate")
+			_expect(restored_data.get_custom_property_definition("health") != null, "custom definitions survive scene pack and instantiate")
+		restored_root.free()
+	root.free()
 
 
 func _make_property(
