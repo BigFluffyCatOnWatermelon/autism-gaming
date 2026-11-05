@@ -52,6 +52,8 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 		errors.append("Укажи название объекта.")
 	if definition.category.strip_edges().is_empty():
 		errors.append("Укажи категорию объекта.")
+	if definition.object_type.strip_edges().is_empty():
+		errors.append("Укажи тип объекта.")
 
 	var used_property_ids: Dictionary = {}
 	for property_definition in definition.custom_properties:
