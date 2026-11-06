@@ -6,6 +6,8 @@ class_name ObjectCapabilityCatalog
 const CAPABILITY_LIBRARY_DATA = preload("res://scripts/object_system/object_capability_library_data.gd")
 const CHARACTERISTICS_MODULE := preload("res://addons/object_builder/mechanics/characteristics/module.gd")
 const COMBAT_MODULE := preload("res://addons/object_builder/mechanics/combat/module.gd")
+const DEFENSE_MODULE := preload("res://addons/object_builder/mechanics/defense/module.gd")
+const DESTRUCTION_MODULE := preload("res://addons/object_builder/mechanics/destruction/module.gd")
 
 const BUILTIN_CATEGORIES := [
 	{"id": "general", "display_name": "Основное", "order": 0},
@@ -295,6 +297,12 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 		implemented_by_id[definition.capability_id] = definition
 	var combat_module: Variant = COMBAT_MODULE.new()
 	for definition in combat_module.build_capability_definitions():
+		implemented_by_id[definition.capability_id] = definition
+	var defense_module: Variant = DEFENSE_MODULE.new()
+	for definition in defense_module.build_capability_definitions():
+		implemented_by_id[definition.capability_id] = definition
+	var destruction_module: Variant = DESTRUCTION_MODULE.new()
+	for definition in destruction_module.build_capability_definitions():
 		implemented_by_id[definition.capability_id] = definition
 	for planned_definition in CAPABILITY_LIBRARY_DATA.create_definitions():
 		var capability_id := planned_definition.capability_id
