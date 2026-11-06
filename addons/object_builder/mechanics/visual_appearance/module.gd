@@ -65,7 +65,7 @@ func build_capability_definitions() -> Array:
         capability.icon = "image"
         capability.keywords = PackedStringArray(item["keywords"])
         capability.component_ids = PackedStringArray([item["id"]])
-        capability.available_in_simple_mode = false
+        capability.available_in_simple_mode = true
         capability.runtime_status = "Planned"
         capability.implementation_note = STATE_NOTE
         capability.version = 1

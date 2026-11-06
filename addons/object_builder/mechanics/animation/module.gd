@@ -12,7 +12,8 @@ const SCRIPT_EVENTS = preload("res://addons/object_builder/mechanics/animation/c
 const SCRIPT_FRAME_EVENTS = preload("res://addons/object_builder/mechanics/animation/components/frame_events.gd")
 const SCRIPT_VARIANTS = preload("res://addons/object_builder/mechanics/animation/components/animation_variants.gd")
 
-const CATEGORY_ID := "animation"
+const COMPONENT_CATEGORY_ID := "Appearance"
+const CAPABILITY_CATEGORY_ID := "animation"
 const CATEGORY_NAME := "Анимация"
 const STATE_NOTE := "Локальная логика компонента реализована. Для активации в Object Builder требуется подтверждённая привязка AnimationPlayer/AnimatedSprite2D к экземпляру и проектные smoke-тесты."
 
@@ -36,8 +37,8 @@ func build_component_definitions() -> Array:
         definition.component_id = item["id"]
         definition.display_name = item["name"]
         definition.description = item["description"]
-        definition.category = "Animation"
-        definition.category_id = CATEGORY_ID
+        definition.category = "Appearance"
+        definition.category_id = COMPONENT_CATEGORY_ID
         definition.category_display_name = CATEGORY_NAME
         definition.component_version = 1
         definition.component_script = item["script"]
@@ -57,7 +58,7 @@ func build_capability_definitions() -> Array:
         capability.capability_id = item["id"]
         capability.display_name = item["name"]
         capability.description = item["description"]
-        capability.category_id = CATEGORY_ID
+        capability.category_id = CAPABILITY_CATEGORY_ID
         capability.category_name = CATEGORY_NAME
         capability.icon = "animation"
         capability.keywords = PackedStringArray(item["keywords"])

@@ -12,7 +12,8 @@ const SCRIPT_LEVEL = preload("res://addons/object_builder/mechanics/object_ident
 const SCRIPT_EXPERIENCE = preload("res://addons/object_builder/mechanics/object_identity/components/experience.gd")
 const SCRIPT_METADATA = preload("res://addons/object_builder/mechanics/object_identity/components/metadata.gd")
 
-const CATEGORY_ID := "basic"
+const COMPONENT_CATEGORY_ID := "Stats"
+const CAPABILITY_CATEGORY_ID := "general"
 const CATEGORY_NAME := "Основное"
 const STATE_NOTE := "Компонент проверяет и изменяет собственное состояние. Для сохранения runtime-изменений ядро должно сохранять export_runtime_state() и вызывать import_runtime_state() при восстановлении."
 
@@ -37,8 +38,8 @@ func build_component_definitions() -> Array:
         definition.component_id = item["id"]
         definition.display_name = item["name"]
         definition.description = item["description"]
-        definition.category = "General"
-        definition.category_id = CATEGORY_ID
+        definition.category = "Stats"
+        definition.category_id = COMPONENT_CATEGORY_ID
         definition.category_display_name = CATEGORY_NAME
         definition.component_version = 1
         definition.component_script = item["script"]
@@ -59,7 +60,7 @@ func build_capability_definitions() -> Array:
         capability.capability_id = item["id"]
         capability.display_name = item["name"]
         capability.description = item["description"]
-        capability.category_id = CATEGORY_ID
+        capability.category_id = CAPABILITY_CATEGORY_ID
         capability.category_name = CATEGORY_NAME
         capability.icon = "dot"
         capability.keywords = PackedStringArray(item["keywords"])

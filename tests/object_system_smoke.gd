@@ -1172,8 +1172,10 @@ func _test_capability_library_size_and_status() -> void:
 			implemented_count += 1
 		elif definition.runtime_status == "Planned":
 			planned_count += 1
-			if not definition.component_ids.is_empty():
-				planned_without_runtime = false
+			for component_id in definition.component_ids:
+				var runtime_component := ObjectComponentCatalog.create_definition(str(component_id))
+				if runtime_component == null or runtime_component.component_script == null:
+					planned_without_runtime = false
 		else:
 			planned_without_runtime = false
 
