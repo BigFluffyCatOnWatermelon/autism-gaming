@@ -151,6 +151,100 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 			"group_name": "Восстановление"
 		})
 		return result
+	if normalized_id == "pickup":
+		result.append({
+			"key": "item_id",
+			"display_name": "ID предмета",
+			"value_type": "String",
+			"default_value": "",
+			"group_name": "Предмет",
+			"required": true
+		})
+		result.append({
+			"key": "quantity",
+			"display_name": "Количество",
+			"value_type": "Integer",
+			"default_value": 1,
+			"group_name": "Предмет",
+			"has_range": true,
+			"minimum": 1,
+			"maximum": 99999
+		})
+		result.append({
+			"key": "pickup_radius",
+			"display_name": "Радиус подбора",
+			"value_type": "Float",
+			"default_value": 24.0,
+			"group_name": "Доступность",
+			"has_range": true,
+			"minimum": 1.0,
+			"maximum": 512.0
+		})
+		result.append({
+			"key": "can_be_picked_up",
+			"display_name": "Разрешить подбор",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "Доступность"
+		})
+		result.append({
+			"key": "remove_object_when_empty",
+			"display_name": "Удалить объект после подбора",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "После подбора"
+		})
+		return result
+	if normalized_id == "interactable":
+		result.append({
+			"key": "can_be_interacted_with",
+			"display_name": "Разрешить взаимодействие",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "Доступность"
+		})
+		result.append({
+			"key": "prompt_text",
+			"display_name": "Текст подсказки",
+			"value_type": "String",
+			"default_value": "E — Взаимодействовать",
+			"group_name": "Подсказка"
+		})
+		result.append({
+			"key": "interaction_radius",
+			"display_name": "Радиус взаимодействия",
+			"value_type": "Float",
+			"default_value": 72.0,
+			"group_name": "Дистанция",
+			"has_range": true,
+			"minimum": 1.0,
+			"maximum": 512.0
+		})
+		result.append({
+			"key": "interaction_method",
+			"display_name": "Метод объекта",
+			"value_type": "String",
+			"default_value": "",
+			"group_name": "Действие"
+		})
+		result.append({
+			"key": "interact_once",
+			"display_name": "Только один раз",
+			"value_type": "Boolean",
+			"default_value": false,
+			"group_name": "Действие"
+		})
+		result.append({
+			"key": "cooldown_seconds",
+			"display_name": "Перезарядка взаимодействия",
+			"value_type": "Float",
+			"default_value": 0.25,
+			"group_name": "Действие",
+			"has_range": true,
+			"minimum": 0.0,
+			"maximum": 60.0
+		})
+		return result
 	if normalized_id != "health":
 		return result
 

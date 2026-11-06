@@ -2,6 +2,7 @@ extends RefCounted
 class_name ObjectFactory
 
 const MECHANIC_MODULE_LOADER = preload("res://scripts/object_system/mechanic_module_loader.gd")
+const OBJECT_SCENE_STRUCTURE_SERVICE = preload("res://scripts/object_system/object_scene_structure_service.gd")
 static var _mechanic_modules_attempted := false
 
 
@@ -48,6 +49,15 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 		instance.add_child(property_data)
 		property_data.owner = instance
 	property_data.configure(definition.custom_properties, property_overrides, true)
+
+	# Build and validate the declarative node tree before attaching mechanic components.
+	var structure_result := OBJECT_SCENE_STRUCTURE_SERVICE.apply_structure(definition, instance)
+	if not bool(structure_result.get("ok", false)):
+		var structure_errors: PackedStringArray = structure_result.get("errors", PackedStringArray())
+		for error_message in structure_errors:
+			push_error("ObjectFactory: " + error_message)
+		instance.free()
+		return null
 
 	var values := property_data.get_values()
 	var property_definitions: Dictionary = {}

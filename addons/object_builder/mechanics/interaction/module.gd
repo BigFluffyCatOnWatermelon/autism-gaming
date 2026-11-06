@@ -33,6 +33,8 @@ const DEFINITIONS := [
 func build_component_definitions() -> Array:
     var result: Array = []
     for item in DEFINITIONS:
+        if str(item["id"]) == "can_interact":
+            continue
         var definition := ObjectComponentDefinition.new()
         definition.component_id = item["id"]
         definition.display_name = item["name"]
@@ -54,6 +56,8 @@ func build_component_definitions() -> Array:
 func build_capability_definitions() -> Array:
     var result: Array = []
     for item in DEFINITIONS:
+        if str(item["id"]) == "can_interact":
+            continue
         var capability := ObjectCapabilityDefinition.new()
         capability.capability_id = item["id"]
         capability.display_name = item["name"]
