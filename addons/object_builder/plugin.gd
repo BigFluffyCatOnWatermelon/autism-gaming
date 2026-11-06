@@ -368,34 +368,35 @@ func _build_ui() -> void:
 
 func _build_workspace_toolbar(parent: VBoxContainer) -> void:
 	var toolbar := HBoxContainer.new()
-	layout.add_child(toolbar)
+	parent.add_child(toolbar)
 	var title := Label.new()
 	title.text = "Object Builder"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toolbar.add_child(title)
 	
-	var new_button := Button.new()
-	new_button.text = "Создать объект"
-	new_button.tooltip_text = "Начать создание нового игрового объекта"
-	new_button.pressed.connect(_on_new_object_pressed)
-	toolbar.add_child(new_button)
-	
-	var template_button := Button.new()
-	template_button.text = "Из шаблона"
-	template_button.pressed.connect(_on_create_from_template_pressed)
-	toolbar.add_child(template_button)
-	
-	var refresh_button := Button.new()
-	refresh_button.text = "↻"
-	refresh_button.tooltip_text = "Обновить библиотеку"
-	refresh_button.pressed.connect(_on_refresh_pressed)
-	toolbar.add_child(refresh_button)
+	ObjectBuilderUIFactory.add_action_button(
+		toolbar,
+		"Создать объект",
+		_on_new_object_pressed,
+		"Начать создание нового игрового объекта"
+	)
+	ObjectBuilderUIFactory.add_action_button(
+		toolbar,
+		"Из шаблона",
+		_on_create_from_template_pressed
+	)
+	ObjectBuilderUIFactory.add_action_button(
+		toolbar,
+		"↻",
+		_on_refresh_pressed,
+		"Обновить библиотеку"
+	)
 
 
 func _build_library_panel(parent: HSplitContainer) -> void:
 	var library_panel := VBoxContainer.new()
 	library_panel.custom_minimum_size = Vector2(210, 0)
-	split.add_child(library_panel)
+	parent.add_child(library_panel)
 	
 	_search = LineEdit.new()
 	_search.placeholder_text = "Найти объект…"
@@ -452,10 +453,7 @@ func _build_simple_editor(parent: TabContainer) -> void:
 	simple_editor.add_theme_constant_override("separation", 10)
 	simple_scroll.add_child(simple_editor)
 	
-	var simple_heading := Label.new()
-	simple_heading.text = "СОЗДАЙ СВОЙ ОБЪЕКТ"
-	simple_heading.add_theme_font_size_override("font_size", 18)
-	simple_editor.add_child(simple_heading)
+	ObjectBuilderUIFactory.create_section_title(simple_editor, "СОЗДАЙ СВОЙ ОБЪЕКТ", 18)
 	
 	_name_edit = _add_labeled_line_edit(simple_editor, "Название", "Например, Волшебный сундук")
 	
@@ -472,10 +470,7 @@ func _build_simple_editor(parent: TabContainer) -> void:
 	_favorite_button.pressed.connect(_on_toggle_favorite_pressed)
 	favorite_row.add_child(_favorite_button)
 	
-	var appearance_title := Label.new()
-	appearance_title.text = "ВНЕШНИЙ ВИД"
-	appearance_title.add_theme_font_size_override("font_size", 16)
-	simple_editor.add_child(appearance_title)
+	ObjectBuilderUIFactory.create_section_title(simple_editor, "ВНЕШНИЙ ВИД", 16)
 	
 	_simple_preview = TextureRect.new()
 	_simple_preview.custom_minimum_size = Vector2(0, 150)
@@ -485,18 +480,16 @@ func _build_simple_editor(parent: TabContainer) -> void:
 	_simple_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	simple_editor.add_child(_simple_preview)
 	
-	var add_image_button := Button.new()
-	add_image_button.text = "+ Добавить изображение"
-	add_image_button.tooltip_text = "Добавить картинку или ещё одну часть объекта"
-	add_image_button.pressed.connect(_on_simple_add_image_pressed)
-	simple_editor.add_child(add_image_button)
+	ObjectBuilderUIFactory.add_action_button(
+		simple_editor,
+		"+ Добавить изображение",
+		_on_simple_add_image_pressed,
+		"Добавить картинку или ещё одну часть объекта"
+	)
 	
 	_build_capability_editor(simple_editor)
 	
-	var save_button := Button.new()
-	save_button.text = "Сохранить объект"
-	save_button.pressed.connect(_on_save_pressed)
-	simple_editor.add_child(save_button)
+	ObjectBuilderUIFactory.add_action_button(simple_editor, "Сохранить объект", _on_save_pressed)
 	
 	_status_label = Label.new()
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -516,10 +509,7 @@ func _build_advanced_editor(parent: TabContainer) -> void:
 	advanced_editor.add_theme_constant_override("separation", 7)
 	advanced_scroll.add_child(advanced_editor)
 	
-	var advanced_title := Label.new()
-	advanced_title.text = "ТЕХНИЧЕСКИЕ НАСТРОЙКИ"
-	advanced_title.add_theme_font_size_override("font_size", 16)
-	advanced_editor.add_child(advanced_title)
+	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ТЕХНИЧЕСКИЕ НАСТРОЙКИ", 16)
 	
 	_id_edit = _add_labeled_line_edit(advanced_editor, "Постоянный ID", "Создаётся автоматически")
 	_id_edit.editable = false
@@ -541,29 +531,29 @@ func _build_advanced_editor(parent: TabContainer) -> void:
 	_template_check.tooltip_text = "Сохранит новую заготовку отдельно от игровых объектов."
 	advanced_editor.add_child(_template_check)
 	
-	var scene_title := Label.new()
-	scene_title.text = "ДЕРЕВО СЦЕНЫ"
-	advanced_editor.add_child(scene_title)
+	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ДЕРЕВО СЦЕНЫ")
 	
 	var scene_toolbar := HBoxContainer.new()
 	advanced_editor.add_child(scene_toolbar)
-	var add_node_button := Button.new()
-	add_node_button.text = "+ Дочерний узел"
-	add_node_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_node_button.pressed.connect(_on_add_node_pressed)
-	scene_toolbar.add_child(add_node_button)
-	
-	var remove_node_button := Button.new()
-	remove_node_button.text = "Удалить"
-	remove_node_button.tooltip_text = "Удаляет выбранный дочерний узел через Undo/Redo."
-	remove_node_button.pressed.connect(_on_remove_node_pressed)
-	scene_toolbar.add_child(remove_node_button)
-	
-	var refresh_tree_button := Button.new()
-	refresh_tree_button.text = "↻"
-	refresh_tree_button.tooltip_text = "Обновить дерево открытой сцены объекта."
-	refresh_tree_button.pressed.connect(_refresh_scene_tree)
-	scene_toolbar.add_child(refresh_tree_button)
+	ObjectBuilderUIFactory.add_action_button(
+		scene_toolbar,
+		"+ Дочерний узел",
+		_on_add_node_pressed,
+		"",
+		true
+	)
+	ObjectBuilderUIFactory.add_action_button(
+		scene_toolbar,
+		"Удалить",
+		_on_remove_node_pressed,
+		"Удаляет выбранный дочерний узел через Undo/Redo."
+	)
+	ObjectBuilderUIFactory.add_action_button(
+		scene_toolbar,
+		"↻",
+		_refresh_scene_tree,
+		"Обновить дерево открытой сцены объекта."
+	)
 	
 	_scene_tree = Tree.new()
 	_scene_tree.custom_minimum_size = Vector2(0, 190)
@@ -589,9 +579,7 @@ func _build_advanced_editor(parent: TabContainer) -> void:
 	_open_scene_button.pressed.connect(_on_open_scene_pressed)
 	open_scene_row.add_child(_open_scene_button)
 	
-	var properties_title := Label.new()
-	properties_title.text = "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА"
-	advanced_editor.add_child(properties_title)
+	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА")
 	
 	var properties_hint := Label.new()
 	properties_hint.text = "Расширенные типизированные свойства и их значения по умолчанию."
@@ -601,10 +589,11 @@ func _build_advanced_editor(parent: TabContainer) -> void:
 	_property_list = VBoxContainer.new()
 	advanced_editor.add_child(_property_list)
 	
-	var add_property_button := Button.new()
-	add_property_button.text = "+ Добавить свойство"
-	add_property_button.pressed.connect(_on_add_property_pressed)
-	advanced_editor.add_child(add_property_button)
+	ObjectBuilderUIFactory.add_action_button(
+		advanced_editor,
+		"+ Добавить свойство",
+		_on_add_property_pressed
+	)
 	
 	_build_component_editor(advanced_editor)
 
@@ -618,10 +607,7 @@ func _build_dialogs() -> void:
 
 
 func _build_capability_editor(parent: VBoxContainer) -> void:
-	var title := Label.new()
-	title.text = "ЧТО ДОЛЖЕН УМЕТЬ ОБЪЕКТ?"
-	title.add_theme_font_size_override("font_size", 16)
-	parent.add_child(title)
+	ObjectBuilderUIFactory.create_section_title(parent, "ЧТО ДОЛЖЕН УМЕТЬ ОБЪЕКТ?", 16)
 
 	var hint := Label.new()
 	hint.text = "Выбирай возможности обычными словами. Нужные игровые системы плагин подключит сам."
@@ -692,9 +678,10 @@ func _rebuild_capability_list() -> void:
 	ObjectBuilderUIFactory.clear_children(_capability_list)
 
 	if _working_definition == null:
-		var empty_label := Label.new()
-		empty_label.text = "Сначала создай объект или выбери его в библиотеке."
-		_capability_list.add_child(empty_label)
+		ObjectBuilderUIFactory.add_empty_state(
+			_capability_list,
+			"Сначала создай объект или выбери его в библиотеке."
+		)
 		return
 
 	var category_id := ""
@@ -1198,9 +1185,7 @@ func _rebuild_component_list() -> void:
 	ObjectBuilderUIFactory.clear_children(_component_list)
 
 	if _working_definition == null or _working_definition.components.is_empty():
-		var empty_label := Label.new()
-		empty_label.text = "Компоненты не добавлены."
-		_component_list.add_child(empty_label)
+		ObjectBuilderUIFactory.add_empty_state(_component_list, "Компоненты не добавлены.")
 		return
 
 	for component_definition in _working_definition.components:
@@ -2029,9 +2014,7 @@ func _rebuild_property_list() -> void:
 		return
 
 	if _working_definition.custom_properties.is_empty():
-		var empty_label := Label.new()
-		empty_label.text = "Пока нет пользовательских свойств."
-		_property_list.add_child(empty_label)
+		ObjectBuilderUIFactory.add_empty_state(_property_list, "Пока нет пользовательских свойств.")
 		return
 
 	var groups: Dictionary = {}
