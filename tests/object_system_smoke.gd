@@ -1,5 +1,7 @@
 extends SceneTree
 
+const MECHANIC_MODULE_LOADER = preload("res://scripts/object_system/mechanic_module_loader.gd")
+
 var failures := PackedStringArray()
 var health_died_signal_received := false
 var destructible_destroyed_received := false
@@ -10,6 +12,10 @@ func _initialize() -> void:
 
 
 func _run_tests() -> void:
+	var module_errors := MECHANIC_MODULE_LOADER.register_modules_in_directory()
+	for error_message in module_errors:
+		failures.append("mechanic module loader: " + error_message)
+	_test_mechanic_modules_registered()
 	_test_runtime_property_values()
 	_test_definition_range_validation()
 	_test_object_type_default()
@@ -1664,3 +1670,42 @@ func _on_destructible_destroyed(_source: Node) -> void:
 func _expect(condition: bool, description: String) -> void:
 	if not condition:
 		failures.append(description)
+
+
+
+func _test_mechanic_modules_registered() -> void:
+	var expected_modules := PackedStringArray([
+		"animation",
+		"characteristics",
+		"combat",
+		"defense",
+		"destruction",
+		"interaction",
+		"movement",
+		"object_identity",
+		"physics",
+		"visual_appearance"
+	])
+	var loaded_modules := MECHANIC_MODULE_LOADER.get_loaded_module_ids()
+	for module_id in expected_modules:
+		_expect(loaded_modules.has(module_id), "mechanic package is registered: " + module_id)
+
+	var expected_capabilities := PackedStringArray([
+		"plays_idle_animation",
+		"has_stamina",
+		"can_block",
+		"has_armor",
+		"can_break_into_parts",
+		"can_interact",
+		"can_jump",
+		"has_unique_identity",
+		"has_collision",
+		"has_sprite"
+	])
+	for capability_id in expected_capabilities:
+		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
+		var component := ObjectComponentCatalog.create_definition(capability_id)
+		_expect(capability != null, "module capability is visible: " + capability_id)
+		_expect(component != null and component.component_script != null, "module component is registered: " + capability_id)
+		if capability != null:
+			_expect(capability.runtime_status in ["Implemented", "Planned"], "module capability has a valid status: " + capability_id)

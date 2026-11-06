@@ -13,7 +13,9 @@ func _initialize() -> void:
  var restored=STAT.new()
  restored.configure(state)
  if restored.get_value()!=stat.get_value(): errors.append("Runtime state restore failed.")
- if errors.is_empty(): print("Characteristics smoke: PASS")
+ if errors.is_empty():
+  print("Characteristics smoke: PASS")
+  quit(0)
  else:
   for error in errors: push_error(error)
   quit(1)

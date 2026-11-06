@@ -4,10 +4,6 @@ class_name ObjectCapabilityCatalog
 ## Registry of user-facing capability cards. Built-in and extension definitions share one API.
 
 const CAPABILITY_LIBRARY_DATA = preload("res://scripts/object_system/object_capability_library_data.gd")
-const CHARACTERISTICS_MODULE := preload("res://addons/object_builder/mechanics/characteristics/module.gd")
-const COMBAT_MODULE := preload("res://addons/object_builder/mechanics/combat/module.gd")
-const DEFENSE_MODULE := preload("res://addons/object_builder/mechanics/defense/module.gd")
-const DESTRUCTION_MODULE := preload("res://addons/object_builder/mechanics/destruction/module.gd")
 
 const BUILTIN_CATEGORIES := [
 	{"id": "general", "display_name": "Основное", "order": 0},
@@ -34,6 +30,7 @@ const BUILTIN_CATEGORIES := [
 
 static var _definitions: Dictionary = {}
 static var _sources: Dictionary = {}
+static var _library_definitions: Dictionary = {}
 static var _initialized: bool = false
 
 
@@ -73,10 +70,19 @@ static func register_definitions(
 		if incoming.has(capability_id):
 			errors.append("В пакете повторяется ID возможности: " + capability_id)
 			continue
-		if _definitions.has(capability_id) and str(_sources.get(capability_id, "")) != normalized_source:
+
+		var existing := _definitions.get(capability_id) as ObjectCapabilityDefinition
+		var existing_source := str(_sources.get(capability_id, ""))
+		var promotes_catalog_placeholder := (
+			existing != null
+			and existing.runtime_status == "Planned"
+			and _library_definitions.has(capability_id)
+			and existing_source == "builtin"
+			and normalized_source.begins_with("mechanic_module:")
+		)
+		if existing != null and existing_source != normalized_source and not promotes_catalog_placeholder:
 			errors.append("ID возможности уже зарегистрирован другим источником: " + capability_id)
 			continue
-		var existing := _definitions.get(capability_id) as ObjectCapabilityDefinition
 		if existing != null and existing.version > definition.version:
 			errors.append("Нельзя понизить версию возможности '%s' с %d до %d." % [
 				capability_id,
@@ -84,6 +90,7 @@ static func register_definitions(
 				definition.version
 			])
 			continue
+
 		var copy := definition.duplicate(true) as ObjectCapabilityDefinition
 		copy.capability_id = capability_id
 		incoming[capability_id] = copy
@@ -110,10 +117,12 @@ static func register_definitions(
 	return errors
 
 
-## Removes all cards from a source only when no remaining card depends on them.
 static func unregister_source(source_id: String) -> PackedStringArray:
 	_ensure_initialized()
 	var normalized_source := source_id.strip_edges()
+	if normalized_source.is_empty():
+		return PackedStringArray(["Для отключения возможностей нужен непустой source_id."])
+
 	var remove_ids := PackedStringArray()
 	for capability_id in _sources:
 		if str(_sources[capability_id]) == normalized_source:
@@ -121,16 +130,28 @@ static func unregister_source(source_id: String) -> PackedStringArray:
 	if remove_ids.is_empty():
 		return PackedStringArray()
 
+	# Restore reserved catalogue cards as Planned instead of deleting them.
 	var candidate := _definitions.duplicate(true)
+	var restore_definitions: Dictionary = {}
 	for capability_id in remove_ids:
-		candidate.erase(capability_id)
+		if _library_definitions.has(capability_id):
+			var fallback := (_library_definitions[capability_id] as ObjectCapabilityDefinition).duplicate(true)
+			restore_definitions[capability_id] = fallback
+			candidate[capability_id] = fallback
+		else:
+			candidate.erase(capability_id)
+
 	var errors := _validate_dependency_graph(candidate)
 	if not errors.is_empty():
 		return errors
 
 	for capability_id in remove_ids:
-		_definitions.erase(capability_id)
-		_sources.erase(capability_id)
+		if restore_definitions.has(capability_id):
+			_definitions[capability_id] = restore_definitions[capability_id]
+			_sources[capability_id] = "builtin"
+		else:
+			_definitions.erase(capability_id)
+			_sources.erase(capability_id)
 	return PackedStringArray()
 
 
@@ -291,30 +312,11 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	destructible.component_ids = PackedStringArray(["destructible"])
 	destructible.display_order = 10
 	result.append(destructible)
-	var implemented_by_id: Dictionary = {}
-	var characteristics_module: Variant = CHARACTERISTICS_MODULE.new()
-	for definition in characteristics_module.build_capability_definitions():
-		implemented_by_id[definition.capability_id] = definition
-	var combat_module: Variant = COMBAT_MODULE.new()
-	for definition in combat_module.build_capability_definitions():
-		implemented_by_id[definition.capability_id] = definition
-	var defense_module: Variant = DEFENSE_MODULE.new()
-	for definition in defense_module.build_capability_definitions():
-		implemented_by_id[definition.capability_id] = definition
-	var destruction_module: Variant = DESTRUCTION_MODULE.new()
-	for definition in destruction_module.build_capability_definitions():
-		implemented_by_id[definition.capability_id] = definition
 	for planned_definition in CAPABILITY_LIBRARY_DATA.create_definitions():
 		var capability_id := planned_definition.capability_id
-		if implemented_by_id.has(capability_id):
-			var active_definition := implemented_by_id[capability_id] as ObjectCapabilityDefinition
-			active_definition.display_order = planned_definition.display_order
-			result.append(active_definition)
-			implemented_by_id.erase(capability_id)
-		else:
-			result.append(planned_definition)
-	for missing_id in implemented_by_id:
-		push_error("ObjectCapabilityCatalog: механика отсутствует в основном каталоге: " + str(missing_id))
+		var library_copy := planned_definition.duplicate(true) as ObjectCapabilityDefinition
+		_library_definitions[capability_id] = library_copy
+		result.append(library_copy.duplicate(true) as ObjectCapabilityDefinition)
 	return result
 
 

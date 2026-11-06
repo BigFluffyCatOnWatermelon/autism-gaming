@@ -12,7 +12,8 @@ const SCRIPT_LAYER = preload("res://addons/object_builder/mechanics/visual_appea
 const SCRIPT_FLIP = preload("res://addons/object_builder/mechanics/visual_appearance/components/flip.gd")
 const SCRIPT_PALETTE = preload("res://addons/object_builder/mechanics/visual_appearance/components/palette_swap.gd")
 
-const CATEGORY_ID := "appearance"
+const COMPONENT_CATEGORY_ID := "Appearance"
+const CAPABILITY_CATEGORY_ID := "visual"
 const CATEGORY_NAME := "Внешний вид"
 const STATE_NOTE := "Компонент содержит рабочие операции применения внешнего вида. Для включения в Object Builder ядро должно передать целевой узел/привязку, вызывать публичный метод применения и сохранять runtime-состояние."
 
@@ -37,8 +38,8 @@ func build_component_definitions() -> Array:
         definition.component_id = item["id"]
         definition.display_name = item["name"]
         definition.description = item["description"]
-        definition.category = "Visual"
-        definition.category_id = CATEGORY_ID
+        definition.category = "Appearance"
+        definition.category_id = COMPONENT_CATEGORY_ID
         definition.category_display_name = CATEGORY_NAME
         definition.component_version = 1
         definition.component_script = item["script"]
@@ -55,7 +56,7 @@ func build_capability_definitions() -> Array:
         capability.capability_id = item["id"]
         capability.display_name = item["name"]
         capability.description = item["description"]
-        capability.category_id = CATEGORY_ID
+        capability.category_id = CAPABILITY_CATEGORY_ID
         capability.category_name = CATEGORY_NAME
         capability.icon = "image"
         capability.keywords = PackedStringArray(item["keywords"])
