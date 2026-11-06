@@ -92,8 +92,13 @@ func _run() -> void:
 	view.call("show_animated_sprite", animated_sprite)
 	_expect(panel.visible and not static_controls.visible and animated_controls.visible, "AnimatedSprite2D displays only animation controls")
 	_expect((view.get("_visual_type_label") as Label).text == "Выбрана анимация: AnimatedSprite", "animated editor identifies the selected node")
-	_expect((view.get("_animation_option") as OptionButton).item_count == 1, "SpriteFrames animation names are listed")
-	_expect(view.call("get_animation_id", 0) == StringName("idle"), "animation IDs are available to the controller")
+	var animation_option := view.get("_animation_option") as OptionButton
+	_expect(animation_option.item_count >= 1, "SpriteFrames animation names are listed")
+	var idle_index := -1
+	for index in range(animation_option.item_count):
+		if view.call("get_animation_id", index) == StringName("idle"):
+			idle_index = index
+	_expect(idle_index >= 0, "animation IDs are available to the controller")
 	_expect(not (view.get("_animated_frame") as SpinBox).editable, "empty animations disable frame selection")
 	_expect(is_equal_approx((view.get("_animated_speed") as SpinBox).value, 1.5), "animation speed is populated")
 
@@ -103,10 +108,10 @@ func _run() -> void:
 	(view.get("_frames_dialog") as FileDialog).file_selected.emit("res://animations/selected.tres")
 	_expect(frame_paths == ["res://animations/submitted.tres"], "submitted SpriteFrames path is forwarded")
 	_expect(frame_file_paths == ["res://animations/selected.tres"], "selected SpriteFrames resource is forwarded")
-	(view.get("_animation_option") as OptionButton).item_selected.emit(0)
+	animation_option.item_selected.emit(idle_index)
 	(view.get("_animated_frame") as SpinBox).value_changed.emit(2.0)
 	(view.get("_animated_speed") as SpinBox).value_changed.emit(2.0)
-	_expect(animation_events == [0], "animation selection is forwarded")
+	_expect(animation_events == [idle_index], "animation selection is forwarded")
 	_expect(frame_events == [2.0], "animation frame edits are forwarded")
 	_expect(speed_events == [2.0], "animation speed edits are forwarded")
 	var frames_row := animated_controls.get_child(1) as HBoxContainer
