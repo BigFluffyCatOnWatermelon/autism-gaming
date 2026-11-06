@@ -650,6 +650,19 @@ func _test_declarative_scene_structure() -> void:
 			"declared signal connection is applied"
 		)
 
+	var definition_path := "user://object_builder_structure_smoke.tres"
+	var definition_save_error := ResourceSaver.save(definition, definition_path)
+	_expect(definition_save_error == OK, "node and signal definitions serialize as ObjectDefinition resources")
+	if definition_save_error == OK:
+		var loaded_definition := ResourceLoader.load(definition_path, "", ResourceLoader.CACHE_MODE_IGNORE) as ObjectDefinition
+		_expect(
+			loaded_definition != null
+			and loaded_definition.node_definitions.size() == 3
+			and loaded_definition.signal_connections.size() == 1,
+			"serialized ObjectDefinition restores all declared nodes and signal connections"
+		)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(definition_path))
+
 	var packed := PackedScene.new()
 	var pack_error := packed.pack(instance)
 	_expect(pack_error == OK, "declarative scene structure can be packed as a real PackedScene")
@@ -699,8 +712,29 @@ func _test_declarative_scene_structure() -> void:
 	orphan.parent_node_id = "missing_parent"
 	orphan.node_name = "Orphan"
 	orphan_definition.node_definitions = [orphan]
-	var orphan_errors := ObjectSceneStructureService.build_plan(orphan_definition, Node2D.new()).get("errors", PackedStringArray())
+	var orphan_root := Node2D.new()
+	var orphan_errors := ObjectSceneStructureService.build_plan(orphan_definition, orphan_root).get("errors", PackedStringArray())
 	_expect(not orphan_errors.is_empty(), "structure preflight rejects missing parent IDs")
+	orphan_root.free()
+
+	var invalid_signal_definition := ObjectDefinition.new()
+	invalid_signal_definition.object_id = "invalid_signal_structure_smoke"
+	invalid_signal_definition.display_name = "Invalid Signal Structure"
+	invalid_signal_definition.category = "Other"
+	var invalid_signal := ObjectSignalConnectionDefinition.new()
+	invalid_signal.connection_id = "missing_method"
+	invalid_signal.source_node_id = "root"
+	invalid_signal.signal_name = "ready"
+	invalid_signal.target_node_id = "root"
+	invalid_signal.method_name = "method_that_does_not_exist"
+	invalid_signal_definition.signal_connections = [invalid_signal]
+	var signal_root := Node2D.new()
+	var invalid_signal_plan := ObjectSceneStructureService.build_plan(invalid_signal_definition, signal_root)
+	_expect(
+		not bool(invalid_signal_plan.get("ok", false)),
+		"structure preflight rejects connections to missing methods"
+	)
+	signal_root.free()
 
 
 func _test_creation_profile_registry() -> void:
