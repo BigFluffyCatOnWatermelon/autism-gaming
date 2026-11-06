@@ -123,7 +123,7 @@ func _run() -> void:
         if patrol.is_patrolling():
             errors.append("has_patrol_route: патруль не завершился на конце незамкнутого маршрута.")
 
-    host.queue_free()
+    host.free()
     if errors.is_empty():
         print("MODULE_TESTS: PASS")
         quit(0)
