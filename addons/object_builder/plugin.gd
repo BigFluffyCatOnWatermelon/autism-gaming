@@ -1,6 +1,8 @@
 @tool
 extends EditorPlugin
 
+const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
+
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
 const CATEGORY_LABELS := {
@@ -129,6 +131,9 @@ var _can_save_as_template := true
 
 
 func _enter_tree() -> void:
+	var module_errors := MechanicModuleLoaderScript.register_modules_in_directory()
+	for error_message in module_errors:
+		push_warning("Object Builder: " + error_message)
 	_load_local_state()
 	_build_ui()
 	add_control_to_dock(DOCK_SLOT_RIGHT_UL, _dock)

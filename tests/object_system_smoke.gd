@@ -1,5 +1,6 @@
 extends SceneTree
 
+const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 const WorldControllerScript = preload("res://scripts/world_controller.gd")
 const GameConfigScript = preload("res://scripts/game_config.gd")
 
@@ -60,6 +61,7 @@ func _run_tests() -> void:
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
+	_test_mechanic_module_loader()
 
 	if failures.is_empty():
 		print("OBJECT_SYSTEM_TESTS: PASS")
@@ -2097,6 +2099,61 @@ func _test_component_node_bindings() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
 
 	test_world.free()
+
+
+
+func _test_mechanic_module_loader() -> void:
+	var module_path := "res://tests/fixtures/mechanic_module"
+	var registration_errors := MechanicModuleLoaderScript.register_module(module_path)
+	_expect(
+		registration_errors.is_empty(),
+		"mechanic module loader registers a standalone module package: %s" % "; ".join(registration_errors)
+	)
+	if not registration_errors.is_empty():
+		return
+
+	_expect(
+		MechanicModuleLoaderScript.get_loaded_module_ids().has("smoke_module"),
+		"module registry exposes the loaded module ID"
+	)
+	_expect(
+		ObjectComponentCatalog.get_source_id("module_smoke_component") == "mechanic_module:smoke_module",
+		"component registration records the owning module source"
+	)
+	_expect(
+		ObjectCapabilityCatalog.get_source_id("module_smoke_feature") == "mechanic_module:smoke_module",
+		"capability registration records the owning module source"
+	)
+
+	var selection := ObjectCapabilityCatalog.create_selection("module_smoke_feature")
+	_expect(selection != null, "module capability becomes available through the common capability catalogue")
+	if selection != null:
+		var definition := ObjectDefinition.new()
+		definition.object_id = "module_loader_smoke_object"
+		definition.display_name = "Module Loader Smoke Object"
+		definition.category = "Other"
+		definition.capabilities = [selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null, "ObjectFactory creates an object using a separately registered module")
+		if instance != null:
+			var component := ObjectFactory.get_component(instance, "module_smoke_component")
+			_expect(
+				component != null and bool(component.call("is_module_component_ready")),
+				"module component receives settings and runs through the normal ObjectFactory path"
+			)
+			instance.free()
+
+	var unload_errors := MechanicModuleLoaderScript.unregister_module("smoke_module")
+	_expect(
+		unload_errors.is_empty(),
+		"module loader unregisters capability and component definitions together: %s" % "; ".join(unload_errors)
+	)
+	_expect(
+		not ObjectCapabilityCatalog.has_capability("module_smoke_feature")
+		and not ObjectComponentCatalog.has_component("module_smoke_component"),
+		"unloading a module removes its registrations from both shared catalogues"
+	)
+
 
 func _make_property(
 	property_id: String,

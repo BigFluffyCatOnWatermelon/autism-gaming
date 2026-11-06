@@ -1,8 +1,13 @@
 extends RefCounted
 class_name ObjectFactory
 
+const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
+
 
 static func instantiate(definition: ObjectDefinition, property_overrides: Dictionary = {}) -> Node:
+	var module_errors := MechanicModuleLoaderScript.register_modules_in_directory()
+	for error_message in module_errors:
+		push_warning("ObjectFactory: " + error_message)
 	if definition == null:
 		push_error("ObjectFactory: передано пустое определение.")
 		return null
