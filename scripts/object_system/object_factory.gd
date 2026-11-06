@@ -40,6 +40,15 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 		property_data.owner = instance
 	property_data.configure(definition.custom_properties, property_overrides, true)
 
+	# Build declarative scene parts only after the full structure has passed preflight.
+	var structure_plan := ObjectSceneStructureService.apply_structure(definition, instance)
+	if not bool(structure_plan.get("ok", false)):
+		var structure_errors: PackedStringArray = structure_plan.get("errors", PackedStringArray())
+		for error_message in structure_errors:
+			push_error("ObjectFactory: " + error_message)
+		instance.free()
+		return null
+
 	var values := property_data.get_values()
 	var property_definitions: Dictionary = {}
 	for property_definition in property_data.property_definitions:
