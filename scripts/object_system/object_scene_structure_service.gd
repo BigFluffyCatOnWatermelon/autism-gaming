@@ -4,6 +4,7 @@ class_name ObjectSceneStructureService
 
 const ROOT_NODE_ID := "root"
 const NODE_ID_META := "object_builder_node_id"
+const APPLIED_PROPERTIES_META := "object_builder_applied_properties"
 const ALLOWED_CONNECTION_FLAGS := (
 	Object.CONNECT_DEFERRED
 	| Object.CONNECT_PERSIST
@@ -175,9 +176,15 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		var existing_node := _find_generated_node(scene_root, node_definition.node_id)
 		if existing_node != null:
 			if parent == null or existing_node.get_parent() != parent:
+				_rollback_created_nodes(created_nodes)
 				return _failed_plan(["Существующий узел '%s' находится не у ожидаемого родителя." % node_definition.node_id])
 			if not ClassDB.is_parent_class(existing_node.get_class(), node_definition.node_type):
+				_rollback_created_nodes(created_nodes)
 				return _failed_plan(["Существующий узел '%s' имеет несовместимый тип." % node_definition.node_id])
+			var reconciliation := _reconcile_node_properties(existing_node, node_definition)
+			if not bool(reconciliation.get("ok", false)):
+				_rollback_created_nodes(created_nodes)
+				return _failed_plan(["Не удалось согласовать свойства узла '%s'." % node_definition.node_id])
 			nodes_by_id[node_definition.node_id] = existing_node
 			reused_nodes.append(existing_node)
 			continue
@@ -204,6 +211,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 			node.free()
 			_rollback_created_nodes(created_nodes)
 			return _failed_plan(["Не удалось применить свойства узла '%s'." % node_definition.node_id])
+		node.set_meta(APPLIED_PROPERTIES_META, node_definition.properties.duplicate(true))
 		nodes_by_id[node_definition.node_id] = node
 		created_nodes.append(node)
 
@@ -267,6 +275,59 @@ static func _validate_node_properties(definition: ObjectNodeDefinition) -> Packe
 			errors.append("Тип значения свойства '%s' не совпадает с типом узла '%s'." % [name, definition.node_id])
 	instance.free()
 	return errors
+
+
+## Updates only values that still match the last value applied by Object Builder.
+## If an editor user changed a property manually, that value is preserved.
+static func _reconcile_node_properties(node: Node, definition: ObjectNodeDefinition) -> Dictionary:
+	var previous: Dictionary = {}
+	if node.has_meta(APPLIED_PROPERTIES_META):
+		var stored: Variant = node.get_meta(APPLIED_PROPERTIES_META)
+		if stored is Dictionary:
+			previous = stored.duplicate(true)
+
+	var defaults_instance := _instantiate_node(definition)
+	if defaults_instance == null:
+		return {"ok": false, "preserved": []}
+	var defaults: Dictionary = {}
+	for property_name in definition.properties:
+		var property_key := str(property_name)
+		defaults[property_key] = defaults_instance.get(property_key)
+	for previous_name in previous:
+		var previous_key := str(previous_name)
+		if not defaults.has(previous_key):
+			defaults[previous_key] = defaults_instance.get(previous_key)
+	defaults_instance.free()
+
+	var next_applied := previous.duplicate(true)
+	var preserved := PackedStringArray()
+	for property_name in definition.properties:
+		var key := str(property_name)
+		var desired: Variant = definition.properties[property_name]
+		if previous.has(key):
+			if node.get(key) == previous[key]:
+				node.set(key, desired)
+				next_applied[key] = desired
+			else:
+				preserved.append(key)
+		elif defaults.has(key) and node.get(key) == defaults[key]:
+			node.set(key, desired)
+			next_applied[key] = desired
+		else:
+			preserved.append(key)
+
+	for previous_name in previous:
+		var previous_key := str(previous_name)
+		if definition.properties.has(previous_key):
+			continue
+		if defaults.has(previous_key) and node.get(previous_key) == previous[previous_key]:
+			node.set(previous_key, defaults[previous_key])
+			next_applied.erase(previous_key)
+		else:
+			preserved.append(previous_key)
+
+	node.set_meta(APPLIED_PROPERTIES_META, next_applied)
+	return {"ok": true, "preserved": preserved}
 
 
 static func _apply_node_properties(node: Node, properties: Dictionary) -> bool:
