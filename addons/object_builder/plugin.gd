@@ -456,7 +456,7 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	_scene_tree_view.call("build")
 	advanced_editor.add_child(_scene_tree_view)
 
-		ObjectBuilderUIFactory.create_section_title(advanced_editor, "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА")
+	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА")
 	
 	var properties_hint := Label.new()
 	properties_hint.text = "Расширенные типизированные свойства и их значения по умолчанию."
