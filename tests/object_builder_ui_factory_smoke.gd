@@ -3,6 +3,7 @@ extends SceneTree
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 
 var failures: Array[String] = []
+var action_call_count := 0
 
 
 func _initialize() -> void:
@@ -19,6 +20,16 @@ func _run() -> void:
 	var name_edit := UIFactory.add_labeled_line_edit(host, "Название", "Имя объекта")
 	_expect(name_edit.placeholder_text == "Имя объекта", "labeled line edit preserves its placeholder")
 	_expect(host.get_child_count() == 3, "labeled line edit adds both label and input")
+
+	var action_button := UIFactory.add_action_button(
+		host,
+		"Проверить",
+		Callable(self, "_on_action_button_pressed"),
+		"Общая подсказка"
+	)
+	_expect(action_button.tooltip_text == "Общая подсказка", "action buttons keep a shared tooltip rule")
+	action_button.pressed.emit()
+	_expect(action_call_count == 1, "action buttons connect their callable exactly once")
 
 	var compact_row := HBoxContainer.new()
 	host.add_child(compact_row)
@@ -39,6 +50,9 @@ func _run() -> void:
 	host.add_child(empty_host)
 	var empty_label := UIFactory.add_empty_state(empty_host, "Нет объектов")
 	_expect(empty_label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "empty state wraps long messages")
+
+	UIFactory.popup_window_safely(null, Vector2i(400, 300))
+	_expect(true, "safe popup helper tolerates a missing optional window")
 
 	var dialog := AcceptDialog.new()
 	root.add_child(dialog)
@@ -62,6 +76,10 @@ func _run() -> void:
 		for failure in failures:
 			push_error(failure)
 		quit(1)
+
+
+func _on_action_button_pressed() -> void:
+	action_call_count += 1
 
 
 func _expect(condition: bool, description: String) -> void:
