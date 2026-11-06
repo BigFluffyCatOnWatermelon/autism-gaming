@@ -58,10 +58,9 @@ func _run() -> void:
 	]
 	view.call("configure", capability, selection, descriptors)
 	_expect(view.title == "Здоровье · настройки", "settings dialog title uses the capability display name")
-	_expect(view.get_child_count() == 1, "settings view owns one persistent scroll container")
-	var scroll := view.get_child(0) as ScrollContainer
-	var form := scroll.get_child(0) as VBoxContainer
-	_expect(form.get_child_count() == 5, "settings view renders advanced toggle, group headers and controls")
+	var form := view.get("_form") as VBoxContainer
+	_expect(form != null, "settings view creates its content form")
+	_expect(form.get_child_count() == 6, "settings view renders advanced toggle, group headers and controls")
 
 	var health_row := form.get_child(2) as HBoxContainer
 	var health_spin := health_row.get_child(1) as SpinBox
@@ -83,9 +82,10 @@ func _run() -> void:
 
 	var empty_descriptors: Array[Dictionary] = []
 	view.call("configure", capability, selection, empty_descriptors)
-	var refreshed_form := (view.get_child(0) as ScrollContainer).get_child(0) as VBoxContainer
+	var refreshed_form := view.get("_form") as VBoxContainer
 	_expect(refreshed_form.get_child_count() == 2, "reconfiguring clears old controls and shows an empty state")
-	_expect(view.call("get_values").is_empty(), "empty schemas return no values")
+	var empty_values: Array[Dictionary] = view.call("get_values")
+	_expect(empty_values.is_empty(), "empty schemas return no values")
 
 	root.remove_child(view)
 	view.free()
