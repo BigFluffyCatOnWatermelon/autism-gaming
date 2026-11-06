@@ -48,6 +48,7 @@ Object Builder должен стать конструктором, которы�
 - [x] Добавлены безопасные проверки при отключении и загрузка пакетов из редактора/ObjectFactory.
 - [x] Добавлен fixture-пакет и smoke-тест регистрации, создания объекта через ObjectFactory и отключения модуля.
 - [x] Созданы MECHANIC_MODULE_STANDARD.md, MECHANIC_MODULE_CHAT_PROMPT.md и MECHANIC_MODULE_REQUEST_TEMPLATE.md.
+- [x] GitHub Actions run 42178421033: импорт/разбор GDScript, общий Object System smoke-тест (включая тест модуля) и запуск основной сцены — успешно.
 - [ ] Встроенные Health, Damageable, Attack, Destructible, Pickup и Interactable пока остаются в центральных каталогах; переносить их в модули нужно постепенно и отдельными пакетами.
 
 Полная целевая структура UI поэлементно описана в OBJECT_BUILDER_UI_SPEC.md.Полная целевая структура UI поэлементно описана в OBJECT_BUILDER_UI_SPEC.md. Актуальная очерёдность фаз, задачи и критерии готовности находятся в OBJECT_BUILDER_ROADMAP.md.

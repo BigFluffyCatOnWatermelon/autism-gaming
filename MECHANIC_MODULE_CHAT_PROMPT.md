@@ -52,6 +52,8 @@ addons/object_builder/mechanics/<module_id>/
 
 Если механике требуются несколько runtime-компонентов, создай дополнительные файлы в этой же папке и перечисли все ID в module.cfg.
 
+И module.gd, и runtime-компоненты должны начинаться с @tool, чтобы работать при регистрации из редактора.
+
 module.gd обязан реализовать:
 - build_component_definitions() -> Array;
 - build_capability_definitions() -> Array.

@@ -47,9 +47,10 @@ capability_ids=["can_be_harvested"]
 
 ## 3. Контракт module.gd
 
-Главный скрипт наследуется от RefCounted и реализует два метода:
+Главный скрипт наследуется от RefCounted, помечается директивой @tool и реализует два метода. Runtime-компонент также должен быть помечен @tool: пакет загружается в редакторе и в runtime.
 
 ~~~gdscript
+@tool
 extends RefCounted
 
 const COMPONENT_SCRIPT = preload(
