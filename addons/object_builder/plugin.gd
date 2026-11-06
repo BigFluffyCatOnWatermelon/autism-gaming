@@ -7,6 +7,7 @@ const ObjectBuilderLibraryViewScript = preload("res://addons/object_builder/ui/l
 const ObjectBuilderEditorViewScript = preload("res://addons/object_builder/ui/object_editor_view.gd")
 const ObjectPropertyValueCodec = preload("res://scripts/object_system/object_property_value_codec.gd")
 const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder/ui/property_list_view.gd")
+const ObjectBuilderComponentEditorViewScript = preload("res://addons/object_builder/ui/component_editor_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -63,10 +64,7 @@ var _description_edit: TextEdit
 var _template_check: CheckBox
 var _favorite_button: Button
 var _property_list: VBoxContainer
-var _component_category_option: OptionButton
-var _component_option: OptionButton
-var _component_add_button: Button
-var _component_list: VBoxContainer
+var _component_view: Control
 var _capability_search: LineEdit
 var _capability_category_option: OptionButton
 var _capability_list: VBoxContainer
@@ -1047,81 +1045,50 @@ func _on_simple_add_image_pressed() -> void:
 
 
 func _build_component_editor(parent: VBoxContainer) -> void:
-	var title := Label.new()
-	title.text = "КОМПОНЕНТЫ"
-	parent.add_child(title)
+	var view: VBoxContainer = ObjectBuilderComponentEditorViewScript.new()
+	_component_view = view
+	view.connect("category_selected", Callable(self, "_on_component_category_selected"))
+	view.connect("add_requested", Callable(self, "_on_component_add_requested"))
+	view.connect("enabled_changed", Callable(self, "_on_component_enabled_toggled"))
+	view.connect("settings_requested", Callable(self, "_on_component_settings_pressed"))
+	view.connect("remove_requested", Callable(self, "_on_component_remove_pressed"))
 
-	var hint := Label.new()
-	hint.text = "Компоненты добавляют объекту поведение. Типизированные настройки открываются в штатном Inspector и сохраняются вместе с определением."
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	parent.add_child(hint)
-
-	var picker_row := HBoxContainer.new()
-	parent.add_child(picker_row)
-
-	_component_category_option = OptionButton.new()
-	_component_category_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for category_definition in ObjectComponentCatalog.get_categories():
-		_component_category_option.add_item(str(category_definition.get("display_name", "")))
-		_component_category_option.set_item_metadata(
-			_component_category_option.item_count - 1,
-			str(category_definition.get("id", ""))
-		)
-	_component_category_option.item_selected.connect(_on_component_category_selected)
-	picker_row.add_child(_component_category_option)
-
-	_component_option = OptionButton.new()
-	_component_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	picker_row.add_child(_component_option)
-
-	_component_add_button = Button.new()
-	_component_add_button.text = "+ Добавить"
-	_component_add_button.pressed.connect(_on_component_add_pressed)
-	picker_row.add_child(_component_add_button)
-
-	_component_list = VBoxContainer.new()
-	_component_list.add_theme_constant_override("separation", 4)
-	parent.add_child(_component_list)
-
-	var selected_stats := 0
-	for index in range(_component_category_option.item_count):
-		if str(_component_category_option.get_item_metadata(index)) == "Stats":
-			selected_stats = index
+	var categories := ObjectComponentCatalog.get_categories()
+	var selected_category := ""
+	for category in categories:
+		var category_id := str(category.get("id", ""))
+		if category_id == "Stats":
+			selected_category = category_id
 			break
-	_component_category_option.select(selected_stats)
+	if selected_category.is_empty() and not categories.is_empty():
+		selected_category = str(categories[0].get("id", ""))
+
+	view.call("build", categories, selected_category)
+	parent.add_child(view)
 	_refresh_component_catalog_options()
+	_rebuild_component_list()
 
 
 func _refresh_component_catalog_options() -> void:
-	if _component_category_option == null or _component_option == null:
+	if _component_view == null:
 		return
-	var category_id := ""
-	if _component_category_option.selected >= 0:
-		category_id = str(_component_category_option.get_item_metadata(_component_category_option.selected))
-	_component_option.clear()
-	var component_ids := ObjectComponentCatalog.get_component_ids(category_id)
-	for component_id in component_ids:
-		_component_option.add_item(ObjectComponentCatalog.get_component_display_name(component_id))
-		_component_option.set_item_metadata(_component_option.item_count - 1, component_id)
-	var has_options := not component_ids.is_empty()
-	if not has_options:
-		_component_option.add_item("Нет доступных компонентов")
-	_component_option.disabled = not has_options
-	_component_add_button.disabled = not has_options
-	if has_options:
-		_component_option.select(0)
+	var category_id := str(_component_view.call("get_selected_category"))
+	var options: Array[Dictionary] = []
+	for component_id in ObjectComponentCatalog.get_component_ids(category_id):
+		options.append({
+			"id": component_id,
+			"label": ObjectComponentCatalog.get_component_display_name(component_id)
+		})
+	_component_view.call("set_component_options", options)
 
 
-func _on_component_category_selected(_index: int) -> void:
+func _on_component_category_selected(_category_id: String) -> void:
 	_refresh_component_catalog_options()
 
 
-func _on_component_add_pressed() -> void:
-	if _working_definition == null or _component_option == null or _component_option.disabled:
+func _on_component_add_requested(component_id: String) -> void:
+	if _working_definition == null or component_id.is_empty():
 		return
-	if _component_option.selected < 0:
-		return
-	var component_id := str(_component_option.get_item_metadata(_component_option.selected))
 	for existing_component in _working_definition.components:
 		if existing_component != null and existing_component.component_id.to_lower() == component_id.to_lower():
 			_set_status("Компонент «%s» уже добавлен." % ObjectComponentCatalog.get_component_display_name(component_id), true)
@@ -1137,41 +1104,18 @@ func _on_component_add_pressed() -> void:
 
 
 func _rebuild_component_list() -> void:
-	if _component_list == null:
+	if _component_view == null:
 		return
-	ObjectBuilderUIFactory.clear_children(_component_list)
-
-	if _working_definition == null or _working_definition.components.is_empty():
-		ObjectBuilderUIFactory.add_empty_state(_component_list, "Компоненты не добавлены.")
-		return
-
-	for component_definition in _working_definition.components:
-		if component_definition == null:
-			continue
-		var row := HBoxContainer.new()
-		var enabled_check := CheckBox.new()
-		enabled_check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		enabled_check.button_pressed = component_definition.enabled
-		enabled_check.text = component_definition.display_name
-		enabled_check.tooltip_text = "%s\nID: %s" % [
-			ObjectComponentCatalog.get_component_description(component_definition.component_id),
-			component_definition.component_id
-		]
-		enabled_check.toggled.connect(_on_component_enabled_toggled.bind(component_definition))
-		row.add_child(enabled_check)
-
-		var settings_button := Button.new()
-		settings_button.text = "Inspector"
-		settings_button.tooltip_text = "Открыть типизированные настройки компонента в штатном Inspector"
-		settings_button.pressed.connect(_on_component_settings_pressed.bind(component_definition))
-		row.add_child(settings_button)
-
-		var remove_button := Button.new()
-		remove_button.text = "×"
-		remove_button.tooltip_text = "Удалить компонент из определения"
-		remove_button.pressed.connect(_on_component_remove_pressed.bind(component_definition))
-		row.add_child(remove_button)
-		_component_list.add_child(row)
+	var entries: Array[Dictionary] = []
+	if _working_definition != null:
+		for component_definition in _working_definition.components:
+			if component_definition == null:
+				continue
+			entries.append({
+				"definition": component_definition,
+				"description": ObjectComponentCatalog.get_component_description(component_definition.component_id)
+			})
+	_component_view.call("set_components", entries)
 
 
 func _on_component_enabled_toggled(enabled: bool, component_definition: ObjectComponentDefinition) -> void:
