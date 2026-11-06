@@ -8,6 +8,7 @@ const ObjectBuilderEditorViewScript = preload("res://addons/object_builder/ui/ob
 const ObjectPropertyValueCodec = preload("res://scripts/object_system/object_property_value_codec.gd")
 const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder/ui/property_list_view.gd")
 const ObjectBuilderComponentEditorViewScript = preload("res://addons/object_builder/ui/component_editor_view.gd")
+const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_builder/ui/capability_list_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -65,9 +66,7 @@ var _template_check: CheckBox
 var _favorite_button: Button
 var _property_list: VBoxContainer
 var _component_view: Control
-var _capability_search: LineEdit
-var _capability_category_option: OptionButton
-var _capability_list: VBoxContainer
+var _capability_view: Control
 var _capability_settings_dialog: AcceptDialog
 var _capability_setting_controls: Array[Dictionary] = []
 var _editing_capability_selection: ObjectCapabilitySelection
@@ -551,36 +550,14 @@ func _build_dialogs() -> void:
 
 
 func _build_capability_editor(parent: VBoxContainer) -> void:
-	ObjectBuilderUIFactory.create_section_title(parent, "ЧТО ДОЛЖЕН УМЕТЬ ОБЪЕКТ?", 16)
-
-	var hint := Label.new()
-	hint.text = "Выбирай возможности обычными словами. Нужные игровые системы плагин подключит сам."
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	parent.add_child(hint)
-
-	_capability_search = LineEdit.new()
-	_capability_search.placeholder_text = "Найти возможность…"
-	_capability_search.text_changed.connect(_on_capability_search_changed)
-	parent.add_child(_capability_search)
-
-	_capability_category_option = OptionButton.new()
-	_capability_category_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_capability_category_option.add_item("Все возможности")
-	_capability_category_option.set_item_metadata(0, "")
-	_capability_category_option.select(0)
-	for category in ObjectCapabilityCatalog.get_categories():
-		_capability_category_option.add_item(str(category.get("display_name", "")))
-		_capability_category_option.set_item_metadata(
-			_capability_category_option.item_count - 1,
-			str(category.get("id", ""))
-		)
-	_capability_category_option.item_selected.connect(_on_capability_category_selected)
-	parent.add_child(_capability_category_option)
-
-	_capability_list = VBoxContainer.new()
-	_capability_list.add_theme_constant_override("separation", 6)
-	parent.add_child(_capability_list)
-
+	var view: VBoxContainer = ObjectBuilderCapabilityListViewScript.new()
+	_capability_view = view
+	view.connect("search_changed", Callable(self, "_on_capability_search_changed"))
+	view.connect("category_changed", Callable(self, "_on_capability_category_selected"))
+	view.connect("toggle_requested", Callable(self, "_on_capability_toggled"))
+	view.connect("settings_requested", Callable(self, "_on_capability_settings_pressed"))
+	view.call("build", ObjectCapabilityCatalog.get_categories())
+	parent.add_child(view)
 	_rebuild_capability_list()
 
 
@@ -599,11 +576,11 @@ func _build_capability_settings_dialog() -> void:
 	add_child(_capability_change_dialog)
 
 
-func _on_capability_search_changed(_value: String) -> void:
+func _on_capability_search_changed(_query: String) -> void:
 	_rebuild_capability_list()
 
 
-func _on_capability_category_selected(_index: int) -> void:
+func _on_capability_category_selected(_category_id: String) -> void:
 	_rebuild_capability_list()
 
 
@@ -617,36 +594,26 @@ func _find_capability_selection(capability_id: String) -> ObjectCapabilitySelect
 
 
 func _rebuild_capability_list() -> void:
-	if _capability_list == null:
+	if _capability_view == null:
 		return
-	ObjectBuilderUIFactory.clear_children(_capability_list)
-
 	if _working_definition == null:
-		ObjectBuilderUIFactory.add_empty_state(
-			_capability_list,
+		_capability_view.call(
+			"show_empty_state",
 			"Сначала создай объект или выбери его в библиотеке."
 		)
 		return
 
-	var category_id := ""
-	if _capability_category_option != null and _capability_category_option.selected >= 0:
-		category_id = str(_capability_category_option.get_item_metadata(_capability_category_option.selected))
-	var query := _capability_search.text.strip_edges().to_lower() if _capability_search != null else ""
+	var category_id := str(_capability_view.call("get_selected_category"))
+	var query := str(_capability_view.call("get_search_query")).strip_edges().to_lower()
 	var capability_ids := ObjectCapabilityCatalog.get_capability_ids(category_id)
-	var visible_count := 0
+	var all_capability_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
 	var ready_count := 0
-	for catalog_id in ObjectCapabilityCatalog.get_capability_ids("", false):
+	for catalog_id in all_capability_ids:
 		var catalog_definition := ObjectCapabilityCatalog.get_definition(catalog_id)
 		if catalog_definition != null and catalog_definition.runtime_status == "Implemented":
 			ready_count += 1
-	var summary := Label.new()
-	summary.text = "Механик в библиотеке: %d · доступно сейчас: %d" % [
-		ObjectCapabilityCatalog.get_capability_ids("", false).size(),
-		ready_count
-	]
-	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_capability_list.add_child(summary)
 
+	var entries: Array[Dictionary] = []
 	for capability_id in capability_ids:
 		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
 		if capability == null:
@@ -658,56 +625,23 @@ func _rebuild_capability_list() -> void:
 		if not query.is_empty() and not searchable.contains(query):
 			continue
 
-		visible_count += 1
 		var selection := _find_capability_selection(capability_id)
 		var is_enabled := selection != null and selection.enabled
-
-		var card := PanelContainer.new()
-		_capability_list.add_child(card)
-		var card_content := VBoxContainer.new()
-		card_content.add_theme_constant_override("separation", 3)
-		card.add_child(card_content)
-
-		var card_header := HBoxContainer.new()
-		card_content.add_child(card_header)
-
 		var is_implemented := capability.runtime_status == "Implemented"
-		var enabled_check := CheckBox.new()
-		enabled_check.text = capability.display_name
-		if selection != null and selection.automatically_added:
-			enabled_check.text += " · автоматически"
-			enabled_check.tooltip_text = "Эта возможность нужна другой выбранной возможности. Её нельзя отключить, пока она используется."
-		elif not is_implemented:
-			enabled_check.tooltip_text = "Механика уже есть в каталоге, но её runtime-поведение ещё разрабатывается."
-		enabled_check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		enabled_check.button_pressed = is_enabled
-		enabled_check.disabled = not is_implemented
-		if is_implemented:
-			enabled_check.toggled.connect(_on_capability_toggled.bind(capability_id))
-		card_header.add_child(enabled_check)
+		entries.append({
+			"definition": capability,
+			"enabled": is_enabled,
+			"automatically_added": selection != null and selection.automatically_added,
+			"can_toggle": is_implemented,
+			"can_configure": is_enabled and is_implemented
+		})
 
-		var state_label := Label.new()
-		state_label.text = "Готово" if is_implemented else "В разработке"
-		state_label.tooltip_text = capability.implementation_note
-		card_header.add_child(state_label)
-
-		var settings_button := Button.new()
-		settings_button.text = "Настроить"
-		settings_button.disabled = not is_enabled or not is_implemented
-		settings_button.pressed.connect(_on_capability_settings_pressed.bind(capability_id))
-		card_header.add_child(settings_button)
-
-		var description := Label.new()
-		description.text = capability.description
-		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		description.modulate = Color(0.78, 0.78, 0.78)
-		card_content.add_child(description)
-
-	if visible_count == 0:
-		var empty_label := Label.new()
-		empty_label.text = "Ничего не найдено. Измени запрос или выбери другую категорию."
-		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_capability_list.add_child(empty_label)
+	_capability_view.call(
+		"set_entries",
+		entries,
+		all_capability_ids.size(),
+		ready_count
+	)
 
 
 func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
