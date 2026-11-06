@@ -25,6 +25,7 @@ func _run_tests() -> void:
 	_test_capability_schema_and_application_plan()
 	_test_capability_library_size_and_status()
 	await _test_component_node_bindings()
+	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
 
@@ -575,6 +576,131 @@ func _test_component_definition_validation() -> void:
 
 
 
+
+
+func _test_declarative_scene_structure() -> void:
+	var definition := ObjectDefinition.new()
+	definition.object_id = "declarative_structure_smoke"
+	definition.display_name = "Declarative Structure"
+	definition.category = "Other"
+	definition.root_type = "Node2D"
+
+	var visual := ObjectNodeDefinition.new()
+	visual.node_id = "visual"
+	visual.parent_node_id = "root"
+	visual.node_type = "Node2D"
+	visual.node_name = "Visual"
+	visual.properties = {"position": Vector2(8.0, 12.0)}
+
+	var interaction := ObjectNodeDefinition.new()
+	interaction.node_id = "interaction"
+	interaction.parent_node_id = "visual"
+	interaction.node_type = "Area2D"
+	interaction.node_name = "Interaction"
+	interaction.groups = PackedStringArray(["interactable"])
+	interaction.metadata = {"interaction_kind": "test"}
+
+	var timer := ObjectNodeDefinition.new()
+	timer.node_id = "timer"
+	timer.parent_node_id = "interaction"
+	timer.node_type = "Timer"
+	timer.node_name = "Timeout"
+	timer.properties = {"wait_time": 0.75, "one_shot": true}
+
+	var connection := ObjectSignalConnectionDefinition.new()
+	connection.connection_id = "timer_hides_root"
+	connection.source_node_id = "timer"
+	connection.signal_name = "timeout"
+	connection.target_node_id = "root"
+	connection.method_name = "hide"
+	connection.flags = Object.CONNECT_PERSIST
+
+	definition.node_definitions = [visual, interaction, timer]
+	definition.signal_connections = [connection]
+
+	var plan_root := Node2D.new()
+	var plan := ObjectSceneStructureService.build_plan(definition, plan_root)
+	var ordered: Array = plan.get("ordered_nodes", [])
+	_expect(
+		bool(plan.get("ok", false)) and ordered.size() == 3,
+		"scene structure preflight resolves parent nodes before their children"
+	)
+	plan_root.free()
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory builds an object from declarative node definitions")
+	if instance == null:
+		return
+	var visual_node := instance.get_node_or_null("Visual") as Node2D
+	var interaction_node := instance.get_node_or_null("Visual/Interaction") as Area2D
+	var timer_node := instance.get_node_or_null("Visual/Interaction/Timeout") as Timer
+	_expect(visual_node != null, "factory creates the declared visual node")
+	_expect(interaction_node != null, "factory creates nested nodes in parent order")
+	_expect(timer_node != null, "factory creates the declared Timer node")
+	if visual_node != null:
+		_expect(visual_node.position == Vector2(8.0, 12.0), "declared node properties are applied")
+	if interaction_node != null:
+		_expect(interaction_node.is_in_group("interactable"), "declared node groups are applied")
+		_expect(interaction_node.get_meta("interaction_kind", "") == "test", "declared node metadata is applied")
+	if timer_node != null:
+		_expect(is_equal_approx(timer_node.wait_time, 0.75), "Timer properties are configured")
+		_expect(timer_node.one_shot, "boolean node properties are configured")
+		_expect(
+			timer_node.is_connected("timeout", Callable(instance, "hide")),
+			"declared signal connection is applied"
+		)
+
+	var packed := PackedScene.new()
+	var pack_error := packed.pack(instance)
+	_expect(pack_error == OK, "declarative scene structure can be packed as a real PackedScene")
+	instance.free()
+	if pack_error == OK:
+		var restored := packed.instantiate()
+		_expect(
+			restored.get_node_or_null("Visual/Interaction/Timeout") is Timer,
+			"nested generated nodes survive PackedScene round-trip"
+		)
+		var restored_timer := restored.get_node("Visual/Interaction/Timeout") as Timer
+		_expect(
+			restored_timer.is_connected("timeout", Callable(restored, "hide")),
+			"persistent signal connections survive PackedScene round-trip"
+		)
+		restored.free()
+
+	var invalid_definition := ObjectDefinition.new()
+	invalid_definition.object_id = "invalid_structure_smoke"
+	invalid_definition.display_name = "Invalid Structure"
+	invalid_definition.category = "Other"
+	var valid_first := ObjectNodeDefinition.new()
+	valid_first.node_id = "would_be_created"
+	valid_first.node_type = "Node2D"
+	valid_first.node_name = "WouldBeCreated"
+	var invalid_second := ObjectNodeDefinition.new()
+	invalid_second.node_id = "invalid_property"
+	invalid_second.node_type = "Node2D"
+	invalid_second.node_name = "InvalidProperty"
+	invalid_second.properties = {"property_that_does_not_exist": 1}
+	invalid_definition.node_definitions = [valid_first, invalid_second]
+	var untouched_root := Node2D.new()
+	var invalid_plan := ObjectSceneStructureService.apply_structure(invalid_definition, untouched_root)
+	_expect(
+		not bool(invalid_plan.get("ok", false))
+		and untouched_root.get_node_or_null("WouldBeCreated") == null,
+		"invalid structure is rejected before any node is added"
+	)
+	untouched_root.free()
+
+	var orphan_definition := ObjectDefinition.new()
+	orphan_definition.object_id = "orphan_structure_smoke"
+	orphan_definition.display_name = "Orphan Structure"
+	orphan_definition.category = "Other"
+	var orphan := ObjectNodeDefinition.new()
+	orphan.node_id = "orphan"
+	orphan.parent_node_id = "missing_parent"
+	orphan.node_name = "Orphan"
+	orphan_definition.node_definitions = [orphan]
+	var orphan_errors := ObjectSceneStructureService.build_plan(orphan_definition, Node2D.new()).get("errors", PackedStringArray())
+	_expect(not orphan_errors.is_empty(), "structure preflight rejects missing parent IDs")
 
 
 func _test_creation_profile_registry() -> void:
