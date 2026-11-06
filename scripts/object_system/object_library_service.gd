@@ -113,6 +113,12 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 		if validation_scene == null:
 			errors.append("Не удалось открыть сцену объекта для проверки привязок компонентов.")
 
+	var structure_plan := ObjectSceneStructureService.build_plan(definition, validation_scene)
+	if not bool(structure_plan.get("ok", false)):
+		var structure_errors: PackedStringArray = structure_plan.get("errors", PackedStringArray())
+		for structure_error in structure_errors:
+			errors.append(structure_error)
+
 	var capability_errors := ObjectCapabilityService.validate_selections(
 		definition.capabilities,
 		validation_scene
@@ -155,6 +161,9 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 				"Для привязки '%s' не найден узел '%s'."
 				% [binding_id, target_path]
 			)
+
+	if validation_scene != null:
+		validation_scene.free()
 
 	var all_bindings: Array[ObjectComponentBinding] = []
 	for legacy_definition in definition.components:
