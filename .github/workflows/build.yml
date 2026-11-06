@@ -63,6 +63,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Property Value Codec smoke tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_property_value_codec_smoke.gd 2>&1 | tee object-property-codec-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-property-codec-test.log; then
+            echo "Object Property Value Codec smoke tests reported an error."
+            exit 1
+          fi
+
       - name: Run standalone mechanic module smoke tests
         shell: bash
         run: |

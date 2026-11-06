@@ -5,6 +5,7 @@ const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic
 const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 const ObjectBuilderLibraryViewScript = preload("res://addons/object_builder/ui/library_view.gd")
 const ObjectBuilderEditorViewScript = preload("res://addons/object_builder/ui/object_editor_view.gd")
+const ObjectPropertyValueCodec = preload("res://scripts/object_system/object_property_value_codec.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -2002,7 +2003,7 @@ func _make_property_default_control(property_definition: ObjectPropertyDefinitio
 	var text_edit := LineEdit.new()
 	text_edit.custom_minimum_size = Vector2(88, 0)
 	text_edit.size_flags_horizontal = Control.SIZE_SHRINK_END
-	text_edit.text = _format_property_default_value(
+	text_edit.text = ObjectPropertyValueCodec.format_default_value(
 		property_definition.default_value,
 		property_definition.value_type
 	)
@@ -2083,7 +2084,7 @@ func _on_edit_property_pressed(property_definition: ObjectPropertyDefinition) ->
 	_property_dialog.title = "Редактировать пользовательское свойство"
 	_property_name_edit.text = property_definition.display_name
 	_select_property_type(property_definition.value_type)
-	_property_default_edit.text = _format_property_default_value(
+	_property_default_edit.text = ObjectPropertyValueCodec.format_default_value(
 		property_definition.default_value,
 		property_definition.value_type
 	)
@@ -2108,13 +2109,6 @@ func _select_property_type(type_name: String) -> void:
 	_on_property_type_changed(0)
 
 
-func _format_property_default_value(value: Variant, type_name: String) -> String:
-	if type_name == "Vector2" and value is Vector2:
-		var vector_value: Vector2 = value
-		return "%s, %s" % [str(vector_value.x), str(vector_value.y)]
-	return str(value)
-
-
 func _on_property_dialog_confirmed() -> void:
 	if _working_definition == null:
 		return
@@ -2124,7 +2118,7 @@ func _on_property_dialog_confirmed() -> void:
 		return
 
 	var value_type := _property_type_option.get_item_text(_property_type_option.selected)
-	var default_value := _parse_default_value(_property_default_edit.text, value_type)
+	var default_value := ObjectPropertyValueCodec.parse_default_value(_property_default_edit.text, value_type)
 	var supports_range := value_type in ["Integer", "Float"]
 	var has_range := supports_range and _property_range_check.button_pressed
 	var minimum_value := _property_minimum_edit.text.to_float()
@@ -2142,7 +2136,7 @@ func _on_property_dialog_confirmed() -> void:
 	var property_definition := _editing_property
 	if property_definition == null:
 		property_definition = ObjectPropertyDefinition.new()
-		property_definition.property_id = _make_property_id(display_name)
+		property_definition.property_id = ObjectPropertyValueCodec.make_property_id(display_name)
 		var duplicate_index := 2
 		var base_id := property_definition.property_id
 		while _has_property_id(property_definition.property_id):
@@ -2172,31 +2166,6 @@ func _has_property_id(property_id: String) -> bool:
 		if property_definition != null and property_definition.property_id == property_id:
 			return true
 	return false
-
-
-func _make_property_id(value: String) -> String:
-	var result := value.strip_edges().to_lower().replace(" ", "_").replace("-", "_")
-	result = result.validate_filename()
-	if result.is_empty():
-		result = "property"
-	return result
-
-
-func _parse_default_value(value: String, type_name: String) -> Variant:
-	match type_name:
-		"Integer":
-			return value.to_int()
-		"Float":
-			return value.to_float()
-		"Boolean":
-			return value.strip_edges().to_lower() in ["true", "1", "yes", "да"]
-		"Vector2":
-			var parts := value.split(",")
-			if parts.size() == 2:
-				return Vector2(parts[0].strip_edges().to_float(), parts[1].strip_edges().to_float())
-			return Vector2.ZERO
-		_:
-			return value
 
 
 func _on_remove_property_pressed(property_definition: ObjectPropertyDefinition) -> void:
