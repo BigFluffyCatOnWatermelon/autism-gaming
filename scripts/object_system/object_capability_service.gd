@@ -520,6 +520,27 @@ static func validate_selections(
 					% [capability.display_name, target_path]
 				)
 
+		for descriptor in capability.settings_schema:
+			if not bool(descriptor.get("required", false)):
+				continue
+			var required_component_id := str(descriptor.get("component_id", "")).strip_edges().to_lower()
+			var required_setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
+			if required_component_id.is_empty() or required_setting_key.is_empty():
+				continue
+			var component_settings := selection.get_component_settings(required_component_id)
+			var required_value: Variant = component_settings.get(
+				required_setting_key,
+				descriptor.get("default_value")
+			)
+			if required_value == null or (
+				typeof(required_value) == TYPE_STRING
+				and str(required_value).strip_edges().is_empty()
+			):
+				errors.append(
+					"Заполни обязательное поле «%s» для возможности «%s»."
+					% [str(descriptor.get("display_name", required_setting_key)), capability.display_name]
+				)
+
 		for component_id in selection.settings_by_component:
 			var normalized_component_id := str(component_id).strip_edges().to_lower()
 			if not capability.component_ids.has(normalized_component_id):
