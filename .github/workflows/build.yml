@@ -63,6 +63,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder property list view tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_property_list_view_smoke.gd 2>&1 | tee object-builder-property-list-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-property-list-test.log; then
+            echo "Object Builder property list view tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Property Value Codec smoke tests
         shell: bash
         run: |

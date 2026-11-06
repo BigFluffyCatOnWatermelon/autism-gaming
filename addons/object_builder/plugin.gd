@@ -6,6 +6,7 @@ const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factor
 const ObjectBuilderLibraryViewScript = preload("res://addons/object_builder/ui/library_view.gd")
 const ObjectBuilderEditorViewScript = preload("res://addons/object_builder/ui/object_editor_view.gd")
 const ObjectPropertyValueCodec = preload("res://scripts/object_system/object_property_value_codec.gd")
+const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder/ui/property_list_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -536,7 +537,14 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	properties_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	advanced_editor.add_child(properties_hint)
 	
-	_property_list = VBoxContainer.new()
+	var property_list_view: VBoxContainer = ObjectBuilderPropertyListViewScript.new()
+	property_list_view.connect("numeric_default_changed", Callable(self, "_on_property_default_numeric_changed"))
+	property_list_view.connect("boolean_default_changed", Callable(self, "_on_property_default_boolean_changed"))
+	property_list_view.connect("text_default_submitted", Callable(self, "_on_property_default_text_submitted"))
+	property_list_view.connect("text_default_focus_exited", Callable(self, "_on_property_default_text_focus_exited"))
+	property_list_view.connect("edit_requested", Callable(self, "_on_edit_property_pressed"))
+	property_list_view.connect("remove_requested", Callable(self, "_on_remove_property_pressed"))
+	_property_list = property_list_view
 	advanced_editor.add_child(_property_list)
 	
 	ObjectBuilderUIFactory.add_action_button(
@@ -1917,100 +1925,10 @@ func _select_root_type(type_name: String) -> void:
 
 
 func _rebuild_property_list() -> void:
-	ObjectBuilderUIFactory.clear_children(_property_list)
-	if _working_definition == null:
-		return
-
-	if _working_definition.custom_properties.is_empty():
-		ObjectBuilderUIFactory.add_empty_state(_property_list, "Пока нет пользовательских свойств.")
-		return
-
-	var groups: Dictionary = {}
-	var group_order := PackedStringArray()
-	for property_definition in _working_definition.custom_properties:
-		if property_definition == null:
-			continue
-		var group_name := property_definition.group_name.strip_edges()
-		if group_name.is_empty():
-			group_name = "Основное"
-		if not groups.has(group_name):
-			groups[group_name] = []
-			group_order.append(group_name)
-		groups[group_name].append(property_definition)
-
-	for group_name in group_order:
-		var group_label := Label.new()
-		group_label.text = group_name
-		_property_list.add_child(group_label)
-		for property_definition in groups[group_name]:
-			var row := HBoxContainer.new()
-			var description_label := Label.new()
-			description_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			var property_suffix := " · Доп." if property_definition.advanced else ""
-			if property_definition.has_range:
-				property_suffix += " · [%s…%s]" % [
-					str(property_definition.minimum),
-					str(property_definition.maximum)
-				]
-			description_label.text = "%s · %s%s" % [
-				property_definition.display_name,
-				property_definition.value_type,
-				property_suffix
-			]
-			description_label.clip_text = true
-			description_label.tooltip_text = "%s\nЗначение по умолчанию: %s" % [
-				property_definition.description,
-				str(property_definition.default_value)
-			]
-			row.add_child(description_label)
-			row.add_child(_make_property_default_control(property_definition))
-
-			var edit_button := Button.new()
-			edit_button.text = "✎"
-			edit_button.tooltip_text = "Изменить определение свойства"
-			edit_button.pressed.connect(_on_edit_property_pressed.bind(property_definition))
-			row.add_child(edit_button)
-
-			var remove_button := Button.new()
-			remove_button.text = "×"
-			remove_button.tooltip_text = "Удалить свойство из определения"
-			remove_button.pressed.connect(_on_remove_property_pressed.bind(property_definition))
-			row.add_child(remove_button)
-			_property_list.add_child(row)
-
-
-func _make_property_default_control(property_definition: ObjectPropertyDefinition) -> Control:
-	if property_definition.value_type == "Integer" or property_definition.value_type == "Float":
-		var number_edit := SpinBox.new()
-		number_edit.custom_minimum_size = Vector2(88, 0)
-		number_edit.size_flags_horizontal = Control.SIZE_SHRINK_END
-		number_edit.step = 1.0 if property_definition.value_type == "Integer" else 0.1
-		number_edit.min_value = property_definition.minimum if property_definition.has_range else -1000000.0
-		number_edit.max_value = property_definition.maximum if property_definition.has_range else 1000000.0
-		number_edit.allow_greater = false
-		number_edit.allow_lesser = false
-		number_edit.set_value_no_signal(float(property_definition.default_value))
-		number_edit.value_changed.connect(_on_property_default_numeric_changed.bind(property_definition))
-		return number_edit
-
-	if property_definition.value_type == "Boolean":
-		var bool_edit := CheckBox.new()
-		bool_edit.custom_minimum_size = Vector2(48, 0)
-		bool_edit.button_pressed = bool(property_definition.default_value)
-		bool_edit.toggled.connect(_on_property_default_boolean_changed.bind(property_definition))
-		return bool_edit
-
-	var text_edit := LineEdit.new()
-	text_edit.custom_minimum_size = Vector2(88, 0)
-	text_edit.size_flags_horizontal = Control.SIZE_SHRINK_END
-	text_edit.text = ObjectPropertyValueCodec.format_default_value(
-		property_definition.default_value,
-		property_definition.value_type
-	)
-	text_edit.tooltip_text = "Измени значение по умолчанию и нажми Enter"
-	text_edit.text_submitted.connect(_on_property_default_text_submitted.bind(property_definition))
-	text_edit.focus_exited.connect(_on_property_default_text_focus_exited.bind(text_edit, property_definition))
-	return text_edit
+	var properties: Array[ObjectPropertyDefinition] = []
+	if _working_definition != null:
+		properties = _working_definition.custom_properties
+	_property_list.call("set_properties", properties)
 
 
 func _on_property_default_numeric_changed(value: float, property_definition: ObjectPropertyDefinition) -> void:
