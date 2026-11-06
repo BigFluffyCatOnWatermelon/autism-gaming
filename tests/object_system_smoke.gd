@@ -713,7 +713,7 @@ func _test_declarative_scene_structure() -> void:
 	orphan.node_name = "Orphan"
 	orphan_definition.node_definitions = [orphan]
 	var orphan_root := Node2D.new()
-	var orphan_errors := ObjectSceneStructureService.build_plan(orphan_definition, orphan_root).get("errors", PackedStringArray())
+	var orphan_errors: PackedStringArray = ObjectSceneStructureService.build_plan(orphan_definition, orphan_root).get("errors", PackedStringArray())
 	_expect(not orphan_errors.is_empty(), "structure preflight rejects missing parent IDs")
 	orphan_root.free()
 
