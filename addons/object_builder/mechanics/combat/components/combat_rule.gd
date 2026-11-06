@@ -19,7 +19,7 @@ func _emit(value: Variant) -> Variant:
 
 func block_damage(incoming_damage: float) -> float:
     if not _enabled(): return maxf(0.0,incoming_damage)
-    return float(_emit(maxf(0.0,incoming_damage*(1.0-clampf(_number("damage_reduction",0.75),0.0,1.0))))
+    return float(_emit(maxf(0.0,incoming_damage*(1.0-clampf(_number("damage_reduction",0.75),0.0,1.0)))))
 
 func resolve_parry(elapsed_since_input: float, incoming_damage: float) -> Dictionary:
     var success := _enabled() and elapsed_since_input >= 0.0 and elapsed_since_input <= _number("parry_window",0.25)
