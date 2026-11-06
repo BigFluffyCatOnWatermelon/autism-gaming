@@ -166,9 +166,6 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 				% [binding_id, target_path]
 			)
 
-	if validation_scene != null:
-		validation_scene.free()
-
 	var all_bindings: Array[ObjectComponentBinding] = []
 	for legacy_definition in definition.components:
 		if legacy_definition == null or not legacy_definition.enabled:
