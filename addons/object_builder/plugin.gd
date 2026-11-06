@@ -12,6 +12,7 @@ const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_build
 const ObjectBuilderCapabilitySettingsViewScript = preload("res://addons/object_builder/ui/capability_settings_view.gd")
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
+const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -55,15 +56,13 @@ const CHILD_NODE_TYPES := [
 var _main_screen: MarginContainer
 var _library_view: Control
 var _editor_view: TabContainer
+var _dialog_view: Node
 var _name_edit: LineEdit
 var _id_edit: LineEdit
 var _category_edit: LineEdit
 var _root_type: OptionButton
 var _object_type_label: Label
 var _tags_edit: LineEdit
-var _new_object_dialog: AcceptDialog
-var _new_object_type_option: OptionButton
-var _new_object_type_hint: Label
 var _description_edit: TextEdit
 var _template_check: CheckBox
 var _favorite_button: Button
@@ -76,23 +75,7 @@ var _capability_change_dialog: AcceptDialog
 var _pending_capability_values: Array[ObjectCapabilitySelection] = []
 var _pending_capability_summary := PackedStringArray()
 var _simple_preview: TextureRect
-var _property_dialog_scroll: ScrollContainer
-var _property_dialog: AcceptDialog
-var _property_name_edit: LineEdit
-var _property_type_option: OptionButton
-var _property_default_edit: LineEdit
-var _property_group_edit: LineEdit
-var _property_description_edit: TextEdit
-var _property_advanced_check: CheckBox
-var _property_range_check: CheckBox
-var _property_minimum_edit: LineEdit
-var _property_maximum_edit: LineEdit
 var _editing_property: ObjectPropertyDefinition
-var _template_dialog: AcceptDialog
-var _template_option: OptionButton
-var _node_dialog: AcceptDialog
-var _node_type_list: ItemList
-var _node_name_edit: LineEdit
 var _scene_tree_view: Control
 var _visual_editor_view: Control
 var _status_label: Label
@@ -464,12 +447,28 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	_build_component_editor(advanced_editor)
 
 func _build_dialogs() -> void:
-	_build_property_dialog()
-	_build_capability_settings_dialog()
-	_build_new_object_dialog()
-	_build_template_dialog()
-	_build_node_dialog()
+	_dialog_view = ObjectBuilderDialogViewScript.new()
+	_dialog_view.name = "DialogView"
+	add_child(_dialog_view)
 
+	var property_types: Array[String] = ["String", "Integer", "Float", "Boolean", "Vector2"]
+	var creation_profiles: Array[Dictionary] = []
+	for profile_id in ObjectCreationProfileRegistry.get_profile_ids():
+		var profile := ObjectCreationProfileRegistry.get_definition(profile_id)
+		if profile == null:
+			continue
+		creation_profiles.append({
+			"id": profile.profile_id,
+			"label": profile.display_name
+		})
+
+	_dialog_view.call("build", property_types, creation_profiles, CHILD_NODE_TYPES)
+	(_dialog_view.call("get_property_dialog") as AcceptDialog).confirmed.connect(_on_property_dialog_confirmed)
+	(_dialog_view.call("get_creation_dialog") as AcceptDialog).confirmed.connect(_on_new_object_dialog_confirmed)
+	(_dialog_view.call("get_template_dialog") as AcceptDialog).confirmed.connect(_on_template_dialog_confirmed)
+	(_dialog_view.call("get_node_dialog") as AcceptDialog).confirmed.connect(_on_node_dialog_confirmed)
+	_dialog_view.connect("creation_profile_selected", Callable(self, "_on_new_object_type_selected"))
+	_build_capability_settings_dialog()
 
 func _build_capability_editor(parent: VBoxContainer) -> void:
 	var view: VBoxContainer = ObjectBuilderCapabilityListViewScript.new()
@@ -877,148 +876,33 @@ func _ensure_component_schemas() -> void:
 		component_definition.notify_property_list_changed()
 
 
-func _build_property_dialog() -> void:
-	_property_dialog = AcceptDialog.new()
-	_property_dialog.title = "Новое пользовательское свойство"
-	add_child(_property_dialog)
-
-	_property_dialog_scroll = ScrollContainer.new()
-	_property_dialog_scroll.custom_minimum_size = Vector2(420, 320)
-	_property_dialog_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_property_dialog_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_property_dialog_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_property_dialog_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	_property_dialog.add_child(_property_dialog_scroll)
-
-	var form := VBoxContainer.new()
-	form.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_property_dialog_scroll.add_child(form)
-
-	_property_name_edit = LineEdit.new()
-	_property_name_edit.placeholder_text = "Например, Максимальное здоровье"
-	ObjectBuilderUIFactory.add_labeled_control(form, "Название", _property_name_edit)
-
-	_property_type_option = OptionButton.new()
-	for type_name in ["String", "Integer", "Float", "Boolean", "Vector2"]:
-		_property_type_option.add_item(type_name)
-	_property_type_option.item_selected.connect(_on_property_type_changed)
-	ObjectBuilderUIFactory.add_labeled_control(form, "Тип", _property_type_option)
-
-	_property_default_edit = LineEdit.new()
-	_property_default_edit.text = "0"
-	ObjectBuilderUIFactory.add_labeled_control(form, "Значение по умолчанию", _property_default_edit)
-
-	_property_group_edit = LineEdit.new()
-	_property_group_edit.text = "Основное"
-	ObjectBuilderUIFactory.add_labeled_control(form, "Группа инспектора", _property_group_edit)
-
-	_property_description_edit = TextEdit.new()
-	_property_description_edit.custom_minimum_size = Vector2(0, 54)
-	_property_description_edit.placeholder_text = "Подсказка о назначении свойства…"
-	ObjectBuilderUIFactory.add_labeled_control(form, "Описание", _property_description_edit)
-
-	_property_advanced_check = CheckBox.new()
-	_property_advanced_check.text = "Дополнительный параметр"
-	_property_advanced_check.tooltip_text = "Отмечает настройку как редко используемую."
-	form.add_child(_property_advanced_check)
-
-	_property_range_check = CheckBox.new()
-	_property_range_check.text = "Ограничить числовой диапазон"
-	_property_range_check.toggled.connect(_on_property_range_toggled)
-	form.add_child(_property_range_check)
-
-	var range_row := HBoxContainer.new()
-	form.add_child(range_row)
-	var minimum_label := Label.new()
-	minimum_label.text = "Мин."
-	range_row.add_child(minimum_label)
-	_property_minimum_edit = LineEdit.new()
-	_property_minimum_edit.text = "0"
-	_property_minimum_edit.custom_minimum_size = Vector2(75, 0)
-	_property_minimum_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	range_row.add_child(_property_minimum_edit)
-
-	var maximum_label := Label.new()
-	maximum_label.text = "Макс."
-	range_row.add_child(maximum_label)
-	_property_maximum_edit = LineEdit.new()
-	_property_maximum_edit.text = "100"
-	_property_maximum_edit.custom_minimum_size = Vector2(75, 0)
-	_property_maximum_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	range_row.add_child(_property_maximum_edit)
-
-	_property_dialog.confirmed.connect(_on_property_dialog_confirmed)
-	_update_property_range_controls()
-
-
-func _build_new_object_dialog() -> void:
-	_new_object_dialog = AcceptDialog.new()
-	_new_object_dialog.title = "Новый объект · выбери тип"
-	add_child(_new_object_dialog)
-
-	var form := ObjectBuilderUIFactory.create_scrollable_dialog_body(
-		_new_object_dialog,
-		Vector2i(420, 190)
-	)
-
-	_new_object_type_option = OptionButton.new()
-	_new_object_type_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_new_object_type_option.add_item("Без профиля · обычный объект")
-	_new_object_type_option.set_item_metadata(0, "")
-	for profile_id in ObjectCreationProfileRegistry.get_profile_ids():
-		var profile := ObjectCreationProfileRegistry.get_definition(profile_id)
-		if profile == null:
-			continue
-		_new_object_type_option.add_item(profile.display_name)
-		_new_object_type_option.set_item_metadata(
-			_new_object_type_option.item_count - 1,
-			profile.profile_id
-		)
-	_new_object_type_option.item_selected.connect(_on_new_object_type_selected)
-	ObjectBuilderUIFactory.add_labeled_control(form, "Что создаём?", _new_object_type_option)
-
-	_new_object_type_hint = Label.new()
-	_new_object_type_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_new_object_type_hint.custom_minimum_size = Vector2(0, 58)
-	form.add_child(_new_object_type_hint)
-
-	var help_label := Label.new()
-	help_label.text = "После подтверждения появятся параметры, подходящие выбранному типу."
-	help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	form.add_child(help_label)
-
-	_new_object_dialog.confirmed.connect(_on_new_object_dialog_confirmed)
-	_new_object_type_option.select(0)
+func _on_new_object_type_selected(_profile_id: String) -> void:
 	_update_new_object_type_hint()
-
-
-func _on_new_object_type_selected(_index: int) -> void:
-	_update_new_object_type_hint()
-
 
 func _update_new_object_type_hint() -> void:
-	if _new_object_type_hint == null or _new_object_type_option == null:
+	if _dialog_view == null:
 		return
-	if _new_object_type_option.selected < 0:
-		_new_object_type_hint.text = ""
-		return
-	var profile_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
+	var profile_id := str(_dialog_view.call("get_selected_creation_profile_id"))
 	if profile_id.is_empty():
-		_new_object_type_hint.text = "Обычный объект без стартового набора параметров. После создания можно добавить любые возможности."
+		_dialog_view.call(
+			"set_creation_profile_hint",
+			"Обычный объект без стартового набора параметров. После создания можно добавить любые возможности."
+		)
 		return
 	var profile := ObjectCreationProfileRegistry.get_definition(profile_id)
 	if profile == null:
-		_new_object_type_hint.text = "Этот профиль больше недоступен. Можно выбрать другой или начать без профиля."
+		_dialog_view.call(
+			"set_creation_profile_hint",
+			"Этот профиль больше недоступен. Можно выбрать другой или начать без профиля."
+		)
 		return
-	_new_object_type_hint.text = "%s\nПрофиль предлагает настройки, но не ограничивает возможности объекта." % [
-		profile.description
-	]
-
+	_dialog_view.call(
+		"set_creation_profile_hint",
+		"%s\nПрофиль предлагает настройки, но не ограничивает возможности объекта." % profile.description
+	)
 
 func _on_new_object_dialog_confirmed() -> void:
-	if _new_object_type_option.selected < 0:
-		return
-	var profile_id := str(_new_object_type_option.get_item_metadata(_new_object_type_option.selected))
+	var profile_id := str(_dialog_view.call("get_selected_creation_profile_id"))
 	var profile := ObjectCreationProfileRegistry.get_definition(profile_id) if not profile_id.is_empty() else null
 
 	var definition := ObjectDefinition.new()
@@ -1050,47 +934,6 @@ func _on_new_object_dialog_confirmed() -> void:
 			false
 		)
 
-
-func _on_property_type_changed(_index: int) -> void:
-	var type_name := _property_type_option.get_item_text(_property_type_option.selected)
-	var supports_range := type_name in ["Integer", "Float"]
-	_property_range_check.disabled = not supports_range
-	if not supports_range:
-		_property_range_check.button_pressed = false
-	_update_property_range_controls()
-
-
-func _on_property_range_toggled(_enabled: bool) -> void:
-	_update_property_range_controls()
-
-
-func _update_property_range_controls() -> void:
-	if _property_minimum_edit == null or _property_maximum_edit == null:
-		return
-	var range_enabled := _property_range_check.button_pressed and not _property_range_check.disabled
-	_property_minimum_edit.editable = range_enabled
-	_property_maximum_edit.editable = range_enabled
-
-
-func _build_template_dialog() -> void:
-	_template_dialog = AcceptDialog.new()
-	_template_dialog.title = "Создать объект из шаблона"
-	add_child(_template_dialog)
-
-	var form := ObjectBuilderUIFactory.create_scrollable_dialog_body(
-		_template_dialog,
-		Vector2i(420, 150)
-	)
-	_template_option = OptionButton.new()
-	ObjectBuilderUIFactory.add_labeled_control(form, "Шаблон", _template_option)
-
-	var hint := Label.new()
-	hint.text = "Будет создана независимая копия определения и сцены."
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	form.add_child(hint)
-	_template_dialog.confirmed.connect(_on_template_dialog_confirmed)
-
-
 func _build_visual_editor(parent: VBoxContainer) -> void:
 	_visual_editor_view = ObjectBuilderVisualEditorViewScript.new()
 	_visual_editor_view.name = "VisualEditorView"
@@ -1108,37 +951,6 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	_visual_editor_view.connect("animation_speed_changed", Callable(self, "_on_animated_speed_changed"))
 	_visual_editor_view.call("build")
 	parent.add_child(_visual_editor_view)
-
-func _build_node_dialog() -> void:
-	_node_dialog = AcceptDialog.new()
-	_node_dialog.title = "Добавить дочерний узел"
-	add_child(_node_dialog)
-
-	var form := ObjectBuilderUIFactory.create_scrollable_dialog_body(
-		_node_dialog,
-		Vector2i(430, 250)
-	)
-	form.add_theme_constant_override("separation", 5)
-
-	var type_label := Label.new()
-	type_label.text = "Выбери тип узла:"
-	form.add_child(type_label)
-
-	_node_type_list = ItemList.new()
-	_node_type_list.custom_minimum_size = Vector2(0, 142)
-	_node_type_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_node_type_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_node_type_list.select_mode = ItemList.SELECT_SINGLE
-	for type_name in CHILD_NODE_TYPES:
-		_node_type_list.add_item(type_name)
-	form.add_child(_node_type_list)
-
-	_node_name_edit = LineEdit.new()
-	_node_name_edit.placeholder_text = "Имя (необязательно)"
-	ObjectBuilderUIFactory.add_labeled_control(form, "Название", _node_name_edit)
-
-	_node_dialog.confirmed.connect(_on_node_dialog_confirmed)
-
 
 func _load_local_state() -> void:
 	var settings := EditorInterface.get_editor_settings()
@@ -1340,27 +1152,26 @@ func _refresh_favorite_button() -> void:
 
 
 func _on_new_object_pressed() -> void:
-	_new_object_type_option.select(0)
-	_update_new_object_type_hint()
-	ObjectBuilderUIFactory.popup_window_safely(_new_object_dialog, Vector2i(460, 250), 0.82)
-
+	_dialog_view.call("reset_creation_profile")
+	_dialog_view.call("popup_creation_dialog")
 
 func _on_create_from_template_pressed() -> void:
 	_templates = ObjectLibraryService.load_templates()
-	_template_option.clear()
 	if _templates.is_empty():
 		_set_status("Шаблоны не найдены.", true)
 		return
+	var template_names: Array[String] = []
 	for template_definition in _templates:
-		_template_option.add_item(template_definition.display_name)
-	_template_option.select(0)
-	ObjectBuilderUIFactory.popup_window_safely(_template_dialog, Vector2i(440, 170), 0.82)
-
+		if template_definition != null:
+			template_names.append(template_definition.display_name)
+	_dialog_view.call("set_template_options", template_names)
+	_dialog_view.call("popup_template_dialog")
 
 func _on_template_dialog_confirmed() -> void:
-	if _template_option.selected < 0 or _template_option.selected >= _templates.size():
+	var selected_index := int(_dialog_view.call("get_selected_template_index"))
+	if selected_index < 0 or selected_index >= _templates.size():
 		return
-	var template_definition := _templates[_template_option.selected]
+	var template_definition := _templates[selected_index]
 	var definition := template_definition.duplicate(true) as ObjectDefinition
 	definition.object_id = "object_%d_%d" % [int(Time.get_unix_time_from_system()), Time.get_ticks_msec()]
 	definition.display_name = template_definition.display_name + " — копия"
@@ -1372,7 +1183,6 @@ func _on_template_dialog_confirmed() -> void:
 	_can_save_as_template = true
 	_load_definition(definition)
 	_set_status("Создана копия шаблона. Измени параметры и сохрани объект.", false)
-
 
 func _clone_template_scene(template_definition: ObjectDefinition, target_definition: ObjectDefinition) -> void:
 	var source_scene: PackedScene = template_definition.scene
@@ -1500,67 +1310,59 @@ func _on_add_property_pressed() -> void:
 		_on_new_object_pressed()
 		return
 	_editing_property = null
-	_property_dialog.title = "Новое пользовательское свойство"
-	_property_name_edit.text = ""
-	_property_type_option.select(2)
-	_property_default_edit.text = "0"
-	_property_group_edit.text = "Основное"
-	_property_description_edit.text = ""
-	_property_advanced_check.button_pressed = false
-	_property_range_check.disabled = false
-	_property_range_check.button_pressed = false
-	_property_minimum_edit.text = "0"
-	_property_maximum_edit.text = "100"
-	_update_property_range_controls()
-	ObjectBuilderUIFactory.popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
-
+	_dialog_view.call("configure_property_form", {
+		"title": "Новое пользовательское свойство",
+		"display_name": "",
+		"value_type": "Float",
+		"default_value": "0",
+		"group_name": "Основное",
+		"description": "",
+		"advanced": false,
+		"has_range": false,
+		"minimum": "0",
+		"maximum": "100"
+	})
+	_dialog_view.call("popup_property_dialog")
 
 func _on_edit_property_pressed(property_definition: ObjectPropertyDefinition) -> void:
 	if _working_definition == null or property_definition == null:
 		return
 	_editing_property = property_definition
-	_property_dialog.title = "Редактировать пользовательское свойство"
-	_property_name_edit.text = property_definition.display_name
-	_select_property_type(property_definition.value_type)
-	_property_default_edit.text = ObjectPropertyValueCodec.format_default_value(
-		property_definition.default_value,
-		property_definition.value_type
-	)
-	_property_group_edit.text = property_definition.group_name
-	_property_description_edit.text = property_definition.description
-	_property_advanced_check.button_pressed = property_definition.advanced
-	_property_range_check.disabled = property_definition.value_type != "Integer" and property_definition.value_type != "Float"
-	_property_range_check.button_pressed = property_definition.has_range
-	_property_minimum_edit.text = str(property_definition.minimum)
-	_property_maximum_edit.text = str(property_definition.maximum)
-	_update_property_range_controls()
-	ObjectBuilderUIFactory.popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
-
-
-func _select_property_type(type_name: String) -> void:
-	for index in range(_property_type_option.item_count):
-		if _property_type_option.get_item_text(index) == type_name:
-			_property_type_option.select(index)
-			_on_property_type_changed(index)
-			return
-	_property_type_option.select(0)
-	_on_property_type_changed(0)
-
+	_dialog_view.call("configure_property_form", {
+		"title": "Редактировать пользовательское свойство",
+		"display_name": property_definition.display_name,
+		"value_type": property_definition.value_type,
+		"default_value": ObjectPropertyValueCodec.format_default_value(
+			property_definition.default_value,
+			property_definition.value_type
+		),
+		"group_name": property_definition.group_name,
+		"description": property_definition.description,
+		"advanced": property_definition.advanced,
+		"has_range": property_definition.has_range,
+		"minimum": str(property_definition.minimum),
+		"maximum": str(property_definition.maximum)
+	})
+	_dialog_view.call("popup_property_dialog")
 
 func _on_property_dialog_confirmed() -> void:
 	if _working_definition == null:
 		return
-	var display_name := _property_name_edit.text.strip_edges()
+	var form_values: Dictionary = _dialog_view.call("get_property_form_values")
+	var display_name := str(form_values.get("display_name", "")).strip_edges()
 	if display_name.is_empty():
 		_set_status("У свойства должно быть название.", true)
 		return
 
-	var value_type := _property_type_option.get_item_text(_property_type_option.selected)
-	var default_value := ObjectPropertyValueCodec.parse_default_value(_property_default_edit.text, value_type)
+	var value_type := str(form_values.get("value_type", "String"))
+	var default_value := ObjectPropertyValueCodec.parse_default_value(
+		str(form_values.get("default_value", "")),
+		value_type
+	)
 	var supports_range := value_type in ["Integer", "Float"]
-	var has_range := supports_range and _property_range_check.button_pressed
-	var minimum_value := _property_minimum_edit.text.to_float()
-	var maximum_value := _property_maximum_edit.text.to_float()
+	var has_range := supports_range and bool(form_values.get("has_range", false))
+	var minimum_value := str(form_values.get("minimum", "0")).to_float()
+	var maximum_value := str(form_values.get("maximum", "100")).to_float()
 
 	if has_range:
 		if minimum_value > maximum_value:
@@ -1585,11 +1387,11 @@ func _on_property_dialog_confirmed() -> void:
 	property_definition.display_name = display_name
 	property_definition.value_type = value_type
 	property_definition.default_value = default_value
-	property_definition.group_name = _property_group_edit.text.strip_edges()
+	property_definition.group_name = str(form_values.get("group_name", "")).strip_edges()
 	if property_definition.group_name.is_empty():
 		property_definition.group_name = "Основное"
-	property_definition.description = _property_description_edit.text
-	property_definition.advanced = _property_advanced_check.button_pressed
+	property_definition.description = str(form_values.get("description", ""))
+	property_definition.advanced = bool(form_values.get("advanced", false))
 	property_definition.has_range = has_range
 	property_definition.minimum = minimum_value
 	property_definition.maximum = maximum_value
@@ -1597,7 +1399,6 @@ func _on_property_dialog_confirmed() -> void:
 	_editing_property = null
 	_rebuild_property_list()
 	_set_status("Свойство обновлено. Нажми «Сохранить в библиотеку».", false)
-
 
 func _has_property_id(property_id: String) -> bool:
 	for property_definition in _working_definition.custom_properties:
@@ -2022,12 +1823,8 @@ func _on_add_node_pressed() -> void:
 	if _get_open_object_scene_root() == null:
 		_set_status("Сначала открой сцену этого объекта.", true)
 		return
-	var sprite_index := CHILD_NODE_TYPES.find("Sprite2D")
-	_node_type_list.select(maxi(0, sprite_index))
-	_node_type_list.ensure_current_is_visible()
-	_node_name_edit.text = ""
-	ObjectBuilderUIFactory.popup_window_safely(_node_dialog, Vector2i(430, 300), 0.82)
-
+	_dialog_view.call("reset_node_dialog", "Sprite2D")
+	_dialog_view.call("popup_node_dialog")
 
 func _on_node_dialog_confirmed() -> void:
 	var scene_root := _get_open_object_scene_root()
@@ -2039,22 +1836,17 @@ func _on_node_dialog_confirmed() -> void:
 	if parent_node == null:
 		parent_node = scene_root
 
-	var selected_types := _node_type_list.get_selected_items()
-	if selected_types.is_empty():
-		_set_status("Выбери тип дочернего узла.", true)
+	var node_type := str(_dialog_view.call("get_selected_node_type"))
+	if node_type.is_empty() or not CHILD_NODE_TYPES.has(node_type):
+		_set_status("Выбери допустимый тип дочернего узла.", true)
 		return
-	var selected_index := selected_types[0]
-	if selected_index < 0 or selected_index >= CHILD_NODE_TYPES.size():
-		_set_status("Не удалось определить тип дочернего узла.", true)
-		return
-	var node_type: String = str(CHILD_NODE_TYPES[selected_index])
 	var created_object: Object = ClassDB.instantiate(node_type)
 	if not created_object is Node:
 		_set_status("Godot не смог создать узел типа " + node_type, true)
 		return
 
 	var new_node := created_object as Node
-	var entered_name := _node_name_edit.text.strip_edges()
+	var entered_name := str(_dialog_view.call("get_node_name")).strip_edges()
 	if entered_name.is_empty():
 		entered_name = node_type
 	new_node.name = entered_name.validate_node_name()
@@ -2070,7 +1862,6 @@ func _on_node_dialog_confirmed() -> void:
 	EditorInterface.edit_node(new_node)
 	_refresh_scene_tree()
 	_set_status("Добавлен узел %s. Для сохранения сцены нажми Ctrl+S." % new_node.name, false)
-
 
 func _on_remove_node_pressed() -> void:
 	var scene_root := _get_open_object_scene_root()

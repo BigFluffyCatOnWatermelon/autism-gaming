@@ -113,6 +113,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder dialog view tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_dialog_view_smoke.gd 2>&1 | tee object-builder-dialog-view-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-dialog-view-test.log; then
+            echo "Object Builder dialog view tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder property list view tests
         shell: bash
         run: |
