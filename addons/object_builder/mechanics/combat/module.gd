@@ -14,6 +14,13 @@ const DEFINITIONS := [
 	{"id":"can_combo_attack","name":"Комбинация атак","description":"Отслеживает последовательность ударов и множитель каждого шага.","defaults":{"rule_type":"combo","enabled":true,"combo_window":0.8,"combo_multipliers":"1.0,1.15,1.4"},"settings":[{"key":"combo_window","display_name":"Окно между ударами","value_type":"Float","default_value":0.8,"group_name":"Комбо","has_range":true,"minimum":0.0,"maximum":10.0},{"key":"combo_multipliers","display_name":"Множители шагов через запятую","value_type":"String","default_value":"1.0,1.15,1.4","group_name":"Комбо"}]},
 	{"id":"can_target_enemy","name":"Выбор цели","description":"Хранит выбранную цель и проверяет дистанцию.","defaults":{"rule_type":"target","enabled":true,"maximum_distance":600.0},"settings":[{"key":"maximum_distance","display_name":"Дальность выбора цели","value_type":"Float","default_value":600.0,"group_name":"Цель","has_range":true,"minimum":0.0,"maximum":100000.0}]}
 ]
+func _settings_for(item: Dictionary) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for descriptor in item.settings:
+		if descriptor is Dictionary:
+			result.append(descriptor.duplicate(true))
+	return result
+
 func build_component_definitions() -> Array[ObjectComponentDefinition]:
 	var result: Array[ObjectComponentDefinition] = []
 	for item in DEFINITIONS:
@@ -26,7 +33,7 @@ func build_component_definitions() -> Array[ObjectComponentDefinition]:
 		d.category_display_name = CATEGORY_NAME
 		d.component_version = 1
 		d.component_script = RULE
-		d.setting_definitions = item.settings.duplicate(true)
+		d.setting_definitions = _settings_for(item)
 		d.settings = item.defaults.duplicate(true)
 		result.append(d)
 	return result
