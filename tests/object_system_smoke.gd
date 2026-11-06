@@ -1665,9 +1665,11 @@ func _test_capability_library_size_and_status() -> void:
 	)
 	if pickup_capability != null:
 		var pickup_selection := ObjectCapabilityCatalog.create_selection("is_pickup_item")
+		if pickup_selection != null:
+			pickup_selection.set_component_setting("pickup", "item_id", "test_item")
 		_expect(
 			ObjectCapabilityService.validate_selections([pickup_selection]).is_empty(),
-			"implemented item pickup capability can be enabled in the Simple Builder"
+			"implemented item pickup capability can be enabled after required settings are filled"
 		)
 
 
