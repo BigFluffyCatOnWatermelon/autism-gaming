@@ -33,6 +33,7 @@ func _run() -> void:
 		and is_equal_approx(spin_box.step, 0.5),
 		"numeric fields use the shared SpinBox configuration"
 	)
+	spin_box.free()
 
 	var empty_host := VBoxContainer.new()
 	host.add_child(empty_host)
@@ -48,8 +49,12 @@ func _run() -> void:
 	UIFactory.clear_children(empty_host)
 	_expect(empty_host.get_child_count() == 0, "dynamic lists can be cleared through one helper")
 
-	host.queue_free()
-	dialog.queue_free()
+	root.remove_child(host)
+	host.free()
+	root.remove_child(dialog)
+	dialog.free()
+	await process_frame
+
 	if failures.is_empty():
 		print("Object Builder UI factory smoke tests passed.")
 		quit(0)
