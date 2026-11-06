@@ -161,11 +161,8 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 
 	var nodes_by_id: Dictionary = {ROOT_NODE_ID: scene_root}
 	var created_nodes: Array[Node] = []
+	var reused_nodes: Array[Node] = []
 	for node_definition in plan.get("ordered_nodes", []):
-		var node := _instantiate_node(node_definition)
-		if node == null:
-			_rollback_created_nodes(created_nodes)
-			return _failed_plan(["Не удалось создать узел '%s' типа '%s'." % [node_definition.node_id, node_definition.node_type]])
 		var parent: Node
 		if not node_definition.parent_node_path.is_empty():
 			parent = scene_root.get_node_or_null(node_definition.parent_node_path)
@@ -174,6 +171,21 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 			if parent_id.is_empty():
 				parent_id = ROOT_NODE_ID
 			parent = nodes_by_id.get(parent_id) as Node
+
+		var existing_node := _find_generated_node(scene_root, node_definition.node_id)
+		if existing_node != null:
+			if parent == null or existing_node.get_parent() != parent:
+				return _failed_plan(["Существующий узел '%s' находится не у ожидаемого родителя." % node_definition.node_id])
+			if not ClassDB.is_parent_class(existing_node.get_class(), node_definition.node_type):
+				return _failed_plan(["Существующий узел '%s' имеет несовместимый тип." % node_definition.node_id])
+			nodes_by_id[node_definition.node_id] = existing_node
+			reused_nodes.append(existing_node)
+			continue
+
+		var node := _instantiate_node(node_definition)
+		if node == null:
+			_rollback_created_nodes(created_nodes)
+			return _failed_plan(["Не удалось создать узел '%s' типа '%s'." % [node_definition.node_id, node_definition.node_type]])
 		if parent == null:
 			node.free()
 			_rollback_created_nodes(created_nodes)
@@ -217,6 +229,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		"ok": true,
 		"errors": PackedStringArray(),
 		"created_nodes": created_nodes,
+		"reused_nodes": reused_nodes,
 		"connected_signals": connected,
 		"nodes_by_id": nodes_by_id
 	}
@@ -266,6 +279,15 @@ static func _apply_node_properties(node: Node, properties: Dictionary) -> bool:
 			return false
 		node.set(name, properties[property_name])
 	return true
+
+
+static func _find_generated_node(scene_root: Node, node_id: String) -> Node:
+	if scene_root == null or node_id.is_empty():
+		return null
+	for node in scene_root.find_children("*", "", true, false):
+		if node.has_meta(NODE_ID_META) and str(node.get_meta(NODE_ID_META)) == node_id:
+			return node
+	return null
 
 
 static func _resolve_node(scene_root: Node, node_id: String, nodes_by_id: Dictionary) -> Node:
