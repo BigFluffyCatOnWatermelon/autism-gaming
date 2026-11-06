@@ -1172,8 +1172,8 @@ func _test_capability_library_size_and_status() -> void:
 			planned_without_runtime = false
 
 	_expect(
-		implemented_count == 21 and planned_count == 179,
-		"catalogue explicitly distinguishes 21 runtime mechanics and 179 planned mechanics"
+		implemented_count == 40 and planned_count == 160,
+		"catalogue explicitly distinguishes 40 runtime mechanics and 160 planned mechanics"
 	)
 	_expect(
 		planned_without_runtime,
@@ -1209,7 +1209,7 @@ func _test_capability_library_size_and_status() -> void:
 
 
 func _test_integrated_mechanics_catalog() -> void:
-	var ids := ["has_stamina","has_mana","has_energy","has_hunger","has_thirst","has_temperature","has_weight_limit","has_mood","has_reputation","can_block","can_parry","can_dodge","can_aim","can_charge_attack","can_critical_hit","can_combo_attack","can_target_enemy"]
+	var ids := ["has_stamina","has_mana","has_energy","has_hunger","has_thirst","has_temperature","has_weight_limit","has_mood","has_reputation","can_block","can_parry","can_dodge","can_aim","can_charge_attack","can_critical_hit","can_combo_attack","can_target_enemy","has_armor","has_damage_resistance","has_immunity","has_shield","reduces_projectile_damage","reflects_projectiles","has_invulnerability_window","has_weak_points","resists_status_effects","regenerates_health","can_break_into_parts","has_destruction_stages","spawns_debris","drops_loot_on_destroy","plays_destroy_animation","leaves_remains","can_be_repaired","can_regrow","can_explode_on_destroy"]
 	for capability_id in ids:
 		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
 		var component_definition := ObjectComponentCatalog.create_definition(capability_id)
@@ -1221,7 +1221,11 @@ func _test_integrated_mechanics_catalog() -> void:
 		var selection := ObjectCapabilityCatalog.create_selection(capability_id)
 		_expect(selection != null and ObjectCapabilityService.validate_selections([selection]).is_empty(), "capability selection validates: " + capability_id)
 		var bindings := ObjectCapabilityService.build_component_bindings([selection])
-		_expect(bindings.size() == 1 and bindings[0].get_component_id() == capability_id, "capability creates its binding: " + capability_id)
+		var has_own_binding := false
+		for binding in bindings:
+			if binding.get_component_id() == capability_id:
+				has_own_binding = true
+		_expect(has_own_binding, "capability creates its own binding (and required dependencies): " + capability_id)
 	var stamina_selection := ObjectCapabilityCatalog.create_selection("has_stamina")
 	if stamina_selection != null:
 		stamina_selection.set_component_setting("has_stamina","maximum_value",150.0)
@@ -1255,6 +1259,93 @@ func _test_integrated_mechanics_catalog() -> void:
 			_expect(block != null,"runtime block component is accessible")
 			if block != null:
 				_expect(is_equal_approx(block.block_damage(20.0),10.0),"configured block rule executes")
+			instance.free()
+
+	var armor_selection := ObjectCapabilityCatalog.create_selection("has_armor")
+	if armor_selection != null:
+		armor_selection.set_component_setting("has_armor", "armor_percent_reduction", 0.2)
+		armor_selection.set_component_setting("has_armor", "armor_flat_reduction", 5.0)
+		var definition := ObjectDefinition.new()
+		definition.object_id = "integrated_armor_smoke"
+		definition.display_name = "Integrated Armor Smoke"
+		definition.category = "Other"
+		definition.capabilities = [armor_selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null, "factory instantiates an object with armor")
+		if instance != null:
+			var armor: Variant = ObjectFactory.get_component(instance, "has_armor")
+			_expect(armor != null, "runtime armor component is accessible")
+			if armor != null:
+				_expect(is_equal_approx(armor.calculate_armored_damage(100.0), 75.0), "armor applies percentage and flat reduction")
+			instance.free()
+
+	var shield_selection := ObjectCapabilityCatalog.create_selection("has_shield")
+	if shield_selection != null:
+		shield_selection.set_component_setting("has_shield", "shield_current", 30.0)
+		shield_selection.set_component_setting("has_shield", "shield_maximum", 30.0)
+		var definition := ObjectDefinition.new()
+		definition.object_id = "integrated_shield_smoke"
+		definition.display_name = "Integrated Shield Smoke"
+		definition.category = "Other"
+		definition.capabilities = [shield_selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null, "factory instantiates an object with a shield")
+		if instance != null:
+			var shield: Variant = ObjectFactory.get_component(instance, "has_shield")
+			if shield != null:
+				var absorbed: Dictionary = shield.absorb_damage_with_shield(40.0)
+				_expect(is_equal_approx(float(absorbed.get("absorbed", 0.0)), 30.0), "shield absorbs damage up to capacity")
+				_expect(is_equal_approx(float(absorbed.get("remaining_damage", 0.0)), 10.0), "shield returns remaining damage")
+			instance.free()
+
+	var stage_selection := ObjectCapabilityCatalog.create_selection("has_destruction_stages")
+	if stage_selection != null:
+		var definition := ObjectDefinition.new()
+		definition.object_id = "integrated_stages_smoke"
+		definition.display_name = "Integrated Stages Smoke"
+		definition.category = "Other"
+		definition.capabilities = [stage_selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null, "factory instantiates destruction stages and dependencies")
+		if instance != null:
+			var stages: Variant = ObjectFactory.get_component(instance, "has_destruction_stages")
+			if stages != null:
+				_expect(stages.get_destruction_stage(0.4) == 2, "integrity maps to the configured destruction stage")
+			instance.free()
+
+	var loot_selection := ObjectCapabilityCatalog.create_selection("drops_loot_on_destroy")
+	if loot_selection != null:
+		loot_selection.set_component_setting("drops_loot_on_destroy", "loot_table_json", "[{\"item_id\":\"wood\",\"minimum\":2,\"maximum\":2,\"chance\":1.0}]")
+		var definition := ObjectDefinition.new()
+		definition.object_id = "integrated_loot_smoke"
+		definition.display_name = "Integrated Loot Smoke"
+		definition.category = "Other"
+		definition.capabilities = [loot_selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null, "factory instantiates a destruction loot table")
+		if instance != null:
+			var loot_rule: Variant = ObjectFactory.get_component(instance, "drops_loot_on_destroy")
+			if loot_rule != null:
+				var rolled: Array[Dictionary] = loot_rule.roll_loot(RandomNumberGenerator.new())
+				_expect(rolled.size() == 1 and int(rolled[0].get("amount", 0)) == 2, "loot table rolls fixed quantities")
+			instance.free()
+
+	var regrowth_selection := ObjectCapabilityCatalog.create_selection("can_regrow")
+	if regrowth_selection != null:
+		regrowth_selection.set_component_setting("can_regrow", "regrowth_seconds", 1.0)
+		var definition := ObjectDefinition.new()
+		definition.object_id = "integrated_regrowth_smoke"
+		definition.display_name = "Integrated Regrowth Smoke"
+		definition.category = "Other"
+		definition.capabilities = [regrowth_selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null, "factory instantiates a regrowth rule")
+		if instance != null:
+			var regrowth: Variant = ObjectFactory.get_component(instance, "can_regrow")
+			if regrowth != null:
+				regrowth.start_regrowth()
+				_expect(not regrowth.tick_regrowth(0.5), "regrowth is pending before its duration")
+				_expect(regrowth.tick_regrowth(0.5), "regrowth completes after its duration")
 			instance.free()
 
 
