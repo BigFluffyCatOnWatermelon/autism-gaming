@@ -2,6 +2,7 @@
 extends EditorPlugin
 
 const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
+const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -336,45 +337,11 @@ func _create_scrollable_dialog_body(
 	dialog: AcceptDialog,
 	minimum_size: Vector2i
 ) -> VBoxContainer:
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(minimum_size)
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	dialog.add_child(scroll)
-
-	var content := VBoxContainer.new()
-	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", 7)
-	scroll.add_child(content)
-	return content
+	return ObjectBuilderUIFactory.create_scrollable_dialog_body(dialog, minimum_size)
 
 
 func _popup_window_safely(window: Window, preferred_size: Vector2i, fallback_ratio: float = 0.82) -> void:
-	if window == null or not is_instance_valid(window):
-		return
-
-	# Limit every popup to the usable area of the monitor that currently hosts Godot.
-	var screen_index := DisplayServer.window_get_current_screen()
-	var usable_rect := DisplayServer.screen_get_usable_rect(screen_index)
-	var usable_size := usable_rect.size
-	if usable_size.x <= 0 or usable_size.y <= 0:
-		window.popup_centered_clamped(preferred_size, fallback_ratio)
-		return
-
-	var maximum_size := Vector2i(
-		mini(usable_size.x, maxi(240, int(floor(float(usable_size.x) * 0.90)))),
-		mini(usable_size.y, maxi(180, int(floor(float(usable_size.y) * 0.84))))
-	)
-	window.max_size = maximum_size
-
-	var requested_size := Vector2i(
-		mini(preferred_size.x, maximum_size.x),
-		mini(preferred_size.y, maximum_size.y)
-	)
-	window.size = requested_size
-	window.popup_centered_clamped(requested_size, fallback_ratio)
+	ObjectBuilderUIFactory.popup_window_safely(window, preferred_size, fallback_ratio)
 
 
 func _build_ui() -> void:
@@ -390,44 +357,51 @@ func _build_ui() -> void:
 	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_main_screen.add_child(layout)
+	_build_workspace_toolbar(layout)
 
+	var workspace_split := HSplitContainer.new()
+	workspace_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	layout.add_child(workspace_split)
+	_build_library_panel(workspace_split)
+	_build_editor_tabs(workspace_split)
+
+
+func _build_workspace_toolbar(parent: VBoxContainer) -> void:
 	var toolbar := HBoxContainer.new()
 	layout.add_child(toolbar)
 	var title := Label.new()
 	title.text = "Object Builder"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toolbar.add_child(title)
-
+	
 	var new_button := Button.new()
 	new_button.text = "Создать объект"
 	new_button.tooltip_text = "Начать создание нового игрового объекта"
 	new_button.pressed.connect(_on_new_object_pressed)
 	toolbar.add_child(new_button)
-
+	
 	var template_button := Button.new()
 	template_button.text = "Из шаблона"
 	template_button.pressed.connect(_on_create_from_template_pressed)
 	toolbar.add_child(template_button)
-
+	
 	var refresh_button := Button.new()
 	refresh_button.text = "↻"
 	refresh_button.tooltip_text = "Обновить библиотеку"
 	refresh_button.pressed.connect(_on_refresh_pressed)
 	toolbar.add_child(refresh_button)
 
-	var split := HSplitContainer.new()
-	split.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	layout.add_child(split)
 
+func _build_library_panel(parent: HSplitContainer) -> void:
 	var library_panel := VBoxContainer.new()
 	library_panel.custom_minimum_size = Vector2(210, 0)
 	split.add_child(library_panel)
-
+	
 	_search = LineEdit.new()
 	_search.placeholder_text = "Найти объект…"
 	_search.text_changed.connect(_on_search_changed)
 	library_panel.add_child(_search)
-
+	
 	_mode_filter = OptionButton.new()
 	_mode_filter.add_item("Все объекты")
 	_mode_filter.set_item_metadata(0, "all")
@@ -437,52 +411,59 @@ func _build_ui() -> void:
 	_mode_filter.set_item_metadata(2, "recent")
 	_mode_filter.item_selected.connect(_on_filter_changed)
 	library_panel.add_child(_mode_filter)
-
+	
 	_category_filter = OptionButton.new()
 	_category_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_category_filter.item_selected.connect(_on_filter_changed)
 	library_panel.add_child(_category_filter)
-
+	
 	_tag_filter = OptionButton.new()
 	_tag_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tag_filter.item_selected.connect(_on_filter_changed)
 	library_panel.add_child(_tag_filter)
-
+	
 	_object_list = ItemList.new()
 	_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_object_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_object_list.item_selected.connect(_on_library_item_selected)
 	library_panel.add_child(_object_list)
 
+
+func _build_editor_tabs(parent: HSplitContainer) -> void:
 	var editor_tabs := TabContainer.new()
 	editor_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	editor_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	split.add_child(editor_tabs)
+	parent.add_child(editor_tabs)
+	_build_simple_editor(editor_tabs)
+	_build_advanced_editor(editor_tabs)
+	_build_dialogs()
 
+
+func _build_simple_editor(parent: TabContainer) -> void:
 	var simple_scroll := ScrollContainer.new()
 	simple_scroll.name = "Простой режим"
 	simple_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	simple_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	simple_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	editor_tabs.add_child(simple_scroll)
-
+	parent.add_child(simple_scroll)
+	
 	var simple_editor := VBoxContainer.new()
 	simple_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	simple_editor.add_theme_constant_override("separation", 10)
 	simple_scroll.add_child(simple_editor)
-
+	
 	var simple_heading := Label.new()
 	simple_heading.text = "СОЗДАЙ СВОЙ ОБЪЕКТ"
 	simple_heading.add_theme_font_size_override("font_size", 18)
 	simple_editor.add_child(simple_heading)
-
+	
 	_name_edit = _add_labeled_line_edit(simple_editor, "Название", "Например, Волшебный сундук")
-
+	
 	_description_edit = TextEdit.new()
 	_description_edit.custom_minimum_size = Vector2(0, 54)
 	_description_edit.placeholder_text = "Что это за объект? (необязательно)"
 	_add_labeled_control(simple_editor, "Описание", _description_edit)
-
+	
 	var favorite_row := HBoxContainer.new()
 	simple_editor.add_child(favorite_row)
 	_favorite_button = Button.new()
@@ -490,12 +471,12 @@ func _build_ui() -> void:
 	_favorite_button.tooltip_text = "Сохраняется локально в настройках редактора этого проекта."
 	_favorite_button.pressed.connect(_on_toggle_favorite_pressed)
 	favorite_row.add_child(_favorite_button)
-
+	
 	var appearance_title := Label.new()
 	appearance_title.text = "ВНЕШНИЙ ВИД"
 	appearance_title.add_theme_font_size_override("font_size", 16)
 	simple_editor.add_child(appearance_title)
-
+	
 	_simple_preview = TextureRect.new()
 	_simple_preview.custom_minimum_size = Vector2(0, 150)
 	_simple_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -503,65 +484,67 @@ func _build_ui() -> void:
 	_simple_preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_simple_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	simple_editor.add_child(_simple_preview)
-
+	
 	var add_image_button := Button.new()
 	add_image_button.text = "+ Добавить изображение"
 	add_image_button.tooltip_text = "Добавить картинку или ещё одну часть объекта"
 	add_image_button.pressed.connect(_on_simple_add_image_pressed)
 	simple_editor.add_child(add_image_button)
-
+	
 	_build_capability_editor(simple_editor)
-
+	
 	var save_button := Button.new()
 	save_button.text = "Сохранить объект"
 	save_button.pressed.connect(_on_save_pressed)
 	simple_editor.add_child(save_button)
-
+	
 	_status_label = Label.new()
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	simple_editor.add_child(_status_label)
 
+
+func _build_advanced_editor(parent: TabContainer) -> void:
 	var advanced_scroll := ScrollContainer.new()
 	advanced_scroll.name = "Расширенный режим"
 	advanced_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	advanced_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	advanced_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	editor_tabs.add_child(advanced_scroll)
-
+	parent.add_child(advanced_scroll)
+	
 	var advanced_editor := VBoxContainer.new()
 	advanced_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	advanced_editor.add_theme_constant_override("separation", 7)
 	advanced_scroll.add_child(advanced_editor)
-
+	
 	var advanced_title := Label.new()
 	advanced_title.text = "ТЕХНИЧЕСКИЕ НАСТРОЙКИ"
 	advanced_title.add_theme_font_size_override("font_size", 16)
 	advanced_editor.add_child(advanced_title)
-
+	
 	_id_edit = _add_labeled_line_edit(advanced_editor, "Постоянный ID", "Создаётся автоматически")
 	_id_edit.editable = false
-
+	
 	_object_type_label = Label.new()
 	_object_type_label.text = "Не выбран"
 	_add_labeled_control(advanced_editor, "Стартовый профиль", _object_type_label)
-
+	
 	_category_edit = _add_labeled_line_edit(advanced_editor, "Категория библиотеки", "Например, Nature")
 	_tags_edit = _add_labeled_line_edit(advanced_editor, "Теги", "дерево, ресурс, лес")
-
+	
 	_root_type = OptionButton.new()
 	for root_type in ROOT_TYPES:
 		_root_type.add_item(root_type)
 	_add_labeled_control(advanced_editor, "Тип корневого узла", _root_type)
-
+	
 	_template_check = CheckBox.new()
 	_template_check.text = "Сохранить как шаблон"
 	_template_check.tooltip_text = "Сохранит новую заготовку отдельно от игровых объектов."
 	advanced_editor.add_child(_template_check)
-
+	
 	var scene_title := Label.new()
 	scene_title.text = "ДЕРЕВО СЦЕНЫ"
 	advanced_editor.add_child(scene_title)
-
+	
 	var scene_toolbar := HBoxContainer.new()
 	advanced_editor.add_child(scene_toolbar)
 	var add_node_button := Button.new()
@@ -569,19 +552,19 @@ func _build_ui() -> void:
 	add_node_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_node_button.pressed.connect(_on_add_node_pressed)
 	scene_toolbar.add_child(add_node_button)
-
+	
 	var remove_node_button := Button.new()
 	remove_node_button.text = "Удалить"
 	remove_node_button.tooltip_text = "Удаляет выбранный дочерний узел через Undo/Redo."
 	remove_node_button.pressed.connect(_on_remove_node_pressed)
 	scene_toolbar.add_child(remove_node_button)
-
+	
 	var refresh_tree_button := Button.new()
 	refresh_tree_button.text = "↻"
 	refresh_tree_button.tooltip_text = "Обновить дерево открытой сцены объекта."
 	refresh_tree_button.pressed.connect(_refresh_scene_tree)
 	scene_toolbar.add_child(refresh_tree_button)
-
+	
 	_scene_tree = Tree.new()
 	_scene_tree.custom_minimum_size = Vector2(0, 190)
 	_scene_tree.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -590,13 +573,13 @@ func _build_ui() -> void:
 	_scene_tree.select_mode = Tree.SELECT_SINGLE
 	_scene_tree.item_selected.connect(_on_scene_tree_item_selected)
 	advanced_editor.add_child(_scene_tree)
-
+	
 	_scene_tree_status = Label.new()
 	_scene_tree_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	advanced_editor.add_child(_scene_tree_status)
-
+	
 	_build_visual_editor(advanced_editor)
-
+	
 	var open_scene_row := HBoxContainer.new()
 	advanced_editor.add_child(open_scene_row)
 	_open_scene_button = Button.new()
@@ -605,26 +588,28 @@ func _build_ui() -> void:
 	_open_scene_button.disabled = true
 	_open_scene_button.pressed.connect(_on_open_scene_pressed)
 	open_scene_row.add_child(_open_scene_button)
-
+	
 	var properties_title := Label.new()
 	properties_title.text = "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА"
 	advanced_editor.add_child(properties_title)
-
+	
 	var properties_hint := Label.new()
 	properties_hint.text = "Расширенные типизированные свойства и их значения по умолчанию."
 	properties_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	advanced_editor.add_child(properties_hint)
-
+	
 	_property_list = VBoxContainer.new()
 	advanced_editor.add_child(_property_list)
-
+	
 	var add_property_button := Button.new()
 	add_property_button.text = "+ Добавить свойство"
 	add_property_button.pressed.connect(_on_add_property_pressed)
 	advanced_editor.add_child(add_property_button)
-
+	
 	_build_component_editor(advanced_editor)
 
+
+func _build_dialogs() -> void:
 	_build_property_dialog()
 	_build_capability_settings_dialog()
 	_build_new_object_dialog()
@@ -704,9 +689,7 @@ func _find_capability_selection(capability_id: String) -> ObjectCapabilitySelect
 func _rebuild_capability_list() -> void:
 	if _capability_list == null:
 		return
-	for child in _capability_list.get_children():
-		_capability_list.remove_child(child)
-		child.queue_free()
+	ObjectBuilderUIFactory.clear_children(_capability_list)
 
 	if _working_definition == null:
 		var empty_label := Label.new()
@@ -1212,9 +1195,7 @@ func _on_component_add_pressed() -> void:
 func _rebuild_component_list() -> void:
 	if _component_list == null:
 		return
-	for child in _component_list.get_children():
-		_component_list.remove_child(child)
-		child.queue_free()
+	ObjectBuilderUIFactory.clear_children(_component_list)
 
 	if _working_definition == null or _working_definition.components.is_empty():
 		var empty_label := Label.new()
@@ -1296,18 +1277,11 @@ func _ensure_component_schemas() -> void:
 
 
 func _add_labeled_line_edit(parent: VBoxContainer, label_text: String, placeholder: String) -> LineEdit:
-	var edit := LineEdit.new()
-	edit.placeholder_text = placeholder
-	_add_labeled_control(parent, label_text, edit)
-	return edit
+	return ObjectBuilderUIFactory.add_labeled_line_edit(parent, label_text, placeholder)
 
 
 func _add_labeled_control(parent: VBoxContainer, label_text: String, control: Control) -> void:
-	var label := Label.new()
-	label.text = label_text
-	parent.add_child(label)
-	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	parent.add_child(control)
+	ObjectBuilderUIFactory.add_labeled_control(parent, label_text, control)
 
 
 func _build_property_dialog() -> void:
@@ -1666,22 +1640,11 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 
 
 func _make_visual_spin_box(minimum: float, maximum: float, step_value: float) -> SpinBox:
-	var control := SpinBox.new()
-	control.min_value = minimum
-	control.max_value = maximum
-	control.step = step_value
-	control.allow_greater = false
-	control.allow_lesser = false
-	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return control
+	return ObjectBuilderUIFactory.make_spin_box(minimum, maximum, step_value)
 
 
 func _add_compact_labeled_control(parent: HBoxContainer, label_text: String, control: Control) -> void:
-	var label := Label.new()
-	label.text = label_text
-	parent.add_child(label)
-	control.custom_minimum_size = Vector2(72, 0)
-	parent.add_child(control)
+	ObjectBuilderUIFactory.add_labeled_control(parent, label_text, control, 72.0)
 
 
 func _build_node_dialog() -> void:
@@ -2061,8 +2024,7 @@ func _select_root_type(type_name: String) -> void:
 
 
 func _rebuild_property_list() -> void:
-	for child in _property_list.get_children():
-		child.queue_free()
+	ObjectBuilderUIFactory.clear_children(_property_list)
 	if _working_definition == null:
 		return
 

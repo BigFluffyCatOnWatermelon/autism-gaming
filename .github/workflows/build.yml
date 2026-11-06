@@ -43,6 +43,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder UI factory smoke tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_ui_factory_smoke.gd 2>&1 | tee object-builder-ui-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-ui-test.log; then
+            echo "Object Builder UI factory smoke tests reported an error."
+            exit 1
+          fi
+
       - name: Run standalone mechanic module smoke tests
         shell: bash
         run: |
