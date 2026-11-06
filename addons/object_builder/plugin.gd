@@ -1153,6 +1153,7 @@ func _refresh_favorite_button() -> void:
 
 func _on_new_object_pressed() -> void:
 	_dialog_view.call("reset_creation_profile")
+	_update_new_object_type_hint()
 	_dialog_view.call("popup_creation_dialog")
 
 func _on_create_from_template_pressed() -> void:
