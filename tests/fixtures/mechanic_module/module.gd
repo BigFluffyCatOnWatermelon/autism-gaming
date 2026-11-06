@@ -1,3 +1,4 @@
+@tool
 extends RefCounted
 
 const MODULE_COMPONENT_SCRIPT = preload("res://tests/fixtures/mechanic_module/component.gd")

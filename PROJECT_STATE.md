@@ -40,7 +40,17 @@ Object Builder должен стать конструктором, которы�
 - [x] GitHub Actions run 42174189433: импорт, разбор GDScript, Object System smoke-тесты и запуск главной сцены — успешно.
 - [ ] Добавить визуальную подсказку взаимодействия в HUD; сейчас текст подсказки хранится в компоненте и доступен через `get_prompt_text()`.
 
-Полная целевая структура UI поэлементно описана в OBJECT_BUILDER_UI_SPEC.md. Актуальная очерёдность фаз, задачи и критерии готовности находятся в OBJECT_BUILDER_ROADMAP.md.
+### Модульная система механик — Mechanic Module API v1
+
+- [x] Добавлен MechanicModuleLoader и стандарт пакета addons/object_builder/mechanics/<module_id>/.
+- [x] Модуль содержит module.cfg и module.gd, которые объявляют runtime-компоненты и пользовательские карточки возможности.
+- [x] Loader проверяет версию API и совпадение заявленных ID, регистрирует оба каталога и откатывает компоненты при ошибке второй регистрации.
+- [x] Добавлены безопасные проверки при отключении и загрузка пакетов из редактора/ObjectFactory.
+- [x] Добавлен fixture-пакет и smoke-тест регистрации, создания объекта через ObjectFactory и отключения модуля.
+- [x] Созданы MECHANIC_MODULE_STANDARD.md, MECHANIC_MODULE_CHAT_PROMPT.md и MECHANIC_MODULE_REQUEST_TEMPLATE.md.
+- [ ] Встроенные Health, Damageable, Attack, Destructible, Pickup и Interactable пока остаются в центральных каталогах; переносить их в модули нужно постепенно и отдельными пакетами.
+
+Полная целевая структура UI поэлементно описана в OBJECT_BUILDER_UI_SPEC.md.Полная целевая структура UI поэлементно описана в OBJECT_BUILDER_UI_SPEC.md. Актуальная очерёдность фаз, задачи и критерии готовности находятся в OBJECT_BUILDER_ROADMAP.md.
 
 
 ### Реализовано в версиях 0.5.0–0.7.0

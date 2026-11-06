@@ -1,3 +1,4 @@
+@tool
 extends RefCounted
 class_name MechanicModuleLoader
 
@@ -8,12 +9,15 @@ const MODULE_API_VERSION := 1
 const DEFAULT_MODULES_DIRECTORY := "res://addons/object_builder/mechanics"
 
 static var _registered_modules: Dictionary = {}
+static var _scanned_directories: Dictionary = {}
 
 
 static func register_modules_in_directory(
 	directory_path: String = DEFAULT_MODULES_DIRECTORY
 ) -> PackedStringArray:
 	var errors := PackedStringArray()
+	if _scanned_directories.has(directory_path):
+		return errors
 	var directory := DirAccess.open(directory_path)
 	if directory == null:
 		return errors
@@ -32,6 +36,7 @@ static func register_modules_in_directory(
 
 	for module_directory in module_directories:
 		errors.append_array(register_module(module_directory))
+	_scanned_directories[directory_path] = true
 	return errors
 
 

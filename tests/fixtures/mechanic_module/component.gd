@@ -1,3 +1,4 @@
+@tool
 extends ObjectComponent
 
 var enabled: bool = false
