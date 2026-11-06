@@ -514,6 +514,16 @@ func _test_pickup_component() -> void:
 	_expect(selection != null, "Simple Builder can create the item pickup capability")
 	if selection == null:
 		return
+	var incomplete_definition := ObjectDefinition.new()
+	incomplete_definition.object_id = "pickup_missing_item_id"
+	incomplete_definition.display_name = "Pickup Without Item ID"
+	incomplete_definition.category = "Items"
+	incomplete_definition.capabilities = [selection.duplicate(true) as ObjectCapabilitySelection]
+	_expect(
+		not ObjectLibraryService.validate_definition(incomplete_definition).is_empty(),
+		"pickup capability rejects an empty required item ID before saving"
+	)
+
 	selection.set_component_setting("pickup", "item_id", "wood")
 	selection.set_component_setting("pickup", "quantity", 5)
 
