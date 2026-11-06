@@ -18,8 +18,11 @@ static func build_plan(definition: ObjectDefinition, scene_root: Node) -> Dictio
 	var errors := PackedStringArray()
 	if definition == null:
 		return _failed_plan(["Не передано определение объекта."])
-	if scene_root == null:
-		return _failed_plan(["Не создан корневой узел объекта."])
+	if scene_root == null and (
+		not definition.node_definitions.is_empty()
+		or not definition.signal_connections.is_empty()
+	):
+		return _failed_plan(["Для проверки структуры нужен корневой узел объекта."])
 
 	var node_definitions: Dictionary = {}
 	var pending: Array[ObjectNodeDefinition] = []
@@ -54,7 +57,7 @@ static func build_plan(definition: ObjectDefinition, scene_root: Node) -> Dictio
 		else:
 			if node_definition.parent_node_id.strip_edges() not in ["", ROOT_NODE_ID]:
 				errors.append("У узла '%s' одновременно заданы ID-родитель и путь к родителю." % node_id)
-			elif scene_root.get_node_or_null(node_definition.parent_node_path) == null:
+			elif scene_root == null or scene_root.get_node_or_null(node_definition.parent_node_path) == null:
 				errors.append("Для узла '%s' не найден родитель '%s'." % [node_id, str(node_definition.parent_node_path)])
 		node_definitions[node_id] = node_definition
 		pending.append(node_definition)
@@ -115,17 +118,29 @@ static func build_plan(definition: ObjectDefinition, scene_root: Node) -> Dictio
 			errors.append("У соединения '%s' указаны неизвестные флаги." % connection_id)
 		connections.append(connection)
 
-	if errors.is_empty():
+	if errors.is_empty() and not connections.is_empty():
+		var temporary_nodes: Dictionary = {ROOT_NODE_ID: scene_root}
+		for node_definition in ordered_nodes:
+			var temporary_node := _instantiate_node(node_definition)
+			if temporary_node == null:
+				errors.append("Не удалось проверить тип узла '%s'." % node_definition.node_id)
+				continue
+			temporary_nodes[node_definition.node_id] = temporary_node
 		for connection in connections:
-			var source := _resolve_node(scene_root, connection.source_node_id, {})
-			var target := _resolve_node(scene_root, connection.target_node_id, {})
+			var source := temporary_nodes.get(connection.source_node_id) as Node
+			var target := temporary_nodes.get(connection.target_node_id) as Node
 			if source == null or target == null:
-				# Generated nodes are not present yet; their signal/method contracts are checked on apply.
+				errors.append("Соединение '%s' ссылается на недоступный узел." % connection.connection_id)
 				continue
 			if not _has_signal(source, connection.signal_name):
 				errors.append("У узла '%s' нет сигнала '%s'." % [connection.source_node_id, connection.signal_name])
 			if not target.has_method(connection.method_name):
 				errors.append("У узла '%s' нет метода '%s'." % [connection.target_node_id, connection.method_name])
+		for node_id in temporary_nodes:
+			if node_id != ROOT_NODE_ID:
+				var temporary_node := temporary_nodes[node_id] as Node
+				if is_instance_valid(temporary_node):
+					temporary_node.free()
 
 	if not errors.is_empty():
 		return _failed_plan(errors)
