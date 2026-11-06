@@ -277,8 +277,8 @@ static func get_builtin_total_count() -> int:
 
 
 static func get_planned_count() -> int:
-	return 179
+	return 160
 
 
 static func get_implemented_count() -> int:
-	return 21
+	return 40
