@@ -12,7 +12,8 @@ const SCRIPT_HAS_INTERACTION_RANGE = preload("res://addons/object_builder/mechan
 const SCRIPT_SHOWS_INTERACTION_PROMPT = preload("res://addons/object_builder/mechanics/interaction/components/shows_interaction_prompt.gd")
 const SCRIPT_SUPPORTS_HOLD_INTERACTION = preload("res://addons/object_builder/mechanics/interaction/components/supports_hold_interaction.gd")
 
-const CATEGORY_ID := "interaction"
+const COMPONENT_CATEGORY_ID := "Interaction"
+const CAPABILITY_CATEGORY_ID := "interaction"
 const CATEGORY_NAME := "Взаимодействие"
 const STATE_NOTE := "Локальные состояния, проверки диапазона, счётчики и прогресс удержания реализованы. Запросы подбора/взаимодействия выдаются сигналами; ядро должно подключить получателей и интерфейс."
 
@@ -37,7 +38,7 @@ func build_component_definitions() -> Array:
         definition.display_name = item["name"]
         definition.description = item["description"]
         definition.category = "Interaction"
-        definition.category_id = CATEGORY_ID
+        definition.category_id = COMPONENT_CATEGORY_ID
         definition.category_display_name = CATEGORY_NAME
         definition.component_version = 1
         definition.component_script = item["script"]
@@ -57,7 +58,7 @@ func build_capability_definitions() -> Array:
         capability.capability_id = item["id"]
         capability.display_name = item["name"]
         capability.description = item["description"]
-        capability.category_id = CATEGORY_ID
+        capability.category_id = CAPABILITY_CATEGORY_ID
         capability.category_name = CATEGORY_NAME
         capability.icon = "hand"
         capability.keywords = PackedStringArray(item["keywords"])
