@@ -23,6 +23,7 @@ func _run_tests() -> void:
 	await _test_simple_capability_resolution()
 	_test_capability_selection_plans()
 	_test_capability_library_size_and_status()
+	_test_integrated_mechanics_catalog()
 	await _test_component_node_bindings()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1171,8 +1172,8 @@ func _test_capability_library_size_and_status() -> void:
 			planned_without_runtime = false
 
 	_expect(
-		implemented_count == 4 and planned_count == 196,
-		"catalogue explicitly distinguishes four runtime mechanics and 196 planned mechanics"
+		implemented_count == 21 and planned_count == 179,
+		"catalogue explicitly distinguishes 21 runtime mechanics and 179 planned mechanics"
 	)
 	_expect(
 		planned_without_runtime,
@@ -1205,6 +1206,56 @@ func _test_capability_library_size_and_status() -> void:
 		health_capability != null and health_capability.runtime_status == "Implemented",
 		"existing Health mechanic remains enabled and is not downgraded"
 	)
+
+
+func _test_integrated_mechanics_catalog() -> void:
+	var ids := ["has_stamina","has_mana","has_energy","has_hunger","has_thirst","has_temperature","has_weight_limit","has_mood","has_reputation","can_block","can_parry","can_dodge","can_aim","can_charge_attack","can_critical_hit","can_combo_attack","can_target_enemy"]
+	for capability_id in ids:
+		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
+		var component_definition := ObjectComponentCatalog.create_definition(capability_id)
+		_expect(capability != null, "integrated capability exists: " + capability_id)
+		_expect(capability != null and capability.runtime_status == "Implemented" and capability.available_in_simple_mode, "capability is available in Simple Builder: " + capability_id)
+		_expect(component_definition != null and component_definition.component_script != null, "component script is registered: " + capability_id)
+		if capability == null or component_definition == null:
+			continue
+		var selection := ObjectCapabilityCatalog.create_selection(capability_id)
+		_expect(selection != null and ObjectCapabilityService.validate_selections([selection]).is_empty(), "capability selection validates: " + capability_id)
+		var bindings := ObjectCapabilityService.build_component_bindings([selection])
+		_expect(bindings.size() == 1 and bindings[0].get_component_id() == capability_id, "capability creates its binding: " + capability_id)
+	var stamina_selection := ObjectCapabilityCatalog.create_selection("has_stamina")
+	if stamina_selection != null:
+		stamina_selection.set_component_setting("has_stamina","maximum_value",150.0)
+		var definition := ObjectDefinition.new()
+		definition.object_id = "integrated_stamina_smoke"
+		definition.display_name = "Integrated Stamina Smoke"
+		definition.category = "Other"
+		definition.capabilities = [stamina_selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null,"factory creates an object with integrated stamina")
+		if instance != null:
+			var stamina: Variant = ObjectFactory.get_component(instance,"has_stamina")
+			_expect(stamina != null,"runtime stamina component is accessible")
+			if stamina != null:
+				_expect(is_equal_approx(stamina.get_maximum(),150.0),"selected maximum reaches runtime component")
+				stamina.add_value(-25.0)
+				_expect(is_equal_approx(stamina.get_value(),75.0),"runtime characteristic can be changed")
+			instance.free()
+	var block_selection := ObjectCapabilityCatalog.create_selection("can_block")
+	if block_selection != null:
+		block_selection.set_component_setting("can_block","damage_reduction",0.5)
+		var definition := ObjectDefinition.new()
+		definition.object_id = "integrated_block_smoke"
+		definition.display_name = "Integrated Block Smoke"
+		definition.category = "Other"
+		definition.capabilities = [block_selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null,"factory creates an object with integrated block")
+		if instance != null:
+			var block: Variant = ObjectFactory.get_component(instance,"can_block")
+			_expect(block != null,"runtime block component is accessible")
+			if block != null:
+				_expect(is_equal_approx(block.block_damage(20.0),10.0),"configured block rule executes")
+			instance.free()
 
 
 func _test_simple_capability_resolution() -> void:
