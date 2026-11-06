@@ -117,7 +117,8 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 		if temporary_root is Node:
 			validation_scene = temporary_root as Node
 
-	var structure_plan := ObjectSceneStructureService.build_plan(definition, validation_scene)
+	# Apply only to this disposable validation instance so bindings may target generated nodes.
+	var structure_plan := ObjectSceneStructureService.apply_structure(definition, validation_scene)
 	if not bool(structure_plan.get("ok", false)):
 		var structure_errors: PackedStringArray = structure_plan.get("errors", PackedStringArray())
 		for structure_error in structure_errors:
