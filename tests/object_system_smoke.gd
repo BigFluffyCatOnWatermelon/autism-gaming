@@ -1,5 +1,22 @@
 extends SceneTree
 
+class PickupTestReceiver:
+	extends Node
+	var capacity: int = 0
+	var received: Array[Dictionary] = []
+
+	func receive_pickup(item_id: String, amount: int, source: Node) -> int:
+		var accepted := mini(capacity, amount)
+		capacity -= accepted
+		if accepted > 0:
+			received.append({
+				"item_id": item_id,
+				"amount": accepted,
+				"source_id": str(source.get_meta("object_definition_id", ""))
+			})
+		return accepted
+
+
 var failures := PackedStringArray()
 var health_died_signal_received := false
 var destructible_destroyed_received := false
@@ -18,6 +35,7 @@ func _run_tests() -> void:
 	_test_damageable_component()
 	_test_attack_component()
 	await _test_destructible_component()
+	await _test_pickup_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 	await _test_simple_capability_resolution()
@@ -488,6 +506,82 @@ func _test_destructible_component() -> void:
 
 	_expect(destructible.destroy(body), "Destructible also supports manual destruction")
 	_expect(not destructible.destroy(body), "repeated destruction is ignored")
+	test_world.free()
+
+
+func _test_pickup_component() -> void:
+	var selection := ObjectCapabilityCatalog.create_selection("is_pickup_item")
+	_expect(selection != null, "Simple Builder can create the item pickup capability")
+	if selection == null:
+		return
+	selection.set_component_setting("pickup", "item_id", "wood")
+	selection.set_component_setting("pickup", "quantity", 5)
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "pickup_component_smoke"
+	definition.display_name = "Pickup Component Smoke"
+	definition.category = "Items"
+	definition.capabilities = [selection]
+	_expect(
+		ObjectLibraryService.validate_definition(definition).is_empty(),
+		"configured pickup capability passes object definition validation"
+	)
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the Pickup capability")
+	if instance == null:
+		return
+
+	var test_world := Node2D.new()
+	root.add_child(test_world)
+	test_world.add_child(instance)
+	var receiver := PickupTestReceiver.new()
+	test_world.add_child(receiver)
+	await process_frame
+
+	var pickup := ObjectFactory.get_component(instance, "pickup") as PickupComponent
+	_expect(pickup != null, "factory resolves the Pickup component by ID")
+	if pickup == null:
+		test_world.free()
+		return
+	_expect(
+		pickup.item_id == "wood" and pickup.get_remaining_quantity() == 5,
+		"capability settings reach the runtime item ID and stack quantity"
+	)
+
+	receiver.capacity = 0
+	_expect(
+		pickup.try_pickup(receiver) == 0 and pickup.get_remaining_quantity() == 5,
+		"a receiver with no capacity cannot remove items from the world"
+	)
+
+	receiver.capacity = 2
+	_expect(
+		pickup.try_pickup(receiver) == 2 and pickup.get_remaining_quantity() == 3,
+		"Pickup supports partial acceptance and preserves the remaining stack"
+	)
+	_expect(
+		receiver.received.size() == 1
+		and str(receiver.received[0].get("item_id", "")) == "wood"
+		and int(receiver.received[0].get("amount", 0)) == 2
+		and str(receiver.received[0].get("source_id", "")) == "pickup_component_smoke",
+		"receiver receives the stable item ID, accepted amount and source object"
+	)
+
+	receiver.capacity = 5
+	_expect(
+		pickup.try_pickup(receiver) == 3 and pickup.get_remaining_quantity() == 0,
+		"Pickup accepts the remainder without exceeding the available quantity"
+	)
+	_expect(
+		not pickup.can_be_picked_up,
+		"depleted pickup becomes unavailable for additional collection"
+	)
+	await process_frame
+	_expect(
+		not is_instance_valid(instance),
+		"world object is removed only after its entire stack has been accepted"
+	)
 	test_world.free()
 
 
@@ -1516,8 +1610,8 @@ func _test_capability_library_size_and_status() -> void:
 			planned_without_runtime = false
 
 	_expect(
-		implemented_count == 4 and planned_count == 196,
-		"catalogue explicitly distinguishes four runtime mechanics and 196 planned mechanics"
+		implemented_count == 5 and planned_count == 195,
+		"catalogue explicitly distinguishes five runtime mechanics and 195 planned mechanics"
 	)
 	_expect(
 		planned_without_runtime,
@@ -1550,6 +1644,20 @@ func _test_capability_library_size_and_status() -> void:
 		health_capability != null and health_capability.runtime_status == "Implemented",
 		"existing Health mechanic remains enabled and is not downgraded"
 	)
+
+	var pickup_capability := ObjectCapabilityCatalog.get_definition("is_pickup_item")
+	_expect(
+		pickup_capability != null
+		and pickup_capability.runtime_status == "Implemented"
+		and pickup_capability.component_ids.has("pickup"),
+		"item pickup is backed by the registered Pickup runtime component"
+	)
+	if pickup_capability != null:
+		var pickup_selection := ObjectCapabilityCatalog.create_selection("is_pickup_item")
+		_expect(
+			ObjectCapabilityService.validate_selections([pickup_selection]).is_empty(),
+			"implemented item pickup capability can be enabled in the Simple Builder"
+		)
 
 
 func _test_simple_capability_resolution() -> void:
