@@ -6,7 +6,7 @@ var _combo_time_left := 0.0
 var _target: WeakRef
 
 func _on_configured() -> void:
-    _load_options({"rule_type":"block","enabled":true,"damage_reduction":0.75,"parry_window":0.25,"counter_multiplier":1.5,"dodge_duration":0.35,"invulnerability":true,"aim_cone_degrees":8.0,"charge_time":1.0,"maximum_multiplier":2.5,"critical_chance":0.1,"critical_multiplier":2.0,"combo_window":0.8,"combo_multipliers":[1.0,1.15,1.4],"maximum_distance":600.0})
+    _load_options({"rule_type":"block","enabled":true,"damage_reduction":0.75,"parry_window":0.25,"counter_multiplier":1.5,"dodge_duration":0.35,"invulnerability":true,"aim_cone_degrees":8.0,"charge_time":1.0,"maximum_multiplier":2.5,"critical_chance":0.1,"critical_multiplier":2.0,"combo_window":0.8,"combo_multipliers":"1.0,1.15,1.4","maximum_distance":600.0})
 
 func _number(key: String, fallback: float) -> float:
     return float(get_option(key,fallback))
@@ -51,12 +51,26 @@ func advance_combo(delta: float) -> int:
     return _combo_step
 
 func register_combo_hit() -> Dictionary:
-    var values: Array=get_option("combo_multipliers",[1.0,1.15,1.4])
-    if values.is_empty(): values=[1.0]
+    var values := _get_combo_multipliers()
     _combo_step=mini(_combo_step+1,values.size())
     _combo_time_left=maxf(0.0,_number("combo_window",0.8))
-    var result: Dictionary = _emit({"step":_combo_step,"multiplier":maxf(1.0,float(values[_combo_step-1]))})
+    var result: Dictionary = _emit({"step":_combo_step,"multiplier":values[_combo_step-1]})
     return result
+
+func _get_combo_multipliers() -> Array[float]:
+    var raw: Variant=get_option("combo_multipliers","1.0,1.15,1.4")
+    var values: Array[float]=[]
+    if raw is Array:
+        for entry in raw:
+            if typeof(entry)==TYPE_INT or typeof(entry)==TYPE_FLOAT:
+                var multiplier := float(entry)
+                if not is_nan(multiplier) and not is_inf(multiplier): values.append(maxf(1.0,multiplier))
+    elif raw is String:
+        for entry in str(raw).split(",",false):
+            var part := str(entry).strip_edges()
+            if part.is_valid_float(): values.append(maxf(1.0,part.to_float()))
+    if values.is_empty(): values.append(1.0)
+    return values
 
 func set_target(target: Node, origin: Node2D = null) -> bool:
     if not _enabled() or not is_instance_valid(target): return fail("Цель недействительна или выбор цели отключён.")
