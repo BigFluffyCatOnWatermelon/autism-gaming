@@ -18,6 +18,7 @@ func _run() -> void:
 	root.add_child(library)
 	library.call("build")
 	_expect(library.get_child_count() == 5, "library view owns search, three filters and result list")
+	_expect(is_equal_approx(library.custom_minimum_size.x, 210.0), "library view preserves its minimum workspace width")
 	_expect(str(library.call("get_selected_mode")) == "all", "library view starts in the all-objects filter")
 	library.connect("search_changed", Callable(self, "_on_search_changed"))
 	library.connect("filter_changed", Callable(self, "_on_filter_changed"))

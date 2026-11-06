@@ -16,6 +16,7 @@ var object_list: ItemList
 func build() -> void:
 	if search_input != null:
 		return
+	custom_minimum_size = Vector2(210, 0)
 	add_theme_constant_override("separation", 6)
 	search_input = LineEdit.new()
 	search_input.placeholder_text = "Найти объект…"
