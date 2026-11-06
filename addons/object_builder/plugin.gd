@@ -11,6 +11,7 @@ const ObjectBuilderComponentEditorViewScript = preload("res://addons/object_buil
 const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_builder/ui/capability_list_view.gd")
 const ObjectBuilderCapabilitySettingsViewScript = preload("res://addons/object_builder/ui/capability_settings_view.gd")
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
+const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -93,26 +94,7 @@ var _node_dialog: AcceptDialog
 var _node_type_list: ItemList
 var _node_name_edit: LineEdit
 var _scene_tree_view: Control
-var _visual_panel: VBoxContainer
-var _sprite_visual_controls: VBoxContainer
-var _animated_visual_controls: VBoxContainer
-var _visual_type_label: Label
-var _visual_preview: TextureRect
-var _texture_path_edit: LineEdit
-var _sprite_hframes: SpinBox
-var _sprite_vframes: SpinBox
-var _sprite_frame: SpinBox
-var _sprite_offset_x: SpinBox
-var _sprite_offset_y: SpinBox
-var _sprite_centered: CheckBox
-var _sprite_flip_h: CheckBox
-var _sprite_flip_v: CheckBox
-var _texture_dialog: FileDialog
-var _frames_dialog: FileDialog
-var _frames_path_edit: LineEdit
-var _animation_option: OptionButton
-var _animated_frame: SpinBox
-var _animated_speed: SpinBox
+var _visual_editor_view: Control
 var _status_label: Label
 var _open_scene_button: Button
 var _connected_scene_tree: SceneTree
@@ -773,7 +755,7 @@ func _on_simple_add_image_pressed() -> void:
 	EditorInterface.get_selection().clear()
 	EditorInterface.get_selection().add_node(sprite)
 	EditorInterface.edit_node(sprite)
-	ObjectBuilderUIFactory.popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
+	_visual_editor_view.call("popup_texture_dialog")
 	_set_status("Изображение добавлено. Его можно перемещать в 2D-редакторе Godot.", false)
 
 
@@ -1110,145 +1092,22 @@ func _build_template_dialog() -> void:
 
 
 func _build_visual_editor(parent: VBoxContainer) -> void:
-	_visual_panel = VBoxContainer.new()
-	_visual_panel.visible = false
-	_visual_panel.add_theme_constant_override("separation", 5)
-	parent.add_child(_visual_panel)
-
-	var title := Label.new()
-	title.text = "ВНЕШНИЙ ВИД · РАСШИРЕННЫЕ НАСТРОЙКИ"
-	_visual_panel.add_child(title)
-
-	_visual_type_label = Label.new()
-	_visual_type_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_visual_panel.add_child(_visual_type_label)
-
-	_visual_preview = TextureRect.new()
-	_visual_preview.custom_minimum_size = Vector2(0, 136)
-	_visual_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_visual_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_visual_preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_visual_preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_visual_panel.add_child(_visual_preview)
-
-	_sprite_visual_controls = VBoxContainer.new()
-	_visual_panel.add_child(_sprite_visual_controls)
-
-	var texture_row := HBoxContainer.new()
-	_sprite_visual_controls.add_child(texture_row)
-	_texture_path_edit = LineEdit.new()
-	_texture_path_edit.placeholder_text = "res://путь/к/текстуре.png"
-	_texture_path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_texture_path_edit.text_submitted.connect(_on_texture_path_submitted)
-	texture_row.add_child(_texture_path_edit)
-
-	var browse_button := Button.new()
-	browse_button.text = "Обзор…"
-	browse_button.pressed.connect(_on_browse_texture_pressed)
-	texture_row.add_child(browse_button)
-
-	var grid_row := HBoxContainer.new()
-	_sprite_visual_controls.add_child(grid_row)
-	_sprite_hframes = ObjectBuilderUIFactory.make_spin_box(1.0, 128.0, 1.0)
-	_sprite_hframes.value_changed.connect(_on_sprite_grid_value_changed.bind("hframes"))
-	ObjectBuilderUIFactory.add_labeled_control(grid_row, "H", _sprite_hframes, 72.0)
-	_sprite_vframes = ObjectBuilderUIFactory.make_spin_box(1.0, 128.0, 1.0)
-	_sprite_vframes.value_changed.connect(_on_sprite_grid_value_changed.bind("vframes"))
-	ObjectBuilderUIFactory.add_labeled_control(grid_row, "V", _sprite_vframes, 72.0)
-	_sprite_frame = ObjectBuilderUIFactory.make_spin_box(0.0, 16383.0, 1.0)
-	_sprite_frame.value_changed.connect(_on_sprite_grid_value_changed.bind("frame"))
-	ObjectBuilderUIFactory.add_labeled_control(grid_row, "Кадр", _sprite_frame, 72.0)
-
-	var offset_row := HBoxContainer.new()
-	_sprite_visual_controls.add_child(offset_row)
-	_sprite_offset_x = ObjectBuilderUIFactory.make_spin_box(-4096.0, 4096.0, 1.0)
-	_sprite_offset_x.value_changed.connect(_on_sprite_offset_changed.bind("x"))
-	ObjectBuilderUIFactory.add_labeled_control(offset_row, "Offset X", _sprite_offset_x, 72.0)
-	_sprite_offset_y = ObjectBuilderUIFactory.make_spin_box(-4096.0, 4096.0, 1.0)
-	_sprite_offset_y.value_changed.connect(_on_sprite_offset_changed.bind("y"))
-	ObjectBuilderUIFactory.add_labeled_control(offset_row, "Y", _sprite_offset_y, 72.0)
-
-	var toggles_row := HBoxContainer.new()
-	_sprite_visual_controls.add_child(toggles_row)
-	_sprite_centered = CheckBox.new()
-	_sprite_centered.text = "По центру"
-	_sprite_centered.toggled.connect(_on_sprite_toggle_changed.bind("centered"))
-	toggles_row.add_child(_sprite_centered)
-	_sprite_flip_h = CheckBox.new()
-	_sprite_flip_h.text = "Flip H"
-	_sprite_flip_h.toggled.connect(_on_sprite_toggle_changed.bind("flip_h"))
-	toggles_row.add_child(_sprite_flip_h)
-	_sprite_flip_v = CheckBox.new()
-	_sprite_flip_v.text = "Flip V"
-	_sprite_flip_v.toggled.connect(_on_sprite_toggle_changed.bind("flip_v"))
-	toggles_row.add_child(_sprite_flip_v)
-
-	var hint := Label.new()
-	hint.text = "Изменения проходят через Undo/Redo. Для записи сцены нажми Ctrl+S."
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_sprite_visual_controls.add_child(hint)
-
-	_animated_visual_controls = VBoxContainer.new()
-	_animated_visual_controls.visible = false
-	_animated_visual_controls.add_theme_constant_override("separation", 5)
-	_visual_panel.add_child(_animated_visual_controls)
-
-	var frames_title := Label.new()
-	frames_title.text = "КАДРЫ АНИМАЦИИ"
-	_animated_visual_controls.add_child(frames_title)
-
-	var frames_row := HBoxContainer.new()
-	_animated_visual_controls.add_child(frames_row)
-	_frames_path_edit = LineEdit.new()
-	_frames_path_edit.placeholder_text = "res://путь/к/sprite_frames.tres"
-	_frames_path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_frames_path_edit.text_submitted.connect(_on_sprite_frames_path_submitted)
-	frames_row.add_child(_frames_path_edit)
-
-	var frames_browse_button := Button.new()
-	frames_browse_button.text = "SpriteFrames…"
-	frames_browse_button.pressed.connect(_on_browse_sprite_frames_pressed)
-	frames_row.add_child(frames_browse_button)
-
-	_animation_option = OptionButton.new()
-	_animation_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_animation_option.item_selected.connect(_on_animated_animation_selected)
-	ObjectBuilderUIFactory.add_labeled_control(_animated_visual_controls, "Анимация", _animation_option)
-
-	var animation_row := HBoxContainer.new()
-	_animated_visual_controls.add_child(animation_row)
-	_animated_frame = ObjectBuilderUIFactory.make_spin_box(0.0, 16383.0, 1.0)
-	_animated_frame.value_changed.connect(_on_animated_frame_changed)
-	ObjectBuilderUIFactory.add_labeled_control(animation_row, "Кадр", _animated_frame, 72.0)
-	_animated_speed = ObjectBuilderUIFactory.make_spin_box(-10.0, 10.0, 0.1)
-	_animated_speed.value_changed.connect(_on_animated_speed_changed)
-	ObjectBuilderUIFactory.add_labeled_control(animation_row, "Скорость", _animated_speed, 72.0)
-
-	var animated_hint := Label.new()
-	animated_hint.text = "Здесь можно выбрать анимацию и кадр для проверки. Для автоматического воспроизведения настрой Autoplay в Inspector."
-	animated_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_animated_visual_controls.add_child(animated_hint)
-
-	_texture_dialog = FileDialog.new()
-	_texture_dialog.title = "Выбрать текстуру"
-	_texture_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	_texture_dialog.access = FileDialog.ACCESS_RESOURCES
-	_texture_dialog.filters = PackedStringArray([
-		"*.png, *.webp, *.jpg, *.jpeg, *.svg, *.bmp, *.tga ; Файлы изображений"
-	])
-	_texture_dialog.file_selected.connect(_on_texture_file_selected)
-	add_child(_texture_dialog)
-
-	_frames_dialog = FileDialog.new()
-	_frames_dialog.title = "Выбрать ресурс SpriteFrames"
-	_frames_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	_frames_dialog.access = FileDialog.ACCESS_RESOURCES
-	_frames_dialog.filters = PackedStringArray([
-		"*.tres, *.res ; Ресурсы Godot"
-	])
-	_frames_dialog.file_selected.connect(_on_sprite_frames_file_selected)
-	add_child(_frames_dialog)
-
+	_visual_editor_view = ObjectBuilderVisualEditorViewScript.new()
+	_visual_editor_view.name = "VisualEditorView"
+	_visual_editor_view.connect("texture_path_submitted", Callable(self, "_on_texture_path_submitted"))
+	_visual_editor_view.connect("texture_browse_requested", Callable(self, "_on_browse_texture_pressed"))
+	_visual_editor_view.connect("texture_file_selected", Callable(self, "_on_texture_file_selected"))
+	_visual_editor_view.connect("sprite_grid_value_changed", Callable(self, "_on_sprite_grid_value_changed"))
+	_visual_editor_view.connect("sprite_offset_changed", Callable(self, "_on_sprite_offset_changed"))
+	_visual_editor_view.connect("sprite_toggle_changed", Callable(self, "_on_sprite_toggle_changed"))
+	_visual_editor_view.connect("frames_path_submitted", Callable(self, "_on_sprite_frames_path_submitted"))
+	_visual_editor_view.connect("frames_browse_requested", Callable(self, "_on_browse_sprite_frames_pressed"))
+	_visual_editor_view.connect("frames_file_selected", Callable(self, "_on_sprite_frames_file_selected"))
+	_visual_editor_view.connect("animation_selected", Callable(self, "_on_animated_animation_selected"))
+	_visual_editor_view.connect("animation_frame_changed", Callable(self, "_on_animated_frame_changed"))
+	_visual_editor_view.connect("animation_speed_changed", Callable(self, "_on_animated_speed_changed"))
+	_visual_editor_view.call("build")
+	parent.add_child(_visual_editor_view)
 
 func _build_node_dialog() -> void:
 	_node_dialog = AcceptDialog.new()
@@ -1959,87 +1818,21 @@ func _on_scene_tree_item_selected(_path: NodePath = NodePath()) -> void:
 
 
 func _refresh_visual_editor(node: Node) -> void:
-	if _visual_panel == null:
+	if _visual_editor_view == null:
 		return
 	if node is Sprite2D:
-		_refresh_static_sprite_editor(node as Sprite2D)
+		var sprite := node as Sprite2D
+		_visual_editor_view.call("show_sprite", sprite)
+		if _simple_preview != null:
+			_simple_preview.texture = sprite.texture
 		return
 	if node is AnimatedSprite2D:
-		_refresh_animated_sprite_editor(node as AnimatedSprite2D)
-		return
-	_visual_panel.visible = false
-
-
-func _refresh_static_sprite_editor(sprite: Sprite2D) -> void:
-	_visual_panel.visible = true
-	_sprite_visual_controls.visible = true
-	_animated_visual_controls.visible = false
-	_visual_type_label.text = "Выбрано изображение: %s" % sprite.name
-	if _simple_preview != null:
-		_simple_preview.texture = sprite.texture
-	_texture_path_edit.text = sprite.texture.resource_path if sprite.texture != null else ""
-	_visual_preview.texture = sprite.texture
-	_sprite_hframes.set_value_no_signal(float(sprite.hframes))
-	_sprite_vframes.set_value_no_signal(float(sprite.vframes))
-	_sprite_frame.max_value = maxf(0.0, float(sprite.hframes * sprite.vframes - 1))
-	_sprite_frame.set_value_no_signal(float(sprite.frame))
-	_sprite_offset_x.set_value_no_signal(sprite.offset.x)
-	_sprite_offset_y.set_value_no_signal(sprite.offset.y)
-	_sprite_centered.set_pressed_no_signal(sprite.centered)
-	_sprite_flip_h.set_pressed_no_signal(sprite.flip_h)
-	_sprite_flip_v.set_pressed_no_signal(sprite.flip_v)
-
-
-func _refresh_animated_sprite_editor(sprite: AnimatedSprite2D) -> void:
-	_visual_panel.visible = true
-	_sprite_visual_controls.visible = false
-	_animated_visual_controls.visible = true
-	_visual_type_label.text = "Выбрана анимация: %s" % sprite.name
-
-	var frames := sprite.sprite_frames
-	_frames_path_edit.text = frames.resource_path if frames != null else ""
-	_animation_option.clear()
-	if frames == null:
-		_animation_option.disabled = true
-		_animated_frame.editable = false
-		_visual_preview.texture = null
-		return
-
-	var animation_names := frames.get_animation_names()
-	for animation_name in animation_names:
-		_animation_option.add_item(str(animation_name))
-		_animation_option.set_item_metadata(
-			_animation_option.item_count - 1,
-			str(animation_name)
-		)
-	_animation_option.disabled = animation_names.is_empty()
-	if animation_names.is_empty():
-		_animated_frame.editable = false
-		_visual_preview.texture = null
-		return
-
-	var selected_animation := str(sprite.animation)
-	var selected_index := 0
-	for index in range(_animation_option.item_count):
-		if str(_animation_option.get_item_metadata(index)) == selected_animation:
-			selected_index = index
-			break
-	_animation_option.select(selected_index)
-
-	var resolved_animation := StringName(str(_animation_option.get_item_metadata(selected_index)))
-	var frame_count := frames.get_frame_count(resolved_animation)
-	_animated_frame.editable = frame_count > 0
-	_animated_frame.max_value = maxf(0.0, float(frame_count - 1))
-	var frame_index := clampi(sprite.frame, 0, maxi(0, frame_count - 1))
-	_animated_frame.set_value_no_signal(float(frame_index))
-	_animated_speed.set_value_no_signal(sprite.speed_scale)
-	if frame_count > 0:
-		_visual_preview.texture = frames.get_frame_texture(resolved_animation, frame_index)
+		var animated_sprite := node as AnimatedSprite2D
+		_visual_editor_view.call("show_animated_sprite", animated_sprite)
 		if _simple_preview != null:
-			_simple_preview.texture = _visual_preview.texture
-	else:
-		_visual_preview.texture = null
-
+			_simple_preview.texture = _visual_editor_view.call("get_preview_texture") as Texture2D
+		return
+	_visual_editor_view.call("hide_editor")
 
 func _get_selected_scene_tree_node() -> Node:
 	if _scene_tree_view == null:
@@ -2053,8 +1846,8 @@ func _on_browse_texture_pressed() -> void:
 	if _get_selected_sprite_node() == null:
 		_set_status("Выбери Sprite2D в дереве сцены.", true)
 		return
-	ObjectBuilderUIFactory.popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
-
+	if _visual_editor_view != null:
+		_visual_editor_view.call("popup_texture_dialog")
 
 func _on_texture_file_selected(path: String) -> void:
 	_apply_texture_path(path)
@@ -2078,8 +1871,8 @@ func _apply_texture_path(path: String) -> void:
 		_set_status("Не удалось загрузить Texture2D: " + clean_path, true)
 		return
 	_commit_sprite_property(sprite, "texture", loaded_resource, "изменить текстуру")
-	_texture_path_edit.text = clean_path
-	_visual_preview.texture = loaded_resource
+	_visual_editor_view.call("set_texture_path", clean_path)
+	_visual_editor_view.call("set_preview_texture", loaded_resource)
 	_set_status("Текстура назначена. Для сохранения сцены нажми Ctrl+S.", false)
 
 
@@ -2101,8 +1894,8 @@ func _on_browse_sprite_frames_pressed() -> void:
 	if _get_selected_animated_sprite_node() == null:
 		_set_status("Выбери AnimatedSprite2D в дереве сцены.", true)
 		return
-	ObjectBuilderUIFactory.popup_window_safely(_frames_dialog, Vector2i(820, 620), 0.88)
-
+	if _visual_editor_view != null:
+		_visual_editor_view.call("popup_sprite_frames_dialog")
 
 func _on_sprite_frames_file_selected(path: String) -> void:
 	_apply_sprite_frames_path(path)
@@ -2132,14 +1925,13 @@ func _apply_sprite_frames_path(path: String) -> void:
 
 func _on_animated_animation_selected(index: int) -> void:
 	var sprite := _get_selected_animated_sprite_node()
-	if sprite == null or sprite.sprite_frames == null:
+	if sprite == null or sprite.sprite_frames == null or _visual_editor_view == null:
 		return
-	if index < 0 or index >= _animation_option.item_count:
+	var animation_name := StringName(str(_visual_editor_view.call("get_animation_id", index)))
+	if animation_name.is_empty():
 		return
-	var animation_name := StringName(str(_animation_option.get_item_metadata(index)))
 	_commit_visual_node_property(sprite, "animation", animation_name, "выбрать анимацию")
 	_refresh_visual_editor(sprite)
-
 
 func _on_animated_frame_changed(value: float) -> void:
 	var sprite := _get_selected_animated_sprite_node()
