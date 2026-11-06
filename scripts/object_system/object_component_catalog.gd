@@ -7,6 +7,8 @@ const ATTACK_COMPONENT_SCRIPT := preload("res://scripts/object_system/components
 const DESTRUCTIBLE_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/destructible_component.gd")
 const CHARACTERISTICS_MODULE := preload("res://addons/object_builder/mechanics/characteristics/module.gd")
 const COMBAT_MODULE := preload("res://addons/object_builder/mechanics/combat/module.gd")
+const DEFENSE_MODULE := preload("res://addons/object_builder/mechanics/defense/module.gd")
+const DESTRUCTION_MODULE := preload("res://addons/object_builder/mechanics/destruction/module.gd")
 
 const CATEGORY_DEFINITIONS := [
 	{"id": "Appearance", "display_name": "Внешний вид"},
@@ -479,6 +481,10 @@ static func _make_builtin_definitions() -> Array[ObjectComponentDefinition]:
 	result.append_array(characteristics_module.build_component_definitions())
 	var combat_module: Variant = COMBAT_MODULE.new()
 	result.append_array(combat_module.build_component_definitions())
+	var defense_module: Variant = DEFENSE_MODULE.new()
+	result.append_array(defense_module.build_component_definitions())
+	var destruction_module: Variant = DESTRUCTION_MODULE.new()
+	result.append_array(destruction_module.build_component_definitions())
 	return result
 
 
