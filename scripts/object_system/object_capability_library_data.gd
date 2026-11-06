@@ -134,7 +134,7 @@ static func create_definitions() -> Array[ObjectCapabilityDefinition]:
 		["can_be_mined", "Можно добывать киркой", "Специальные правила добычи минеральных ресурсов."],
 	])
 	_append_category(result, "items", "Предметы", "Подбираемые, расходуемые и экипируемые предметы.", [
-		["is_pickup_item", "Подбираемый предмет", "Подбор объекта из мира в инвентарь."],
+		["is_pickup_item", "Подбираемый предмет", "Передача предмета в инвентарь или другое хранилище; поддерживает частичный подбор.", ["pickup"]],
 		["is_stackable", "Складывается в стопку", "Объединение одинаковых предметов в один слот."],
 		["has_item_weight", "Вес предмета", "Добавление веса предмета к нагрузке."],
 		["has_item_value", "Стоимость предмета", "Цена покупки, продажи или обмена."],
@@ -265,8 +265,13 @@ static func _append_category(
 		definition.icon = "sparkles"
 		definition.category_id = category_id
 		definition.category_name = category_name
-		definition.runtime_status = "Planned"
-		definition.implementation_note = category_hint + " Runtime-поведение ещё не реализовано."
+		if row.size() > 3 and row[3] is Array:
+			definition.component_ids = PackedStringArray(row[3])
+			definition.runtime_status = "Implemented"
+			definition.implementation_note = "Поддерживается runtime-компонентом Pickup. Получатель реализует receive_pickup(item_id, amount, source)."
+		else:
+			definition.runtime_status = "Planned"
+			definition.implementation_note = category_hint + " Runtime-поведение ещё не реализовано."
 		definition.available_in_simple_mode = true
 		definition.display_order = output.size() + 100
 		output.append(definition)
@@ -277,8 +282,8 @@ static func get_builtin_total_count() -> int:
 
 
 static func get_planned_count() -> int:
-	return 196
+	return 195
 
 
 static func get_implemented_count() -> int:
-	return 4
+	return 5
