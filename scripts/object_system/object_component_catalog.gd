@@ -5,6 +5,8 @@ const HEALTH_COMPONENT_SCRIPT := preload("res://scripts/object_system/components
 const DAMAGEABLE_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/damageable_component.gd")
 const ATTACK_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/attack_component.gd")
 const DESTRUCTIBLE_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/destructible_component.gd")
+const CHARACTERISTICS_MODULE := preload("res://addons/object_builder/mechanics/characteristics/module.gd")
+const COMBAT_MODULE := preload("res://addons/object_builder/mechanics/combat/module.gd")
 
 const CATEGORY_DEFINITIONS := [
 	{"id": "Appearance", "display_name": "Внешний вид"},
@@ -472,6 +474,11 @@ static func _make_builtin_definitions() -> Array[ObjectComponentDefinition]:
 			if not key.is_empty():
 				definition.settings[key] = descriptor.get("default_value")
 		result.append(definition)
+
+	var characteristics_module: Variant = CHARACTERISTICS_MODULE.new()
+	result.append_array(characteristics_module.build_component_definitions())
+	var combat_module: Variant = COMBAT_MODULE.new()
+	result.append_array(combat_module.build_component_definitions())
 	return result
 
 
