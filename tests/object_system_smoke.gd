@@ -1,5 +1,17 @@
 extends SceneTree
 
+const WorldControllerScript = preload("res://scripts/world_controller.gd")
+const GameConfigScript = preload("res://scripts/game_config.gd")
+
+class InteractableTestTarget extends Node2D:
+	var interaction_count: int = 0
+	var last_interactor: Node
+
+	func record_interaction(interactor: Node) -> void:
+		interaction_count += 1
+		last_interactor = interactor
+
+
 class PickupTestReceiver:
 	extends Node
 	var capacity: int = 0
@@ -36,6 +48,8 @@ func _run_tests() -> void:
 	_test_attack_component()
 	await _test_destructible_component()
 	await _test_pickup_component()
+	_test_world_inventory_pickup_adapter()
+	await _test_interactable_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 	await _test_simple_capability_resolution()
@@ -221,6 +235,7 @@ func _test_component_catalog_and_health() -> void:
 	_expect(ObjectComponentCatalog.has_component("HEALTH"), "catalog component IDs are case-insensitive")
 	_expect(ObjectComponentCatalog.has_component("Damageable"), "Damageable is available by its stable ID")
 	_expect(ObjectComponentCatalog.has_component("ATTACK"), "Attack is available by its stable ID")
+	_expect(ObjectComponentCatalog.has_component("interactable"), "Interactable is registered as a built-in component")
 
 	var component_definition := ObjectComponentCatalog.create_definition("health")
 	_expect(component_definition != null, "catalog creates the Health component definition")
@@ -594,6 +609,118 @@ func _test_pickup_component() -> void:
 	)
 	test_world.free()
 
+
+
+
+func _test_world_inventory_pickup_adapter() -> void:
+	var controller = WorldControllerScript.new()
+	controller.config = GameConfigScript.make_default()
+	controller.backpack_slots = 0
+	controller.inventory.clear()
+	var hotbar_size := int(controller.config.inventory.hotbar_slots)
+	for index in range(hotbar_size):
+		controller.inventory.append({"id": "stone", "amount": 99})
+	controller.inventory[0] = {"id": "wood", "amount": 98}
+
+	var actor := Node2D.new()
+	actor.name = "PickupTestPlayer"
+	controller.player = actor
+	controller.add_child(actor)
+	actor.position = Vector2(200.0, 0.0)
+
+	var selection := ObjectCapabilityCatalog.create_selection("is_pickup_item")
+	selection.set_component_setting("pickup", "item_id", "wood")
+	selection.set_component_setting("pickup", "quantity", 5)
+	selection.set_component_setting("pickup", "pickup_radius", 32.0)
+	var definition := ObjectDefinition.new()
+	definition.object_id = "pickup_inventory_adapter_smoke"
+	definition.display_name = "Pickup Inventory Adapter Smoke"
+	definition.category = "Items"
+	definition.capabilities = [selection]
+	var source := ObjectFactory.instantiate(definition)
+	_expect(source != null, "factory creates an object for the real inventory adapter")
+	if source == null:
+		controller.free()
+		return
+	controller.add_child(source)
+
+	var pickup := ObjectFactory.get_component(source, "pickup") as PickupComponent
+	_expect(pickup != null, "inventory adapter test resolves the Pickup component")
+	if pickup == null:
+		controller.free()
+		return
+
+	controller._update_component_pickups()
+	_expect(pickup.get_remaining_quantity() == 5, "Pickup remains untouched when the player is outside its configured radius")
+	actor.position = Vector2(10.0, 0.0)
+	controller._update_component_pickups()
+	_expect(
+		controller._get_item_count("wood") == 99 and pickup.get_remaining_quantity() == 4,
+		"Pickup transfers items into the existing game inventory and keeps the unaccepted remainder"
+	)
+	controller.free()
+
+
+func _test_interactable_component() -> void:
+	var selection := ObjectCapabilityCatalog.create_selection("can_interact")
+	_expect(selection != null, "Simple Builder can create the interaction capability")
+	if selection == null:
+		return
+	selection.set_component_setting("interactable", "interaction_radius", 48.0)
+	selection.set_component_setting("interactable", "interaction_method", "record_interaction")
+	selection.set_component_setting("interactable", "interact_once", true)
+
+	var scene_root := InteractableTestTarget.new()
+	scene_root.name = "InteractableTarget"
+	var packed_scene := PackedScene.new()
+	var packed_result := packed_scene.pack(scene_root)
+	_expect(packed_result == OK, "interaction test target can be packed into a reusable scene")
+	scene_root.free()
+	if packed_result != OK:
+		return
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "interactable_component_smoke"
+	definition.display_name = "Interactable Component Smoke"
+	definition.category = "Other"
+	definition.scene = packed_scene
+	definition.capabilities = [selection]
+	_expect(
+		ObjectLibraryService.validate_definition(definition).is_empty(),
+		"configured interaction capability passes object definition validation"
+	)
+	var controller = WorldControllerScript.new()
+	controller._configure_input()
+	_expect(InputMap.has_action("interact"), "world input map registers E interaction")
+	var target := ObjectFactory.instantiate(definition)
+	_expect(target != null, "factory creates an object with the Interactable capability")
+	if target == null:
+		controller.free()
+		return
+	controller.add_child(target)
+	var actor := Node2D.new()
+	actor.name = "InteractionTestActor"
+	controller.player = actor
+	controller.add_child(actor)
+
+	var interactable := ObjectFactory.get_component(target, "interactable") as InteractableComponent
+	var scripted_target := target as InteractableTestTarget
+	_expect(interactable != null, "factory resolves Interactable by its stable ID")
+	_expect(scripted_target != null, "target scene keeps its custom interaction script")
+	if interactable != null and scripted_target != null:
+		actor.position = Vector2(80.0, 0.0)
+		controller._try_interact_with_nearest()
+		_expect(scripted_target.interaction_count == 0, "world interaction scan ignores objects outside their radius")
+		actor.position = Vector2(24.0, 0.0)
+		controller._try_interact_with_nearest()
+		_expect(
+			scripted_target.interaction_count == 1 and scripted_target.last_interactor == actor,
+			"E interaction selects a nearby object and calls its configured method"
+		)
+		_expect(not interactable.can_be_interacted_with, "one-shot interaction disables itself after success")
+		controller._try_interact_with_nearest()
+		_expect(scripted_target.interaction_count == 1, "one-shot interaction cannot be repeated")
+	controller.free()
 
 func _test_component_definition_inspector_settings() -> void:
 	var component_definition := ObjectComponentCatalog.create_definition("health")
@@ -1621,8 +1748,8 @@ func _test_capability_library_size_and_status() -> void:
 			planned_without_runtime = false
 
 	_expect(
-		implemented_count == 5 and planned_count == 195,
-		"catalogue explicitly distinguishes five runtime mechanics and 195 planned mechanics"
+		implemented_count == 6 and planned_count == 194,
+		"catalogue explicitly distinguishes six runtime mechanics and 194 planned mechanics"
 	)
 	_expect(
 		planned_without_runtime,
@@ -1656,6 +1783,13 @@ func _test_capability_library_size_and_status() -> void:
 		"existing Health mechanic remains enabled and is not downgraded"
 	)
 
+	var interaction_capability := ObjectCapabilityCatalog.get_definition("can_interact")
+	_expect(
+		interaction_capability != null
+		and interaction_capability.runtime_status == "Implemented"
+		and interaction_capability.component_ids.has("interactable"),
+		"interaction capability is backed by the Interactable runtime component"
+	)
 	var pickup_capability := ObjectCapabilityCatalog.get_definition("is_pickup_item")
 	_expect(
 		pickup_capability != null

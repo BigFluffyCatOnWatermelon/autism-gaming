@@ -6,6 +6,7 @@ const DAMAGEABLE_COMPONENT_SCRIPT := preload("res://scripts/object_system/compon
 const ATTACK_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/attack_component.gd")
 const DESTRUCTIBLE_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/destructible_component.gd")
 const PICKUP_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/pickup_component.gd")
+const INTERACTABLE_COMPONENT_SCRIPT := preload("res://scripts/object_system/components/interactable_component.gd")
 
 const CATEGORY_DEFINITIONS := [
 	{"id": "Appearance", "display_name": "Внешний вид"},
@@ -447,7 +448,7 @@ static func _binding_resolution_failure(errors: PackedStringArray) -> Dictionary
 
 static func _make_builtin_definitions() -> Array[ObjectComponentDefinition]:
 	var result: Array[ObjectComponentDefinition] = []
-	for component_id in ["health", "damageable", "attack", "destructible", "pickup"]:
+	for component_id in ["health", "damageable", "attack", "destructible", "pickup", "interactable"]:
 		var definition := ObjectComponentDefinition.new()
 		definition.component_id = component_id
 		definition.display_name = _get_builtin_display_name(component_id)
@@ -455,7 +456,7 @@ static func _make_builtin_definitions() -> Array[ObjectComponentDefinition]:
 		definition.category = "Stats" if component_id == "health" else "Combat"
 		if component_id == "destructible":
 			definition.category = "Destruction"
-		elif component_id == "pickup":
+		elif component_id in ["pickup", "interactable"]:
 			definition.category = "Interaction"
 		definition.category_id = definition.category
 		definition.category_display_name = _get_builtin_category_display_name(definition.category)
@@ -471,6 +472,8 @@ static func _make_builtin_definitions() -> Array[ObjectComponentDefinition]:
 				definition.component_script = DESTRUCTIBLE_COMPONENT_SCRIPT
 			"pickup":
 				definition.component_script = PICKUP_COMPONENT_SCRIPT
+			"interactable":
+				definition.component_script = INTERACTABLE_COMPONENT_SCRIPT
 		definition.setting_definitions = ObjectComponentDefinition.get_builtin_setting_definitions(component_id)
 		for descriptor in definition.setting_definitions:
 			var key := str(descriptor.get("key", ""))
@@ -634,6 +637,8 @@ static func _get_builtin_display_name(component_id: String) -> String:
 			return "Разрушение"
 		"pickup":
 			return "Подбор предмета"
+		"interactable":
+			return "Взаимодействие"
 	return component_id
 
 
@@ -649,11 +654,13 @@ static func _get_builtin_description(component_id: String) -> String:
 			return "Реагирует на смерть Health, отключает коллизии и получение урона, сообщает о разрушении."
 		"pickup":
 			return "Передаёт предмет принимающему объекту, поддерживает частичный подбор и удаляет источник после опустошения."
+		"interactable":
+			return "Проверяет доступность и радиус, вызывает назначенный метод объекта и отправляет сигнал взаимодействия."
 	return "Компонент без описания."
 
 
 static func _is_builtin_id(component_id: String) -> bool:
-	return component_id in ["health", "damageable", "attack", "destructible", "pickup"]
+	return component_id in ["health", "damageable", "attack", "destructible", "pickup", "interactable"]
 
 
 static func _normalize_id(value: String) -> String:

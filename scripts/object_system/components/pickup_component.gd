@@ -10,6 +10,7 @@ signal depleted(receiver: Node)
 @export_range(1, 99999, 1) var quantity: int = 1
 @export var can_be_picked_up: bool = true
 @export var remove_object_when_empty: bool = true
+@export_range(1.0, 512.0, 1.0) var pickup_radius: float = 24.0
 
 
 func _on_configured() -> void:
@@ -17,6 +18,7 @@ func _on_configured() -> void:
 	quantity = maxi(1, _read_integer("quantity", quantity))
 	can_be_picked_up = _read_bool("can_be_picked_up", can_be_picked_up)
 	remove_object_when_empty = _read_bool("remove_object_when_empty", remove_object_when_empty)
+	pickup_radius = _read_float("pickup_radius", pickup_radius)
 
 
 ## Receiver contract:
@@ -83,3 +85,10 @@ func _read_integer(key: String, fallback: int) -> int:
 func _read_bool(key: String, fallback: bool) -> bool:
 	var value: Variant = settings.get(key, fallback)
 	return bool(value) if typeof(value) == TYPE_BOOL else fallback
+
+
+func _read_float(key: String, fallback: float) -> float:
+	var value: Variant = settings.get(key, fallback)
+	if typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT:
+		return maxf(1.0, float(value))
+	return fallback

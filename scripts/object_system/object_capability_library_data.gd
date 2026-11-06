@@ -66,7 +66,7 @@ static func create_definitions() -> Array[ObjectCapabilityDefinition]:
 		["has_physics_material", "Материал физики", "Упругость, трение и свойства поверхности."],
 	])
 	_append_category(result, "interaction", "Взаимодействие", "Доступность действий, радиусы и правила использования.", [
-		["can_interact", "Можно взаимодействовать", "Реакция на команду взаимодействия."],
+		["can_interact", "Можно взаимодействовать", "Взаимодействие по команде E в заданном радиусе.", ["interactable"]],
 		["can_be_picked_up", "Можно подобрать", "Поднятие объекта в инвентарь или контейнер."],
 		["can_be_activated", "Можно активировать", "Запуск действия по команде активации."],
 		["can_be_opened", "Можно открыть", "Поддержка состояния открытия."],
@@ -268,7 +268,10 @@ static func _append_category(
 		if row.size() > 3 and row[3] is Array:
 			definition.component_ids = PackedStringArray(row[3])
 			definition.runtime_status = "Implemented"
-			definition.implementation_note = "Поддерживается runtime-компонентом Pickup. Получатель реализует receive_pickup(item_id, amount, source)."
+			if definition.component_ids.has("pickup"):
+				definition.implementation_note = "Pickup передаёт предметы по контракту receive_pickup(item_id, amount, source) и поддерживает частичный подбор."
+			elif definition.component_ids.has("interactable"):
+				definition.implementation_note = "Interactable проверяет радиус и перезарядку, вызывает назначенный метод объекта и отправляет сигнал interacted."
 		else:
 			definition.runtime_status = "Planned"
 			definition.implementation_note = category_hint + " Runtime-поведение ещё не реализовано."
@@ -282,8 +285,8 @@ static func get_builtin_total_count() -> int:
 
 
 static func get_planned_count() -> int:
-	return 195
+	return 194
 
 
 static func get_implemented_count() -> int:
-	return 5
+	return 6
