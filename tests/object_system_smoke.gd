@@ -711,6 +711,33 @@ func _test_declarative_scene_structure() -> void:
 		repeat_root.find_children("*", "", true, false).size() == 3,
 		"the generated scene tree remains the same size after repeated application"
 	)
+
+	# Definition edits update values still owned by Object Builder.
+	visual.properties["position"] = Vector2(20.0, 30.0)
+	# A manual Inspector edit must win over a later definition update.
+	if repeat_timer != null:
+		repeat_timer.wait_time = 2.5
+	timer.properties["wait_time"] = 1.25
+	var reconciled := ObjectSceneStructureService.apply_structure(definition, repeat_root)
+	_expect(bool(reconciled.get("ok", false)), "changed structure can be reconciled onto an existing instance")
+	_expect(
+		visual_node != null and visual_node.position == Vector2(20.0, 30.0),
+		"reconciliation updates generated properties that have not been manually changed"
+	)
+	_expect(
+		repeat_timer != null and is_equal_approx(repeat_timer.wait_time, 2.5),
+		"reconciliation preserves manual Inspector changes"
+	)
+
+	# Removing a property from the definition restores its native Godot default
+	# only when the current value still equals the last Object Builder value.
+	visual.properties.erase("position")
+	var reset_result := ObjectSceneStructureService.apply_structure(definition, repeat_root)
+	_expect(
+		bool(reset_result.get("ok", false))
+		and visual_node != null and visual_node.position == Vector2.ZERO,
+		"removing a generated property restores the Godot default when it was not manually edited"
+	)
 	repeat_root.free()
 
 	var invalid_definition := ObjectDefinition.new()
