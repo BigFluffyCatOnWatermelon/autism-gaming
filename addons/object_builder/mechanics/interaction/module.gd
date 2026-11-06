@@ -41,7 +41,11 @@ func build_component_definitions() -> Array:
         definition.category_display_name = CATEGORY_NAME
         definition.component_version = 1
         definition.component_script = item["script"]
-        definition.setting_definitions = item["settings"]
+        var typed_settings: Array[Dictionary] = []
+        for setting_value in item["settings"]:
+            if setting_value is Dictionary:
+                typed_settings.append(setting_value.duplicate(true))
+        definition.setting_definitions = typed_settings
         definition.settings = item["defaults"].duplicate(true)
         result.append(definition)
     return result
@@ -62,6 +66,5 @@ func build_capability_definitions() -> Array:
         capability.runtime_status = "Planned"
         capability.implementation_note = STATE_NOTE
         capability.version = 1
-        capability.definition_schema_version = 1
         result.append(capability)
     return result
