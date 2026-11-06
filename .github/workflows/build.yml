@@ -23,7 +23,7 @@ jobs:
       - name: Print Godot version
         run: godot --version
 
-      - name: Import resources and validate scripts
+      - name: Load editor plugins, import resources and validate scripts
         shell: bash
         run: |
           set -o pipefail

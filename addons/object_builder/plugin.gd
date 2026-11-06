@@ -42,7 +42,7 @@ const CHILD_NODE_TYPES := [
 	"AudioStreamPlayer2D",
 	"AnimationPlayer"
 ]
-var _dock: MarginContainer
+var _main_screen: MarginContainer
 var _search: LineEdit
 var _mode_filter: OptionButton
 var _category_filter: OptionButton
@@ -136,16 +136,36 @@ func _enter_tree() -> void:
 		push_warning("Object Builder: " + error_message)
 	_load_local_state()
 	_build_ui()
-	add_control_to_dock(DOCK_SLOT_RIGHT_UL, _dock)
+	var editor_main_screen := EditorInterface.get_editor_main_screen()
+	editor_main_screen.add_child(_main_screen)
+	_main_screen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_main_screen.hide()
 	_connect_editor_sync()
 	_refresh_library()
 
 
 func _exit_tree() -> void:
 	_disconnect_editor_sync()
-	if _dock != null:
-		remove_control_from_docks(_dock)
-		_dock.queue_free()
+	if _main_screen != null:
+		_main_screen.queue_free()
+		_main_screen = null
+
+
+func _has_main_screen() -> bool:
+	return true
+
+
+func _make_visible(visible: bool) -> void:
+	if _main_screen != null:
+		_main_screen.visible = visible
+
+
+func _get_plugin_name() -> String:
+	return "Object Builder"
+
+
+func _get_plugin_icon() -> Texture2D:
+	return EditorInterface.get_editor_theme().get_icon("Node2D", "EditorIcons")
 
 
 func _connect_editor_sync() -> void:
@@ -358,14 +378,18 @@ func _popup_window_safely(window: Window, preferred_size: Vector2i, fallback_rat
 
 
 func _build_ui() -> void:
-	_dock = MarginContainer.new()
-	_dock.name = "Object Builder"
-	_dock.custom_minimum_size = Vector2(720, 480)
+	_main_screen = MarginContainer.new()
+	_main_screen.name = "Object Builder"
+	_main_screen.custom_minimum_size = Vector2(560, 320)
+	_main_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_main_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	for margin_name in ["left", "top", "right", "bottom"]:
-		_dock.add_theme_constant_override("margin_" + margin_name, 8)
+		_main_screen.add_theme_constant_override("margin_" + margin_name, 8)
 
 	var layout := VBoxContainer.new()
-	_dock.add_child(layout)
+	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_main_screen.add_child(layout)
 
 	var toolbar := HBoxContainer.new()
 	layout.add_child(toolbar)
