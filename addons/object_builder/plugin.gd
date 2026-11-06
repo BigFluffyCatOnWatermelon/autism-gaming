@@ -10,6 +10,7 @@ const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder
 const ObjectBuilderComponentEditorViewScript = preload("res://addons/object_builder/ui/component_editor_view.gd")
 const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_builder/ui/capability_list_view.gd")
 const ObjectBuilderCapabilitySettingsViewScript = preload("res://addons/object_builder/ui/capability_settings_view.gd")
+const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -91,8 +92,7 @@ var _template_option: OptionButton
 var _node_dialog: AcceptDialog
 var _node_type_list: ItemList
 var _node_name_edit: LineEdit
-var _scene_tree: Tree
-var _scene_tree_status: Label
+var _scene_tree_view: Control
 var _visual_panel: VBoxContainer
 var _sprite_visual_controls: VBoxContainer
 var _animated_visual_controls: VBoxContainer
@@ -303,31 +303,12 @@ func _sync_scene_tree_selection(node: Node) -> void:
 	if node == null or not is_instance_valid(node):
 		return
 	var scene_root := _get_open_object_scene_root()
-	if scene_root == null:
-		return
-	var target_path := scene_root.get_path_to(node)
-	var item := _find_scene_tree_item(_scene_tree.get_root(), target_path)
-	if item == null:
+	if scene_root == null or _scene_tree_view == null:
 		return
 	_syncing_tree_selection = true
-	item.select(0)
-	_scene_tree.scroll_to_item(item)
+	_scene_tree_view.call("select_node", scene_root, node)
 	_syncing_tree_selection = false
 	_refresh_visual_editor(node)
-
-
-func _find_scene_tree_item(parent_item: TreeItem, target_path: NodePath) -> TreeItem:
-	if parent_item == null:
-		return null
-	if parent_item.get_metadata(0) == target_path:
-		return parent_item
-	for child_item in parent_item.get_children():
-		var found_item := _find_scene_tree_item(child_item, target_path)
-		if found_item != null:
-			return found_item
-	return null
-
-
 
 func _build_ui() -> void:
 	_main_screen = MarginContainer.new()
@@ -466,55 +447,16 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	_template_check.tooltip_text = "Сохранит новую заготовку отдельно от игровых объектов."
 	advanced_editor.add_child(_template_check)
 	
-	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ДЕРЕВО СЦЕНЫ")
-	
-	var scene_toolbar := HBoxContainer.new()
-	advanced_editor.add_child(scene_toolbar)
-	ObjectBuilderUIFactory.add_action_button(
-		scene_toolbar,
-		"+ Дочерний узел",
-		_on_add_node_pressed,
-		"",
-		true
-	)
-	ObjectBuilderUIFactory.add_action_button(
-		scene_toolbar,
-		"Удалить",
-		_on_remove_node_pressed,
-		"Удаляет выбранный дочерний узел через Undo/Redo."
-	)
-	ObjectBuilderUIFactory.add_action_button(
-		scene_toolbar,
-		"↻",
-		_refresh_scene_tree,
-		"Обновить дерево открытой сцены объекта."
-	)
-	
-	_scene_tree = Tree.new()
-	_scene_tree.custom_minimum_size = Vector2(0, 190)
-	_scene_tree.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_scene_tree.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_scene_tree.hide_root = false
-	_scene_tree.select_mode = Tree.SELECT_SINGLE
-	_scene_tree.item_selected.connect(_on_scene_tree_item_selected)
-	advanced_editor.add_child(_scene_tree)
-	
-	_scene_tree_status = Label.new()
-	_scene_tree_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	advanced_editor.add_child(_scene_tree_status)
-	
-	_build_visual_editor(advanced_editor)
-	
-	var open_scene_row := HBoxContainer.new()
-	advanced_editor.add_child(open_scene_row)
-	_open_scene_button = Button.new()
-	_open_scene_button.text = "Открыть исходную сцену"
-	_open_scene_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_open_scene_button.disabled = true
-	_open_scene_button.pressed.connect(_on_open_scene_pressed)
-	open_scene_row.add_child(_open_scene_button)
-	
-	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА")
+	_scene_tree_view = ObjectBuilderSceneTreeViewScript.new()
+	_scene_tree_view.name = "SceneTreeView"
+	_scene_tree_view.connect("add_node_requested", Callable(self, "_on_add_node_pressed"))
+	_scene_tree_view.connect("remove_node_requested", Callable(self, "_on_remove_node_pressed"))
+	_scene_tree_view.connect("refresh_requested", Callable(self, "_refresh_scene_tree"))
+	_scene_tree_view.connect("node_selected", Callable(self, "_on_scene_tree_item_selected"))
+	_scene_tree_view.call("build")
+	advanced_editor.add_child(_scene_tree_view)
+
+		ObjectBuilderUIFactory.create_section_title(advanced_editor, "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА")
 	
 	var properties_hint := Label.new()
 	properties_hint.text = "Расширенные типизированные свойства и их значения по умолчанию."
@@ -1985,44 +1927,22 @@ func _get_open_object_scene_root() -> Node:
 
 
 func _refresh_scene_tree() -> void:
-	if _scene_tree == null:
+	if _scene_tree_view == null:
 		return
 	_update_scene_tree_connection()
-	_scene_tree.clear()
 	var scene_root := _get_open_object_scene_root()
+	_scene_tree_view.call("set_scene_root", scene_root)
 	if scene_root == null:
 		_refresh_visual_editor(null)
-		_scene_tree_status.text = "Открой сцену выбранного объекта, чтобы редактировать её структуру."
-		var placeholder := _scene_tree.create_item()
-		placeholder.set_text(0, "Сцена объекта не открыта")
-		placeholder.set_selectable(0, false)
 		return
 
-	var root_item := _scene_tree.create_item()
-	root_item.set_text(0, "%s  <%s>" % [scene_root.name, scene_root.get_class()])
-	root_item.set_metadata(0, NodePath("."))
-	root_item.set_tooltip_text(0, scene_root.get_path())
-	for child in scene_root.get_children():
-		_add_scene_tree_item(child, root_item, scene_root)
-	_scene_tree_status.text = "Дерево синхронизируется со штатными Scene dock и Inspector. Ctrl+S сохраняет сцену."
 	var selected_node := _get_editor_selected_scene_node(scene_root)
 	if selected_node != null:
 		_sync_scene_tree_selection(selected_node)
 	else:
 		_refresh_visual_editor(null)
 
-
-func _add_scene_tree_item(node: Node, parent_item: TreeItem, scene_root: Node) -> void:
-	var item := _scene_tree.create_item(parent_item)
-	var display_name := "Параметры объекта" if node is ObjectPropertyData else node.name
-	item.set_text(0, "%s  <%s>" % [display_name, node.get_class()])
-	item.set_metadata(0, scene_root.get_path_to(node))
-	item.set_tooltip_text(0, str(node.get_path()))
-	for child in node.get_children():
-		_add_scene_tree_item(child, item, scene_root)
-
-
-func _on_scene_tree_item_selected() -> void:
+func _on_scene_tree_item_selected(_path: NodePath = NodePath()) -> void:
 	var node := _get_selected_scene_tree_node()
 	if node == null:
 		return
@@ -2122,17 +2042,12 @@ func _refresh_animated_sprite_editor(sprite: AnimatedSprite2D) -> void:
 
 
 func _get_selected_scene_tree_node() -> Node:
-	var selected_item := _scene_tree.get_selected()
-	if selected_item == null:
-		return null
-	var path_value: Variant = selected_item.get_metadata(0)
-	if path_value == null:
+	if _scene_tree_view == null:
 		return null
 	var scene_root := _get_open_object_scene_root()
 	if scene_root == null:
 		return null
-	return scene_root.get_node_or_null(NodePath(str(path_value)))
-
+	return _scene_tree_view.call("get_selected_node", scene_root) as Node
 
 func _on_browse_texture_pressed() -> void:
 	if _get_selected_sprite_node() == null:
