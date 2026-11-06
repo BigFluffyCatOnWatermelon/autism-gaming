@@ -163,6 +163,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 	var nodes_by_id: Dictionary = {ROOT_NODE_ID: scene_root}
 	var created_nodes: Array[Node] = []
 	var reused_nodes: Array[Node] = []
+	var reconciled_nodes: Array[Dictionary] = []
 	for node_definition in plan.get("ordered_nodes", []):
 		var parent: Node
 		if not node_definition.parent_node_path.is_empty():
@@ -176,25 +177,36 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		var existing_node := _find_generated_node(scene_root, node_definition.node_id)
 		if existing_node != null:
 			if parent == null or existing_node.get_parent() != parent:
+				_rollback_reconciled_nodes(reconciled_nodes)
 				_rollback_created_nodes(created_nodes)
 				return _failed_plan(["Существующий узел '%s' находится не у ожидаемого родителя." % node_definition.node_id])
 			if not ClassDB.is_parent_class(existing_node.get_class(), node_definition.node_type):
+				_rollback_reconciled_nodes(reconciled_nodes)
 				_rollback_created_nodes(created_nodes)
 				return _failed_plan(["Существующий узел '%s' имеет несовместимый тип." % node_definition.node_id])
 			var reconciliation := _reconcile_node_properties(existing_node, node_definition)
 			if not bool(reconciliation.get("ok", false)):
+				_rollback_reconciled_nodes(reconciled_nodes)
 				_rollback_created_nodes(created_nodes)
 				return _failed_plan(["Не удалось согласовать свойства узла '%s'." % node_definition.node_id])
+			reconciled_nodes.append({
+				"node": existing_node,
+				"before": reconciliation.get("before", {}),
+				"had_meta": reconciliation.get("had_meta", false),
+				"previous_meta": reconciliation.get("previous_meta", {})
+			})
 			nodes_by_id[node_definition.node_id] = existing_node
 			reused_nodes.append(existing_node)
 			continue
 
 		var node := _instantiate_node(node_definition)
 		if node == null:
+			_rollback_reconciled_nodes(reconciled_nodes)
 			_rollback_created_nodes(created_nodes)
 			return _failed_plan(["Не удалось создать узел '%s' типа '%s'." % [node_definition.node_id, node_definition.node_type]])
 		if parent == null:
 			node.free()
+			_rollback_reconciled_nodes(reconciled_nodes)
 			_rollback_created_nodes(created_nodes)
 			return _failed_plan(["Родитель узла '%s' недоступен." % node_definition.node_id])
 		var requested_name: String = String(node_definition.node_name.strip_edges().validate_node_name())
@@ -209,6 +221,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 			node.set_meta(str(metadata_key), node_definition.metadata[metadata_key])
 		if not _apply_node_properties(node, node_definition.properties):
 			node.free()
+			_rollback_reconciled_nodes(reconciled_nodes)
 			_rollback_created_nodes(created_nodes)
 			return _failed_plan(["Не удалось применить свойства узла '%s'." % node_definition.node_id])
 		node.set_meta(APPLIED_PROPERTIES_META, node_definition.properties.duplicate(true))
@@ -221,6 +234,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		var target := _resolve_node(scene_root, connection.target_node_id, nodes_by_id)
 		if source == null or target == null or not _has_signal(source, connection.signal_name) or not target.has_method(connection.method_name):
 			_rollback_connections(connected)
+			_rollback_reconciled_nodes(reconciled_nodes)
 			_rollback_created_nodes(created_nodes)
 			return _failed_plan(["Не удалось разрешить сигнал или метод в соединении '%s'." % connection.connection_id])
 		var callable := Callable(target, connection.method_name)
@@ -229,6 +243,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		var connect_error := source.connect(connection.signal_name, callable, connection.flags)
 		if connect_error != OK:
 			_rollback_connections(connected)
+			_rollback_reconciled_nodes(reconciled_nodes)
 			_rollback_created_nodes(created_nodes)
 			return _failed_plan(["Не удалось подключить сигнал '%s': код %d." % [connection.signal_name, connect_error]])
 		connected.append({"source": source, "signal": connection.signal_name, "callable": callable})
@@ -238,6 +253,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		"errors": PackedStringArray(),
 		"created_nodes": created_nodes,
 		"reused_nodes": reused_nodes,
+		"reconciled_nodes": reconciled_nodes,
 		"connected_signals": connected,
 		"nodes_by_id": nodes_by_id
 	}
@@ -280,11 +296,12 @@ static func _validate_node_properties(definition: ObjectNodeDefinition) -> Packe
 ## Updates only values that still match the last value applied by Object Builder.
 ## If an editor user changed a property manually, that value is preserved.
 static func _reconcile_node_properties(node: Node, definition: ObjectNodeDefinition) -> Dictionary:
+	var had_meta := node.has_meta(APPLIED_PROPERTIES_META)
+	var previous_meta: Variant = node.get_meta(APPLIED_PROPERTIES_META) if had_meta else {}
 	var previous: Dictionary = {}
-	if node.has_meta(APPLIED_PROPERTIES_META):
-		var stored: Variant = node.get_meta(APPLIED_PROPERTIES_META)
-		if stored is Dictionary:
-			previous = stored.duplicate(true)
+	if previous_meta is Dictionary:
+		previous = previous_meta.duplicate(true)
+	var before: Dictionary = {}
 
 	var defaults_instance := _instantiate_node(definition)
 	if defaults_instance == null:
@@ -306,11 +323,13 @@ static func _reconcile_node_properties(node: Node, definition: ObjectNodeDefinit
 		var desired: Variant = definition.properties[property_name]
 		if previous.has(key):
 			if node.get(key) == previous[key]:
+				before[key] = node.get(key)
 				node.set(key, desired)
 				next_applied[key] = desired
 			else:
 				preserved.append(key)
 		elif defaults.has(key) and node.get(key) == defaults[key]:
+			before[key] = node.get(key)
 			node.set(key, desired)
 			next_applied[key] = desired
 		else:
@@ -321,13 +340,20 @@ static func _reconcile_node_properties(node: Node, definition: ObjectNodeDefinit
 		if definition.properties.has(previous_key):
 			continue
 		if defaults.has(previous_key) and node.get(previous_key) == previous[previous_key]:
+			before[previous_key] = node.get(previous_key)
 			node.set(previous_key, defaults[previous_key])
 			next_applied.erase(previous_key)
 		else:
 			preserved.append(previous_key)
 
 	node.set_meta(APPLIED_PROPERTIES_META, next_applied)
-	return {"ok": true, "preserved": preserved}
+	return {
+		"ok": true,
+		"preserved": preserved,
+		"before": before,
+		"had_meta": had_meta,
+		"previous_meta": previous_meta
+	}
 
 
 static func _apply_node_properties(node: Node, properties: Dictionary) -> bool:
@@ -377,6 +403,21 @@ static func _make_unique_child_name(parent: Node, requested_name: String) -> Str
 		candidate = "%s_%d" % [base_name, suffix]
 		suffix += 1
 	return candidate
+
+
+static func _rollback_reconciled_nodes(changes: Array[Dictionary]) -> void:
+	for index in range(changes.size() - 1, -1, -1):
+		var change := changes[index]
+		var node := change.get("node") as Node
+		if not is_instance_valid(node):
+			continue
+		var before: Dictionary = change.get("before", {})
+		for property_name in before:
+			node.set(str(property_name), before[property_name])
+		if bool(change.get("had_meta", false)):
+			node.set_meta(APPLIED_PROPERTIES_META, change.get("previous_meta", {}))
+		elif node.has_meta(APPLIED_PROPERTIES_META):
+			node.remove_meta(APPLIED_PROPERTIES_META)
 
 
 static func _rollback_connections(connections: Array[Dictionary]) -> void:
