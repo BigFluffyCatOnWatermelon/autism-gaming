@@ -189,7 +189,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		for metadata_key in node_definition.metadata:
 			node.set_meta(str(metadata_key), node_definition.metadata[metadata_key])
 		if not _apply_node_properties(node, node_definition.properties):
-			node.queue_free()
+			node.free()
 			_rollback_created_nodes(created_nodes)
 			return _failed_plan(["Не удалось применить свойства узла '%s'." % node_definition.node_id])
 		nodes_by_id[node_definition.node_id] = node
