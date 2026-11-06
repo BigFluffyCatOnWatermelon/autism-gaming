@@ -689,6 +689,30 @@ func _test_declarative_scene_structure() -> void:
 		)
 		restored.free()
 
+	var repeat_root := Node2D.new()
+	var first_apply := ObjectSceneStructureService.apply_structure(definition, repeat_root)
+	var second_apply := ObjectSceneStructureService.apply_structure(definition, repeat_root)
+	var reused_nodes: Array = second_apply.get("reused_nodes", [])
+	var created_again: Array = second_apply.get("created_nodes", [])
+	var repeat_timer := repeat_root.get_node_or_null("Visual/Interaction/Timeout") as Timer
+	_expect(
+		bool(first_apply.get("ok", false))
+		and bool(second_apply.get("ok", false))
+		and reused_nodes.size() == 3
+		and created_again.is_empty(),
+		"reapplying the same structure reuses generated nodes without duplicates"
+	)
+	if repeat_timer != null:
+		_expect(
+			repeat_timer.get_signal_connection_list("timeout").size() == 1,
+			"reapplying the same structure does not duplicate signal connections"
+		)
+	_expect(
+		repeat_root.find_children("*", "", true, false).size() == 3,
+		"the generated scene tree remains the same size after repeated application"
+	)
+	repeat_root.free()
+
 	var invalid_definition := ObjectDefinition.new()
 	invalid_definition.object_id = "invalid_structure_smoke"
 	invalid_definition.display_name = "Invalid Structure"
