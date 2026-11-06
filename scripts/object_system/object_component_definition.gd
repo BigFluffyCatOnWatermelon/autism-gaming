@@ -157,7 +157,8 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 			"display_name": "ID предмета",
 			"value_type": "String",
 			"default_value": "",
-			"group_name": "Предмет"
+			"group_name": "Предмет",
+			"required": true
 		})
 		result.append({
 			"key": "quantity",
