@@ -48,7 +48,7 @@ static func build_plan(definition: ObjectDefinition, scene_root: Node) -> Dictio
 		if node_definition.node_name.strip_edges().is_empty():
 			errors.append("У узла '%s' не задано имя." % node_id)
 		if node_definition.parent_node_path.is_empty():
-			var parent_id := node_definition.parent_node_id.strip_edges()
+			var parent_id: String = node_definition.parent_node_id.strip_edges()
 			if parent_id.is_empty():
 				parent_id = ROOT_NODE_ID
 			if parent_id != ROOT_NODE_ID and not node_definitions.has(parent_id):
@@ -68,7 +68,7 @@ static func build_plan(definition: ObjectDefinition, scene_root: Node) -> Dictio
 	for node_definition in pending:
 		if not node_definition.parent_node_path.is_empty():
 			continue
-		var parent_id := node_definition.parent_node_id.strip_edges()
+		var parent_id: String = node_definition.parent_node_id.strip_edges()
 		if parent_id.is_empty():
 			parent_id = ROOT_NODE_ID
 		if not node_definitions.has(parent_id) and parent_id != ROOT_NODE_ID:
@@ -77,7 +77,7 @@ static func build_plan(definition: ObjectDefinition, scene_root: Node) -> Dictio
 		var progressed := false
 		for index in range(unresolved.size() - 1, -1, -1):
 			var node_definition := unresolved[index] as ObjectNodeDefinition
-			var parent_id := node_definition.parent_node_id.strip_edges()
+			var parent_id: String = node_definition.parent_node_id.strip_edges()
 			if parent_id.is_empty():
 				parent_id = ROOT_NODE_ID
 			if not node_definition.parent_node_path.is_empty() or resolved_ids.has(parent_id):
@@ -170,7 +170,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		if not node_definition.parent_node_path.is_empty():
 			parent = scene_root.get_node_or_null(node_definition.parent_node_path)
 		else:
-			var parent_id := node_definition.parent_node_id.strip_edges()
+			var parent_id: String = node_definition.parent_node_id.strip_edges()
 			if parent_id.is_empty():
 				parent_id = ROOT_NODE_ID
 			parent = nodes_by_id.get(parent_id) as Node
@@ -178,7 +178,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 			node.free()
 			_rollback_created_nodes(created_nodes)
 			return _failed_plan(["Родитель узла '%s' недоступен." % node_definition.node_id])
-		var requested_name := node_definition.node_name.strip_edges().validate_node_name()
+		var requested_name: String = String(node_definition.node_name.strip_edges().validate_node_name())
 		node.name = _make_unique_child_name(parent, requested_name)
 		parent.add_child(node)
 		node.owner = scene_root
