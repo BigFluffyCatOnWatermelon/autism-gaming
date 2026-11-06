@@ -332,17 +332,6 @@ func _find_scene_tree_item(parent_item: TreeItem, target_path: NodePath) -> Tree
 
 
 
-func _create_scrollable_dialog_body(
-	dialog: AcceptDialog,
-	minimum_size: Vector2i
-) -> VBoxContainer:
-	return ObjectBuilderUIFactory.create_scrollable_dialog_body(dialog, minimum_size)
-
-
-func _popup_window_safely(window: Window, preferred_size: Vector2i, fallback_ratio: float = 0.82) -> void:
-	ObjectBuilderUIFactory.popup_window_safely(window, preferred_size, fallback_ratio)
-
-
 func _build_ui() -> void:
 	_main_screen = MarginContainer.new()
 	_main_screen.name = "Object Builder"
@@ -415,12 +404,12 @@ func _build_simple_editor(parent: VBoxContainer) -> void:
 	simple_editor.add_theme_constant_override("separation", 10)
 	ObjectBuilderUIFactory.create_section_title(simple_editor, "СОЗДАЙ СВОЙ ОБЪЕКТ", 18)
 	
-	_name_edit = _add_labeled_line_edit(simple_editor, "Название", "Например, Волшебный сундук")
+	_name_edit = ObjectBuilderUIFactory.add_labeled_line_edit(simple_editor, "Название", "Например, Волшебный сундук")
 	
 	_description_edit = TextEdit.new()
 	_description_edit.custom_minimum_size = Vector2(0, 54)
 	_description_edit.placeholder_text = "Что это за объект? (необязательно)"
-	_add_labeled_control(simple_editor, "Описание", _description_edit)
+	ObjectBuilderUIFactory.add_labeled_control(simple_editor, "Описание", _description_edit)
 	
 	var favorite_row := HBoxContainer.new()
 	simple_editor.add_child(favorite_row)
@@ -460,20 +449,20 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	advanced_editor.add_theme_constant_override("separation", 7)
 	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ТЕХНИЧЕСКИЕ НАСТРОЙКИ", 16)
 	
-	_id_edit = _add_labeled_line_edit(advanced_editor, "Постоянный ID", "Создаётся автоматически")
+	_id_edit = ObjectBuilderUIFactory.add_labeled_line_edit(advanced_editor, "Постоянный ID", "Создаётся автоматически")
 	_id_edit.editable = false
 	
 	_object_type_label = Label.new()
 	_object_type_label.text = "Не выбран"
-	_add_labeled_control(advanced_editor, "Стартовый профиль", _object_type_label)
+	ObjectBuilderUIFactory.add_labeled_control(advanced_editor, "Стартовый профиль", _object_type_label)
 	
-	_category_edit = _add_labeled_line_edit(advanced_editor, "Категория библиотеки", "Например, Nature")
-	_tags_edit = _add_labeled_line_edit(advanced_editor, "Теги", "дерево, ресурс, лес")
+	_category_edit = ObjectBuilderUIFactory.add_labeled_line_edit(advanced_editor, "Категория библиотеки", "Например, Nature")
+	_tags_edit = ObjectBuilderUIFactory.add_labeled_line_edit(advanced_editor, "Теги", "дерево, ресурс, лес")
 	
 	_root_type = OptionButton.new()
 	for root_type in ROOT_TYPES:
 		_root_type.add_item(root_type)
-	_add_labeled_control(advanced_editor, "Тип корневого узла", _root_type)
+	ObjectBuilderUIFactory.add_labeled_control(advanced_editor, "Тип корневого узла", _root_type)
 	
 	_template_check = CheckBox.new()
 	_template_check.text = "Сохранить как шаблон"
@@ -760,7 +749,7 @@ func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
 	_pending_capability_summary = application_plan.get("summary_lines", PackedStringArray())
 	_capability_change_dialog.dialog_text = "\n".join(_pending_capability_summary)
 	_rebuild_capability_list()
-	_popup_window_safely(_capability_change_dialog, Vector2i(560, 360), 0.82)
+	ObjectBuilderUIFactory.popup_window_safely(_capability_change_dialog, Vector2i(560, 360), 0.82)
 
 
 func _on_capability_change_confirmed() -> void:
@@ -937,7 +926,7 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 	_capability_advanced_settings_check.visible = has_advanced_settings
 	_on_capability_advanced_settings_toggled(false)
 
-	_popup_window_safely(_capability_settings_dialog, Vector2i(520, 460), 0.82)
+	ObjectBuilderUIFactory.popup_window_safely(_capability_settings_dialog, Vector2i(520, 460), 0.82)
 
 
 func _on_capability_advanced_settings_toggled(show_advanced: bool) -> void:
@@ -1040,7 +1029,7 @@ func _on_simple_add_image_pressed() -> void:
 	EditorInterface.get_selection().clear()
 	EditorInterface.get_selection().add_node(sprite)
 	EditorInterface.edit_node(sprite)
-	_popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
+	ObjectBuilderUIFactory.popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
 	_set_status("Изображение добавлено. Его можно перемещать в 2D-редакторе Godot.", false)
 
 
@@ -1162,14 +1151,6 @@ func _ensure_component_schemas() -> void:
 		component_definition.notify_property_list_changed()
 
 
-func _add_labeled_line_edit(parent: VBoxContainer, label_text: String, placeholder: String) -> LineEdit:
-	return ObjectBuilderUIFactory.add_labeled_line_edit(parent, label_text, placeholder)
-
-
-func _add_labeled_control(parent: VBoxContainer, label_text: String, control: Control) -> void:
-	ObjectBuilderUIFactory.add_labeled_control(parent, label_text, control)
-
-
 func _build_property_dialog() -> void:
 	_property_dialog = AcceptDialog.new()
 	_property_dialog.title = "Новое пользовательское свойство"
@@ -1189,26 +1170,26 @@ func _build_property_dialog() -> void:
 
 	_property_name_edit = LineEdit.new()
 	_property_name_edit.placeholder_text = "Например, Максимальное здоровье"
-	_add_labeled_control(form, "Название", _property_name_edit)
+	ObjectBuilderUIFactory.add_labeled_control(form, "Название", _property_name_edit)
 
 	_property_type_option = OptionButton.new()
 	for type_name in ["String", "Integer", "Float", "Boolean", "Vector2"]:
 		_property_type_option.add_item(type_name)
 	_property_type_option.item_selected.connect(_on_property_type_changed)
-	_add_labeled_control(form, "Тип", _property_type_option)
+	ObjectBuilderUIFactory.add_labeled_control(form, "Тип", _property_type_option)
 
 	_property_default_edit = LineEdit.new()
 	_property_default_edit.text = "0"
-	_add_labeled_control(form, "Значение по умолчанию", _property_default_edit)
+	ObjectBuilderUIFactory.add_labeled_control(form, "Значение по умолчанию", _property_default_edit)
 
 	_property_group_edit = LineEdit.new()
 	_property_group_edit.text = "Основное"
-	_add_labeled_control(form, "Группа инспектора", _property_group_edit)
+	ObjectBuilderUIFactory.add_labeled_control(form, "Группа инспектора", _property_group_edit)
 
 	_property_description_edit = TextEdit.new()
 	_property_description_edit.custom_minimum_size = Vector2(0, 54)
 	_property_description_edit.placeholder_text = "Подсказка о назначении свойства…"
-	_add_labeled_control(form, "Описание", _property_description_edit)
+	ObjectBuilderUIFactory.add_labeled_control(form, "Описание", _property_description_edit)
 
 	_property_advanced_check = CheckBox.new()
 	_property_advanced_check.text = "Дополнительный параметр"
@@ -1249,7 +1230,7 @@ func _build_new_object_dialog() -> void:
 	_new_object_dialog.title = "Новый объект · выбери тип"
 	add_child(_new_object_dialog)
 
-	var form := _create_scrollable_dialog_body(
+	var form := ObjectBuilderUIFactory.create_scrollable_dialog_body(
 		_new_object_dialog,
 		Vector2i(420, 190)
 	)
@@ -1268,7 +1249,7 @@ func _build_new_object_dialog() -> void:
 			profile.profile_id
 		)
 	_new_object_type_option.item_selected.connect(_on_new_object_type_selected)
-	_add_labeled_control(form, "Что создаём?", _new_object_type_option)
+	ObjectBuilderUIFactory.add_labeled_control(form, "Что создаём?", _new_object_type_option)
 
 	_new_object_type_hint = Label.new()
 	_new_object_type_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1370,12 +1351,12 @@ func _build_template_dialog() -> void:
 	_template_dialog.title = "Создать объект из шаблона"
 	add_child(_template_dialog)
 
-	var form := _create_scrollable_dialog_body(
+	var form := ObjectBuilderUIFactory.create_scrollable_dialog_body(
 		_template_dialog,
 		Vector2i(420, 150)
 	)
 	_template_option = OptionButton.new()
-	_add_labeled_control(form, "Шаблон", _template_option)
+	ObjectBuilderUIFactory.add_labeled_control(form, "Шаблон", _template_option)
 
 	var hint := Label.new()
 	hint.text = "Будет создана независимая копия определения и сцены."
@@ -1424,24 +1405,24 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 
 	var grid_row := HBoxContainer.new()
 	_sprite_visual_controls.add_child(grid_row)
-	_sprite_hframes = _make_visual_spin_box(1.0, 128.0, 1.0)
+	_sprite_hframes = ObjectBuilderUIFactory.make_spin_box(1.0, 128.0, 1.0)
 	_sprite_hframes.value_changed.connect(_on_sprite_grid_value_changed.bind("hframes"))
-	_add_compact_labeled_control(grid_row, "H", _sprite_hframes)
-	_sprite_vframes = _make_visual_spin_box(1.0, 128.0, 1.0)
+	ObjectBuilderUIFactory.add_labeled_control(grid_row, "H", _sprite_hframes)
+	_sprite_vframes = ObjectBuilderUIFactory.make_spin_box(1.0, 128.0, 1.0)
 	_sprite_vframes.value_changed.connect(_on_sprite_grid_value_changed.bind("vframes"))
-	_add_compact_labeled_control(grid_row, "V", _sprite_vframes)
-	_sprite_frame = _make_visual_spin_box(0.0, 16383.0, 1.0)
+	ObjectBuilderUIFactory.add_labeled_control(grid_row, "V", _sprite_vframes)
+	_sprite_frame = ObjectBuilderUIFactory.make_spin_box(0.0, 16383.0, 1.0)
 	_sprite_frame.value_changed.connect(_on_sprite_grid_value_changed.bind("frame"))
-	_add_compact_labeled_control(grid_row, "Кадр", _sprite_frame)
+	ObjectBuilderUIFactory.add_labeled_control(grid_row, "Кадр", _sprite_frame)
 
 	var offset_row := HBoxContainer.new()
 	_sprite_visual_controls.add_child(offset_row)
-	_sprite_offset_x = _make_visual_spin_box(-4096.0, 4096.0, 1.0)
+	_sprite_offset_x = ObjectBuilderUIFactory.make_spin_box(-4096.0, 4096.0, 1.0)
 	_sprite_offset_x.value_changed.connect(_on_sprite_offset_changed.bind("x"))
-	_add_compact_labeled_control(offset_row, "Offset X", _sprite_offset_x)
-	_sprite_offset_y = _make_visual_spin_box(-4096.0, 4096.0, 1.0)
+	ObjectBuilderUIFactory.add_labeled_control(offset_row, "Offset X", _sprite_offset_x)
+	_sprite_offset_y = ObjectBuilderUIFactory.make_spin_box(-4096.0, 4096.0, 1.0)
 	_sprite_offset_y.value_changed.connect(_on_sprite_offset_changed.bind("y"))
-	_add_compact_labeled_control(offset_row, "Y", _sprite_offset_y)
+	ObjectBuilderUIFactory.add_labeled_control(offset_row, "Y", _sprite_offset_y)
 
 	var toggles_row := HBoxContainer.new()
 	_sprite_visual_controls.add_child(toggles_row)
@@ -1488,16 +1469,16 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	_animation_option = OptionButton.new()
 	_animation_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_animation_option.item_selected.connect(_on_animated_animation_selected)
-	_add_labeled_control(_animated_visual_controls, "Анимация", _animation_option)
+	ObjectBuilderUIFactory.add_labeled_control(_animated_visual_controls, "Анимация", _animation_option)
 
 	var animation_row := HBoxContainer.new()
 	_animated_visual_controls.add_child(animation_row)
-	_animated_frame = _make_visual_spin_box(0.0, 16383.0, 1.0)
+	_animated_frame = ObjectBuilderUIFactory.make_spin_box(0.0, 16383.0, 1.0)
 	_animated_frame.value_changed.connect(_on_animated_frame_changed)
-	_add_compact_labeled_control(animation_row, "Кадр", _animated_frame)
-	_animated_speed = _make_visual_spin_box(-10.0, 10.0, 0.1)
+	ObjectBuilderUIFactory.add_labeled_control(animation_row, "Кадр", _animated_frame)
+	_animated_speed = ObjectBuilderUIFactory.make_spin_box(-10.0, 10.0, 0.1)
 	_animated_speed.value_changed.connect(_on_animated_speed_changed)
-	_add_compact_labeled_control(animation_row, "Скорость", _animated_speed)
+	ObjectBuilderUIFactory.add_labeled_control(animation_row, "Скорость", _animated_speed)
 
 	var animated_hint := Label.new()
 	animated_hint.text = "Здесь можно выбрать анимацию и кадр для проверки. Для автоматического воспроизведения настрой Autoplay в Inspector."
@@ -1525,20 +1506,12 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	add_child(_frames_dialog)
 
 
-func _make_visual_spin_box(minimum: float, maximum: float, step_value: float) -> SpinBox:
-	return ObjectBuilderUIFactory.make_spin_box(minimum, maximum, step_value)
-
-
-func _add_compact_labeled_control(parent: HBoxContainer, label_text: String, control: Control) -> void:
-	ObjectBuilderUIFactory.add_labeled_control(parent, label_text, control, 72.0)
-
-
 func _build_node_dialog() -> void:
 	_node_dialog = AcceptDialog.new()
 	_node_dialog.title = "Добавить дочерний узел"
 	add_child(_node_dialog)
 
-	var form := _create_scrollable_dialog_body(
+	var form := ObjectBuilderUIFactory.create_scrollable_dialog_body(
 		_node_dialog,
 		Vector2i(430, 250)
 	)
@@ -1559,7 +1532,7 @@ func _build_node_dialog() -> void:
 
 	_node_name_edit = LineEdit.new()
 	_node_name_edit.placeholder_text = "Имя (необязательно)"
-	_add_labeled_control(form, "Название", _node_name_edit)
+	ObjectBuilderUIFactory.add_labeled_control(form, "Название", _node_name_edit)
 
 	_node_dialog.confirmed.connect(_on_node_dialog_confirmed)
 
@@ -1766,7 +1739,7 @@ func _refresh_favorite_button() -> void:
 func _on_new_object_pressed() -> void:
 	_new_object_type_option.select(0)
 	_update_new_object_type_hint()
-	_popup_window_safely(_new_object_dialog, Vector2i(460, 250), 0.82)
+	ObjectBuilderUIFactory.popup_window_safely(_new_object_dialog, Vector2i(460, 250), 0.82)
 
 
 func _on_create_from_template_pressed() -> void:
@@ -1778,7 +1751,7 @@ func _on_create_from_template_pressed() -> void:
 	for template_definition in _templates:
 		_template_option.add_item(template_definition.display_name)
 	_template_option.select(0)
-	_popup_window_safely(_template_dialog, Vector2i(440, 170), 0.82)
+	ObjectBuilderUIFactory.popup_window_safely(_template_dialog, Vector2i(440, 170), 0.82)
 
 
 func _on_template_dialog_confirmed() -> void:
@@ -1936,7 +1909,7 @@ func _on_add_property_pressed() -> void:
 	_property_minimum_edit.text = "0"
 	_property_maximum_edit.text = "100"
 	_update_property_range_controls()
-	_popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
+	ObjectBuilderUIFactory.popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
 
 
 func _on_edit_property_pressed(property_definition: ObjectPropertyDefinition) -> void:
@@ -1958,7 +1931,7 @@ func _on_edit_property_pressed(property_definition: ObjectPropertyDefinition) ->
 	_property_minimum_edit.text = str(property_definition.minimum)
 	_property_maximum_edit.text = str(property_definition.maximum)
 	_update_property_range_controls()
-	_popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
+	ObjectBuilderUIFactory.popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
 
 
 func _select_property_type(type_name: String) -> void:
@@ -2363,7 +2336,7 @@ func _on_browse_texture_pressed() -> void:
 	if _get_selected_sprite_node() == null:
 		_set_status("Выбери Sprite2D в дереве сцены.", true)
 		return
-	_popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
+	ObjectBuilderUIFactory.popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
 
 
 func _on_texture_file_selected(path: String) -> void:
@@ -2411,7 +2384,7 @@ func _on_browse_sprite_frames_pressed() -> void:
 	if _get_selected_animated_sprite_node() == null:
 		_set_status("Выбери AnimatedSprite2D в дереве сцены.", true)
 		return
-	_popup_window_safely(_frames_dialog, Vector2i(820, 620), 0.88)
+	ObjectBuilderUIFactory.popup_window_safely(_frames_dialog, Vector2i(820, 620), 0.88)
 
 
 func _on_sprite_frames_file_selected(path: String) -> void:
@@ -2544,7 +2517,7 @@ func _on_add_node_pressed() -> void:
 	_node_type_list.select(maxi(0, sprite_index))
 	_node_type_list.ensure_current_is_visible()
 	_node_name_edit.text = ""
-	_popup_window_safely(_node_dialog, Vector2i(430, 300), 0.82)
+	ObjectBuilderUIFactory.popup_window_safely(_node_dialog, Vector2i(430, 300), 0.82)
 
 
 func _on_node_dialog_confirmed() -> void:
