@@ -4,6 +4,8 @@ class_name ObjectCapabilityCatalog
 ## Registry of user-facing capability cards. Built-in and extension definitions share one API.
 
 const CAPABILITY_LIBRARY_DATA = preload("res://scripts/object_system/object_capability_library_data.gd")
+const CHARACTERISTICS_MODULE := preload("res://addons/object_builder/mechanics/characteristics/module.gd")
+const COMBAT_MODULE := preload("res://addons/object_builder/mechanics/combat/module.gd")
 
 const BUILTIN_CATEGORIES := [
 	{"id": "general", "display_name": "Основное", "order": 0},
@@ -287,7 +289,24 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	destructible.component_ids = PackedStringArray(["destructible"])
 	destructible.display_order = 10
 	result.append(destructible)
-	result.append_array(CAPABILITY_LIBRARY_DATA.create_definitions())
+	var implemented_by_id: Dictionary = {}
+	var characteristics_module: Variant = CHARACTERISTICS_MODULE.new()
+	for definition in characteristics_module.build_capability_definitions():
+		implemented_by_id[definition.capability_id] = definition
+	var combat_module: Variant = COMBAT_MODULE.new()
+	for definition in combat_module.build_capability_definitions():
+		implemented_by_id[definition.capability_id] = definition
+	for planned_definition in CAPABILITY_LIBRARY_DATA.create_definitions():
+		var capability_id := planned_definition.capability_id
+		if implemented_by_id.has(capability_id):
+			var active_definition := implemented_by_id[capability_id] as ObjectCapabilityDefinition
+			active_definition.display_order = planned_definition.display_order
+			result.append(active_definition)
+			implemented_by_id.erase(capability_id)
+		else:
+			result.append(planned_definition)
+	for missing_id in implemented_by_id:
+		push_error("ObjectCapabilityCatalog: механика отсутствует в основном каталоге: " + str(missing_id))
 	return result
 
 
