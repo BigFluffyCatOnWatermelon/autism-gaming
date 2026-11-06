@@ -8,7 +8,7 @@ func _initialize() -> void:
  if not is_equal_approx(stat.add_value(25.0),25.0): errors.append("Positive adjustment failed.")
  if not is_equal_approx(stat.add_value(-100.0),-75.0) or stat.get_value()!=0.0: errors.append("Lower bound clamp failed.")
  if stat.spend_value(1.0): errors.append("Spending below zero should fail.")
- if not stat.spend_value(0.0)==false: errors.append("Zero spend should fail.")
+ if stat.spend_value(0.0): errors.append("Zero spend should fail.")
  var state: Dictionary=stat.export_runtime_state()
  var restored=STAT.new()
  restored.configure(state)

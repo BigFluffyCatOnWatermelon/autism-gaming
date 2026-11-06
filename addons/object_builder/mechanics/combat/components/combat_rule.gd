@@ -19,18 +19,21 @@ func _emit(value: Variant) -> Variant:
 
 func block_damage(incoming_damage: float) -> float:
     if not _enabled(): return maxf(0.0,incoming_damage)
-    return float(_emit(maxf(0.0,incoming_damage*(1.0-clampf(_number("damage_reduction",0.75),0.0,1.0)))))
+    return float(_emit(maxf(0.0,incoming_damage*(1.0-clampf(_number("damage_reduction",0.75),0.0,1.0))))
 
 func resolve_parry(elapsed_since_input: float, incoming_damage: float) -> Dictionary:
     var success := _enabled() and elapsed_since_input >= 0.0 and elapsed_since_input <= _number("parry_window",0.25)
-    return _emit({"success":success,"incoming_damage":0.0 if success else maxf(0.0,incoming_damage),"counter_multiplier":_number("counter_multiplier",1.5) if success else 1.0})
+    var result: Dictionary = _emit({"success":success,"incoming_damage":0.0 if success else maxf(0.0,incoming_damage),"counter_multiplier":_number("counter_multiplier",1.5) if success else 1.0})
+    return result
 
 func begin_dodge() -> Dictionary:
-    return _emit({"duration":maxf(0.0,_number("dodge_duration",0.35)),"invulnerable":bool(get_option("invulnerability",true))})
+    var result: Dictionary = _emit({"duration":maxf(0.0,_number("dodge_duration",0.35)),"invulnerable":bool(get_option("invulnerability",true))})
+    return result
 
 func set_aim_direction(direction: Vector2) -> Vector2:
     if not _enabled() or direction.is_zero_approx(): return Vector2.ZERO
-    return _emit(direction.normalized())
+    var result: Vector2 = _emit(direction.normalized())
+    return result
 
 func get_charge_multiplier(held_seconds: float) -> float:
     if not _enabled(): return 1.0
@@ -52,7 +55,8 @@ func register_combo_hit() -> Dictionary:
     if values.is_empty(): values=[1.0]
     _combo_step=mini(_combo_step+1,values.size())
     _combo_time_left=maxf(0.0,_number("combo_window",0.8))
-    return _emit({"step":_combo_step,"multiplier":maxf(1.0,float(values[_combo_step-1]))})
+    var result: Dictionary = _emit({"step":_combo_step,"multiplier":maxf(1.0,float(values[_combo_step-1]))})
+    return result
 
 func set_target(target: Node, origin: Node2D = null) -> bool:
     if not _enabled() or not is_instance_valid(target): return fail("Цель недействительна или выбор цели отключён.")
