@@ -13,7 +13,9 @@ func _initialize() -> void:
  if not is_equal_approx(rule.roll_critical_hit(),3.0): errors.append("Critical multiplier failed.")
  rule.configure({"rule_type":"combo","enabled":true,"combo_window":1.0,"combo_multipliers":[1.0,1.5]})
  if rule.register_combo_hit().step!=1 or not is_equal_approx(rule.register_combo_hit().multiplier,1.5): errors.append("Combo progression failed.")
- if errors.is_empty(): print("Combat smoke: PASS")
+ if errors.is_empty():
+  print("Combat smoke: PASS")
+  quit(0)
  else:
   for error in errors: push_error(error)
   quit(1)

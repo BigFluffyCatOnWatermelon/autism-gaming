@@ -1,11 +1,20 @@
 extends RefCounted
 class_name ObjectFactory
 
+const MECHANIC_MODULE_LOADER = preload("res://scripts/object_system/mechanic_module_loader.gd")
+static var _mechanic_modules_attempted := false
+
 
 static func instantiate(definition: ObjectDefinition, property_overrides: Dictionary = {}) -> Node:
 	if definition == null:
 		push_error("ObjectFactory: передано пустое определение.")
 		return null
+
+	if not _mechanic_modules_attempted:
+		_mechanic_modules_attempted = true
+		var module_errors := MECHANIC_MODULE_LOADER.register_modules_in_directory()
+		for error_message in module_errors:
+			push_error("ObjectFactory: " + error_message)
 
 	var instance: Node = null
 	if not definition.scene_path.strip_edges().is_empty() and ResourceLoader.exists(definition.scene_path):

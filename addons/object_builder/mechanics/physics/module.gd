@@ -12,7 +12,8 @@ const SCRIPT_CAN_ROLL = preload("res://addons/object_builder/mechanics/physics/c
 const SCRIPT_CAN_SLIDE = preload("res://addons/object_builder/mechanics/physics/components/can_slide.gd")
 const SCRIPT_HAS_PHYSICS_MATERIAL = preload("res://addons/object_builder/mechanics/physics/components/has_physics_material.gd")
 
-const CATEGORY_ID := "physics"
+const COMPONENT_CATEGORY_ID := "Physics"
+const CAPABILITY_CATEGORY_ID := "physics"
 const CATEGORY_NAME := "Физика"
 const STATE_NOTE := "Локальные физические настройки и команды реализованы. Для корректной симуляции требуются подходящие StaticBody2D / RigidBody2D и формы коллизии и физический цикл Godot; пакет не создаёт их автоматически."
 
@@ -37,11 +38,15 @@ func build_component_definitions() -> Array:
         definition.display_name = item["name"]
         definition.description = item["description"]
         definition.category = "Physics"
-        definition.category_id = CATEGORY_ID
+        definition.category_id = COMPONENT_CATEGORY_ID
         definition.category_display_name = CATEGORY_NAME
         definition.component_version = 1
         definition.component_script = item["script"]
-        definition.setting_definitions = item["settings"]
+        var typed_settings: Array[Dictionary] = []
+        for setting_value in item["settings"]:
+            if setting_value is Dictionary:
+                typed_settings.append(setting_value.duplicate(true))
+        definition.setting_definitions = typed_settings
         definition.settings = item["defaults"].duplicate(true)
         result.append(definition)
     return result
@@ -53,7 +58,7 @@ func build_capability_definitions() -> Array:
         capability.capability_id = item["id"]
         capability.display_name = item["name"]
         capability.description = item["description"]
-        capability.category_id = CATEGORY_ID
+        capability.category_id = CAPABILITY_CATEGORY_ID
         capability.category_name = CATEGORY_NAME
         capability.icon = "weight"
         capability.keywords = PackedStringArray(item["keywords"])
@@ -62,6 +67,5 @@ func build_capability_definitions() -> Array:
         capability.runtime_status = "Planned"
         capability.implementation_note = STATE_NOTE
         capability.version = 1
-        capability.definition_schema_version = 1
         result.append(capability)
     return result

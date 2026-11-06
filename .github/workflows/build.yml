@@ -43,6 +43,22 @@ jobs:
             exit 1
           fi
 
+      - name: Run standalone mechanic module smoke tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          found_test=false
+          for test_script in addons/object_builder/mechanics/*/tests/smoke.gd; do
+            [[ -f "$test_script" ]] || continue
+            found_test=true
+            echo "Running $test_script"
+            godot --headless --path . --script "res://$test_script"
+          done
+          if [[ "$found_test" != true ]]; then
+            echo "No standalone mechanic module smoke tests were found."
+            exit 1
+          fi
+
       - name: Launch main scene and check runtime
         shell: bash
         run: |
