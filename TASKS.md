@@ -19,8 +19,12 @@
 - [x] Перенести Object Builder в центральную вкладку Godot через Main Screen Plugin.
 - [x] Вынести повторяемые UI-паттерны в общий ObjectBuilderUIFactory.
 - [x] Разбить сборку главного интерфейса на отдельные построители toolbar, library, simple editor, advanced editor и dialogs.
+- [x] Вынести библиотеку объектов в независимый LibraryView с API фильтров, списка и сигналами действий.
+- [x] Вынести вкладки простого/расширенного редактора и прокручиваемые области в независимый ObjectEditorView.
+- [x] Добавить smoke-тесты контрактов обоих UI-компонентов.
 - [x] Добавить UI factory smoke-тест и отдельный шаг в GitHub Actions.
 - [ ] Сделать визуальную библиотеку-карточки и рабочий Preview.
+- [ ] Вынести диалоги в DialogService после завершения контрактов LibraryView/ObjectEditorView.
 - [ ] Подключать остальные Planned-механики к игровым системам только после end-to-end тестов.
 
 
