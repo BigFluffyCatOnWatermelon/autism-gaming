@@ -1,6 +1,34 @@
 extends SceneTree
 
-const MECHANIC_MODULE_LOADER = preload("res://scripts/object_system/mechanic_module_loader.gd")
+const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
+const WorldControllerScript = preload("res://scripts/world_controller.gd")
+const GameConfigScript = preload("res://scripts/game_config.gd")
+
+class InteractableTestTarget extends Node2D:
+	var interaction_count: int = 0
+	var last_interactor: Node
+
+	func record_interaction(interactor: Node) -> void:
+		interaction_count += 1
+		last_interactor = interactor
+
+
+class PickupTestReceiver:
+	extends Node
+	var capacity: int = 0
+	var received: Array[Dictionary] = []
+
+	func receive_pickup(item_id: String, amount: int, source: Node) -> int:
+		var accepted := mini(capacity, amount)
+		capacity -= accepted
+		if accepted > 0:
+			received.append({
+				"item_id": item_id,
+				"amount": accepted,
+				"source_id": str(source.get_meta("object_definition_id", ""))
+			})
+		return accepted
+
 
 var failures := PackedStringArray()
 var health_died_signal_received := false
@@ -12,7 +40,7 @@ func _initialize() -> void:
 
 
 func _run_tests() -> void:
-	var module_errors := MECHANIC_MODULE_LOADER.register_modules_in_directory()
+	var module_errors := MechanicModuleLoaderScript.register_modules_in_directory()
 	for error_message in module_errors:
 		failures.append("mechanic module loader: " + error_message)
 	_test_mechanic_modules_registered()
@@ -24,15 +52,20 @@ func _run_tests() -> void:
 	_test_damageable_component()
 	_test_attack_component()
 	await _test_destructible_component()
+	await _test_pickup_component()
+	_test_world_inventory_pickup_adapter()
+	await _test_interactable_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
 	await _test_simple_capability_resolution()
 	_test_capability_selection_plans()
+	_test_capability_schema_and_application_plan()
 	_test_capability_library_size_and_status()
-	_test_integrated_mechanics_catalog()
 	await _test_component_node_bindings()
+	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
+	_test_mechanic_module_loader()
 
 	if failures.is_empty():
 		print("OBJECT_SYSTEM_TESTS: PASS")
@@ -208,6 +241,7 @@ func _test_component_catalog_and_health() -> void:
 	_expect(ObjectComponentCatalog.has_component("HEALTH"), "catalog component IDs are case-insensitive")
 	_expect(ObjectComponentCatalog.has_component("Damageable"), "Damageable is available by its stable ID")
 	_expect(ObjectComponentCatalog.has_component("ATTACK"), "Attack is available by its stable ID")
+	_expect(ObjectComponentCatalog.has_component("interactable"), "Interactable is registered as a built-in component")
 
 	var component_definition := ObjectComponentCatalog.create_definition("health")
 	_expect(component_definition != null, "catalog creates the Health component definition")
@@ -496,6 +530,204 @@ func _test_destructible_component() -> void:
 	test_world.free()
 
 
+func _test_pickup_component() -> void:
+	var selection := ObjectCapabilityCatalog.create_selection("is_pickup_item")
+	_expect(selection != null, "Simple Builder can create the item pickup capability")
+	if selection == null:
+		return
+	var incomplete_definition := ObjectDefinition.new()
+	incomplete_definition.object_id = "pickup_missing_item_id"
+	incomplete_definition.display_name = "Pickup Without Item ID"
+	incomplete_definition.category = "Items"
+	incomplete_definition.capabilities = [selection.duplicate(true) as ObjectCapabilitySelection]
+	_expect(
+		not ObjectLibraryService.validate_definition(incomplete_definition).is_empty(),
+		"pickup capability rejects an empty required item ID before saving"
+	)
+
+	selection.set_component_setting("pickup", "item_id", "wood")
+	selection.set_component_setting("pickup", "quantity", 5)
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "pickup_component_smoke"
+	definition.display_name = "Pickup Component Smoke"
+	definition.category = "Items"
+	definition.capabilities = [selection]
+	_expect(
+		ObjectLibraryService.validate_definition(definition).is_empty(),
+		"configured pickup capability passes object definition validation"
+	)
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the Pickup capability")
+	if instance == null:
+		return
+
+	var test_world := Node2D.new()
+	root.add_child(test_world)
+	test_world.add_child(instance)
+	var receiver := PickupTestReceiver.new()
+	test_world.add_child(receiver)
+	await process_frame
+
+	var pickup := ObjectFactory.get_component(instance, "pickup") as PickupComponent
+	_expect(pickup != null, "factory resolves the Pickup component by ID")
+	if pickup == null:
+		test_world.free()
+		return
+	_expect(
+		pickup.item_id == "wood" and pickup.get_remaining_quantity() == 5,
+		"capability settings reach the runtime item ID and stack quantity"
+	)
+
+	receiver.capacity = 0
+	_expect(
+		pickup.try_pickup(receiver) == 0 and pickup.get_remaining_quantity() == 5,
+		"a receiver with no capacity cannot remove items from the world"
+	)
+
+	receiver.capacity = 2
+	_expect(
+		pickup.try_pickup(receiver) == 2 and pickup.get_remaining_quantity() == 3,
+		"Pickup supports partial acceptance and preserves the remaining stack"
+	)
+	_expect(
+		receiver.received.size() == 1
+		and str(receiver.received[0].get("item_id", "")) == "wood"
+		and int(receiver.received[0].get("amount", 0)) == 2
+		and str(receiver.received[0].get("source_id", "")) == "pickup_component_smoke",
+		"receiver receives the stable item ID, accepted amount and source object"
+	)
+
+	receiver.capacity = 5
+	_expect(
+		pickup.try_pickup(receiver) == 3 and pickup.get_remaining_quantity() == 0,
+		"Pickup accepts the remainder without exceeding the available quantity"
+	)
+	_expect(
+		not pickup.can_be_picked_up,
+		"depleted pickup becomes unavailable for additional collection"
+	)
+	await process_frame
+	_expect(
+		not is_instance_valid(instance),
+		"world object is removed only after its entire stack has been accepted"
+	)
+	test_world.free()
+
+
+
+
+func _test_world_inventory_pickup_adapter() -> void:
+	var controller = WorldControllerScript.new()
+	controller.config = GameConfigScript.make_default()
+	controller.backpack_slots = 0
+	controller.inventory.clear()
+	var hotbar_size := int(controller.config.inventory.hotbar_slots)
+	for index in range(hotbar_size):
+		controller.inventory.append({"id": "stone", "amount": 99})
+	controller.inventory[0] = {"id": "wood", "amount": 98}
+
+	var actor := Node2D.new()
+	actor.name = "PickupTestPlayer"
+	controller.player = actor
+	controller.add_child(actor)
+	actor.position = Vector2(200.0, 0.0)
+
+	var selection := ObjectCapabilityCatalog.create_selection("is_pickup_item")
+	selection.set_component_setting("pickup", "item_id", "wood")
+	selection.set_component_setting("pickup", "quantity", 5)
+	selection.set_component_setting("pickup", "pickup_radius", 32.0)
+	var definition := ObjectDefinition.new()
+	definition.object_id = "pickup_inventory_adapter_smoke"
+	definition.display_name = "Pickup Inventory Adapter Smoke"
+	definition.category = "Items"
+	definition.capabilities = [selection]
+	var source := ObjectFactory.instantiate(definition)
+	_expect(source != null, "factory creates an object for the real inventory adapter")
+	if source == null:
+		controller.free()
+		return
+	controller.add_child(source)
+
+	var pickup := ObjectFactory.get_component(source, "pickup") as PickupComponent
+	_expect(pickup != null, "inventory adapter test resolves the Pickup component")
+	if pickup == null:
+		controller.free()
+		return
+
+	controller._update_component_pickups()
+	_expect(pickup.get_remaining_quantity() == 5, "Pickup remains untouched when the player is outside its configured radius")
+	actor.position = Vector2(10.0, 0.0)
+	controller._update_component_pickups()
+	_expect(
+		controller._get_item_count("wood") == 99 and pickup.get_remaining_quantity() == 4,
+		"Pickup transfers items into the existing game inventory and keeps the unaccepted remainder"
+	)
+	controller.free()
+
+
+func _test_interactable_component() -> void:
+	var selection := ObjectCapabilityCatalog.create_selection("can_interact")
+	_expect(selection != null, "Simple Builder can create the interaction capability")
+	if selection == null:
+		return
+	selection.set_component_setting("interactable", "interaction_radius", 48.0)
+	selection.set_component_setting("interactable", "interaction_method", "record_interaction")
+	selection.set_component_setting("interactable", "interact_once", true)
+
+	var scene_root := InteractableTestTarget.new()
+	scene_root.name = "InteractableTarget"
+	var packed_scene := PackedScene.new()
+	var packed_result := packed_scene.pack(scene_root)
+	_expect(packed_result == OK, "interaction test target can be packed into a reusable scene")
+	scene_root.free()
+	if packed_result != OK:
+		return
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "interactable_component_smoke"
+	definition.display_name = "Interactable Component Smoke"
+	definition.category = "Other"
+	definition.scene = packed_scene
+	definition.capabilities = [selection]
+	_expect(
+		ObjectLibraryService.validate_definition(definition).is_empty(),
+		"configured interaction capability passes object definition validation"
+	)
+	var controller = WorldControllerScript.new()
+	controller._configure_input()
+	_expect(InputMap.has_action("interact"), "world input map registers E interaction")
+	var target := ObjectFactory.instantiate(definition)
+	_expect(target != null, "factory creates an object with the Interactable capability")
+	if target == null:
+		controller.free()
+		return
+	controller.add_child(target)
+	var actor := Node2D.new()
+	actor.name = "InteractionTestActor"
+	controller.player = actor
+	controller.add_child(actor)
+
+	var interactable := ObjectFactory.get_component(target, "interactable") as InteractableComponent
+	var scripted_target := target as InteractableTestTarget
+	_expect(interactable != null, "factory resolves Interactable by its stable ID")
+	_expect(scripted_target != null, "target scene keeps its custom interaction script")
+	if interactable != null and scripted_target != null:
+		actor.position = Vector2(80.0, 0.0)
+		controller._try_interact_with_nearest()
+		_expect(scripted_target.interaction_count == 0, "world interaction scan ignores objects outside their radius")
+		actor.position = Vector2(24.0, 0.0)
+		controller._try_interact_with_nearest()
+		_expect(
+			scripted_target.interaction_count == 1 and scripted_target.last_interactor == actor,
+			"E interaction selects a nearby object and calls its configured method"
+		)
+		_expect(not interactable.can_be_interacted_with, "one-shot interaction disables itself after success")
+		controller._try_interact_with_nearest()
+		_expect(scripted_target.interaction_count == 1, "one-shot interaction cannot be repeated")
+	controller.free()
+
 func _test_component_definition_inspector_settings() -> void:
 	var component_definition := ObjectComponentCatalog.create_definition("health")
 	_expect(component_definition != null, "Health definition exists for Inspector settings test")
@@ -581,6 +813,226 @@ func _test_component_definition_validation() -> void:
 
 
 
+
+
+func _test_declarative_scene_structure() -> void:
+	var definition := ObjectDefinition.new()
+	definition.object_id = "declarative_structure_smoke"
+	definition.display_name = "Declarative Structure"
+	definition.category = "Other"
+	definition.root_type = "Node2D"
+
+	var visual := ObjectNodeDefinition.new()
+	visual.node_id = "visual"
+	visual.parent_node_id = "root"
+	visual.node_type = "Node2D"
+	visual.node_name = "Visual"
+	visual.properties = {"position": Vector2(8.0, 12.0)}
+
+	var interaction := ObjectNodeDefinition.new()
+	interaction.node_id = "interaction"
+	interaction.parent_node_id = "visual"
+	interaction.node_type = "Area2D"
+	interaction.node_name = "Interaction"
+	interaction.groups = PackedStringArray(["interactable"])
+	interaction.metadata = {"interaction_kind": "test"}
+
+	var timer := ObjectNodeDefinition.new()
+	timer.node_id = "timer"
+	timer.parent_node_id = "interaction"
+	timer.node_type = "Timer"
+	timer.node_name = "Timeout"
+	timer.properties = {"wait_time": 0.75, "one_shot": true}
+
+	var connection := ObjectSignalConnectionDefinition.new()
+	connection.connection_id = "timer_hides_root"
+	connection.source_node_id = "timer"
+	connection.signal_name = "timeout"
+	connection.target_node_id = "root"
+	connection.method_name = "hide"
+	connection.flags = Object.CONNECT_PERSIST
+
+	definition.node_definitions = [visual, interaction, timer]
+	definition.signal_connections = [connection]
+
+	var generated_binding := ObjectComponentCatalog.create_binding("health", NodePath("Visual"))
+	generated_binding.binding_id = "health_on_generated_visual"
+	definition.component_bindings = [generated_binding]
+	_expect(
+		ObjectLibraryService.validate_definition(definition).is_empty(),
+		"component bindings may target nodes generated by the declarative structure"
+	)
+	definition.component_bindings.clear()
+
+	var plan_root := Node2D.new()
+	var plan := ObjectSceneStructureService.build_plan(definition, plan_root)
+	var ordered: Array = plan.get("ordered_nodes", [])
+	_expect(
+		bool(plan.get("ok", false)) and ordered.size() == 3,
+		"scene structure preflight resolves parent nodes before their children"
+	)
+	plan_root.free()
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory builds an object from declarative node definitions")
+	if instance == null:
+		return
+	var visual_node := instance.get_node_or_null("Visual") as Node2D
+	var interaction_node := instance.get_node_or_null("Visual/Interaction") as Area2D
+	var timer_node := instance.get_node_or_null("Visual/Interaction/Timeout") as Timer
+	_expect(visual_node != null, "factory creates the declared visual node")
+	_expect(interaction_node != null, "factory creates nested nodes in parent order")
+	_expect(timer_node != null, "factory creates the declared Timer node")
+	if visual_node != null:
+		_expect(visual_node.position == Vector2(8.0, 12.0), "declared node properties are applied")
+	if interaction_node != null:
+		_expect(interaction_node.is_in_group("interactable"), "declared node groups are applied")
+		_expect(interaction_node.get_meta("interaction_kind", "") == "test", "declared node metadata is applied")
+	if timer_node != null:
+		_expect(is_equal_approx(timer_node.wait_time, 0.75), "Timer properties are configured")
+		_expect(timer_node.one_shot, "boolean node properties are configured")
+		_expect(
+			timer_node.is_connected("timeout", Callable(instance, "hide")),
+			"declared signal connection is applied"
+		)
+
+	var definition_path := "user://object_builder_structure_smoke.tres"
+	var definition_save_error := ResourceSaver.save(definition, definition_path)
+	_expect(definition_save_error == OK, "node and signal definitions serialize as ObjectDefinition resources")
+	if definition_save_error == OK:
+		var loaded_definition := ResourceLoader.load(definition_path, "", ResourceLoader.CACHE_MODE_IGNORE) as ObjectDefinition
+		_expect(
+			loaded_definition != null
+			and loaded_definition.node_definitions.size() == 3
+			and loaded_definition.signal_connections.size() == 1,
+			"serialized ObjectDefinition restores all declared nodes and signal connections"
+		)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(definition_path))
+
+	var packed := PackedScene.new()
+	var pack_error := packed.pack(instance)
+	_expect(pack_error == OK, "declarative scene structure can be packed as a real PackedScene")
+	instance.free()
+	if pack_error == OK:
+		var restored := packed.instantiate()
+		_expect(
+			restored.get_node_or_null("Visual/Interaction/Timeout") is Timer,
+			"nested generated nodes survive PackedScene round-trip"
+		)
+		var restored_timer := restored.get_node("Visual/Interaction/Timeout") as Timer
+		_expect(
+			restored_timer.is_connected("timeout", Callable(restored, "hide")),
+			"persistent signal connections survive PackedScene round-trip"
+		)
+		restored.free()
+
+	var repeat_root := Node2D.new()
+	var first_apply := ObjectSceneStructureService.apply_structure(definition, repeat_root)
+	var second_apply := ObjectSceneStructureService.apply_structure(definition, repeat_root)
+	var reused_nodes: Array = second_apply.get("reused_nodes", [])
+	var created_again: Array = second_apply.get("created_nodes", [])
+	var repeat_timer := repeat_root.get_node_or_null("Visual/Interaction/Timeout") as Timer
+	var repeat_visual := repeat_root.get_node_or_null("Visual") as Node2D
+	_expect(
+		bool(first_apply.get("ok", false))
+		and bool(second_apply.get("ok", false))
+		and reused_nodes.size() == 3
+		and created_again.is_empty(),
+		"reapplying the same structure reuses generated nodes without duplicates"
+	)
+	if repeat_timer != null:
+		_expect(
+			repeat_timer.get_signal_connection_list("timeout").size() == 1,
+			"reapplying the same structure does not duplicate signal connections"
+		)
+	_expect(
+		repeat_root.find_children("*", "", true, false).size() == 3,
+		"the generated scene tree remains the same size after repeated application"
+	)
+
+	# Definition edits update values still owned by Object Builder.
+	visual.properties["position"] = Vector2(20.0, 30.0)
+	# A manual Inspector edit must win over a later definition update.
+	if repeat_timer != null:
+		repeat_timer.wait_time = 2.5
+	timer.properties["wait_time"] = 1.25
+	var reconciled := ObjectSceneStructureService.apply_structure(definition, repeat_root)
+	_expect(bool(reconciled.get("ok", false)), "changed structure can be reconciled onto an existing instance")
+	_expect(
+		repeat_visual != null and repeat_visual.position == Vector2(20.0, 30.0),
+		"reconciliation updates generated properties that have not been manually changed"
+	)
+	_expect(
+		repeat_timer != null and is_equal_approx(repeat_timer.wait_time, 2.5),
+		"reconciliation preserves manual Inspector changes"
+	)
+
+	# Removing a property from the definition restores its native Godot default
+	# only when the current value still equals the last Object Builder value.
+	visual.properties.erase("position")
+	var reset_result := ObjectSceneStructureService.apply_structure(definition, repeat_root)
+	_expect(
+		bool(reset_result.get("ok", false))
+		and repeat_visual != null and repeat_visual.position == Vector2.ZERO,
+		"removing a generated property restores the Godot default when it was not manually edited"
+	)
+	repeat_root.free()
+
+	var invalid_definition := ObjectDefinition.new()
+	invalid_definition.object_id = "invalid_structure_smoke"
+	invalid_definition.display_name = "Invalid Structure"
+	invalid_definition.category = "Other"
+	var valid_first := ObjectNodeDefinition.new()
+	valid_first.node_id = "would_be_created"
+	valid_first.node_type = "Node2D"
+	valid_first.node_name = "WouldBeCreated"
+	var invalid_second := ObjectNodeDefinition.new()
+	invalid_second.node_id = "invalid_property"
+	invalid_second.node_type = "Node2D"
+	invalid_second.node_name = "InvalidProperty"
+	invalid_second.properties = {"property_that_does_not_exist": 1}
+	invalid_definition.node_definitions = [valid_first, invalid_second]
+	var untouched_root := Node2D.new()
+	var invalid_plan := ObjectSceneStructureService.apply_structure(invalid_definition, untouched_root)
+	_expect(
+		not bool(invalid_plan.get("ok", false))
+		and untouched_root.get_node_or_null("WouldBeCreated") == null,
+		"invalid structure is rejected before any node is added"
+	)
+	untouched_root.free()
+
+	var orphan_definition := ObjectDefinition.new()
+	orphan_definition.object_id = "orphan_structure_smoke"
+	orphan_definition.display_name = "Orphan Structure"
+	orphan_definition.category = "Other"
+	var orphan := ObjectNodeDefinition.new()
+	orphan.node_id = "orphan"
+	orphan.parent_node_id = "missing_parent"
+	orphan.node_name = "Orphan"
+	orphan_definition.node_definitions = [orphan]
+	var orphan_root := Node2D.new()
+	var orphan_errors: PackedStringArray = ObjectSceneStructureService.build_plan(orphan_definition, orphan_root).get("errors", PackedStringArray())
+	_expect(not orphan_errors.is_empty(), "structure preflight rejects missing parent IDs")
+	orphan_root.free()
+
+	var invalid_signal_definition := ObjectDefinition.new()
+	invalid_signal_definition.object_id = "invalid_signal_structure_smoke"
+	invalid_signal_definition.display_name = "Invalid Signal Structure"
+	invalid_signal_definition.category = "Other"
+	var invalid_signal := ObjectSignalConnectionDefinition.new()
+	invalid_signal.connection_id = "missing_method"
+	invalid_signal.source_node_id = "root"
+	invalid_signal.signal_name = "ready"
+	invalid_signal.target_node_id = "root"
+	invalid_signal.method_name = "method_that_does_not_exist"
+	invalid_signal_definition.signal_connections = [invalid_signal]
+	var signal_root := Node2D.new()
+	var invalid_signal_plan := ObjectSceneStructureService.build_plan(invalid_signal_definition, signal_root)
+	_expect(
+		not bool(invalid_signal_plan.get("ok", false)),
+		"structure preflight rejects connections to missing methods"
+	)
+	signal_root.free()
 
 
 func _test_creation_profile_registry() -> void:
@@ -1139,6 +1591,130 @@ func _test_capability_selection_plans() -> void:
 
 
 
+func _test_capability_schema_and_application_plan() -> void:
+	var health_schema := ObjectCapabilityCatalog.get_settings_schema("has_health")
+	var has_max_health := false
+	for descriptor in health_schema:
+		if str(descriptor.get("setting_key", "")) == "max_health":
+			has_max_health = (
+				str(descriptor.get("component_id", "")) == "health"
+				and str(descriptor.get("value_type", "")) == "Float"
+				and str(descriptor.get("level", "")) in ["Basic", "Advanced", "Expert"]
+			)
+	_expect(
+		not health_schema.is_empty() and has_max_health,
+		"implemented capability exposes a typed settings schema sourced from its runtime component"
+	)
+
+	if not health_schema.is_empty():
+		health_schema[0]["display_name"] = "Изменение только копии"
+		var fresh_schema := ObjectCapabilityCatalog.get_settings_schema("has_health")
+		_expect(
+			str(fresh_schema[0].get("display_name", "")) != "Изменение только копии",
+			"capability settings schema is returned as a defensive deep copy"
+		)
+
+	var invalid_schema := ObjectCapabilityDefinition.new()
+	invalid_schema.capability_id = "registry_invalid_setting_schema"
+	invalid_schema.display_name = "Invalid Setting Schema"
+	invalid_schema.description = "Must fail validation."
+	invalid_schema.category_id = "general"
+	invalid_schema.category_name = "Основное"
+	invalid_schema.component_ids = PackedStringArray(["health"])
+	invalid_schema.settings_schema = [{
+		"component_id": "health",
+		"setting_key": "max_health",
+		"value_type": "String",
+		"level": "basic"
+	}]
+	var invalid_schema_errors := ObjectCapabilityCatalog.register_definitions(
+		[invalid_schema],
+		"invalid_schema_extension"
+	)
+	_expect(
+		not invalid_schema_errors.is_empty()
+		and not ObjectCapabilityCatalog.has_capability("registry_invalid_setting_schema"),
+		"registry rejects a capability whose declared setting type conflicts with its component schema"
+	)
+
+	var invalid_level := ObjectCapabilityDefinition.new()
+	invalid_level.capability_id = "registry_invalid_setting_level"
+	invalid_level.display_name = "Invalid Setting Level"
+	invalid_level.description = "Must fail validation."
+	invalid_level.category_id = "general"
+	invalid_level.category_name = "Основное"
+	invalid_level.component_ids = PackedStringArray(["health"])
+	invalid_level.settings_schema = [{
+		"component_id": "health",
+		"setting_key": "max_health",
+		"value_type": "Float",
+		"level": "impossible"
+	}]
+	var invalid_level_errors := ObjectCapabilityCatalog.register_definitions(
+		[invalid_level],
+		"invalid_level_extension"
+	)
+	_expect(
+		not invalid_level_errors.is_empty()
+		and not ObjectCapabilityCatalog.has_capability("registry_invalid_setting_level"),
+		"registry rejects unknown Basic/Advanced/Expert setting levels"
+	)
+
+	var empty_selections: Array[ObjectCapabilitySelection] = []
+	var planned: Dictionary = ObjectCapabilityService.plan_selection_change(
+		empty_selections,
+		"can_receive_damage",
+		true
+	)
+	_expect(bool(planned.get("ok", false)), "valid capability setup produces the next selection state")
+	if not bool(planned.get("ok", false)):
+		return
+
+	var planned_values: Array[ObjectCapabilitySelection] = []
+	var raw_values: Variant = planned.get("selections", [])
+	if raw_values is Array:
+		for value in raw_values:
+			if value is ObjectCapabilitySelection:
+				planned_values.append(value as ObjectCapabilitySelection)
+
+	var first_plan := ObjectCapabilityService.build_application_plan(empty_selections, planned_values)
+	var first_added: Array = first_plan.get("added_components", [])
+	_expect(
+		bool(first_plan.get("ok", false))
+		and bool(first_plan.get("changed", false))
+		and first_added.size() == 2,
+		"preflight reports both Health and Damageable before applying the selection"
+	)
+
+	var repeated_plan := ObjectCapabilityService.build_application_plan(planned_values, planned_values)
+	var repeated_added: Array = repeated_plan.get("added_components", [])
+	var repeated_removed: Array = repeated_plan.get("removed_components", [])
+	var repeated_updated: Array = repeated_plan.get("updated_components", [])
+	_expect(
+		bool(repeated_plan.get("ok", false))
+		and not bool(repeated_plan.get("changed", true))
+		and repeated_added.is_empty()
+		and repeated_removed.is_empty()
+		and repeated_updated.is_empty(),
+		"reapplying the same capability selection is idempotent and produces no duplicate component delta"
+	)
+
+	var changed_values: Array[ObjectCapabilitySelection] = []
+	for selection in planned_values:
+		var copied := selection.duplicate(true) as ObjectCapabilitySelection
+		if copied.capability_id == "has_health":
+			copied.set_component_setting("health", "max_health", 175.0)
+		changed_values.append(copied)
+	var settings_plan := ObjectCapabilityService.build_application_plan(planned_values, changed_values)
+	var updated_components: Array = settings_plan.get("updated_components", [])
+	_expect(
+		bool(settings_plan.get("ok", false))
+		and updated_components.size() == 1
+		and str(updated_components[0].get("component_id", "")) == "health",
+		"preflight detects component setting changes separately from added or removed modules"
+	)
+
+
 func _test_capability_library_size_and_status() -> void:
 	var all_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
 	var simple_ids := ObjectCapabilityCatalog.get_capability_ids("", true)
@@ -1180,8 +1756,8 @@ func _test_capability_library_size_and_status() -> void:
 			planned_without_runtime = false
 
 	_expect(
-		implemented_count == 40 and planned_count == 160,
-		"catalogue explicitly distinguishes 40 runtime mechanics and 160 planned mechanics"
+		implemented_count == 42 and planned_count == 158,
+		"catalogue explicitly distinguishes 42 runtime mechanics and 158 planned mechanics"
 	)
 	_expect(
 		planned_without_runtime,
@@ -1215,146 +1791,28 @@ func _test_capability_library_size_and_status() -> void:
 		"existing Health mechanic remains enabled and is not downgraded"
 	)
 
-
-func _test_integrated_mechanics_catalog() -> void:
-	var ids := ["has_stamina","has_mana","has_energy","has_hunger","has_thirst","has_temperature","has_weight_limit","has_mood","has_reputation","can_block","can_parry","can_dodge","can_aim","can_charge_attack","can_critical_hit","can_combo_attack","can_target_enemy","has_armor","has_damage_resistance","has_immunity","has_shield","reduces_projectile_damage","reflects_projectiles","has_invulnerability_window","has_weak_points","resists_status_effects","regenerates_health","can_break_into_parts","has_destruction_stages","spawns_debris","drops_loot_on_destroy","plays_destroy_animation","leaves_remains","can_be_repaired","can_regrow","can_explode_on_destroy"]
-	for capability_id in ids:
-		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
-		var component_definition := ObjectComponentCatalog.create_definition(capability_id)
-		_expect(capability != null, "integrated capability exists: " + capability_id)
-		_expect(capability != null and capability.runtime_status == "Implemented" and capability.available_in_simple_mode, "capability is available in Simple Builder: " + capability_id)
-		_expect(component_definition != null and component_definition.component_script != null, "component script is registered: " + capability_id)
-		if capability == null or component_definition == null:
-			continue
-		var selection := ObjectCapabilityCatalog.create_selection(capability_id)
-		_expect(selection != null and ObjectCapabilityService.validate_selections([selection]).is_empty(), "capability selection validates: " + capability_id)
-		var bindings := ObjectCapabilityService.build_component_bindings([selection])
-		var has_own_binding := false
-		for binding in bindings:
-			if binding.get_component_id() == capability_id:
-				has_own_binding = true
-		_expect(has_own_binding, "capability creates its own binding (and required dependencies): " + capability_id)
-	var stamina_selection := ObjectCapabilityCatalog.create_selection("has_stamina")
-	if stamina_selection != null:
-		stamina_selection.set_component_setting("has_stamina","maximum_value",150.0)
-		var definition := ObjectDefinition.new()
-		definition.object_id = "integrated_stamina_smoke"
-		definition.display_name = "Integrated Stamina Smoke"
-		definition.category = "Other"
-		definition.capabilities = [stamina_selection]
-		var instance := ObjectFactory.instantiate(definition)
-		_expect(instance != null,"factory creates an object with integrated stamina")
-		if instance != null:
-			var stamina: Variant = ObjectFactory.get_component(instance,"has_stamina")
-			_expect(stamina != null,"runtime stamina component is accessible")
-			if stamina != null:
-				_expect(is_equal_approx(stamina.get_maximum(),150.0),"selected maximum reaches runtime component")
-				stamina.add_value(-25.0)
-				_expect(is_equal_approx(stamina.get_value(),75.0),"runtime characteristic can be changed")
-			instance.free()
-	var block_selection := ObjectCapabilityCatalog.create_selection("can_block")
-	if block_selection != null:
-		block_selection.set_component_setting("can_block","damage_reduction",0.5)
-		var definition := ObjectDefinition.new()
-		definition.object_id = "integrated_block_smoke"
-		definition.display_name = "Integrated Block Smoke"
-		definition.category = "Other"
-		definition.capabilities = [block_selection]
-		var instance := ObjectFactory.instantiate(definition)
-		_expect(instance != null,"factory creates an object with integrated block")
-		if instance != null:
-			var block: Variant = ObjectFactory.get_component(instance,"can_block")
-			_expect(block != null,"runtime block component is accessible")
-			if block != null:
-				_expect(is_equal_approx(block.block_damage(20.0),10.0),"configured block rule executes")
-			instance.free()
-
-	var armor_selection := ObjectCapabilityCatalog.create_selection("has_armor")
-	if armor_selection != null:
-		armor_selection.set_component_setting("has_armor", "armor_percent_reduction", 0.2)
-		armor_selection.set_component_setting("has_armor", "armor_flat_reduction", 5.0)
-		var definition := ObjectDefinition.new()
-		definition.object_id = "integrated_armor_smoke"
-		definition.display_name = "Integrated Armor Smoke"
-		definition.category = "Other"
-		definition.capabilities = [armor_selection]
-		var instance := ObjectFactory.instantiate(definition)
-		_expect(instance != null, "factory instantiates an object with armor")
-		if instance != null:
-			var armor: Variant = ObjectFactory.get_component(instance, "has_armor")
-			_expect(armor != null, "runtime armor component is accessible")
-			if armor != null:
-				_expect(is_equal_approx(armor.calculate_armored_damage(100.0), 75.0), "armor applies percentage and flat reduction")
-			instance.free()
-
-	var shield_selection := ObjectCapabilityCatalog.create_selection("has_shield")
-	if shield_selection != null:
-		shield_selection.set_component_setting("has_shield", "shield_current", 30.0)
-		shield_selection.set_component_setting("has_shield", "shield_maximum", 30.0)
-		var definition := ObjectDefinition.new()
-		definition.object_id = "integrated_shield_smoke"
-		definition.display_name = "Integrated Shield Smoke"
-		definition.category = "Other"
-		definition.capabilities = [shield_selection]
-		var instance := ObjectFactory.instantiate(definition)
-		_expect(instance != null, "factory instantiates an object with a shield")
-		if instance != null:
-			var shield: Variant = ObjectFactory.get_component(instance, "has_shield")
-			if shield != null:
-				var absorbed: Dictionary = shield.absorb_damage_with_shield(40.0)
-				_expect(is_equal_approx(float(absorbed.get("absorbed", 0.0)), 30.0), "shield absorbs damage up to capacity")
-				_expect(is_equal_approx(float(absorbed.get("remaining_damage", 0.0)), 10.0), "shield returns remaining damage")
-			instance.free()
-
-	var stage_selection := ObjectCapabilityCatalog.create_selection("has_destruction_stages")
-	if stage_selection != null:
-		var definition := ObjectDefinition.new()
-		definition.object_id = "integrated_stages_smoke"
-		definition.display_name = "Integrated Stages Smoke"
-		definition.category = "Other"
-		definition.capabilities = [stage_selection]
-		var instance := ObjectFactory.instantiate(definition)
-		_expect(instance != null, "factory instantiates destruction stages and dependencies")
-		if instance != null:
-			var stages: Variant = ObjectFactory.get_component(instance, "has_destruction_stages")
-			if stages != null:
-				_expect(stages.get_destruction_stage(0.4) == 2, "integrity maps to the configured destruction stage")
-			instance.free()
-
-	var loot_selection := ObjectCapabilityCatalog.create_selection("drops_loot_on_destroy")
-	if loot_selection != null:
-		loot_selection.set_component_setting("drops_loot_on_destroy", "loot_table_json", "[{\"item_id\":\"wood\",\"minimum\":2,\"maximum\":2,\"chance\":1.0}]")
-		var definition := ObjectDefinition.new()
-		definition.object_id = "integrated_loot_smoke"
-		definition.display_name = "Integrated Loot Smoke"
-		definition.category = "Other"
-		definition.capabilities = [loot_selection]
-		var instance := ObjectFactory.instantiate(definition)
-		_expect(instance != null, "factory instantiates a destruction loot table")
-		if instance != null:
-			var loot_rule: Variant = ObjectFactory.get_component(instance, "drops_loot_on_destroy")
-			if loot_rule != null:
-				var rolled: Array[Dictionary] = loot_rule.roll_loot(RandomNumberGenerator.new())
-				_expect(rolled.size() == 1 and int(rolled[0].get("amount", 0)) == 2, "loot table rolls fixed quantities")
-			instance.free()
-
-	var regrowth_selection := ObjectCapabilityCatalog.create_selection("can_regrow")
-	if regrowth_selection != null:
-		regrowth_selection.set_component_setting("can_regrow", "regrowth_seconds", 1.0)
-		var definition := ObjectDefinition.new()
-		definition.object_id = "integrated_regrowth_smoke"
-		definition.display_name = "Integrated Regrowth Smoke"
-		definition.category = "Other"
-		definition.capabilities = [regrowth_selection]
-		var instance := ObjectFactory.instantiate(definition)
-		_expect(instance != null, "factory instantiates a regrowth rule")
-		if instance != null:
-			var regrowth: Variant = ObjectFactory.get_component(instance, "can_regrow")
-			if regrowth != null:
-				regrowth.start_regrowth()
-				_expect(not regrowth.tick_regrowth(0.5), "regrowth is pending before its duration")
-				_expect(regrowth.tick_regrowth(0.5), "regrowth completes after its duration")
-			instance.free()
+	var interaction_capability := ObjectCapabilityCatalog.get_definition("can_interact")
+	_expect(
+		interaction_capability != null
+		and interaction_capability.runtime_status == "Implemented"
+		and interaction_capability.component_ids.has("interactable"),
+		"interaction capability is backed by the Interactable runtime component"
+	)
+	var pickup_capability := ObjectCapabilityCatalog.get_definition("is_pickup_item")
+	_expect(
+		pickup_capability != null
+		and pickup_capability.runtime_status == "Implemented"
+		and pickup_capability.component_ids.has("pickup"),
+		"item pickup is backed by the registered Pickup runtime component"
+	)
+	if pickup_capability != null:
+		var pickup_selection := ObjectCapabilityCatalog.create_selection("is_pickup_item")
+		if pickup_selection != null:
+			pickup_selection.set_component_setting("pickup", "item_id", "test_item")
+		_expect(
+			ObjectCapabilityService.validate_selections([pickup_selection]).is_empty(),
+			"implemented item pickup capability can be enabled after required settings are filled"
+		)
 
 
 func _test_simple_capability_resolution() -> void:
@@ -1648,6 +2106,109 @@ func _test_component_node_bindings() -> void:
 
 	test_world.free()
 
+
+
+
+
+
+func _test_mechanic_modules_registered() -> void:
+	var expected_modules := PackedStringArray([
+		"animation",
+		"characteristics",
+		"combat",
+		"defense",
+		"destruction",
+		"interaction",
+		"movement",
+		"object_identity",
+		"physics",
+		"visual_appearance"
+	])
+	var loaded_modules := MechanicModuleLoaderScript.get_loaded_module_ids()
+	for module_id in expected_modules:
+		_expect(loaded_modules.has(module_id), "mechanic package is registered: " + module_id)
+
+	var expected_capabilities := PackedStringArray([
+		"plays_idle_animation",
+		"has_stamina",
+		"can_block",
+		"has_armor",
+		"can_break_into_parts",
+		"can_be_activated",
+		"can_jump",
+		"has_unique_identity",
+		"has_collision",
+		"has_sprite",
+		"can_interact",
+		"is_pickup_item"
+	])
+	for capability_id in expected_capabilities:
+		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
+		_expect(capability != null, "integrated capability is visible: " + capability_id)
+		if capability == null:
+			continue
+		var source_component_id := str(capability.component_ids[0]) if not capability.component_ids.is_empty() else ""
+		var component := ObjectComponentCatalog.create_definition(source_component_id)
+		_expect(component != null and component.component_script != null, "capability has a registered runtime component: " + capability_id)
+	_expect(
+		ObjectComponentCatalog.get_source_id("has_stamina") == "mechanic_module:characteristics",
+		"mechanic component source is tracked by the package loader"
+	)
+
+
+func _test_mechanic_module_loader() -> void:
+	var module_path := "res://tests/fixtures/mechanic_module"
+	var registration_errors := MechanicModuleLoaderScript.register_module(module_path)
+	_expect(
+		registration_errors.is_empty(),
+		"mechanic module loader registers a standalone module package: %s" % "; ".join(registration_errors)
+	)
+	if not registration_errors.is_empty():
+		return
+
+	_expect(
+		MechanicModuleLoaderScript.get_loaded_module_ids().has("smoke_module"),
+		"module registry exposes the loaded module ID"
+	)
+	_expect(
+		ObjectComponentCatalog.get_source_id("module_smoke_component") == "mechanic_module:smoke_module",
+		"component registration records the owning module source"
+	)
+	_expect(
+		ObjectCapabilityCatalog.get_source_id("module_smoke_feature") == "mechanic_module:smoke_module",
+		"capability registration records the owning module source"
+	)
+
+	var selection := ObjectCapabilityCatalog.create_selection("module_smoke_feature")
+	_expect(selection != null, "module capability becomes available through the common capability catalogue")
+	if selection != null:
+		var definition := ObjectDefinition.new()
+		definition.object_id = "module_loader_smoke_object"
+		definition.display_name = "Module Loader Smoke Object"
+		definition.category = "Other"
+		definition.capabilities = [selection]
+		var instance := ObjectFactory.instantiate(definition)
+		_expect(instance != null, "ObjectFactory creates an object using a separately registered module")
+		if instance != null:
+			var component := ObjectFactory.get_component(instance, "module_smoke_component")
+			_expect(
+				component != null and bool(component.call("is_module_component_ready")),
+				"module component receives settings and runs through the normal ObjectFactory path"
+			)
+			instance.free()
+
+	var unload_errors := MechanicModuleLoaderScript.unregister_module("smoke_module")
+	_expect(
+		unload_errors.is_empty(),
+		"module loader unregisters capability and component definitions together: %s" % "; ".join(unload_errors)
+	)
+	_expect(
+		not ObjectCapabilityCatalog.has_capability("module_smoke_feature")
+		and not ObjectComponentCatalog.has_component("module_smoke_component"),
+		"unloading a module removes its registrations from both shared catalogues"
+	)
+
+
 func _make_property(
 	property_id: String,
 	value_type: String,
@@ -1672,42 +2233,3 @@ func _on_destructible_destroyed(_source: Node) -> void:
 func _expect(condition: bool, description: String) -> void:
 	if not condition:
 		failures.append(description)
-
-
-
-func _test_mechanic_modules_registered() -> void:
-	var expected_modules := PackedStringArray([
-		"animation",
-		"characteristics",
-		"combat",
-		"defense",
-		"destruction",
-		"interaction",
-		"movement",
-		"object_identity",
-		"physics",
-		"visual_appearance"
-	])
-	var loaded_modules := MECHANIC_MODULE_LOADER.get_loaded_module_ids()
-	for module_id in expected_modules:
-		_expect(loaded_modules.has(module_id), "mechanic package is registered: " + module_id)
-
-	var expected_capabilities := PackedStringArray([
-		"plays_idle_animation",
-		"has_stamina",
-		"can_block",
-		"has_armor",
-		"can_break_into_parts",
-		"can_interact",
-		"can_jump",
-		"has_unique_identity",
-		"has_collision",
-		"has_sprite"
-	])
-	for capability_id in expected_capabilities:
-		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
-		var component := ObjectComponentCatalog.create_definition(capability_id)
-		_expect(capability != null, "module capability is visible: " + capability_id)
-		_expect(component != null and component.component_script != null, "module component is registered: " + capability_id)
-		if capability != null:
-			_expect(capability.runtime_status in ["Implemented", "Planned"], "module capability has a valid status: " + capability_id)

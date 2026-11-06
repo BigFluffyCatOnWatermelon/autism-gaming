@@ -112,6 +112,17 @@ static func validate_definition(definition: ObjectDefinition) -> PackedStringArr
 		validation_scene = validation_packed_scene.instantiate()
 		if validation_scene == null:
 			errors.append("Не удалось открыть сцену объекта для проверки привязок компонентов.")
+	if validation_scene == null and ClassDB.class_exists(definition.root_type):
+		var temporary_root: Object = ClassDB.instantiate(definition.root_type)
+		if temporary_root is Node:
+			validation_scene = temporary_root as Node
+
+	# Apply only to this disposable validation instance so bindings may target generated nodes.
+	var structure_plan := ObjectSceneStructureService.apply_structure(definition, validation_scene)
+	if not bool(structure_plan.get("ok", false)):
+		var structure_errors: PackedStringArray = structure_plan.get("errors", PackedStringArray())
+		for structure_error in structure_errors:
+			errors.append(structure_error)
 
 	var capability_errors := ObjectCapabilityService.validate_selections(
 		definition.capabilities,

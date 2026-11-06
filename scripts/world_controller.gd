@@ -6,6 +6,7 @@ const CombatSystemScript = preload("res://scripts/combat_system.gd")
 const PlayerControllerScript = preload("res://scripts/player_controller.gd")
 const ResourceDropScript = preload("res://scripts/resource_drop.gd")
 const ArrowProjectileScript = preload("res://scripts/arrow_projectile.gd")
+const ObjectFactoryScript = preload("res://scripts/object_system/object_factory.gd")
 const ObjectsScene = preload("res://scenes/objects.tscn")
 const UIScene = preload("res://scenes/ui.tscn")
 
@@ -42,6 +43,7 @@ var debug_selected_id := ""
 var debug_selected_inventory_slot := -1
 var debug_object_selection_enabled := true
 var debug_refresh_timer := 0.0
+var _pickup_scan_timer := 0.0
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
@@ -82,6 +84,7 @@ func _configure_input() -> void:
 	_add_key_action("debug", [KEY_F3])
 	_add_key_action("logs", [KEY_F2])
 	_add_key_action("drop_item", [KEY_Q])
+	_add_key_action("interact", [KEY_E])
 	for index in range(9):
 		_add_key_action("slot_%d" % (index + 1), [KEY_1 + index])
 	_add_mouse_action("attack_primary", MOUSE_BUTTON_LEFT)
@@ -216,6 +219,10 @@ func _process(delta: float) -> void:
 	_handle_held_combat()
 	_update_projectiles(delta)
 	_update_drops()
+	_pickup_scan_timer -= delta
+	if _pickup_scan_timer <= 0.0:
+		_update_component_pickups()
+		_pickup_scan_timer = 0.12
 	_update_camera(delta)
 	_update_z_order()
 	_update_held_item()
@@ -312,6 +319,9 @@ func _handle_hotkeys() -> void:
 			_clear_debug_selection()
 	if Input.is_action_just_pressed("logs"):
 		ui.toggle_panel("logs")
+	if Input.is_action_just_pressed("interact"):
+		if ui == null or not ui.has_modal_open() or _debug_world_interaction_allowed():
+			_try_interact_with_nearest()
 	if Input.is_action_just_pressed("drop_item") and not ui.has_modal_open():
 		_drop_selected_item()
 	for index in range(9):
@@ -957,6 +967,114 @@ func _update_drops() -> void:
 				drop.queue_free()
 			else:
 				drop.amount = remaining
+
+
+
+## Object Builder pickup receiver. The legacy inventory remains the single source of truth.
+func receive_pickup(item_id: String, amount: int, source: Node) -> int:
+	var requested := maxi(0, amount)
+	if item_id.strip_edges().is_empty() or requested <= 0:
+		return 0
+	var remaining := _inventory_add(item_id, requested)
+	var accepted := clampi(requested - remaining, 0, requested)
+	if accepted > 0:
+		var label := str(config.items.get(item_id, {}).get("label", item_id))
+		_log("Подобрано: %s ×%d." % [label, accepted])
+	return accepted
+
+
+func _update_component_pickups() -> void:
+	if player == null:
+		return
+	var actor_position := _get_actor_world_position(player)
+	for component in _get_world_components("pickup"):
+		var pickup := component as PickupComponent
+		if pickup == null or not pickup.can_be_picked_up or pickup.get_remaining_quantity() <= 0:
+			continue
+		var source := ObjectFactoryScript.get_object_root(pickup)
+		if source == null or source == pickup or not is_instance_valid(source) or source.is_queued_for_deletion():
+			continue
+		var target_position := _get_component_world_position(pickup, source)
+		if actor_position.distance_to(target_position) <= pickup.pickup_radius:
+			pickup.try_pickup(self)
+
+
+func _try_interact_with_nearest() -> void:
+	if player == null:
+		return
+	var actor_position := _get_actor_world_position(player)
+	var nearest: InteractableComponent
+	var nearest_distance := INF
+	for component in _get_world_components("interactable"):
+		var interactable := component as InteractableComponent
+		if interactable == null or not interactable.is_interaction_ready():
+			continue
+		var source := ObjectFactoryScript.get_object_root(interactable)
+		if source == null or source == interactable or not is_instance_valid(source) or source.is_queued_for_deletion():
+			continue
+		var distance := actor_position.distance_to(_get_component_world_position(interactable, source))
+		if distance <= interactable.interaction_radius and distance < nearest_distance:
+			nearest = interactable
+			nearest_distance = distance
+	if nearest == null:
+		_log("Рядом нет доступных объектов для взаимодействия.")
+		return
+	if nearest.try_interact(player):
+		var source := ObjectFactoryScript.get_object_root(nearest)
+		if source != null:
+			_log("Взаимодействие: %s." % source.name)
+	else:
+		_log("Не удалось взаимодействовать с объектом.")
+
+
+func _get_world_components(component_id: String) -> Array[ObjectComponent]:
+	var result: Array[ObjectComponent] = []
+	_collect_world_components(self, component_id.strip_edges().to_lower(), result)
+	return result
+
+
+func _collect_world_components(current: Node, component_id: String, output: Array[ObjectComponent]) -> void:
+	if current == null:
+		return
+	if current.has_meta("object_definition_id"):
+		output.append_array(ObjectFactoryScript.get_components(current, component_id))
+		_collect_nested_world_components(current, component_id, output)
+		return
+	if current is ObjectComponent:
+		var direct_component := current as ObjectComponent
+		if direct_component.component_id.strip_edges().to_lower() == component_id:
+			output.append(direct_component)
+	for child in current.get_children():
+		if child is Node:
+			_collect_world_components(child as Node, component_id, output)
+
+
+func _collect_nested_world_components(current: Node, component_id: String, output: Array[ObjectComponent]) -> void:
+	for child in current.get_children():
+		if child.has_meta("object_definition_id"):
+			_collect_world_components(child, component_id, output)
+		else:
+			_collect_nested_world_components(child, component_id, output)
+
+
+func _get_component_world_position(component: ObjectComponent, source: Node) -> Vector2:
+	if component != null:
+		var target := component.get_parent()
+		if target is Node2D:
+			return (target as Node2D).global_position
+	if source is Node2D:
+		return (source as Node2D).global_position
+	return Vector2.ZERO
+
+
+func _get_actor_world_position(actor: Node) -> Vector2:
+	if actor != null and actor.has_method("get_ground_position"):
+		var value: Variant = actor.call("get_ground_position")
+		if typeof(value) == TYPE_VECTOR2:
+			return value
+	if actor is Node2D:
+		return (actor as Node2D).global_position
+	return Vector2.ZERO
 
 func _get_magnet_radius() -> float:
 	return float(config.player.pickup_base_radius) + float(config.player.magnet) * float(config.player.pickup_magnet_per_level)

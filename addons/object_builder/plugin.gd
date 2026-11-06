@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-const MECHANIC_MODULE_LOADER = preload("res://scripts/object_system/mechanic_module_loader.gd")
+const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -71,8 +71,12 @@ var _capability_list: VBoxContainer
 var _capability_settings_dialog: AcceptDialog
 var _capability_setting_controls: Array[Dictionary] = []
 var _editing_capability_selection: ObjectCapabilitySelection
+var _capability_change_dialog: AcceptDialog
+var _pending_capability_values: Array[ObjectCapabilitySelection] = []
+var _pending_capability_summary := PackedStringArray()
 var _simple_preview: TextureRect
 var _capability_settings_scroll: ScrollContainer
+var _capability_advanced_settings_check: CheckBox
 var _property_dialog_scroll: ScrollContainer
 var _property_dialog: AcceptDialog
 var _property_name_edit: LineEdit
@@ -127,7 +131,7 @@ var _can_save_as_template := true
 
 
 func _enter_tree() -> void:
-	var module_errors := MECHANIC_MODULE_LOADER.register_modules_in_directory()
+	var module_errors := MechanicModuleLoaderScript.register_modules_in_directory()
 	for error_message in module_errors:
 		push_warning("Object Builder: " + error_message)
 	_load_local_state()
@@ -647,6 +651,14 @@ func _build_capability_settings_dialog() -> void:
 	_capability_settings_dialog.confirmed.connect(_on_capability_settings_confirmed)
 	add_child(_capability_settings_dialog)
 
+	_capability_change_dialog = AcceptDialog.new()
+	_capability_change_dialog.title = "Подтвердить изменение объекта"
+	_capability_change_dialog.ok_button_text = "Применить"
+	_capability_change_dialog.confirmed.connect(_on_capability_change_confirmed)
+	_capability_change_dialog.canceled.connect(_on_capability_change_canceled)
+	_capability_change_dialog.add_cancel_button("Отмена")
+	add_child(_capability_change_dialog)
+
 
 func _on_capability_search_changed(_value: String) -> void:
 	_rebuild_capability_list()
@@ -782,28 +794,52 @@ func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
 			if value is ObjectCapabilitySelection:
 				next_values.append(value as ObjectCapabilitySelection)
 
-	var added_ids: PackedStringArray = plan.get("added_capability_ids", PackedStringArray())
-	var disabled_ids: PackedStringArray = plan.get("disabled_capability_ids", PackedStringArray())
-	_commit_working_capabilities(next_values, "Изменить возможности объекта")
+	var application_plan := ObjectCapabilityService.build_application_plan(
+		_working_definition.capabilities,
+		next_values
+	)
+	if not bool(application_plan.get("ok", false)):
+		_rebuild_capability_list()
+		var application_errors: PackedStringArray = application_plan.get("errors", PackedStringArray())
+		_set_status("Нельзя применить изменение: " + "; ".join(application_errors), true)
+		return
+	if not bool(application_plan.get("changed", false)):
+		_rebuild_capability_list()
+		return
 
-	var capability := ObjectCapabilityCatalog.get_definition(capability_id)
-	var action_text := "добавлена" if enabled else "отключена"
-	var status_message := "Возможность «%s» %s." % [
-		capability.display_name if capability != null else capability_id,
-		action_text
-	]
-	if enabled and added_ids.size() > 1:
-		var dependency_names := PackedStringArray()
-		for added_id in added_ids:
-			if added_id == capability_id:
-				continue
-			var dependency := ObjectCapabilityCatalog.get_definition(added_id)
-			dependency_names.append(dependency.display_name if dependency != null else added_id)
-		if not dependency_names.is_empty():
-			status_message += " Автоматически добавлены зависимости: " + ", ".join(dependency_names) + "."
-	elif not enabled and disabled_ids.size() > 1:
-		status_message += " Больше не нужные автоматические зависимости отключены."
-	_set_status(status_message, false)
+	_pending_capability_values = _duplicate_capability_selections(next_values)
+	_pending_capability_summary = application_plan.get("summary_lines", PackedStringArray())
+	_capability_change_dialog.dialog_text = "\n".join(_pending_capability_summary)
+	_rebuild_capability_list()
+	_popup_window_safely(_capability_change_dialog, Vector2i(560, 360), 0.82)
+
+
+func _on_capability_change_confirmed() -> void:
+	if _working_definition == null or _pending_capability_values.is_empty():
+		_on_capability_change_canceled()
+		return
+	# Revalidate immediately before committing; the scene or registry may have changed
+	# while the confirmation dialog was open.
+	var application_plan := ObjectCapabilityService.build_application_plan(
+		_working_definition.capabilities,
+		_pending_capability_values
+	)
+	if not bool(application_plan.get("ok", false)):
+		var errors: PackedStringArray = application_plan.get("errors", PackedStringArray())
+		_set_status("Изменение не применено: " + "; ".join(errors), true)
+		_on_capability_change_canceled()
+		return
+	_commit_working_capabilities(_pending_capability_values, "Изменить возможности объекта")
+	_set_status("Изменения применены. Нажми «Сохранить объект», чтобы записать их в библиотеку.", false)
+	_pending_capability_values.clear()
+	_pending_capability_summary.clear()
+	_rebuild_capability_list()
+
+
+func _on_capability_change_canceled() -> void:
+	_pending_capability_values.clear()
+	_pending_capability_summary.clear()
+	_rebuild_capability_list()
 
 
 func _duplicate_capability_selections(
@@ -866,66 +902,110 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 	_capability_settings_scroll.add_child(form)
 	_capability_setting_controls.clear()
 
-	for component_id in capability.component_ids:
-		var component_definition := ObjectComponentCatalog.create_definition(component_id)
-		if component_definition == null:
+	_capability_advanced_settings_check = CheckBox.new()
+	_capability_advanced_settings_check.text = "Показать дополнительные настройки"
+	_capability_advanced_settings_check.tooltip_text = "Показывает дополнительные и экспертные параметры. Основные настройки доступны сразу."
+	_capability_advanced_settings_check.toggled.connect(_on_capability_advanced_settings_toggled)
+	form.add_child(_capability_advanced_settings_check)
+
+	var previous_group := ""
+	var current_group_header: Label
+	var has_advanced_settings := false
+	for descriptor in ObjectCapabilityCatalog.get_settings_schema(capability_id):
+		var component_id := str(descriptor.get("component_id", "")).strip_edges().to_lower()
+		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", "")))
+		if setting_key.is_empty() or component_id.is_empty():
 			continue
+
+		var group_name := str(descriptor.get("group_name", "")).strip_edges()
+		if not group_name.is_empty() and group_name != previous_group:
+			current_group_header = Label.new()
+			current_group_header.text = group_name
+			current_group_header.add_theme_font_size_override("font_size", 12)
+			form.add_child(current_group_header)
+			previous_group = group_name
+		elif group_name.is_empty():
+			current_group_header = null
+
 		var component_settings := _editing_capability_selection.get_component_settings(component_id)
-		for descriptor in component_definition.get_setting_definitions():
-			var setting_key := str(descriptor.get("key", ""))
-			if setting_key.is_empty():
-				continue
-			var row := HBoxContainer.new()
-			form.add_child(row)
-			var setting_label := Label.new()
-			setting_label.text = str(descriptor.get("display_name", setting_key))
-			setting_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			setting_label.tooltip_text = str(descriptor.get("description", ""))
-			row.add_child(setting_label)
+		var row := HBoxContainer.new()
+		form.add_child(row)
+		var setting_label := Label.new()
+		setting_label.text = str(descriptor.get("display_name", setting_key))
+		setting_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		setting_label.tooltip_text = str(descriptor.get("description", ""))
+		row.add_child(setting_label)
 
-			var value_type := str(descriptor.get("value_type", ""))
-			var current_value: Variant = component_settings.get(
-				setting_key,
-				descriptor.get("default_value")
-			)
-			var control: Control
-			match value_type:
-				"Integer", "Float":
-					var spin := SpinBox.new()
-					spin.min_value = float(descriptor.get("minimum", 0.0)) if descriptor.has("minimum") else -1000000.0
-					spin.max_value = float(descriptor.get("maximum", 1000000.0)) if descriptor.has("maximum") else 1000000.0
-					spin.step = 1.0 if value_type == "Integer" else 0.1
-					spin.value = float(current_value)
-					spin.custom_minimum_size = Vector2(120, 0)
-					control = spin
-				"Boolean":
-					var check := CheckBox.new()
-					check.button_pressed = bool(current_value)
-					control = check
-				"String":
-					var line := LineEdit.new()
-					line.text = str(current_value)
-					line.custom_minimum_size = Vector2(150, 0)
-					control = line
-				_:
-					var unsupported := Label.new()
-					unsupported.text = "Подробная настройка"
-					unsupported.tooltip_text = "Для этого параметра пока нет простого редактора."
-					control = unsupported
-			row.add_child(control)
-			_capability_setting_controls.append({
-				"component_id": component_id,
-				"setting_key": setting_key,
-				"value_type": value_type,
-				"control": control
-			})
+		var value_type := str(descriptor.get("value_type", ""))
+		var current_value: Variant = component_settings.get(
+			setting_key,
+			descriptor.get("default_value")
+		)
+		var control: Control
+		match value_type:
+			"Integer", "Float":
+				var spin := SpinBox.new()
+				spin.min_value = float(descriptor.get("minimum", 0.0)) if descriptor.has("minimum") else -1000000.0
+				spin.max_value = float(descriptor.get("maximum", 1000000.0)) if descriptor.has("maximum") else 1000000.0
+				spin.step = float(descriptor.get("step", 1.0 if value_type == "Integer" else 0.1))
+				spin.value = float(current_value)
+				spin.custom_minimum_size = Vector2(120, 0)
+				control = spin
+			"Boolean":
+				var check := CheckBox.new()
+				check.button_pressed = bool(current_value)
+				control = check
+			"String":
+				var line := LineEdit.new()
+				line.text = str(current_value)
+				line.custom_minimum_size = Vector2(150, 0)
+				control = line
+			_:
+				var unsupported := Label.new()
+				unsupported.text = "Подробная настройка"
+				unsupported.tooltip_text = "Для этого параметра пока нет простого редактора."
+				control = unsupported
+		row.add_child(control)
 
-	if form.get_child_count() == 0:
+		var setting_level := str(descriptor.get("level", "Basic"))
+		var is_basic := setting_level == "Basic"
+		has_advanced_settings = has_advanced_settings or not is_basic
+		row.visible = is_basic
+		_capability_setting_controls.append({
+			"component_id": component_id,
+			"setting_key": setting_key,
+			"value_type": value_type,
+			"level": setting_level,
+			"control": control,
+			"row": row,
+			"group_header": current_group_header
+		})
+
+	if form.get_child_count() <= 1:
 		var empty_label := Label.new()
 		empty_label.text = "У этой возможности пока нет дополнительных настроек."
 		form.add_child(empty_label)
+	_capability_advanced_settings_check.visible = has_advanced_settings
+	_on_capability_advanced_settings_toggled(false)
 
 	_popup_window_safely(_capability_settings_dialog, Vector2i(520, 460), 0.82)
+
+
+func _on_capability_advanced_settings_toggled(show_advanced: bool) -> void:
+	var group_headers: Array[Label] = []
+	for entry in _capability_setting_controls:
+		var group_header := entry.get("group_header") as Label
+		if group_header != null and not group_headers.has(group_header):
+			group_headers.append(group_header)
+			group_header.visible = false
+
+		var row := entry.get("row") as Control
+		if row == null:
+			continue
+		var visible := str(entry.get("level", "Basic")) == "Basic" or show_advanced
+		row.visible = visible
+		if visible and group_header != null:
+			group_header.visible = true
 
 
 func _on_capability_settings_confirmed() -> void:

@@ -187,6 +187,215 @@ static func _failed_selection_plan(errors: PackedStringArray) -> Dictionary:
 	}
 
 
+## Describes the complete component delta before the editor changes the working object.
+## The returned plan is data only: callers may show it for confirmation before committing.
+static func build_application_plan(
+	current_selections: Array[ObjectCapabilitySelection],
+	next_selections: Array[ObjectCapabilitySelection],
+	scene_root: Node = null
+) -> Dictionary:
+	var validation_errors := validate_selections(next_selections, scene_root)
+	if not validation_errors.is_empty():
+		return {
+			"ok": false,
+			"changed": false,
+			"errors": validation_errors,
+			"added_capability_ids": PackedStringArray(),
+			"removed_capability_ids": PackedStringArray(),
+			"added_components": [],
+			"removed_components": [],
+			"updated_components": [],
+			"summary_lines": PackedStringArray()
+		}
+
+	var current_bindings := build_component_bindings(current_selections)
+	var next_bindings := build_component_bindings(next_selections)
+	var current_by_key: Dictionary = {}
+	var next_by_key: Dictionary = {}
+	for binding in current_bindings:
+		var key := _component_binding_key(binding)
+		if not key.is_empty():
+			current_by_key[key] = binding
+	for binding in next_bindings:
+		var key := _component_binding_key(binding)
+		if not key.is_empty():
+			next_by_key[key] = binding
+
+	var added_components: Array[Dictionary] = []
+	var removed_components: Array[Dictionary] = []
+	var updated_components: Array[Dictionary] = []
+	for key in next_by_key:
+		var next_binding := next_by_key[key] as ObjectComponentBinding
+		var component_id := next_binding.get_component_id()
+		if not current_by_key.has(key):
+			added_components.append(_component_plan_entry(next_binding))
+			continue
+		var current_binding := current_by_key[key] as ObjectComponentBinding
+		var before_settings := _effective_component_settings(current_binding.component_definition)
+		var after_settings := _effective_component_settings(next_binding.component_definition)
+		if before_settings != after_settings:
+			updated_components.append({
+				"component_id": component_id,
+				"display_name": ObjectComponentCatalog.get_component_display_name(component_id),
+				"target_node_path": str(next_binding.target_node_path),
+				"before": before_settings,
+				"after": after_settings
+			})
+	for key in current_by_key:
+		if not next_by_key.has(key):
+			removed_components.append(_component_plan_entry(current_by_key[key] as ObjectComponentBinding))
+
+	var current_capabilities := _enabled_capability_ids(current_selections)
+	var next_capabilities := _enabled_capability_ids(next_selections)
+	var added_capabilities := PackedStringArray()
+	var removed_capabilities := PackedStringArray()
+	for capability_id in next_capabilities:
+		if not current_capabilities.has(capability_id):
+			added_capabilities.append(capability_id)
+	for capability_id in current_capabilities:
+		if not next_capabilities.has(capability_id):
+			removed_capabilities.append(capability_id)
+
+	var summary := PackedStringArray()
+	_append_capability_summary(summary, "Добавляются возможности", added_capabilities)
+	_append_capability_summary(summary, "Отключаются возможности", removed_capabilities)
+	_append_component_summary(summary, "Добавляются игровые модули", added_components)
+	_append_component_summary(summary, "Удаляются игровые модули", removed_components)
+	_append_component_summary(summary, "Меняются настройки модулей", updated_components)
+	var changed := (
+		not added_capabilities.is_empty()
+		or not removed_capabilities.is_empty()
+		or not added_components.is_empty()
+		or not removed_components.is_empty()
+		or not updated_components.is_empty()
+	)
+	if not changed:
+		summary.append("Состав объекта не изменится.")
+	else:
+		summary.insert(0, "Будет применён следующий план:")
+
+	return {
+		"ok": true,
+		"changed": changed,
+		"errors": PackedStringArray(),
+		"added_capability_ids": added_capabilities,
+		"removed_capability_ids": removed_capabilities,
+		"added_components": added_components,
+		"removed_components": removed_components,
+		"updated_components": updated_components,
+		"summary_lines": summary
+	}
+
+
+static func _enabled_capability_ids(
+	selections: Array[ObjectCapabilitySelection]
+) -> PackedStringArray:
+	var result := PackedStringArray()
+	for selection in selections:
+		if selection == null or not selection.enabled:
+			continue
+		var capability_id := selection.capability_id.strip_edges().to_lower()
+		if not capability_id.is_empty() and not result.has(capability_id):
+			result.append(capability_id)
+	return result
+
+
+static func _component_binding_key(binding: ObjectComponentBinding) -> String:
+	if binding == null or binding.component_definition == null:
+		return ""
+	return "%s@%s" % [
+		binding.get_component_id().strip_edges().to_lower(),
+		str(binding.target_node_path)
+	]
+
+
+static func _component_plan_entry(binding: ObjectComponentBinding) -> Dictionary:
+	if binding == null or binding.component_definition == null:
+		return {}
+	var component_id := binding.get_component_id()
+	return {
+		"component_id": component_id,
+		"display_name": ObjectComponentCatalog.get_component_display_name(component_id),
+		"target_node_path": str(binding.target_node_path),
+		"settings": _effective_component_settings(binding.component_definition)
+	}
+
+
+static func _effective_component_settings(definition: ObjectComponentDefinition) -> Dictionary:
+	if definition == null:
+		return {}
+	var result := definition.get_settings()
+	for descriptor in definition.get_setting_definitions():
+		var setting_key := str(descriptor.get("key", ""))
+		if setting_key.is_empty() or result.has(setting_key):
+			continue
+		result[setting_key] = descriptor.get("default_value")
+	return result
+
+
+static func _component_setting_display_name(component_id: String, setting_key: String) -> String:
+	var definition := ObjectComponentCatalog.create_definition(component_id)
+	if definition == null:
+		return setting_key
+	for descriptor in definition.get_setting_definitions():
+		if str(descriptor.get("key", "")) == setting_key:
+			return str(descriptor.get("display_name", setting_key))
+	return setting_key
+
+
+static func _format_plan_setting_value(value: Variant) -> String:
+	if typeof(value) == TYPE_BOOL:
+		return "Да" if bool(value) else "Нет"
+	return str(value)
+
+
+static func _append_capability_summary(
+	output: PackedStringArray,
+	label: String,
+	capability_ids: PackedStringArray
+) -> void:
+	if capability_ids.is_empty():
+		return
+	var names := PackedStringArray()
+	for capability_id in capability_ids:
+		var definition := ObjectCapabilityCatalog.get_definition(capability_id)
+		names.append(definition.display_name if definition != null else capability_id)
+	output.append("%s: %s." % [label, ", ".join(names)])
+
+
+static func _append_component_summary(
+	output: PackedStringArray,
+	label: String,
+	entries: Array[Dictionary]
+) -> void:
+	if entries.is_empty():
+		return
+	var descriptions := PackedStringArray()
+	for entry in entries:
+		var node_path := str(entry.get("target_node_path", "."))
+		var target_text := "корневой узел" if node_path.is_empty() or node_path == "." else node_path
+		var description := "%s (%s)" % [
+			str(entry.get("display_name", entry.get("component_id", "компонент"))),
+			target_text
+		]
+		if entry.has("before") and entry.has("after"):
+			var component_id := str(entry.get("component_id", ""))
+			var before: Dictionary = entry.get("before", {})
+			var after: Dictionary = entry.get("after", {})
+			var setting_changes := PackedStringArray()
+			for setting_key in after:
+				if before.get(setting_key) == after[setting_key]:
+					continue
+				var setting_name := _component_setting_display_name(component_id, str(setting_key))
+				var previous_value := _format_plan_setting_value(before.get(setting_key))
+				var next_value := _format_plan_setting_value(after[setting_key])
+				setting_changes.append("%s: %s → %s" % [setting_name, previous_value, next_value])
+			if not setting_changes.is_empty():
+				description += "; " + ", ".join(setting_changes)
+		descriptions.append(description)
+	output.append("%s: %s." % [label, ", ".join(descriptions)])
+
+
 static func build_component_bindings(
 	selections: Array[ObjectCapabilitySelection]
 ) -> Array[ObjectComponentBinding]:
@@ -309,6 +518,27 @@ static func validate_selections(
 				errors.append(
 					"Для возможности «%s» не найден выбранный узел «%s»."
 					% [capability.display_name, target_path]
+				)
+
+		for descriptor in capability.settings_schema:
+			if not bool(descriptor.get("required", false)):
+				continue
+			var required_component_id := str(descriptor.get("component_id", "")).strip_edges().to_lower()
+			var required_setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
+			if required_component_id.is_empty() or required_setting_key.is_empty():
+				continue
+			var component_settings := selection.get_component_settings(required_component_id)
+			var required_value: Variant = component_settings.get(
+				required_setting_key,
+				descriptor.get("default_value")
+			)
+			if required_value == null or (
+				typeof(required_value) == TYPE_STRING
+				and str(required_value).strip_edges().is_empty()
+			):
+				errors.append(
+					"Заполни обязательное поле «%s» для возможности «%s»."
+					% [str(descriptor.get("display_name", required_setting_key)), capability.display_name]
 				)
 
 		for component_id in selection.settings_by_component:
