@@ -789,6 +789,7 @@ func _test_declarative_scene_structure() -> void:
 	var reused_nodes: Array = second_apply.get("reused_nodes", [])
 	var created_again: Array = second_apply.get("created_nodes", [])
 	var repeat_timer := repeat_root.get_node_or_null("Visual/Interaction/Timeout") as Timer
+	var repeat_visual := repeat_root.get_node_or_null("Visual") as Node2D
 	_expect(
 		bool(first_apply.get("ok", false))
 		and bool(second_apply.get("ok", false))
@@ -815,7 +816,7 @@ func _test_declarative_scene_structure() -> void:
 	var reconciled := ObjectSceneStructureService.apply_structure(definition, repeat_root)
 	_expect(bool(reconciled.get("ok", false)), "changed structure can be reconciled onto an existing instance")
 	_expect(
-		visual_node != null and visual_node.position == Vector2(20.0, 30.0),
+		repeat_visual != null and repeat_visual.position == Vector2(20.0, 30.0),
 		"reconciliation updates generated properties that have not been manually changed"
 	)
 	_expect(
@@ -829,7 +830,7 @@ func _test_declarative_scene_structure() -> void:
 	var reset_result := ObjectSceneStructureService.apply_structure(definition, repeat_root)
 	_expect(
 		bool(reset_result.get("ok", false))
-		and visual_node != null and visual_node.position == Vector2.ZERO,
+		and repeat_visual != null and repeat_visual.position == Vector2.ZERO,
 		"removing a generated property restores the Godot default when it was not manually edited"
 	)
 	repeat_root.free()
