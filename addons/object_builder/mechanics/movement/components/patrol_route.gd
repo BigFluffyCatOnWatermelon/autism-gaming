@@ -31,7 +31,10 @@ func configure_mechanic(values: Dictionary) -> bool:
 
 
 func _is_valid_route(raw: String) -> bool:
-    var parsed: Variant = JSON.parse_string(raw)
+    var parser := JSON.new()
+    if parser.parse(raw) != OK:
+        return false
+    var parsed: Variant = parser.data
     if typeof(parsed) != TYPE_ARRAY or parsed.is_empty():
         return false
     for point in parsed:
@@ -45,7 +48,11 @@ func _is_valid_route(raw: String) -> bool:
 
 
 func _parse_route() -> bool:
-    var parsed: Variant = JSON.parse_string(str(get_option("route_json", "[]")))
+    var parser := JSON.new()
+    var parse_error := parser.parse(str(get_option("route_json", "[]")))
+    if parse_error != OK:
+        return _fail("Не удалось разобрать JSON-маршрут: " + parser.get_error_message())
+    var parsed: Variant = parser.data
     if typeof(parsed) != TYPE_ARRAY:
         return _fail("Маршрут должен быть JSON-массивом координат.")
     var clean: Array[Vector2] = []
