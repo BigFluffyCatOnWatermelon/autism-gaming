@@ -151,6 +151,39 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 			"group_name": "Восстановление"
 		})
 		return result
+	if normalized_id == "pickup":
+		result.append({
+			"key": "item_id",
+			"display_name": "ID предмета",
+			"value_type": "String",
+			"default_value": "",
+			"group_name": "Предмет"
+		})
+		result.append({
+			"key": "quantity",
+			"display_name": "Количество",
+			"value_type": "Integer",
+			"default_value": 1,
+			"group_name": "Предмет",
+			"has_range": true,
+			"minimum": 1,
+			"maximum": 99999
+		})
+		result.append({
+			"key": "can_be_picked_up",
+			"display_name": "Разрешить подбор",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "Доступность"
+		})
+		result.append({
+			"key": "remove_object_when_empty",
+			"display_name": "Удалить объект после подбора",
+			"value_type": "Boolean",
+			"default_value": true,
+			"group_name": "После подбора"
+		})
+		return result
 	if normalized_id != "health":
 		return result
 
