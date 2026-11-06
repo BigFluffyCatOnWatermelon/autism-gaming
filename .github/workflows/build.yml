@@ -53,6 +53,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder view component tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_views_smoke.gd 2>&1 | tee object-builder-views-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-views-test.log; then
+            echo "Object Builder view component tests reported an error."
+            exit 1
+          fi
+
       - name: Run standalone mechanic module smoke tests
         shell: bash
         run: |

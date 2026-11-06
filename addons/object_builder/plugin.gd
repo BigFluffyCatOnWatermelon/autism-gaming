@@ -3,6 +3,8 @@ extends EditorPlugin
 
 const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
+const ObjectBuilderLibraryViewScript = preload("res://addons/object_builder/ui/library_view.gd")
+const ObjectBuilderEditorViewScript = preload("res://addons/object_builder/ui/object_editor_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -44,11 +46,8 @@ const CHILD_NODE_TYPES := [
 	"AnimationPlayer"
 ]
 var _main_screen: MarginContainer
-var _search: LineEdit
-var _mode_filter: OptionButton
-var _category_filter: OptionButton
-var _tag_filter: OptionButton
-var _object_list: ItemList
+var _library_view: Control
+var _editor_view: TabContainer
 var _name_edit: LineEdit
 var _id_edit: LineEdit
 var _category_edit: LineEdit
@@ -394,65 +393,26 @@ func _build_workspace_toolbar(parent: VBoxContainer) -> void:
 
 
 func _build_library_panel(parent: HSplitContainer) -> void:
-	var library_panel := VBoxContainer.new()
-	library_panel.custom_minimum_size = Vector2(210, 0)
-	parent.add_child(library_panel)
-	
-	_search = LineEdit.new()
-	_search.placeholder_text = "Найти объект…"
-	_search.text_changed.connect(_on_search_changed)
-	library_panel.add_child(_search)
-	
-	_mode_filter = OptionButton.new()
-	_mode_filter.add_item("Все объекты")
-	_mode_filter.set_item_metadata(0, "all")
-	_mode_filter.add_item("Избранное")
-	_mode_filter.set_item_metadata(1, "favorites")
-	_mode_filter.add_item("Недавние")
-	_mode_filter.set_item_metadata(2, "recent")
-	_mode_filter.item_selected.connect(_on_filter_changed)
-	library_panel.add_child(_mode_filter)
-	
-	_category_filter = OptionButton.new()
-	_category_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_category_filter.item_selected.connect(_on_filter_changed)
-	library_panel.add_child(_category_filter)
-	
-	_tag_filter = OptionButton.new()
-	_tag_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_tag_filter.item_selected.connect(_on_filter_changed)
-	library_panel.add_child(_tag_filter)
-	
-	_object_list = ItemList.new()
-	_object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_object_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_object_list.item_selected.connect(_on_library_item_selected)
-	library_panel.add_child(_object_list)
-
+	_library_view = ObjectBuilderLibraryViewScript.new()
+	_library_view.name = "LibraryView"
+	parent.add_child(_library_view)
+	_library_view.call("build")
+	_library_view.connect("search_changed", Callable(self, "_on_search_changed"))
+	_library_view.connect("filter_changed", Callable(self, "_on_filter_changed"))
+	_library_view.connect("object_selected", Callable(self, "_on_library_item_selected"))
 
 func _build_editor_tabs(parent: HSplitContainer) -> void:
-	var editor_tabs := TabContainer.new()
-	editor_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	editor_tabs.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(editor_tabs)
-	_build_simple_editor(editor_tabs)
-	_build_advanced_editor(editor_tabs)
+	_editor_view = ObjectBuilderEditorViewScript.new()
+	_editor_view.name = "ObjectEditorView"
+	parent.add_child(_editor_view)
+	_editor_view.call("build")
+	_build_simple_editor(_editor_view.get("simple_content") as VBoxContainer)
+	_build_advanced_editor(_editor_view.get("advanced_content") as VBoxContainer)
 	_build_dialogs()
 
-
-func _build_simple_editor(parent: TabContainer) -> void:
-	var simple_scroll := ScrollContainer.new()
-	simple_scroll.name = "Простой режим"
-	simple_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	simple_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	simple_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	parent.add_child(simple_scroll)
-	
-	var simple_editor := VBoxContainer.new()
-	simple_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+func _build_simple_editor(parent: VBoxContainer) -> void:
+	var simple_editor := parent
 	simple_editor.add_theme_constant_override("separation", 10)
-	simple_scroll.add_child(simple_editor)
-	
 	ObjectBuilderUIFactory.create_section_title(simple_editor, "СОЗДАЙ СВОЙ ОБЪЕКТ", 18)
 	
 	_name_edit = _add_labeled_line_edit(simple_editor, "Название", "Например, Волшебный сундук")
@@ -495,20 +455,9 @@ func _build_simple_editor(parent: TabContainer) -> void:
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	simple_editor.add_child(_status_label)
 
-
-func _build_advanced_editor(parent: TabContainer) -> void:
-	var advanced_scroll := ScrollContainer.new()
-	advanced_scroll.name = "Расширенный режим"
-	advanced_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	advanced_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	advanced_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	parent.add_child(advanced_scroll)
-	
-	var advanced_editor := VBoxContainer.new()
-	advanced_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+func _build_advanced_editor(parent: VBoxContainer) -> void:
+	var advanced_editor := parent
 	advanced_editor.add_theme_constant_override("separation", 7)
-	advanced_scroll.add_child(advanced_editor)
-	
 	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ТЕХНИЧЕСКИЕ НАСТРОЙКИ", 16)
 	
 	_id_edit = _add_labeled_line_edit(advanced_editor, "Постоянный ID", "Создаётся автоматически")
@@ -596,7 +545,6 @@ func _build_advanced_editor(parent: TabContainer) -> void:
 	)
 	
 	_build_component_editor(advanced_editor)
-
 
 func _build_dialogs() -> void:
 	_build_property_dialog()
@@ -1714,10 +1662,7 @@ func _on_refresh_pressed() -> void:
 
 
 func _rebuild_category_filter() -> void:
-	var previous_category := ""
-	if _category_filter.selected >= 0:
-		previous_category = str(_category_filter.get_item_metadata(_category_filter.selected))
-
+	var previous_category := str(_library_view.call("get_selected_category"))
 	var categories: Array[String] = []
 	for category_key in CATEGORY_LABELS.keys():
 		categories.append(str(category_key))
@@ -1725,23 +1670,13 @@ func _rebuild_category_filter() -> void:
 		if definition != null and not definition.category.is_empty() and not categories.has(definition.category):
 			categories.append(definition.category)
 	categories.sort()
-
-	_category_filter.clear()
-	_category_filter.add_item("Все категории")
-	_category_filter.set_item_metadata(0, "")
+	var options: Array[Dictionary] = []
 	for category_name in categories:
-		var label_text := str(CATEGORY_LABELS.get(category_name, category_name))
-		_category_filter.add_item(label_text)
-		_category_filter.set_item_metadata(_category_filter.item_count - 1, category_name)
-
-	_select_option_metadata(_category_filter, previous_category)
-
+		options.append({"id": category_name, "label": str(CATEGORY_LABELS.get(category_name, category_name))})
+	_library_view.call("set_category_options", options, previous_category)
 
 func _rebuild_tag_filter() -> void:
-	var previous_tag := ""
-	if _tag_filter.selected >= 0:
-		previous_tag = str(_tag_filter.get_item_metadata(_tag_filter.selected))
-
+	var previous_tag := str(_library_view.call("get_selected_tag"))
 	var tags := PackedStringArray()
 	for definition in _definitions:
 		if definition == null:
@@ -1750,41 +1685,19 @@ func _rebuild_tag_filter() -> void:
 			if not tag.is_empty() and not tags.has(tag):
 				tags.append(tag)
 	tags.sort()
-
-	_tag_filter.clear()
-	_tag_filter.add_item("Все теги")
-	_tag_filter.set_item_metadata(0, "")
+	var options: Array[Dictionary] = []
 	for tag in tags:
-		_tag_filter.add_item("#" + tag)
-		_tag_filter.set_item_metadata(_tag_filter.item_count - 1, tag)
-	_select_option_metadata(_tag_filter, previous_tag)
-
-
-func _select_option_metadata(option: OptionButton, value: String) -> void:
-	for index in range(option.item_count):
-		if str(option.get_item_metadata(index)) == value:
-			option.select(index)
-			return
-	option.select(0)
-
+		options.append({"id": tag, "label": "#" + tag})
+	_library_view.call("set_tag_options", options, previous_tag)
 
 func _refresh_library_list() -> void:
-	if _object_list == null:
+	if _library_view == null:
 		return
-	_object_list.clear()
 	_visible_definitions.clear()
-
-	var query := _search.text.strip_edges().to_lower()
-	var selected_category := ""
-	var selected_tag := ""
-	var selected_mode := "all"
-	if _category_filter.selected >= 0:
-		selected_category = str(_category_filter.get_item_metadata(_category_filter.selected))
-	if _tag_filter.selected >= 0:
-		selected_tag = str(_tag_filter.get_item_metadata(_tag_filter.selected))
-	if _mode_filter.selected >= 0:
-		selected_mode = str(_mode_filter.get_item_metadata(_mode_filter.selected))
-
+	var query := str(_library_view.call("get_search_query")).strip_edges().to_lower()
+	var selected_category := str(_library_view.call("get_selected_category"))
+	var selected_tag := str(_library_view.call("get_selected_tag"))
+	var selected_mode := str(_library_view.call("get_selected_mode"))
 	var candidates: Array[ObjectDefinition] = []
 	if selected_mode == "recent":
 		for object_id in _recent_ids:
@@ -1798,7 +1711,7 @@ func _refresh_library_list() -> void:
 			if selected_mode == "favorites" and not _favorites.has(definition.object_id):
 				continue
 			candidates.append(definition)
-
+	var entries: Array[Dictionary] = []
 	for definition in candidates:
 		if not selected_category.is_empty() and definition.category != selected_category:
 			continue
@@ -1810,24 +1723,18 @@ func _refresh_library_list() -> void:
 		).to_lower()
 		if not query.is_empty() and not searchable_text.contains(query):
 			continue
-
 		_visible_definitions.append(definition)
 		var title_prefix := "★ " if _favorites.has(definition.object_id) else ""
-		_object_list.add_item(title_prefix + definition.display_name)
-		_object_list.set_item_tooltip(
-			_object_list.item_count - 1,
-			"%s\nТип: %s\nID: %s\nТеги: %s" % [
+		entries.append({
+			"title": title_prefix + definition.display_name,
+			"tooltip": "%s\nТип: %s\nID: %s\nТеги: %s" % [
 				definition.description,
 				_object_type_display_name(definition.object_type),
 				definition.object_id,
 				_join_tags(definition.tags)
 			]
-		)
-
-	if _visible_definitions.is_empty():
-		_object_list.add_item("Объекты не найдены")
-		_object_list.set_item_disabled(0, true)
-
+		})
+	_library_view.call("set_entries", entries, "Объекты не найдены")
 
 func _object_type_display_name(type_id: String) -> String:
 	var profile_name := ObjectCreationProfileRegistry.get_display_name(type_id)
@@ -1875,7 +1782,7 @@ func _record_recent(object_id: String) -> void:
 	while _recent_ids.size() > RECENT_LIMIT:
 		_recent_ids.remove_at(_recent_ids.size() - 1)
 	_save_local_state()
-	if _mode_filter.selected >= 0 and str(_mode_filter.get_item_metadata(_mode_filter.selected)) == "recent":
+	if _library_view != null and str(_library_view.call("get_selected_mode")) == "recent":
 		_refresh_library_list()
 
 
