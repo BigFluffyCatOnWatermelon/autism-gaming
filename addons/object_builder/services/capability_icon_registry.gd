@@ -6,7 +6,7 @@ class_name CapabilityIconRegistry
 const ICON_ATLAS_PATH := "res://addons/object_builder/assets/capabilities/capability_icon_atlas.svg"
 const ICON_CELL_SIZE := 40
 const ICON_COLUMNS := 10
-const ICON_COUNT := 204
+const ICON_COUNT := 200
 
 static var _atlas: Texture2D
 static var _icon_cache: Dictionary = {}
