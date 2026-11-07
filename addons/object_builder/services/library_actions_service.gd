@@ -109,7 +109,7 @@ static func create_unique_id(prefix: String, source_id: String, is_template: boo
 		clean_prefix = "object"
 	if clean_source.is_empty():
 		clean_source = "item"
-	var base_id := "%s_%s_%d" % [clean_prefix, clean_source, int(Time.get_unix_time_from_system())]
+	var base_id := "%s_%s_%d" % [clean_prefix, clean_source, Time.get_ticks_usec()]
 	var candidate := base_id
 	var suffix := 2
 	while _definition_exists(candidate, is_template) or FileAccess.file_exists(ObjectLibraryService.get_scene_path(candidate)):
