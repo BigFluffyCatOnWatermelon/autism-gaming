@@ -755,6 +755,13 @@ func _rebuild_capability_list() -> void:
 	var focused_definition := ObjectCapabilityCatalog.get_definition_reference(focused_id)
 	var focused_name := focused_definition.display_name if focused_definition != null else ""
 	_capability_view.call("set_related_entries", related_entries, focused_name)
+	var recommended_entries: Array[Dictionary] = _capability_catalog_controller.call(
+		"build_recommended_entries",
+		_working_definition.capabilities,
+		query,
+		8
+	)
+	_capability_view.call("set_recommended_entries", recommended_entries)
 
 func _on_capability_focus_requested(capability_id: String) -> void:
 	if _working_definition == null:
