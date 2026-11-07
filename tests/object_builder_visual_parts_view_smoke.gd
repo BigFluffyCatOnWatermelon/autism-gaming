@@ -125,6 +125,9 @@ func _run() -> void:
 	search_input.clear()
 	view.call("_on_search_changed", "")
 	_expect(int(view.call("get_visible_row_count")) == 3, "clearing search restores all part rows")
+	_expect(bool(view.call("request_inline_rename", NodePath("Visuals/Leaf"))), "canvas context rename can open the matching inline editor")
+	_expect((view.get("_renaming_edit") as LineEdit).visible, "context rename focuses the part name field")
+	view.call("_on_inline_rename_gui_input", escape_event, NodePath("Visuals/Leaf"))
 
 	view.call("set_scene_root", null)
 	_expect(int(view.call("get_part_count")) == 0, "closing the object scene clears the parts model")
