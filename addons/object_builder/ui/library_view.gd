@@ -342,6 +342,7 @@ func _on_filter_changed(index: int) -> void:
 func _on_object_selected(index: int) -> void:
 	_selected_index = index
 	_update_card_selection()
+	_update_entry_actions_state()
 	object_selected.emit(index)
 
 
@@ -379,7 +380,7 @@ func _update_entry_actions_state() -> void:
 func _show_entry_actions_menu() -> void:
 	if _selected_index < 0 or _selected_index >= _entries.size() or _entry_actions_menu == null:
 		return
-	_entry_actions_menu.position = Vector2i(get_global_mouse_position())
+	_entry_actions_menu.position = DisplayServer.mouse_get_position()
 	_entry_actions_menu.reset_size()
 	_entry_actions_menu.popup()
 
