@@ -86,6 +86,8 @@ func _run() -> void:
 	sprite.flip_h = true
 	sprite.flip_v = false
 	view.call("show_sprite", sprite)
+	_expect(view.get("_frames_dialog") == view.get("_texture_dialog"), "texture and SpriteFrames paths share one resource picker window")
+	_expect(str(view.get("_resource_picker_mode")) == "texture", "static sprites select the texture filter in the shared picker")
 	_expect(panel.visible and transform_controls.visible and static_controls.visible and not animated_controls.visible, "Sprite2D displays transform and static controls")
 	_expect((view.get("_visual_type_label") as Label).text == "Выбрано изображение: StaticSprite", "static editor identifies the selected node")
 	_expect(is_equal_approx((view.get("_sprite_hframes") as SpinBox).value, 3.0), "horizontal frame count is populated")
@@ -121,6 +123,7 @@ func _run() -> void:
 	animated_sprite.animation = &"idle"
 	animated_sprite.speed_scale = 1.5
 	view.call("show_animated_sprite", animated_sprite)
+	_expect(str(view.get("_resource_picker_mode")) == "sprite_frames", "animated sprites select the SpriteFrames filter in the shared picker")
 	_expect(panel.visible and not static_controls.visible and animated_controls.visible, "AnimatedSprite2D displays only animation controls")
 	_expect((view.get("_visual_type_label") as Label).text == "Выбрана анимация: AnimatedSprite", "animated editor identifies the selected node")
 	var animation_option := view.get("_animation_option") as OptionButton
