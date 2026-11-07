@@ -86,16 +86,19 @@ static func _collect_node_path_references(
 			if property_name.is_empty():
 				continue
 			var value: Variant = source_node.get(property_name)
-			if not value is NodePath or value.is_empty():
+			if typeof(value) != TYPE_NODE_PATH:
 				continue
-			var target_node := source_node.get_node_or_null(value) as Node
+			var node_path: NodePath = value
+			if node_path.is_empty():
+				continue
+			var target_node := source_node.get_node_or_null(node_path) as Node
 			var target_is_removed := _is_within(target_node, removed_node)
 			if not source_is_removed and not target_is_removed:
 				continue
 			if source_is_removed and target_is_removed:
 				continue
 			var kind := "NodePath из удаляемой части" if source_is_removed else "NodePath на удаляемую часть"
-			var detail := "%s → %s" % [property_name, str(value)]
+			var detail := "%s → %s" % [property_name, str(node_path)]
 			_add_reference(references, seen, kind, str(source_node.get_path()), detail)
 
 
