@@ -186,7 +186,6 @@ func set_preview_instance(
 func clear_canvas(message: String) -> void:
 	_clear_preview()
 	_editing_enabled = false
-	_selected_path = NodePath("")
 	_open_scene_button.disabled = true
 	_open_scene_button.visible = false
 	_status_label.text = message

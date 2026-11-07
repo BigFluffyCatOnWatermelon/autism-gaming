@@ -72,18 +72,18 @@ func _run() -> void:
 			_expect(committed_transforms[0].get("new") == Vector2(72.0, 32.0), "canvas emits the snapped final position")
 		_expect(sprite.position == Vector2(64.0, 32.0), "dragging the isolated preview leaves the original scene unchanged")
 
-		var handles: Dictionary = canvas.call("_get_transform_handle_positions")
+		var handles: Dictionary = interaction.call("_get_transform_handle_positions")
 		_expect(handles.has("scale") and handles.has("rotate"), "selected parts expose scale and rotation handles")
 		if handles.has("scale"):
 			var scale_handle: Vector2 = handles["scale"]
 			interaction.call("_begin_selection", scale_handle)
 			_expect(str(interaction.get("_drag_mode")) == "scale", "scale handle starts a scale drag")
-			var scale_start_world: Vector2 = canvas.call("_screen_to_world", scale_handle)
+			var scale_start_world: Vector2 = interaction.call("_screen_to_world", scale_handle)
 			var scale_end_world := preview_sprite.global_position + (scale_start_world - preview_sprite.global_position) * 1.5
 			var scale_end_viewport := viewport.get_canvas_transform() * scale_end_world
 			var scale_end_screen := scale_end_viewport * surface.size / Vector2(viewport.size)
 			interaction.call("_update_drag", scale_end_screen)
-			canvas.call("_finish_canvas_drag")
+			interaction.call("_finish_drag")
 			_expect(is_equal_approx(preview_sprite.scale.x, 1.5) and is_equal_approx(preview_sprite.scale.y, 1.5), "scale handle changes both sprite axes uniformly")
 			_expect(committed_transforms.size() == 2 and committed_transforms[1].get("property") == "scale", "scale drag commits one undoable scale change")
 
@@ -91,8 +91,8 @@ func _run() -> void:
 		if handles.has("rotate"):
 			var rotate_handle: Vector2 = handles["rotate"]
 			interaction.call("_begin_selection", rotate_handle)
-			_expect(str(canvas.get("_drag_mode")) == "rotate", "rotation handle starts a rotation drag")
-			var rotate_start_world: Vector2 = canvas.call("_screen_to_world", rotate_handle)
+			_expect(str(interaction.get("_drag_mode")) == "rotate", "rotation handle starts a rotation drag")
+			var rotate_start_world: Vector2 = interaction.call("_screen_to_world", rotate_handle)
 			var rotate_vector := rotate_start_world - preview_sprite.global_position
 			var rotate_end_world := preview_sprite.global_position + rotate_vector.rotated(PI / 4.0)
 			var rotate_end_viewport := viewport.get_canvas_transform() * rotate_end_world
