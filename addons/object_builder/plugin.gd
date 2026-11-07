@@ -676,6 +676,8 @@ func _build_capability_editor(parent: VBoxContainer) -> void:
 	view.connect("selection_toggled", Callable(self, "_on_capability_catalog_selection_toggled"))
 	view.connect("batch_add_requested", Callable(self, "_on_capability_batch_add_requested"))
 	view.connect("clear_selection_requested", Callable(self, "_on_capability_catalog_selection_cleared"))
+	view.connect("preset_requested", Callable(self, "_on_capability_preset_requested"))
+	view.connect("preset_select_all_requested", Callable(self, "_on_capability_preset_select_all_requested"))
 	view.call("build", ObjectCapabilityCatalog.get_categories())
 	parent.add_child(view)
 	_rebuild_capability_list()
@@ -783,6 +785,12 @@ func _rebuild_capability_list() -> void:
 		recommended_entries,
 		" · ".join(recommendation_context_parts)
 	)
+	var preset_summaries: Array[Dictionary] = _capability_catalog_controller.call("build_preset_summaries")
+	var active_preset_details: Dictionary = _capability_catalog_controller.call(
+		"build_active_preset_details",
+		_working_definition.capabilities
+	)
+	_capability_view.call("set_preset_data", preset_summaries, active_preset_details)
 
 func _on_capability_focus_requested(capability_id: String) -> void:
 	if _working_definition == null:
@@ -796,6 +804,27 @@ func _on_capability_catalog_selection_toggled(selected: bool, capability_id: Str
 		return
 	_capability_catalog_controller.call("set_selected", capability_id, selected)
 	_rebuild_capability_list()
+
+func _on_capability_preset_requested(preset_id: String) -> void:
+	if _working_definition == null:
+		return
+	_capability_catalog_controller.call("set_active_preset", preset_id)
+	_rebuild_capability_list()
+
+
+func _on_capability_preset_select_all_requested() -> void:
+	if _working_definition == null:
+		return
+	var added_count := int(_capability_catalog_controller.call(
+		"select_all_available_from_active_preset",
+		_working_definition.capabilities
+	))
+	_rebuild_capability_list()
+	if added_count > 0:
+		_set_status("В общий список выбора добавлено из набора: %d." % added_count, false)
+	else:
+		_set_status("В этом наборе больше нет новых совместимых возможностей для выбора.", false)
+
 
 func _on_capability_catalog_selection_cleared() -> void:
 	_capability_catalog_controller.call("clear_selection")
