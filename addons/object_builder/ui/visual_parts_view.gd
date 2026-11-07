@@ -11,6 +11,7 @@ signal part_lock_changed(path: NodePath, locked: bool)
 signal draw_order_change_requested(path: NodePath, delta: int)
 signal rename_requested(path: NodePath, new_name: String)
 signal resource_edit_requested(path: NodePath)
+signal sprite_frames_editor_requested(path: NodePath)
 signal draw_order_reorder_requested(source_path: NodePath, target_path: NodePath)
 
 const VisualPartRowScript = preload("res://addons/object_builder/ui/visual_part_row.gd")
@@ -25,6 +26,7 @@ var _rows_host: VBoxContainer
 var _scroll: ScrollContainer
 var _status_label: Label
 var _resource_button: Button
+var _frames_editor_button: Button
 var _selected_path := NodePath("")
 var _row_buttons: Array[Button] = []
 var _row_paths: Array[NodePath] = []
@@ -66,6 +68,12 @@ func build() -> void:
 	_resource_button.disabled = true
 	_resource_button.pressed.connect(_on_resource_edit_pressed)
 	heading_row.add_child(_resource_button)
+	_frames_editor_button = Button.new()
+	_frames_editor_button.text = "Анимации…"
+	_frames_editor_button.tooltip_text = "Создать и редактировать анимации, кадры, FPS и зацикливание."
+	_frames_editor_button.disabled = true
+	_frames_editor_button.pressed.connect(_on_frames_editor_pressed)
+	heading_row.add_child(_frames_editor_button)
 
 	_search_input = LineEdit.new()
 	_search_input.placeholder_text = "Найти часть…"
@@ -140,6 +148,7 @@ func _update_resource_button() -> void:
 		return
 	var selected_node := _scene_root.get_node_or_null(_selected_path) if _scene_root != null and not _selected_path.is_empty() else null
 	_resource_button.disabled = not (selected_node is Sprite2D or selected_node is AnimatedSprite2D)
+	_frames_editor_button.disabled = not (selected_node is AnimatedSprite2D)
 	if selected_node is AnimatedSprite2D:
 		_resource_button.text = "Кадры…"
 	else:
@@ -149,6 +158,11 @@ func _update_resource_button() -> void:
 func _on_resource_edit_pressed() -> void:
 	if not _resource_button.disabled and not _selected_path.is_empty():
 		resource_edit_requested.emit(_selected_path)
+
+
+func _on_frames_editor_pressed() -> void:
+	if not _frames_editor_button.disabled and not _selected_path.is_empty():
+		sprite_frames_editor_requested.emit(_selected_path)
 
 
 func get_locked_paths() -> Array[NodePath]:
