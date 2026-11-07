@@ -80,6 +80,8 @@ func _run() -> void:
 	_expect(action_events.size() == 2 and action_events[1] == "add_to_collection:collection_forest:0", "selected object can be added to a custom collection")
 	library.call("_on_entry_action_selected", 6)
 	_expect(action_events.size() == 3 and action_events[2] == "remove_from_collection:0", "selected object can be removed from the active collection")
+	library.call("_on_entry_action_selected", 7)
+	_expect(action_events.size() == 4 and action_events[3] == "toggle_favorite:0", "favorite can be toggled from the selected library entry")
 	library.call("set_display_mode", "list")
 	_expect(not (library.get("_cards_scroll") as ScrollContainer).visible and object_list.visible, "list mode swaps the visible result view")
 	_expect(object_list.item_count == 2, "compact list renders the same entries")
