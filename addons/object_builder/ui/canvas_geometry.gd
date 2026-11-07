@@ -2,6 +2,10 @@
 extends RefCounted
 ## Geometry helpers shared by the Object Builder canvas.
 
+static func is_visual_node(node: Node) -> bool:
+	return node is Sprite2D or node is AnimatedSprite2D or node is Polygon2D or node is Line2D
+
+
 static func collect_visual_bounds(node: Node) -> Dictionary:
 	var result: Dictionary = {}
 	_collect_visual_bounds(node, result)
