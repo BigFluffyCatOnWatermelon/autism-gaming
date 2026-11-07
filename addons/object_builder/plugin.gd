@@ -719,7 +719,7 @@ func _rebuild_capability_list() -> void:
 	var ready_count := 0
 	for catalog_id in all_capability_ids:
 		var catalog_definition := ObjectCapabilityCatalog.get_definition_reference(catalog_id)
-		if catalog_definition != null and catalog_definition.runtime_status == "Implemented":
+		if catalog_definition != null and catalog_definition.is_ready():
 			ready_count += 1
 
 	var entries: Array[Dictionary] = []
@@ -736,7 +736,7 @@ func _rebuild_capability_list() -> void:
 
 		var selection := _find_capability_selection(capability_id)
 		var is_enabled := selection != null and selection.enabled
-		var is_implemented := capability.runtime_status == "Implemented"
+		var is_implemented := capability.is_ready()
 		entries.append({
 			"definition": capability,
 			"enabled": is_enabled,
