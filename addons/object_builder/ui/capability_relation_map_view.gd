@@ -12,6 +12,15 @@ var _full_nodes_by_id: Dictionary = {}
 var _full_search_text_by_id: Dictionary = {}
 var _full_search_input: LineEdit
 
+const RELATION_TYPE_IDS := {
+	"requires": 1,
+	"conflicts": 2,
+	"recommends": 3,
+	"extends": 4,
+	"alternative": 5,
+	"related": 6
+}
+
 
 func open(
 	host_control: Control,
@@ -76,12 +85,15 @@ func open(
 		var relation_caption := _relation_caption(relation_type)
 		var direction := "Входящая связь" if bool(entry.get("is_reverse", false)) else "Исходящая связь"
 		var node_name := "Capability_" + str(index)
+		var relation_type_id := _get_relation_type_id(relation_type)
+		_graph.add_valid_connection_type(0, relation_type_id)
 		var graph_node := _create_graph_node(
 			node_name,
 			definition.display_name,
 			relation_caption + " · " + direction,
 			definition.is_ready(),
-			definition.capability_id
+			definition.capability_id,
+			relation_type_id
 		)
 		var angle := TAU * float(index) / float(maxi(1, count)) - PI * 0.5
 		var radius := 260.0 if count <= 8 else 320.0
@@ -128,7 +140,16 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 	_graph.minimap_enabled = true
 	_graph.minimap_size = Vector2(180, 120)
 	_graph.zoom = 0.55
-	_graph.add_valid_connection_type(0, 0)
+	_graph.type_names = {
+		1: "Обязательная зависимость",
+		2: "Конфликт",
+		3: "Рекомендуется",
+		4: "Расширяет",
+		5: "Альтернатива",
+		6: "Тематическая связь"
+	}
+	for relation_type_id in RELATION_TYPE_IDS.values():
+		_graph.add_valid_connection_type(int(relation_type_id), int(relation_type_id))
 	layout.add_child(_graph)
 
 	_full_nodes_by_id.clear()
@@ -159,21 +180,12 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 		node_names_by_id[capability_id] = node_name
 		var readiness := "Готово" if definition.is_ready() else "В разработке"
 		var subtitle := definition.category_name + " · " + readiness
-		var graph_node := _create_graph_node(
-			node_name,
-			definition.display_name,
-			subtitle,
-			definition.is_ready(),
-			capability_id
-		)
-		graph_node.custom_minimum_size = Vector2(205, 88)
+		var graph_node := _create_full_graph_node(node_name, definition)
+		graph_node.custom_minimum_size = Vector2(215, 190)
 		graph_node.position_offset = Vector2(
 			category_column * 520 + item_column * 245,
-			category_row * 760 + item_row * 132
+			category_row * 1100 + item_row * 210
 		)
-		var action := graph_node.get_child(0).get_child(1) as Button
-		if action != null:
-			action.tooltip_text = definition.description
 		_graph.add_child(graph_node)
 		_full_nodes_by_id[capability_id] = graph_node
 		_full_search_text_by_id[capability_id] = (
@@ -185,19 +197,21 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 	var connected_pairs: Dictionary = {}
 	for capability_id in definitions_by_id:
 		var definition := definitions_by_id[capability_id] as ObjectCapabilityDefinition
-		var targets := _get_relation_targets(definition)
-		for target_id in targets:
+		for edge in _get_relation_edges(definition):
+			var target_id := str(edge.get("target_id", ""))
 			if not node_names_by_id.has(target_id):
 				continue
-			var pair_key := str(capability_id) + ">" + str(target_id)
+			var relation_type := str(edge.get("type", "related"))
+			var relation_type_id := _get_relation_type_id(relation_type)
+			var pair_key := str(capability_id) + ">" + target_id + ":" + relation_type
 			if connected_pairs.has(pair_key):
 				continue
 			connected_pairs[pair_key] = true
 			_graph.connect_node(
 				str(node_names_by_id[capability_id]),
-				0,
+				relation_type_id - 1,
 				str(node_names_by_id[target_id]),
-				0
+				relation_type_id - 1
 			)
 
 	if not focused_capability_id.is_empty() and _full_nodes_by_id.has(focused_capability_id):
@@ -223,23 +237,7 @@ func get_visible_node_count() -> int:
 	return count
 
 
-func _get_relation_targets(definition: ObjectCapabilityDefinition) -> PackedStringArray:
-	var result := PackedStringArray()
-	if definition == null:
-		return result
-	for required_id in definition.required_capability_ids:
-		var normalized_id := str(required_id).strip_edges().to_lower()
-		if not normalized_id.is_empty() and not result.has(normalized_id):
-			result.append(normalized_id)
-	for conflict_id in definition.incompatible_capability_ids:
-		var normalized_id := str(conflict_id).strip_edges().to_lower()
-		if not normalized_id.is_empty() and not result.has(normalized_id):
-			result.append(normalized_id)
-	for relation in definition.relations:
-		var target_id := str(relation.get("target_id", "")).strip_edges().to_lower()
-		if not target_id.is_empty() and not result.has(target_id):
-			result.append(target_id)
-	return result
+
 
 
 func get_node_count() -> int:
@@ -259,7 +257,8 @@ func _create_graph_node(
 	title_text: String,
 	subtitle: String,
 	is_ready: bool,
-	capability_id: String
+	capability_id: String,
+	port_type: int = 0
 ) -> GraphNode:
 	var graph_node := GraphNode.new()
 	graph_node.name = node_name
@@ -270,7 +269,8 @@ func _create_graph_node(
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 3)
 	graph_node.add_child(content)
-	graph_node.set_slot(0, true, 0, Color(0.62, 0.75, 0.95), true, 0, Color(0.62, 0.75, 0.95))
+	var port_color := _get_relation_type_color(port_type)
+	graph_node.set_slot(0, true, port_type, port_color, true, port_type, port_color)
 
 	var subtitle_label := Label.new()
 	subtitle_label.text = subtitle
@@ -292,6 +292,70 @@ func _create_graph_node(
 		center_label.add_theme_font_size_override("font_size", 10)
 		content.add_child(center_label)
 	return graph_node
+
+
+func _create_full_graph_node(node_name: String, definition: ObjectCapabilityDefinition) -> GraphNode:
+	var graph_node := GraphNode.new()
+	graph_node.name = node_name
+	graph_node.title = definition.display_name
+	graph_node.custom_minimum_size = Vector2(215, 190)
+	graph_node.resizable = false
+	for relation_type in RELATION_TYPE_IDS:
+		var row := HBoxContainer.new()
+		var relation_label := Label.new()
+		relation_label.text = _relation_caption(str(relation_type))
+		relation_label.add_theme_font_size_override("font_size", 9)
+		relation_label.modulate = _get_relation_type_color(int(RELATION_TYPE_IDS[relation_type]))
+		row.add_child(relation_label)
+		graph_node.add_child(row)
+		var slot_index := graph_node.get_child_count() - 1
+		var type_id := int(RELATION_TYPE_IDS[relation_type])
+		var color := _get_relation_type_color(type_id)
+		graph_node.set_slot(slot_index, true, type_id, color, true, type_id, color)
+
+	var action := Button.new()
+	action.text = "Открыть карточку"
+	action.tooltip_text = definition.description
+	action.pressed.connect(_on_focus_pressed.bind(definition.capability_id))
+	graph_node.add_child(action)
+	_focus_button_count += 1
+	return graph_node
+
+
+func _get_relation_edges(definition: ObjectCapabilityDefinition) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if definition == null:
+		return result
+	for required_id in definition.required_capability_ids:
+		result.append({"target_id": str(required_id).strip_edges().to_lower(), "type": "requires"})
+	for conflict_id in definition.incompatible_capability_ids:
+		result.append({"target_id": str(conflict_id).strip_edges().to_lower(), "type": "conflicts"})
+	for relation in definition.relations:
+		result.append({
+			"target_id": str(relation.get("target_id", "")).strip_edges().to_lower(),
+			"type": str(relation.get("type", "related")).strip_edges().to_lower()
+		})
+	return result
+
+
+func _get_relation_type_id(relation_type: String) -> int:
+	return int(RELATION_TYPE_IDS.get(relation_type, RELATION_TYPE_IDS["related"]))
+
+
+func _get_relation_type_color(type_id: int) -> Color:
+	match type_id:
+		1:
+			return Color(0.55, 0.75, 1.0)
+		2:
+			return Color(1.0, 0.48, 0.45)
+		3:
+			return Color(0.48, 0.84, 0.62)
+		4:
+			return Color(0.76, 0.62, 0.94)
+		5:
+			return Color(0.48, 0.8, 0.84)
+		_:
+			return Color(0.85, 0.78, 0.52)
 
 
 func _on_focus_pressed(capability_id: String) -> void:
