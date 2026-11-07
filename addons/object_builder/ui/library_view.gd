@@ -9,6 +9,7 @@ signal filter_changed(index: int)
 signal object_selected(index: int)
 signal entry_action_requested(action: String, index: int)
 signal collection_create_requested
+signal collection_management_requested(action: String)
 
 var search_input: LineEdit
 var mode_filter: OptionButton
@@ -21,6 +22,8 @@ var _card_mode_button: Button
 var _list_mode_button: Button
 var _entry_actions_button: Button
 var _entry_actions_menu: PopupMenu
+var _collection_management_menu: PopupMenu
+var _collection_management_button: Button
 var _collection_options: Array[Dictionary] = []
 var _display_mode := "cards"
 var _entries: Array[Dictionary] = []
@@ -104,6 +107,18 @@ func _build_view_mode_controls() -> void:
 		collection_create_requested.emit()
 	)
 	action_row.add_child(create_collection_button)
+
+	_collection_management_button = Button.new()
+	_collection_management_button.text = "⋯"
+	_collection_management_button.tooltip_text = "Переименовать или удалить выбранную коллекцию"
+	_collection_management_button.disabled = true
+	_collection_management_button.pressed.connect(_show_collection_management_menu)
+	action_row.add_child(_collection_management_button)
+	_collection_management_menu = PopupMenu.new()
+	_collection_management_menu.add_item("Переименовать коллекцию", 0)
+	_collection_management_menu.add_item("Удалить коллекцию…", 1)
+	_collection_management_menu.id_pressed.connect(_on_collection_management_item_selected)
+	add_child(_collection_management_menu)
 
 	_entry_actions_menu = PopupMenu.new()
 	_entry_actions_menu.id_pressed.connect(_on_entry_action_selected)
