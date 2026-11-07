@@ -7,6 +7,7 @@ signal part_visibility_changed(path: NodePath, visible: bool)
 signal duplicate_requested(path: NodePath)
 signal remove_requested(path: NodePath)
 signal visibility_batch_requested(visible: bool)
+signal part_lock_changed(path: NodePath, locked: bool)
 
 const ROW_HEIGHT := 44.0
 const THUMB_SIZE := Vector2(34.0, 34.0)
@@ -19,6 +20,9 @@ var _scroll: ScrollContainer
 var _status_label: Label
 var _selected_path := NodePath("")
 var _row_buttons: Array[Button] = []
+var _row_paths: Array[NodePath] = []
+var _row_lock_checkboxes: Array[CheckBox] = []
+var _locked_paths: Dictionary = {}
 
 
 func build() -> void:
@@ -85,6 +89,20 @@ func set_selected_path(path: NodePath) -> void:
 	_update_row_selection()
 
 
+func set_locked_paths(paths: Array[NodePath]) -> void:
+	_locked_paths.clear()
+	for path in paths:
+		_locked_paths[path] = true
+	_update_row_locks()
+
+
+func get_locked_paths() -> Array[NodePath]:
+	var result: Array[NodePath] = []
+	for path in _locked_paths:
+		result.append(path)
+	return result
+
+
 func get_part_count() -> int:
 	return _parts.size()
 
@@ -134,6 +152,8 @@ func _render_rows() -> void:
 		_rows_host.remove_child(child)
 		child.queue_free()
 	_row_buttons.clear()
+	_row_paths.clear()
+	_row_lock_checkboxes.clear()
 
 	if _scene_root == null or not is_instance_valid(_scene_root):
 		_status_label.text = "Открой сцену объекта, чтобы управлять её частями."
@@ -197,6 +217,14 @@ func _add_part_row(entry: Dictionary) -> void:
 	name_button.pressed.connect(_on_part_selected.bind(path))
 	content.add_child(name_button)
 	_row_buttons.append(name_button)
+	_row_paths.append(path)
+
+	var locked := CheckBox.new()
+	locked.button_pressed = _locked_paths.has(path)
+	locked.tooltip_text = "Зафиксировать часть на холсте"
+	locked.toggled.connect(_on_lock_toggled.bind(path))
+	content.add_child(locked)
+	_row_lock_checkboxes.append(locked)
 
 	var visibility := CheckBox.new()
 	visibility.button_pressed = bool(entry.get("visible", true))
@@ -228,6 +256,12 @@ func _get_type_glyph(type_name: String) -> String:
 		"Line2D":
 			return "LINE"
 	return "NODE"
+
+
+func _update_row_locks() -> void:
+	for index in range(_row_paths.size()):
+		if index < _row_lock_checkboxes.size():
+			_row_lock_checkboxes[index].set_pressed_no_signal(_locked_paths.has(_row_paths[index]))
 
 
 func _update_row_selection() -> void:
@@ -269,6 +303,14 @@ func _on_duplicate_requested(path: NodePath) -> void:
 
 func _on_remove_requested(path: NodePath) -> void:
 	remove_requested.emit(path)
+
+
+func _on_lock_toggled(locked: bool, path: NodePath) -> void:
+	if locked:
+		_locked_paths[path] = true
+	else:
+		_locked_paths.erase(path)
+	part_lock_changed.emit(path, locked)
 
 
 func _on_show_all_pressed() -> void:

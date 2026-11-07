@@ -43,6 +43,8 @@ func _run() -> void:
 	_expect(viewport != null and surface != null and camera != null, "canvas creates a viewport, input surface and camera")
 	_expect(surface.size.x > 0.0 and surface.size.y > 0.0, "canvas surface receives its layout size")
 	_expect(bool(canvas.get("_editing_enabled")), "canvas enables edits for an open scene")
+	canvas.call("set_locked_paths", [NodePath("Sprite")])
+	_expect(bool(interaction.call("is_path_locked", NodePath("Sprite"))), "canvas forwards locked part paths to the interaction controller")
 	_expect(bool(canvas.get("_grid_enabled")) and bool(canvas.get("_snap_enabled")), "grid and pixel snapping are enabled by default")
 	var interaction: RefCounted = canvas.get("_interaction_controller")
 	_expect(interaction != null, "canvas delegates pointer handling to a separate controller")

@@ -8,6 +8,7 @@ var visibility_events: Array[Dictionary] = []
 var duplicate_paths: Array[NodePath] = []
 var remove_paths: Array[NodePath] = []
 var visibility_batch_events: Array[bool] = []
+var lock_events: Array[Dictionary] = []
 
 
 func _initialize() -> void:
@@ -23,6 +24,7 @@ func _run() -> void:
 	view.connect("duplicate_requested", Callable(self, "_on_duplicate_requested"))
 	view.connect("remove_requested", Callable(self, "_on_remove_requested"))
 	view.connect("visibility_batch_requested", Callable(self, "_on_visibility_batch_requested"))
+	view.connect("part_lock_changed", Callable(self, "_on_part_lock_changed"))
 
 	var scene_root := Node2D.new()
 	scene_root.name = "ObjectRoot"
@@ -79,6 +81,10 @@ func _run() -> void:
 	view.call("_on_show_all_pressed")
 	view.call("_on_hide_all_pressed")
 	_expect(visibility_batch_events == [true, false], "show-all and hide-all emit one batch visibility action each")
+	view.call("_on_lock_toggled", true, NodePath("Visuals/Leaf"))
+	_expect(lock_events == [{"path": NodePath("Visuals/Leaf"), "locked": true}], "part lock emits its relative path and enabled state")
+	view.call("set_locked_paths", [NodePath("Visuals/Glow")])
+	_expect(view.call("get_locked_paths") == [NodePath("Visuals/Glow")], "locked part paths can be restored from project editor settings")
 
 	var search_input := view.get("_search_input") as LineEdit
 	search_input.text = "glow"
@@ -124,6 +130,10 @@ func _on_remove_requested(path: NodePath) -> void:
 
 func _on_visibility_batch_requested(visible: bool) -> void:
 	visibility_batch_events.append(visible)
+
+
+func _on_part_lock_changed(path: NodePath, locked: bool) -> void:
+	lock_events.append({"path": path, "locked": locked})
 
 
 func _expect(condition: bool, description: String) -> void:

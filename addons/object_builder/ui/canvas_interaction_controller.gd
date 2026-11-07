@@ -16,6 +16,7 @@ var _preview_instance: Node
 var _selected_path := NodePath("")
 var _editing_enabled := false
 var _snap_enabled := true
+var _locked_paths: Dictionary = {}
 var _zoom := 1.0
 var _drag_node: Node2D
 var _drag_path := NodePath("")
@@ -56,6 +57,16 @@ func set_selected_path(path: NodePath) -> void:
 
 func set_snap_enabled(enabled: bool) -> void:
 	_snap_enabled = enabled
+
+
+func set_locked_paths(paths: Array[NodePath]) -> void:
+	_locked_paths.clear()
+	for path in paths:
+		_locked_paths[path] = true
+
+
+func is_path_locked(path: NodePath) -> bool:
+	return _locked_paths.has(path)
 
 
 func set_zoom(value: float) -> void:
@@ -118,7 +129,7 @@ func draw_selection(target: Control) -> void:
 	for index in range(surface_corners.size() - 1):
 		target.draw_circle(surface_corners[index], 3.0, Color(0.35, 0.85, 1.0))
 	var handles := _get_transform_handle_positions()
-	if handles.is_empty():
+	if handles.is_empty() or is_path_locked(_selected_path):
 		return
 	var rotate_point: Vector2 = handles["rotate"]
 	var top_middle := (surface_corners[0] + surface_corners[1]) * 0.5
@@ -155,10 +166,10 @@ func _begin_selection(screen_position: Vector2) -> void:
 		return
 	var selected := _get_selected_node() as Node2D
 	var handles := _get_transform_handle_positions()
-	if selected != null and handles.has("scale") and screen_position.distance_to(handles["scale"]) <= 10.0:
+	if selected != null and not is_path_locked(_selected_path) and handles.has("scale") and screen_position.distance_to(handles["scale"]) <= 10.0:
 		_begin_transform_drag("scale", selected, screen_position)
 		return
-	if selected != null and handles.has("rotate") and screen_position.distance_to(handles["rotate"]) <= 10.0:
+	if selected != null and not is_path_locked(_selected_path) and handles.has("rotate") and screen_position.distance_to(handles["rotate"]) <= 10.0:
 		_begin_transform_drag("rotate", selected, screen_position)
 		return
 
@@ -172,7 +183,7 @@ func _begin_selection(screen_position: Vector2) -> void:
 	_selected_path = _preview_instance.get_path_to(hit)
 	part_selected.emit(_selected_path)
 	_surface.queue_redraw()
-	if hit == _preview_instance or hit.get_parent() == null:
+	if hit == _preview_instance or hit.get_parent() == null or is_path_locked(_selected_path):
 		return
 	var parent_canvas := hit.get_parent() as CanvasItem
 	_drag_start_parent_position = (

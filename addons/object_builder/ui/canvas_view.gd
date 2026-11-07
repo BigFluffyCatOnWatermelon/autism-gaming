@@ -198,6 +198,11 @@ func set_selected_path(path: NodePath) -> void:
 		_interaction_controller.call("set_selected_path", path)
 
 
+func set_locked_paths(paths: Array[NodePath]) -> void:
+	if _interaction_controller != null:
+		_interaction_controller.call("set_locked_paths", paths)
+
+
 func _disable_preview_processing(node: Node) -> void:
 	node.process_mode = Node.PROCESS_MODE_DISABLED
 	node.set_process(false)

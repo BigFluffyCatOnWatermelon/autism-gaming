@@ -87,6 +87,7 @@ var _syncing_tree_selection := false
 var _working_definition: ObjectDefinition
 var _is_loading_editor_form := false
 var _can_save_as_template := true
+var _locked_visual_part_keys := PackedStringArray()
 
 
 func _enter_tree() -> void:
@@ -334,6 +335,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_visual_parts_view.connect("duplicate_requested", Callable(self, "_on_visual_part_duplicate_requested"))
 	_visual_parts_view.connect("remove_requested", Callable(self, "_on_visual_part_remove_requested"))
 	_visual_parts_view.connect("visibility_batch_requested", Callable(self, "_on_visual_parts_visibility_batch_requested"))
+	_visual_parts_view.connect("part_lock_changed", Callable(self, "_on_visual_part_lock_changed"))
 	parent.add_child(_visual_parts_view)
 
 
@@ -1074,12 +1076,15 @@ func _load_local_state() -> void:
 	var stored_favorites: Variant = settings.get_project_metadata(METADATA_SECTION, "favorites", PackedStringArray())
 	var stored_recent: Variant = settings.get_project_metadata(METADATA_SECTION, "recent", PackedStringArray())
 	var stored_layout: Variant = settings.get_project_metadata(METADATA_SECTION, "workspace_layout", {})
+	var stored_locked_parts: Variant = settings.get_project_metadata(METADATA_SECTION, "locked_visual_parts", PackedStringArray())
+	_locked_visual_part_keys = _to_packed_string_array(stored_locked_parts)
 	_workspace_layout_state = stored_layout.duplicate(true) if stored_layout is Dictionary else {}
 	_library_controller.call("set_local_state", stored_favorites, stored_recent)
 func _save_local_state() -> void:
 	var settings := EditorInterface.get_editor_settings()
 	settings.set_project_metadata(METADATA_SECTION, "favorites", _library_controller.call("get_favorites"))
 	settings.set_project_metadata(METADATA_SECTION, "recent", _library_controller.call("get_recent_ids"))
+	settings.set_project_metadata(METADATA_SECTION, "locked_visual_parts", _locked_visual_part_keys)
 	if _workspace_view != null:
 		settings.set_project_metadata(METADATA_SECTION, "workspace_layout", _workspace_view.call("get_layout_state"))
 func _refresh_library() -> void:
@@ -1719,6 +1724,14 @@ func _refresh_visual_parts() -> void:
 		if selected_node != null:
 			selected_path = scene_root.get_path_to(selected_node)
 	_visual_parts_view.call("set_scene_root", scene_root, selected_path)
+	var locked_paths: Array[NodePath] = []
+	if scene_root != null:
+		var part_paths: Array[NodePath] = _visual_parts_view.call("get_part_paths")
+		for part_path in part_paths:
+			if _locked_visual_part_keys.has(_get_visual_part_lock_key(scene_root, part_path)):
+				locked_paths.append(part_path)
+	_visual_parts_view.call("set_locked_paths", locked_paths)
+	_canvas_view.call("set_locked_paths", locked_paths)
 
 
 func _on_canvas_part_selected(path: NodePath) -> void:
@@ -1982,6 +1995,28 @@ func _on_visual_part_remove_requested(path: NodePath) -> void:
 	if node == null or node == scene_root:
 		return
 	_remove_scene_node(node)
+
+
+func _on_visual_part_lock_changed(path: NodePath, locked: bool) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var lock_key := _get_visual_part_lock_key(scene_root, path)
+	if locked:
+		if not _locked_visual_part_keys.has(lock_key):
+			_locked_visual_part_keys.append(lock_key)
+	else:
+		_locked_visual_part_keys.erase(lock_key)
+	_save_local_state()
+	_refresh_visual_parts()
+	_set_status("Часть зафиксирована на холсте." if locked else "Блокировка части снята.", false)
+
+
+func _get_visual_part_lock_key(scene_root: Node, path: NodePath) -> String:
+	var scene_path := scene_root.scene_file_path
+	if scene_path.is_empty() and _working_definition != null:
+		scene_path = _working_definition.scene_path
+	return scene_path + "::" + str(path)
 
 
 func _on_visual_parts_visibility_batch_requested(visible: bool) -> void:
