@@ -282,7 +282,49 @@ static func _apply_curated_relations(definitions: Array[ObjectCapabilityDefiniti
 		["plays_attack_sound", "recommends", "can_attack", "Звук атаки сопровождает выполнение атакующего действия."],
 		["plays_damage_sound", "recommends", "can_receive_damage", "Звук получения урона нужен объекту, который реагирует на попадания."],
 		["plays_destroy_sound", "recommends", "breaks_when_health_empty", "Звук разрушения дополняет переход в разрушенное состояние."],
-		["has_cooldown", "related", "can_attack", "Перезарядка часто ограничивает частоту повторных атак."]
+		["has_cooldown", "related", "can_attack", "Перезарядка часто ограничивает частоту повторных атак."],
+		["can_move", "recommends", "plays_walk_animation", "Движущемуся персонажу нужна анимация ходьбы для визуальной обратной связи."],
+		["can_run", "related", "has_stamina", "Бег часто расходует выносливость и требует правил восстановления."],
+		["can_jump", "related", "affected_by_gravity", "Прыжок обычно использует физическую гравитацию объекта."],
+		["can_attack", "recommends", "has_cooldown", "Перезарядка ограничивает частоту атак и помогает балансировать бой."],
+		["can_attack", "recommends", "can_aim", "Для направленных и дальних атак полезно отдельное прицеливание."],
+		["can_be_picked_up", "recommends", "is_stackable", "Подбираемые одинаковые предметы часто объединяются в стопки."],
+		["can_be_picked_up", "related", "has_item_weight", "Вес подбираемого предмета влияет на переносимую нагрузку."],
+		["can_be_equipped", "recommends", "has_equipment_slots", "Экипируемому предмету нужны подходящие слоты экипировки."],
+		["has_inventory", "related", "supports_hotbar", "Быстрая панель обычно использует предметы из инвентаря."],
+		["can_be_harvested", "recommends", "has_harvest_progress", "Длительную добычу удобно показывать через прогресс сбора."],
+		["can_be_harvested", "recommends", "requires_tool", "Для некоторых ресурсов добыча зависит от подходящего инструмента."],
+		["yields_resources", "recommends", "drops_loot_on_destroy", "Ресурс может выпадать как награда после разрушения объекта."],
+		["breaks_when_health_empty", "recommends", "spawns_debris", "Разрушение объекта можно сопровождать физическими или визуальными обломками."],
+		["breaks_when_health_empty", "recommends", "leaves_remains", "После разрушения можно оставить пень, руины или другой остаток."],
+		["breaks_when_health_empty", "recommends", "drops_loot_on_destroy", "Уничтожение объекта может создавать предметы и ресурсы."],
+		["can_be_repaired", "related", "has_item_durability", "Прочность и ремонт описывают износ и восстановление предмета."],
+		["can_be_tamed", "recommends", "has_happiness", "Приручение животных часто связано с доверием и уровнем счастья."],
+		["can_be_fed", "related", "has_hunger", "Кормление меняет показатель голода животного или персонажа."],
+		["can_be_mounted", "recommends", "can_move", "Оседланное животное должно поддерживать перемещение."],
+		["has_patrol_route", "extends", "can_move", "Маршрут задаёт точки и правила для уже доступного движения."],
+		["can_chase", "recommends", "can_target_enemy", "Преследование требует определить и отслеживать цель."],
+		["can_block", "related", "has_armor", "Блок и броня могут совместно снижать входящий урон."],
+		["has_shield", "related", "has_armor", "Щит и броня образуют разные слои защиты объекта."],
+		["has_damage_resistance", "related", "resists_status_effects", "Сопротивления урону и эффектам задают защиту от разных типов угроз."],
+		["plays_footsteps", "recommends", "can_move", "Звуки шагов имеют смысл у объектов, которые перемещаются."],
+		["plays_attack_sound", "recommends", "plays_attack_animation", "Звуковой и визуальный отклик вместе делают атаку понятнее."],
+		["plays_destroy_sound", "related", "emits_particles", "Звук и частицы могут вместе сопровождать разрушение."],
+		["has_day_night_schedule", "related", "has_daily_routine", "Расписание дня и ночи дополняет распорядок персонажа или животного."],
+		["has_seasonal_yield", "related", "changes_by_season", "Сезонная добыча зависит от сезонных изменений мира."],
+		["spawns_by_biome", "related", "has_habitat", "Биом появления должен соответствовать среде обитания объекта."],
+		["has_spawn_conditions", "related", "supports_region_rules", "Условия появления могут учитывать ограничения региона."],
+		["can_grow", "related", "can_regrow", "Рост и повторное отрастание описывают разные этапы развития ресурса."],
+		["has_timed_activation", "related", "has_cooldown", "Таймер активации и перезарядка управляют временем повторных действий."],
+		["supports_signal_triggers", "related", "can_be_activated", "Сигнал может служить внешним источником активации объекта."],
+		["has_light_effect", "related", "supports_tint", "Цветовое оформление может дополнять свечение объекта."],
+		["has_trail_effect", "related", "can_move", "След обычно создаётся при перемещении объекта."],
+		["has_weight_limit", "related", "has_inventory", "Лимит веса ограничивает содержимое переносимого инвентаря."],
+		["has_item_value", "recommends", "can_be_traded", "Стоимость предмета полезна при торговле и обмене."],
+		["is_consumable", "related", "can_be_used", "Расходуемый предмет теряет количество при использовании."],
+		["can_be_placed", "recommends", "has_collision", "Размещаемому в мире объекту часто нужна форма столкновений."],
+		["can_be_pushed", "related", "has_mass", "Масса влияет на реакцию объекта на толчки."],
+		["can_bounce", "related", "has_physics_material", "Материал физики задаёт упругость при отскоке."]
 	]
 
 	for row in relation_rows:
@@ -322,6 +364,7 @@ static func _append_category(
 		definition.available_in_simple_mode = true
 		definition.display_order = output.size() + 100
 		definition.icon_atlas_index = ICON_INDEX_DATA.get_index(definition.capability_id)
+		_apply_search_metadata(definition)
 		output.append(definition)
 
 
@@ -335,3 +378,108 @@ static func get_planned_count() -> int:
 
 static func get_implemented_count() -> int:
 	return 40
+
+
+static func _apply_search_metadata(definition: ObjectCapabilityDefinition) -> void:
+	var token_aliases := {
+		"health": ["здоровье", "хп", "очки жизни", "жизни"],
+		"damage": ["урон", "получение урона", "повреждение"],
+		"attack": ["атака", "удар", "атаковать"],
+		"move": ["движение", "перемещение", "двигаться"],
+		"walk": ["ходьба", "ходить"],
+		"run": ["бег", "бежать", "ускорение"],
+		"jump": ["прыжок", "прыгать"],
+		"dash": ["рывок", "ускоренный рывок"],
+		"fly": ["полёт", "летать"],
+		"swim": ["плавание", "плавать"],
+		"climb": ["лазание", "карабкаться"],
+		"teleport": ["телепортация", "телепорт"],
+		"inventory": ["инвентарь", "сумка", "рюкзак", "хранилище предметов"],
+		"item": ["предмет", "вещь", "лут"],
+		"pickup": ["подбор", "поднять", "подбираемый предмет"],
+		"stack": ["стопка", "стак", "объединение предметов"],
+		"equip": ["экипировка", "надеть", "снаряжение"],
+		"harvest": ["добыча", "сбор", "собирать ресурс"],
+		"resource": ["ресурс", "материал", "добываемый предмет"],
+		"tool": ["инструмент", "орудие"],
+		"destroy": ["разрушение", "сломать", "уничтожение"],
+		"break": ["сломать", "разрушить", "поломка"],
+		"loot": ["добыча", "дроп", "выпадение предметов"],
+		"repair": ["ремонт", "починка", "починить"],
+		"regrow": ["отрастание", "восстановление ресурса"],
+		"armor": ["броня", "защита"],
+		"shield": ["щит", "защитный барьер"],
+		"resistance": ["сопротивление", "снижение урона"],
+		"immunity": ["иммунитет", "невосприимчивость"],
+		"block": ["блок", "блокирование", "защититься"],
+		"parry": ["парирование", "отбить удар"],
+		"dodge": ["уклонение", "увернуться"],
+		"aim": ["прицеливание", "наведение", "цель"],
+		"critical": ["критический удар", "крит"],
+		"combo": ["комбо", "серия ударов"],
+		"projectile": ["снаряд", "пуля", "стрела"],
+		"collision": ["коллизия", "столкновение", "хитбокс"],
+		"gravity": ["гравитация", "падение"],
+		"physics": ["физика", "физическое поведение"],
+		"sound": ["звук", "аудио", "звуковой эффект"],
+		"animation": ["анимация", "кадры", "движение спрайта"],
+		"particle": ["частицы", "партиклы", "эффект частиц"],
+		"effect": ["эффект", "визуальный эффект"],
+		"light": ["свет", "свечение", "освещение"],
+		"patrol": ["патруль", "маршрут"],
+		"chase": ["преследование", "погоня"],
+		"flee": ["побег", "убегать"],
+		"target": ["цель", "выбор цели"],
+		"enemy": ["враг", "противник"],
+		"tame": ["приручение", "приручить"],
+		"feed": ["кормление", "кормить"],
+		"breed": ["размножение", "разведение"],
+		"animal": ["животное", "питомец"],
+		"weather": ["погода", "погодные условия"],
+		"season": ["сезон", "время года"],
+		"spawn": ["появление", "спавн", "генерация"],
+		"biome": ["биом", "местность"],
+		"grow": ["рост", "расти", "вырасти"],
+		"weight": ["вес", "нагрузка", "масса предмета"],
+		"rarity": ["редкость", "качество добычи"],
+		"level": ["уровень", "прогрессия"],
+		"experience": ["опыт", "очки опыта", "xp"],
+		"stamina": ["выносливость", "стамина"],
+		"mana": ["мана", "магическая энергия"],
+		"energy": ["энергия", "заряд"],
+		"hunger": ["голод", "сытость"],
+		"thirst": ["жажда", "вода"],
+		"temperature": ["температура", "жара", "холод"],
+		"mood": ["настроение", "счастье"],
+		"reputation": ["репутация", "отношение фракций"],
+		"open": ["открыть", "открытие"],
+		"close": ["закрыть", "закрытие"],
+		"lock": ["замок", "запереть", "блокировка"],
+		"unlock": ["отпереть", "разблокировать"],
+		"interact": ["взаимодействие", "взаимодействовать"],
+		"activate": ["активация", "включить"],
+		"use": ["использование", "использовать"],
+		"cooldown": ["перезарядка", "задержка между действиями"],
+		"timer": ["таймер", "задержка"],
+		"schedule": ["расписание", "режим по времени"],
+		"place": ["размещение", "поставить", "установить"],
+		"grid": ["сетка", "клетка"],
+		"push": ["толкать", "толкание"],
+		"pull": ["тянуть", "притяжение"],
+		"mass": ["масса", "вес объекта"],
+		"trade": ["торговля", "обмен", "продажа"]
+	}
+	var synonyms := PackedStringArray()
+	for token in definition.capability_id.to_lower().split("_"):
+		for alias_value in token_aliases.get(str(token), []):
+			var alias := str(alias_value)
+			if not synonyms.has(alias):
+				synonyms.append(alias)
+	if synonyms.is_empty():
+		synonyms.append(definition.display_name.to_lower())
+	definition.synonyms = synonyms
+	var examples := PackedStringArray()
+	for index in range(mini(4, synonyms.size())):
+		examples.append("как добавить " + synonyms[index] + " объекту")
+		examples.append("сделать объект с " + synonyms[index])
+	definition.example_queries = examples
