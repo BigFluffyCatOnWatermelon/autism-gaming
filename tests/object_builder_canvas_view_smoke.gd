@@ -213,6 +213,19 @@ func _run() -> void:
 		canvas.call("_on_add_vertical_guide_pressed")
 		_expect(guide_events.size() >= 1, "adding a guide emits project-layout state")
 		canvas.call("_on_clear_guides_pressed")
+
+		# Single-part rotation keeps its custom pivot at the same world coordinate.
+		var custom_pivot_before: Vector2 = preview_sprite.global_transform * Vector2(4.0, 6.0)
+		var single_handles: Dictionary = interaction.call("_get_transform_handle_positions")
+		var single_rotate_world: Vector2 = interaction.call("_screen_to_world", single_handles["rotate"])
+		var single_pivot_world: Vector2 = interaction.call("_screen_to_world", single_handles["pivot"])
+		var single_rotate_end := single_pivot_world + (single_rotate_world - single_pivot_world).rotated(PI / 4.0)
+		var single_rotate_screen := (viewport.get_canvas_transform() * single_rotate_end) * surface.size / Vector2(viewport.size)
+		interaction.call("_begin_selection", single_handles["rotate"])
+		interaction.call("_update_drag", single_rotate_screen)
+		interaction.call("_finish_drag")
+		var custom_pivot_after: Vector2 = preview_sprite.global_transform * Vector2(4.0, 6.0)
+		_expect(custom_pivot_after.distance_to(custom_pivot_before) <= 0.001, "rotating a part preserves its independent pivot in world space")
 		guide_state = canvas.call("get_guides")
 		_expect(guide_state.get("vertical", []).is_empty() and guide_state.get("horizontal", []).is_empty(), "clear guides removes both guide directions")
 
