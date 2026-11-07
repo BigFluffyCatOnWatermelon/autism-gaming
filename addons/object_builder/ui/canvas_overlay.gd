@@ -7,10 +7,10 @@ var canvas_owner: Node
 
 func _gui_input(event: InputEvent) -> void:
 	if canvas_owner != null and is_instance_valid(canvas_owner):
-		canvas_owner.call("_on_canvas_gui_input", event)
+		canvas_owner.call("handle_input", event)
 		accept_event()
 
 
 func _draw() -> void:
 	if canvas_owner != null and is_instance_valid(canvas_owner):
-		canvas_owner.call("_draw_selection", self)
+		canvas_owner.call("draw_selection", self)
