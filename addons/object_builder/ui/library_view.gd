@@ -40,6 +40,8 @@ func build() -> void:
 	mode_filter.set_item_metadata(1, "favorites")
 	mode_filter.add_item("Недавние")
 	mode_filter.set_item_metadata(2, "recent")
+	mode_filter.add_item("Шаблоны")
+	mode_filter.set_item_metadata(3, "templates")
 	mode_filter.item_selected.connect(_on_filter_changed)
 	add_child(mode_filter)
 	category_filter = OptionButton.new()
@@ -110,6 +112,10 @@ func get_search_query() -> String:
 
 func get_selected_mode() -> String:
 	return _get_selected_metadata(mode_filter, "all")
+
+
+func set_selected_mode(mode_id: String) -> void:
+	_select_option_metadata(mode_filter, mode_id)
 
 
 func get_selected_category() -> String:

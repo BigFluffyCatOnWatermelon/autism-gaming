@@ -100,7 +100,7 @@ func get_category_options(_selected_value: String = "") -> Array[Dictionary]:
 	var categories: Array[String] = []
 	for category_key in CATEGORY_LABELS.keys():
 		categories.append(str(category_key))
-	for definition in definitions:
+	for definition in definitions + templates:
 		if not definition.category.is_empty() and not categories.has(definition.category):
 			categories.append(definition.category)
 	categories.sort()
@@ -112,7 +112,7 @@ func get_category_options(_selected_value: String = "") -> Array[Dictionary]:
 
 func get_tag_options(_selected_value: String = "") -> Array[Dictionary]:
 	var tags := PackedStringArray()
-	for definition in definitions:
+	for definition in definitions + templates:
 		for tag in definition.tags:
 			if not tag.is_empty() and not tags.has(tag):
 				tags.append(tag)
@@ -136,6 +136,8 @@ func build_visible_entries(
 			var recent_definition := find_definition(object_id)
 			if recent_definition != null:
 				candidates.append(recent_definition)
+	elif selected_mode == "templates":
+		candidates.assign(templates)
 	else:
 		for definition in definitions:
 			if selected_mode == "favorites" and not is_favorite(definition.object_id):
@@ -207,8 +209,9 @@ func get_object_type_display_name(type_id: String) -> String:
 func _rebuild_indexes() -> void:
 	_definitions_by_id.clear()
 	_search_text_by_instance_id.clear()
-	for definition in definitions:
-		_definitions_by_id[definition.object_id] = definition
+	for definition in definitions + templates:
+		if not definition.is_template:
+			_definitions_by_id[definition.object_id] = definition
 		_search_text_by_instance_id[definition.get_instance_id()] = (
 			definition.display_name + " " + definition.object_id + " "
 			+ definition.description + " " + join_tags(definition.tags)

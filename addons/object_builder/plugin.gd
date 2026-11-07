@@ -314,6 +314,7 @@ func _build_preview_window() -> void:
 	_preview_view.call("build")
 	_preview_view.connect("refresh_requested", Callable(self, "_on_preview_pressed"))
 	add_child(_preview_view)
+	_preview_view.hide()
 func _build_library_panel(parent: VBoxContainer) -> void:
 	_library_view = ObjectBuilderLibraryViewScript.new()
 	_library_view.name = "LibraryView"
@@ -1057,8 +1058,14 @@ func _refresh_library() -> void:
 	_refresh_library_list()
 	_refresh_favorite_button()
 	_refresh_scene_tree()
-	if int(_library_controller.call("get_definition_count")) == 0:
-		_set_status("Библиотека пока пуста. Создай объект или начни с шаблона.", false)
+	var definition_count := int(_library_controller.call("get_definition_count"))
+	var template_count := int(_library_controller.call("get_template_count"))
+	if definition_count == 0 and template_count > 0:
+		_library_view.call("set_selected_mode", "templates")
+		_refresh_library_list()
+		_set_status("Пока нет сохранённых объектов. Выбери стартовый шаблон — он откроется как отдельная копия.", false)
+	elif definition_count == 0:
+		_set_status("Библиотека пока пуста. Создай первый объект.", false)
 
 func _on_refresh_pressed() -> void:
 	_refresh_library()
@@ -1098,6 +1105,13 @@ func _on_filter_changed(_index: int) -> void:
 func _on_library_item_selected(index: int) -> void:
 	var definition := _library_controller.call("get_visible_definition", index) as ObjectDefinition
 	if definition == null:
+		return
+	if definition.is_template:
+		var template_copy := _create_definition_from_template(definition)
+		if template_copy != null:
+			_can_save_as_template = true
+			_load_definition(template_copy, true)
+			_set_status("Создана копия шаблона. Измени её и сохрани как отдельный объект.", false)
 		return
 	_can_save_as_template = false
 	_record_recent(definition.object_id)
@@ -1146,6 +1160,17 @@ func _on_template_dialog_confirmed() -> void:
 	var template_definition := _library_controller.call("get_template", selected_index) as ObjectDefinition
 	if template_definition == null:
 		return
+	var definition := _create_definition_from_template(template_definition)
+	if definition == null:
+		return
+	_can_save_as_template = true
+	_load_definition(definition, true)
+	_set_status("Создана копия шаблона. Измени параметры и сохрани объект.", false)
+
+
+func _create_definition_from_template(template_definition: ObjectDefinition) -> ObjectDefinition:
+	if template_definition == null:
+		return null
 	var definition := template_definition.duplicate(true) as ObjectDefinition
 	definition.object_id = "object_%d_%d" % [int(Time.get_unix_time_from_system()), Time.get_ticks_msec()]
 	definition.display_name = template_definition.display_name + " — копия"
@@ -1154,9 +1179,7 @@ func _on_template_dialog_confirmed() -> void:
 	definition.scene = null
 	definition.scene_path = ""
 	_clone_template_scene(template_definition, definition)
-	_can_save_as_template = true
-	_load_definition(definition, true)
-	_set_status("Создана копия шаблона. Измени параметры и сохрани объект.", false)
+	return definition
 
 func _clone_template_scene(template_definition: ObjectDefinition, target_definition: ObjectDefinition) -> void:
 	var result: Dictionary = ObjectBuilderSceneDraftService.clone_template_scene(
@@ -1481,6 +1504,8 @@ func _on_save_pressed() -> void:
 		_set_status("Объект сохранён в библиотеку: %s" % _working_definition.display_name, false)
 	if scene_properties_synced:
 		_set_status("Объект и его сцена сохранены.", false)
+	if not _working_definition.is_template and str(_library_view.call("get_selected_mode")) == "templates":
+		_library_view.call("set_selected_mode", "all")
 	_refresh_library()
 	_load_definition(_working_definition)
 
