@@ -124,7 +124,8 @@ static func _ensure_required_selections(
 			var dependency_selection := selections[dependency_index]
 			if not dependency_selection.enabled:
 				dependency_selection.enabled = true
-				dependency_selection.automatically_added = true
+				# Keep manually-added provenance. Only new dependencies are automatic;
+				# re-enabling an existing manual entry must never make it removable later.
 				added_ids.append(dependency_id)
 
 		if not _ensure_required_selections(dependency_id, selections, states, added_ids, errors):
