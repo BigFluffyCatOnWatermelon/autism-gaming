@@ -296,6 +296,7 @@ func _build_creation_dialog(profiles: Array) -> void:
 	_creation_file_dialog.filters = PackedStringArray(["*.tscn, *.scn ; Godot Scene"])
 	_creation_file_dialog.file_selected.connect(_on_creation_import_file_selected)
 	add_child(_creation_file_dialog)
+	_creation_mode_option.select(0)
 	_creation_profile_option.select(0)
 	_on_creation_mode_selected(0)
 
@@ -335,6 +336,7 @@ func _populate_creation_source_options() -> void:
 		_suggest_creation_name_from_source()
 	else:
 		_creation_source_option.add_item("Список пока пуст")
+		_creation_source_option.set_item_metadata(0, "")
 		_creation_source_option.set_item_disabled(0, true)
 
 
