@@ -3,6 +3,7 @@ extends RefCounted
 ## Handles pointer selection and transforms on an Object Builder canvas.
 
 signal part_selected(path: NodePath)
+signal context_menu_requested(path: NodePath)
 signal transform_committed(path: NodePath, property_name: String, new_value: Variant, old_value: Variant)
 signal zoom_requested(factor: float)
 
@@ -84,6 +85,10 @@ func handle_input(event: InputEvent) -> void:
 		if button.button_index == MOUSE_BUTTON_WHEEL_DOWN and button.pressed:
 			zoom_requested.emit(1.0 / 1.2)
 			return
+		if button.button_index == MOUSE_BUTTON_RIGHT:
+			if button.pressed:
+				_begin_context_selection(button.position)
+			return
 		if button.button_index == MOUSE_BUTTON_MIDDLE:
 			_pan_active = button.pressed
 			_last_mouse_position = button.position
@@ -111,6 +116,21 @@ func handle_input(event: InputEvent) -> void:
 		elif _drag_node != null and is_instance_valid(_drag_node):
 			_update_drag(motion.position)
 
+
+func _begin_context_selection(screen_position: Vector2) -> void:
+	if not _editing_enabled or _preview_instance == null or not is_instance_valid(_preview_instance):
+		return
+	var world_position := _screen_to_world(screen_position)
+	var hit := CanvasGeometry.find_visual_at(_preview_instance, world_position)
+	if hit == null:
+		_selected_path = NodePath("")
+		_surface.queue_redraw()
+		part_selected.emit(NodePath(""))
+		return
+	_selected_path = _preview_instance.get_path_to(hit)
+	_surface.queue_redraw()
+	part_selected.emit(_selected_path)
+	context_menu_requested.emit(_selected_path)
 
 func draw_selection(target: Control) -> void:
 	var corners: PackedVector2Array = CanvasGeometry.selected_screen_corners(
