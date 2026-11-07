@@ -8,6 +8,9 @@ var selected_paths: Array[NodePath] = []
 var committed_transforms: Array[Dictionary] = []
 var open_scene_requests := 0
 var context_action_events: Array[String] = []
+var batch_transform_events: Array[Array] = []
+var pivot_events: Array[Dictionary] = []
+var guide_events: Array[Dictionary] = []
 
 
 func _initialize() -> void:
@@ -21,6 +24,9 @@ func _run() -> void:
 	canvas.size = Vector2(760, 430)
 	canvas.connect("part_selected", Callable(self, "_on_part_selected"))
 	canvas.connect("transform_committed", Callable(self, "_on_transform_committed"))
+	canvas.connect("batch_transform_committed", Callable(self, "_on_batch_transform_committed"))
+	canvas.connect("pivot_committed", Callable(self, "_on_pivot_committed"))
+	canvas.connect("guides_changed", Callable(self, "_on_guides_changed"))
 	canvas.connect("open_scene_requested", Callable(self, "_on_open_scene_requested"))
 	canvas.connect("part_context_action_requested", Callable(self, "_on_part_context_action_requested"))
 
@@ -34,6 +40,11 @@ func _run() -> void:
 	sprite.texture = texture
 	sprite.position = Vector2(64.0, 32.0)
 	scene_root.add_child(sprite)
+	var second_sprite := Sprite2D.new()
+	second_sprite.name = "SecondSprite"
+	second_sprite.texture = texture
+	second_sprite.position = Vector2(128.0, 32.0)
+	scene_root.add_child(second_sprite)
 
 	canvas.call("set_preview_instance", scene_root.duplicate(), true, true, NodePath("Sprite"))
 	await process_frame
@@ -103,7 +114,52 @@ func _run() -> void:
 			_expect(committed_transforms[0].get("property") == "position", "canvas commits position changes through a property contract")
 			_expect(committed_transforms[0].get("old") == Vector2(64.0, 32.0), "canvas preserves the original position for Undo")
 			_expect(committed_transforms[0].get("new") == Vector2(72.0, 32.0), "canvas emits the snapped final position")
+
 		_expect(sprite.position == Vector2(64.0, 32.0), "dragging the isolated preview leaves the original scene unchanged")
+
+		# Marquee selection is independent of the single active Inspector selection.
+		var first_corner := viewport.get_canvas_transform() * Vector2(40.0, 8.0)
+		var second_corner := viewport.get_canvas_transform() * Vector2(152.0, 56.0)
+		interaction.set("_marquee_start", first_corner * surface.size / Vector2(viewport.size))
+		interaction.set("_marquee_end", second_corner * surface.size / Vector2(viewport.size))
+		interaction.call("_finish_marquee")
+		var selected_group: Array = interaction.call("get_selected_paths")
+		_expect(selected_group.size() == 2, "marquee selects multiple visual parts inside its rectangle")
+		_expect(selected_group.has(NodePath("Sprite")) and selected_group.has(NodePath("SecondSprite")), "marquee retains stable scene-relative paths")
+
+		# Group movement is committed as one batch rather than independent Undo entries.
+		var second_preview := preview_root.get_node("SecondSprite") as Sprite2D
+		var before_first := preview_sprite.global_position
+		var before_second := second_preview.global_position
+		var group_start_world := Vector2(64.0, 32.0)
+		var group_start_screen := (viewport.get_canvas_transform() * group_start_world) * surface.size / Vector2(viewport.size)
+		interaction.call("_begin_selection", group_start_screen)
+		var group_end_world := group_start_world + Vector2(16.0, 8.0)
+		var group_end_screen := (viewport.get_canvas_transform() * group_end_world) * surface.size / Vector2(viewport.size)
+		interaction.call("_update_drag", group_end_screen)
+		interaction.call("_finish_drag")
+		_expect(preview_sprite.global_position == before_first + Vector2(16.0, 8.0), "group drag moves the first selected part")
+		_expect(second_preview.global_position == before_second + Vector2(16.0, 8.0), "group drag moves every selected part")
+		_expect(batch_transform_events.size() == 1 and batch_transform_events[0].size() == 2, "group movement emits one batch containing both part transforms")
+
+		# Independent pivot metadata is editable and emits a scene commit request.
+		canvas.call("set_selected_path", NodePath("Sprite"))
+		interaction.call("set_pivot_edit_mode", true)
+		var pivot_world := preview_sprite.global_position + Vector2(4.0, 6.0)
+		var pivot_screen := (viewport.get_canvas_transform() * pivot_world) * surface.size / Vector2(viewport.size)
+		interaction.call("_begin_selection", pivot_screen)
+		_expect(preview_sprite.has_meta("object_builder_pivot"), "pivot mode stores an independent local pivot on the preview node")
+		_expect(pivot_events.size() == 1 and pivot_events[0].get("path") == NodePath("Sprite"), "pivot edit emits a stable scene path for Undo/Redo persistence")
+		interaction.call("set_pivot_edit_mode", false)
+
+		canvas.call("set_guides", [12.0], [24.0])
+		var guide_state: Dictionary = canvas.call("get_guides")
+		_expect(guide_state.get("vertical", []).size() == 1 and guide_state.get("horizontal", []).size() == 1, "canvas stores vertical and horizontal guides")
+		canvas.call("_on_add_vertical_guide_pressed")
+		_expect(guide_events.size() >= 1, "adding a guide emits project-layout state")
+		canvas.call("_on_clear_guides_pressed")
+		guide_state = canvas.call("get_guides")
+		_expect(guide_state.get("vertical", []).is_empty() and guide_state.get("horizontal", []).is_empty(), "clear guides removes both guide directions")
 
 		var handles: Dictionary = interaction.call("_get_transform_handle_positions")
 		_expect(handles.has("scale") and handles.has("rotate"), "selected parts expose scale and rotation handles")
@@ -230,6 +286,18 @@ func _on_transform_committed(path: NodePath, property_name: String, new_value: V
 		"new": new_value,
 		"old": old_value
 	})
+
+
+func _on_batch_transform_committed(changes: Array[Dictionary]) -> void:
+	batch_transform_events.append(changes)
+
+
+func _on_pivot_committed(path: NodePath, new_value: Vector2, old_value: Variant) -> void:
+	pivot_events.append({"path": path, "new": new_value, "old": old_value})
+
+
+func _on_guides_changed(vertical_guides: Array[float], horizontal_guides: Array[float]) -> void:
+	guide_events.append({"vertical": vertical_guides, "horizontal": horizontal_guides})
 
 
 func _on_open_scene_requested() -> void:
