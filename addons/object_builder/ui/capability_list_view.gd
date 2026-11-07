@@ -167,7 +167,7 @@ func _create_capability_card(
 	var card_header := HBoxContainer.new()
 	card_content.add_child(card_header)
 
-	var is_implemented := capability.runtime_status == "Implemented"
+	var is_implemented := capability.is_ready()
 	var is_enabled := bool(entry.get("enabled", false))
 	var is_automatic := bool(entry.get("automatically_added", false))
 	var enabled_check := CheckBox.new()
@@ -176,7 +176,7 @@ func _create_capability_card(
 		enabled_check.text += " · автоматически"
 		enabled_check.tooltip_text = "Эта возможность нужна другой выбранной возможности. Её нельзя отключить, пока она используется."
 	elif not is_implemented:
-		enabled_check.tooltip_text = "Механика уже есть в каталоге, но её runtime-поведение ещё разрабатывается."
+		enabled_check.tooltip_text = "Возможность есть в каталоге, но её реализация ещё не готова для использования."
 	enabled_check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	enabled_check.button_pressed = is_enabled
 	enabled_check.disabled = not bool(entry.get("can_toggle", is_implemented))
