@@ -56,8 +56,10 @@ func _run() -> void:
 		_expect(duplicate.scene_path != source.scene_path, "copy workflow uses an independent scene path")
 		if duplicate.scene is PackedScene:
 			var copy_root := duplicate.scene.instantiate()
-			_expect(copy_root.get_node_or_null("UnknownPart/NestedMarker") is Marker2D, "copy workflow preserves unknown source nodes")
-			copy_root.free()
+			_expect(copy_root != null, "copy workflow scene can be instantiated")
+			if copy_root != null:
+				_expect(copy_root.get_node_or_null("UnknownPart/NestedMarker") is Marker2D, "copy workflow preserves unknown source nodes")
+				copy_root.free()
 
 	var invalid_result: Dictionary = CreationService.create_from_source(null, {})
 	_expect(not bool(invalid_result.get("ok", true)), "copy workflow handles a missing source")
