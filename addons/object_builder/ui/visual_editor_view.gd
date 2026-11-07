@@ -38,6 +38,7 @@ var _sprite_flip_v: CheckBox
 var _texture_dialog: FileDialog
 var _frames_path_edit: LineEdit
 var _frames_dialog: FileDialog
+var _resource_picker_mode := "texture"
 var _animation_option: OptionButton
 var _animated_frame: SpinBox
 var _animated_speed: SpinBox
@@ -252,24 +253,20 @@ func _build_animated_sprite_controls() -> void:
 
 func _build_file_dialogs() -> void:
 	_texture_dialog = FileDialog.new()
-	_texture_dialog.title = "Выбрать текстуру"
+	_texture_dialog.title = "Выбрать ресурс"
 	_texture_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	_texture_dialog.access = FileDialog.ACCESS_RESOURCES
-	_texture_dialog.filters = PackedStringArray([
-		"*.png, *.webp, *.jpg, *.jpeg, *.svg, *.bmp, *.tga ; Файлы изображений"
-	])
-	_texture_dialog.file_selected.connect(_on_texture_file_selected)
+	_texture_dialog.file_selected.connect(_on_resource_file_selected)
 	add_child(_texture_dialog)
+	# Both resource types use the same picker window and navigation state.
+	_frames_dialog = _texture_dialog
 
-	_frames_dialog = FileDialog.new()
-	_frames_dialog.title = "Выбрать ресурс SpriteFrames"
-	_frames_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
-	_frames_dialog.access = FileDialog.ACCESS_RESOURCES
-	_frames_dialog.filters = PackedStringArray([
-		"*.tres, *.res ; Ресурсы Godot"
-	])
-	_frames_dialog.file_selected.connect(_on_frames_file_selected)
-	add_child(_frames_dialog)
+
+func _on_resource_file_selected(path: String) -> void:
+	if _resource_picker_mode == "sprite_frames":
+		frames_file_selected.emit(path)
+	else:
+		texture_file_selected.emit(path)
 
 
 func show_sprite(sprite: Sprite2D) -> void:
@@ -374,11 +371,19 @@ func set_preview_texture(texture: Texture2D) -> void:
 
 
 func popup_texture_dialog() -> void:
+	_resource_picker_mode = "texture"
+	_texture_dialog.title = "Выбрать текстуру Texture2D"
+	_texture_dialog.filters = PackedStringArray([
+		"*.png, *.webp, *.jpg, *.jpeg, *.svg, *.bmp, *.tga ; Файлы изображений"
+	])
 	DialogService.popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
 
 
 func popup_sprite_frames_dialog() -> void:
-	DialogService.popup_window_safely(_frames_dialog, Vector2i(820, 620), 0.88)
+	_resource_picker_mode = "sprite_frames"
+	_texture_dialog.title = "Выбрать ресурс SpriteFrames"
+	_texture_dialog.filters = PackedStringArray(["*.tres, *.res ; Ресурсы Godot"])
+	DialogService.popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
 
 
 func _on_texture_path_submitted(path: String) -> void:
