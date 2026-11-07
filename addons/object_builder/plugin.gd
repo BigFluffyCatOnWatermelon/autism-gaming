@@ -116,6 +116,8 @@ var _working_definition: ObjectDefinition
 var _is_loading_editor_form := false
 var _can_save_as_template := true
 var _locked_visual_part_keys := PackedStringArray()
+var _canvas_vertical_guides: Array[float] = []
+var _canvas_horizontal_guides: Array[float] = []
 
 
 func _enter_tree() -> void:
@@ -433,6 +435,9 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_canvas_view.connect("part_selected", Callable(self, "_on_canvas_part_selected"))
 	_canvas_view.connect("part_context_action_requested", Callable(self, "_on_canvas_part_context_action_requested"))
 	_canvas_view.connect("transform_committed", Callable(self, "_on_canvas_transform_committed"))
+	_canvas_view.connect("batch_transform_committed", Callable(self, "_on_canvas_batch_transform_committed"))
+	_canvas_view.connect("pivot_committed", Callable(self, "_on_canvas_pivot_committed"))
+	_canvas_view.connect("guides_changed", Callable(self, "_on_canvas_guides_changed"))
 	_canvas_view.connect("open_scene_requested", Callable(self, "_on_canvas_open_scene_requested"))
 	parent.add_child(_canvas_view)
 
@@ -1545,6 +1550,8 @@ func _load_local_state() -> void:
 	var stored_collections: Variant = settings.get_project_metadata(METADATA_SECTION, "custom_collections", {})
 	var stored_layout: Variant = settings.get_project_metadata(METADATA_SECTION, "workspace_layout", {})
 	var stored_locked_parts: Variant = settings.get_project_metadata(METADATA_SECTION, "locked_visual_parts", PackedStringArray())
+	var stored_vertical_guides: Variant = settings.get_project_metadata(METADATA_SECTION, "canvas_vertical_guides", [])
+	var stored_horizontal_guides: Variant = settings.get_project_metadata(METADATA_SECTION, "canvas_horizontal_guides", [])
 	_locked_visual_part_keys = PackedStringArray()
 	if stored_locked_parts is PackedStringArray:
 		_locked_visual_part_keys = stored_locked_parts.duplicate()
@@ -1553,6 +1560,14 @@ func _load_local_state() -> void:
 			var lock_key := str(stored_key).strip_edges()
 			if not lock_key.is_empty() and not _locked_visual_part_keys.has(lock_key):
 				_locked_visual_part_keys.append(lock_key)
+	_canvas_vertical_guides.clear()
+	_canvas_horizontal_guides.clear()
+	if stored_vertical_guides is Array:
+		for guide_value in stored_vertical_guides:
+			_canvas_vertical_guides.append(float(guide_value))
+	if stored_horizontal_guides is Array:
+		for guide_value in stored_horizontal_guides:
+			_canvas_horizontal_guides.append(float(guide_value))
 	_workspace_layout_state = stored_layout.duplicate(true) if stored_layout is Dictionary else {}
 	_library_controller.call("set_local_state", stored_favorites, stored_recent, stored_collections)
 func _save_local_state() -> void:
@@ -1561,6 +1576,8 @@ func _save_local_state() -> void:
 	settings.set_project_metadata(METADATA_SECTION, "recent", _library_controller.call("get_recent_ids"))
 	settings.set_project_metadata(METADATA_SECTION, "custom_collections", _library_controller.call("get_collections_state"))
 	settings.set_project_metadata(METADATA_SECTION, "locked_visual_parts", _locked_visual_part_keys)
+	settings.set_project_metadata(METADATA_SECTION, "canvas_vertical_guides", _canvas_vertical_guides)
+	settings.set_project_metadata(METADATA_SECTION, "canvas_horizontal_guides", _canvas_horizontal_guides)
 	if _workspace_view != null:
 		settings.set_project_metadata(METADATA_SECTION, "workspace_layout", _workspace_view.call("get_layout_state"))
 func _refresh_library() -> void:
@@ -2438,6 +2455,7 @@ func _refresh_canvas() -> void:
 		var selected_node := _get_editor_selected_scene_node(scene_root)
 		if selected_node != null:
 			selected_path = scene_root.get_path_to(selected_node)
+	_canvas_view.call("set_guides", _canvas_vertical_guides, _canvas_horizontal_guides)
 	_canvas_view.call(
 		"set_preview_instance",
 		preview_result.get("instance") as Node,
@@ -2538,6 +2556,71 @@ func _on_canvas_transform_committed(
 		return
 	_commit_visual_node_property(node, property_name, new_value, "переместить часть на холсте")
 	_refresh_canvas()
+
+
+func _on_canvas_batch_transform_committed(changes: Array[Dictionary]) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null or changes.is_empty():
+		return
+	var resolved_changes: Array[Dictionary] = []
+	for change in changes:
+		var path := NodePath(str(change.get("path", "")))
+		var node := scene_root.get_node_or_null(path) as Node2D
+		var property_name := str(change.get("property", ""))
+		if node == null or property_name.is_empty():
+			continue
+		var old_value: Variant = node.get(property_name)
+		var new_value: Variant = change.get("new")
+		if old_value == new_value:
+			continue
+		resolved_changes.append({
+			"node": node,
+			"property": property_name,
+			"old": old_value,
+			"new": new_value
+		})
+	if resolved_changes.is_empty():
+		return
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: трансформация нескольких частей на холсте", 0, scene_root)
+	for change in resolved_changes:
+		var node := change.get("node") as Node2D
+		var property_name := str(change.get("property", ""))
+		undo_redo.add_do_property(node, property_name, change.get("new"))
+		undo_redo.add_undo_property(node, property_name, change.get("old"))
+	undo_redo.commit_action()
+	_refresh_canvas()
+	_refresh_visual_parts()
+	_set_status("Изменения применены к %d свойствам выбранных частей одним действием Undo/Redo." % resolved_changes.size(), false)
+
+
+func _on_canvas_pivot_committed(path: NodePath, new_value: Vector2, old_value: Variant) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var node := scene_root.get_node_or_null(path) as Node2D
+	if node == null:
+		return
+	var metadata_key := "object_builder_pivot"
+	var current_value: Variant = node.get_meta(metadata_key) if node.has_meta(metadata_key) else null
+	if current_value == new_value:
+		return
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: изменить точку Pivot", 0, scene_root)
+	undo_redo.add_do_method(node, "set_meta", metadata_key, new_value)
+	if current_value == null:
+		undo_redo.add_undo_method(node, "remove_meta", metadata_key)
+	else:
+		undo_redo.add_undo_method(node, "set_meta", metadata_key, current_value)
+	undo_redo.commit_action()
+	_refresh_canvas()
+	_set_status("Точка Pivot сохранена в сцене. Масштабирование и вращение будут выполняться вокруг неё.", false)
+
+
+func _on_canvas_guides_changed(vertical_guides: Array[float], horizontal_guides: Array[float]) -> void:
+	_canvas_vertical_guides = vertical_guides.duplicate()
+	_canvas_horizontal_guides = horizontal_guides.duplicate()
+	_save_local_state()
 
 
 func _on_canvas_open_scene_requested() -> void:
