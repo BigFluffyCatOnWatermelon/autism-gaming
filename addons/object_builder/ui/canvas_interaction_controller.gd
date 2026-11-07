@@ -456,7 +456,7 @@ func _begin_transform_drag(mode: String, node: Node2D, screen_position: Vector2)
 	_drag_mode = mode
 	if mode == "scale":
 		_drag_old_scale = node.scale
-		_drag_start_vector = world_position - node.global_position
+		_drag_start_vector = world_position - _drag_start_pivot_world
 	elif mode == "rotate":
 		_drag_old_rotation = node.rotation_degrees
 		_drag_start_vector = world_position - node.global_position
