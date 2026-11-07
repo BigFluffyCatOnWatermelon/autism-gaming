@@ -21,6 +21,10 @@ func _run() -> void:
 	view.connect("close_requested", Callable(self, "_on_close_requested"))
 
 	_expect(view.visible, "inline settings panel can be displayed by its parent")
+	_expect(view.get_child_count() == 5, "panel has one header, a scroll area, separators and a fixed footer")
+	_expect(view.get_child(0) is HBoxContainer, "capability name and close action share the header row")
+	_expect(view.get_child(2) is ScrollContainer, "capability settings use an independently scrollable area")
+	_expect(view.get_child(4) is HBoxContainer, "apply and cancel actions remain fixed below the scroll area")
 
 	var capability = CapabilityScript.new()
 	capability.capability_id = "has_health"
