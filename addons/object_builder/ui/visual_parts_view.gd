@@ -124,6 +124,7 @@ func set_selected_paths(paths: Array[NodePath]) -> void:
 	_selected_paths = paths.duplicate()
 	_selected_path = _selected_paths.back() if not _selected_paths.is_empty() else NodePath("")
 	_update_row_selection()
+	_update_resource_button()
 
 
 func get_selected_paths() -> Array[NodePath]:
