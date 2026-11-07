@@ -158,7 +158,7 @@ static func _is_scene_referenced_by_other_definition(
 	scene_path: String
 ) -> bool:
 	for candidate in ObjectLibraryService.load_definitions() + ObjectLibraryService.load_templates():
-		if candidate == null or candidate.object_id == deleted_definition.object_id:
+		if candidate == null or _get_definition_path(candidate) == _get_definition_path(deleted_definition):
 			continue
 		if candidate.scene_path == scene_path:
 			return true
