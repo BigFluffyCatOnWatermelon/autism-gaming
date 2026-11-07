@@ -37,9 +37,6 @@ var _creation_category_option: OptionButton
 var _creation_tags_edit: LineEdit
 var _creation_description_edit: TextEdit
 
-var _template_dialog: AcceptDialog
-var _template_option: OptionButton
-
 var _node_dialog: AcceptDialog
 var _node_type_list: ItemList
 var _node_name_edit: LineEdit
@@ -48,7 +45,6 @@ var _node_name_edit: LineEdit
 func build(property_types: Array, creation_profiles: Array, child_node_types: Array) -> void:
 	_build_property_dialog(property_types)
 	_build_creation_dialog(creation_profiles)
-	_build_template_dialog()
 	_build_node_dialog(child_node_types)
 
 
@@ -58,10 +54,6 @@ func get_property_dialog() -> AcceptDialog:
 
 func get_creation_dialog() -> AcceptDialog:
 	return _creation_dialog
-
-
-func get_template_dialog() -> AcceptDialog:
-	return _template_dialog
 
 
 func get_node_dialog() -> AcceptDialog:
@@ -440,33 +432,6 @@ func set_creation_profile_hint(value: String) -> void:
 
 func reset_creation_profile() -> void:
 	reset_creation_wizard("new")
-func _build_template_dialog() -> void:
-	_template_dialog = AcceptDialog.new()
-	_template_dialog.title = "Создать объект из шаблона"
-	add_child(_template_dialog)
-	var form := UIFactory.create_scrollable_dialog_body(_template_dialog, Vector2i(420, 150))
-	_template_option = OptionButton.new()
-	UIFactory.add_labeled_control(form, "Шаблон", _template_option)
-	var hint := Label.new()
-	hint.text = "Будет создана независимая копия определения и сцены."
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	form.add_child(hint)
-
-
-func set_template_options(names: Array) -> void:
-	if _template_option == null:
-		return
-	_template_option.clear()
-	for entry in names:
-		_template_option.add_item(str(entry))
-	if _template_option.item_count > 0:
-		_template_option.select(0)
-
-
-func get_selected_template_index() -> int:
-	return _template_option.selected if _template_option != null else -1
-
-
 func _build_node_dialog(child_node_types: Array) -> void:
 	_node_dialog = AcceptDialog.new()
 	_node_dialog.title = "Добавить дочерний узел"
@@ -530,10 +495,6 @@ func popup_property_dialog() -> void:
 
 func popup_creation_dialog() -> void:
 	DialogService.popup_window_safely(_creation_dialog, Vector2i(540, 560), 0.90)
-
-
-func popup_template_dialog() -> void:
-	DialogService.popup_window_safely(_template_dialog, Vector2i(440, 170), 0.82)
 
 
 func popup_node_dialog() -> void:
