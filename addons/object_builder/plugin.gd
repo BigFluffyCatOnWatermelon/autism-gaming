@@ -1376,6 +1376,7 @@ func _on_preview_pressed() -> void:
 		_set_status("Окно предпросмотра ещё не готово.", true)
 		return
 
+	var should_open_window := not _preview_view.visible
 	var result: Dictionary = ObjectBuilderPreviewService.create_preview_instance(
 		_working_definition,
 		_get_open_object_scene_root()
@@ -1391,8 +1392,11 @@ func _on_preview_pressed() -> void:
 		_set_status("Не удалось открыть предпросмотр объекта.", true)
 		return
 
-	ObjectBuilderDialogService.popup_window_safely(_preview_view, Vector2i(820, 620), 0.86)
-	_set_status("Предпросмотр построен из текущего черновика. Исходная сцена и файлы не изменены.", false)
+	if should_open_window:
+		ObjectBuilderDialogService.popup_window_safely(_preview_view, Vector2i(820, 620), 0.86)
+	else:
+		_preview_view.grab_focus()
+	_set_status("Предпросмотр собран из актуального черновика. Тестовое состояние предыдущей копии сброшено.", false)
 
 
 func _on_save_pressed() -> void:
