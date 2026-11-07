@@ -15,6 +15,7 @@ signal sprite_frames_editor_requested(path: NodePath)
 signal draw_order_reorder_requested(source_path: NodePath, target_path: NodePath)
 
 const VisualPartRowScript = preload("res://addons/object_builder/ui/visual_part_row.gd")
+const VisualPartDragHandleScript = preload("res://addons/object_builder/ui/visual_part_drag_handle.gd")
 
 const ROW_HEIGHT := 44.0
 const THUMB_SIZE := Vector2(34.0, 34.0)
@@ -265,6 +266,13 @@ func _add_part_row(entry: Dictionary) -> void:
 	content.add_theme_constant_override("separation", 5)
 	row.add_child(content)
 
+	var drag_handle = VisualPartDragHandleScript.new()
+	drag_handle.text = "⋮⋮"
+	drag_handle.tooltip_text = "Перетащить часть и изменить порядок отрисовки"
+	drag_handle.part_path = path
+	drag_handle.parent_path = entry.get("parent_path", NodePath(""))
+	content.add_child(drag_handle)
+
 	var thumbnail_host := CenterContainer.new()
 	thumbnail_host.custom_minimum_size = THUMB_SIZE
 	content.add_child(thumbnail_host)
@@ -347,6 +355,15 @@ func _add_part_row(entry: Dictionary) -> void:
 	remove_button.tooltip_text = "Удалить часть (можно отменить через Undo)"
 	remove_button.pressed.connect(_on_remove_requested.bind(path))
 	content.add_child(remove_button)
+	_set_child_mouse_filter_recursive(content, Control.MOUSE_FILTER_PASS)
+	drag_handle.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func _set_child_mouse_filter_recursive(control: Control, filter: Control.MouseFilter) -> void:
+	for child in control.get_children():
+		if child is Control:
+			(child as Control).mouse_filter = filter
+			_set_child_mouse_filter_recursive(child as Control, filter)
 
 
 func _get_type_glyph(type_name: String) -> String:
