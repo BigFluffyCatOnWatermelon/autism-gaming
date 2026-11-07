@@ -57,7 +57,12 @@ static func import_scene_draft(source_path: String, values: Dictionary) -> Dicti
 	var import_result: Dictionary = SceneDraftService.import_scene(source_path, definition)
 	if not bool(import_result.get("ok", false)):
 		return _failure(str(import_result.get("message", "Не удалось импортировать сцену.")))
-	return {"ok": true, "definition": definition, "message": ""}
+	return {
+		"ok": true,
+		"definition": definition,
+		"import_report": import_result.get("import_report", {}),
+		"message": ""
+	}
 
 
 static func _apply_metadata(definition: ObjectDefinition, values: Dictionary) -> void:
