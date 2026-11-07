@@ -6,6 +6,7 @@ signal search_changed(query: String)
 signal category_changed(category_id: String)
 signal toggle_requested(enabled: bool, capability_id: String)
 signal settings_requested(capability_id: String)
+signal focus_requested(capability_id: String)
 signal selection_toggled(selected: bool, capability_id: String)
 signal batch_add_requested
 signal clear_selection_requested
@@ -293,6 +294,12 @@ func _create_capability_card(
 	state_label.tooltip_text = capability.implementation_note
 	card_header.add_child(state_label)
 
+	var relations_button := Button.new()
+	relations_button.text = "Связи"
+	relations_button.tooltip_text = "Показать обязательные, рекомендуемые и другие связанные возможности"
+	relations_button.pressed.connect(_on_focus_requested.bind(capability.capability_id))
+	card_header.add_child(relations_button)
+
 	var relation_value: Variant = entry.get("relation_highlight", {})
 	if relation_value is Dictionary and not relation_value.is_empty():
 		var relation: Dictionary = relation_value
@@ -389,3 +396,7 @@ func _on_clear_selection_pressed() -> void:
 
 func _on_settings_requested(capability_id: String) -> void:
 	settings_requested.emit(capability_id)
+
+
+func _on_focus_requested(capability_id: String) -> void:
+	focus_requested.emit(capability_id)
