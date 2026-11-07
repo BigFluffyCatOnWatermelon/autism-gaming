@@ -224,7 +224,6 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 		node_names_by_id[capability_id] = node_name
 		_full_node_names_by_id[capability_id] = node_name
 		_full_category_by_id[capability_id] = definition.category_id
-		var readiness := "Готово" if definition.is_ready() else "В разработке"
 		var graph_node := _create_full_graph_node(node_name, definition)
 		graph_node.custom_minimum_size = Vector2(215, 190)
 		graph_node.position_offset = Vector2(
