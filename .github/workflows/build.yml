@@ -59,6 +59,18 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder capability icon registry smoke tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_capability_icon_registry_smoke.gd 2>&1 | tee object-builder-capability-icons-test.log
+          errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-capability-icons-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
+          if [[ -n "$errors" ]]; then
+            echo "$errors"
+            echo "Object Builder capability icon registry tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder capability catalog controller smoke tests
         shell: bash
         run: |
