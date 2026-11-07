@@ -3,6 +3,7 @@ extends RefCounted
 ## Handles pointer selection and transforms on an Object Builder canvas.
 
 signal part_selected(path: NodePath)
+signal parts_selected(paths: Array[NodePath])
 signal context_menu_requested(path: NodePath)
 signal pointer_position_changed(world_position: Vector2)
 signal transform_committed(path: NodePath, property_name: String, new_value: Variant, old_value: Variant)
@@ -149,6 +150,7 @@ func _set_selected_paths(paths: Array[NodePath], active_path: NodePath = NodePat
 	)
 	if _surface != null:
 		_surface.queue_redraw()
+	parts_selected.emit(_selected_paths.duplicate())
 	if not _selected_path.is_empty():
 		part_selected.emit(_selected_path)
 	else:
