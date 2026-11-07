@@ -36,12 +36,9 @@ var _zoom := 1.0
 var _drag_node: Node2D
 var _drag_path := NodePath("")
 var _drag_old_position := Vector2.ZERO
-var _drag_old_scale := Vector2.ONE
-var _drag_old_rotation := 0.0
 var _drag_start_vector := Vector2.ZERO
 var _drag_start_angle := 0.0
 var _drag_mode := "move"
-var _drag_start_parent_position := Vector2.ZERO
 var _drag_group_nodes: Array[Node2D] = []
 var _drag_group_paths: Array[NodePath] = []
 var _drag_group_old_positions: Array[Vector2] = []
@@ -525,7 +522,6 @@ func _begin_selection(screen_position: Vector2) -> void:
 	_drag_path = _drag_group_paths[0]
 	_drag_mode = "move"
 	_drag_old_position = _drag_node.position
-	_drag_start_parent_position = _drag_node.position
 
 
 func _begin_transform_drag(mode: String, node: Node2D, screen_position: Vector2) -> void:
@@ -551,10 +547,7 @@ func _begin_transform_drag(mode: String, node: Node2D, screen_position: Vector2)
 	_drag_mode = mode
 	_drag_start_pivot_world = _get_group_pivot_world()
 	_drag_start_vector = world_position - _drag_start_pivot_world
-	if mode == "scale":
-		_drag_old_scale = node.scale
-	elif mode == "rotate":
-		_drag_old_rotation = node.rotation_degrees
+	if mode == "rotate":
 		_drag_start_angle = _drag_start_vector.angle()
 
 
