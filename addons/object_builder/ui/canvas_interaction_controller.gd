@@ -226,13 +226,10 @@ func _begin_context_selection(screen_position: Vector2) -> void:
 	var world_position := _screen_to_world(screen_position)
 	var hit := CanvasGeometry.find_visual_at(_preview_instance, world_position)
 	if hit == null:
-		_selected_path = NodePath("")
-		_surface.queue_redraw()
-		part_selected.emit(NodePath(""))
+		_set_selected_paths([])
 		return
-	_selected_path = _preview_instance.get_path_to(hit)
-	_surface.queue_redraw()
-	part_selected.emit(_selected_path)
+	var context_path := _preview_instance.get_path_to(hit)
+	_set_selected_paths([context_path], context_path)
 	context_menu_requested.emit(_selected_path)
 
 func draw_selection(target: Control) -> void:
