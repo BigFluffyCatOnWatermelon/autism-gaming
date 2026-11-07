@@ -11,7 +11,7 @@ var _animation_option: OptionButton
 var _animation_name: LineEdit
 var _frame_list: ItemList
 var _fps: SpinBox
-var _loop: CheckBox
+var _loop_mode: OptionButton
 var _duration: SpinBox
 var _status: Label
 var _file_dialog: FileDialog
@@ -125,8 +125,6 @@ func open_for_sprite_frames(source: SpriteFrames) -> void:
 	build()
 	if source == null:
 		_working_frames = SpriteFrames.new()
-		_working_frames.clear_all()
-		_working_frames.add_animation(&"default")
 	else:
 		_working_frames = source.duplicate(true) as SpriteFrames
 	if _working_frames.get_animation_names().is_empty():
@@ -181,7 +179,11 @@ func _refresh_animation_controls() -> void:
 	if animation.is_empty() or _working_frames == null:
 		return
 	_fps.set_value_no_signal(_working_frames.get_animation_speed(animation))
-	_loop.set_pressed_no_signal(_working_frames.get_animation_loop(animation))
+	var loop_mode := int(_working_frames.get_animation_loop_mode(animation))
+	for index in range(_loop_mode.item_count):
+		if int(_loop_mode.get_item_metadata(index)) == loop_mode:
+			_loop_mode.select(index)
+			break
 	_refresh_frame_list()
 
 
@@ -241,7 +243,6 @@ func _remove_current_animation() -> void:
 		return
 	if get_animation_count() <= 1:
 		_working_frames.clear_all()
-		_working_frames.add_animation(&"default")
 		_refresh_animation_list(&"default")
 		return
 	_working_frames.remove_animation(animation)
@@ -258,10 +259,12 @@ func _on_fps_changed(value: float) -> void:
 		_working_frames.set_animation_speed(animation, clampf(value, 0.1, 120.0))
 
 
-func _on_loop_toggled(enabled: bool) -> void:
+func _on_loop_mode_selected(index: int) -> void:
 	var animation := _get_selected_animation()
-	if not animation.is_empty():
-		_working_frames.set_animation_loop(animation, enabled)
+	if animation.is_empty() or index < 0 or index >= _loop_mode.item_count:
+		return
+	var loop_mode := int(_loop_mode.get_item_metadata(index))
+	_working_frames.set_animation_loop_mode(animation, loop_mode)
 
 
 func _on_frame_selected(index: int) -> void:
@@ -285,7 +288,7 @@ func add_frame(texture: Texture2D, duration: float = 1.0) -> bool:
 	var animation := _get_selected_animation()
 	if texture == null or animation.is_empty():
 		return false
-	_working_frames.add_frame(animation, texture, -1, clampf(duration, 0.01, 60.0))
+	_working_frames.add_frame(animation, texture, clampf(duration, 0.01, 60.0))
 	_refresh_frame_list(_working_frames.get_frame_count(animation) - 1)
 	return true
 
@@ -317,7 +320,10 @@ func move_selected_frame(delta: int) -> bool:
 	var next_index := index + delta
 	if animation.is_empty() or index < 0 or next_index < 0 or next_index >= _working_frames.get_frame_count(animation):
 		return false
-	_working_frames.move_frame(animation, index, next_index)
+	var texture := _working_frames.get_frame_texture(animation, index)
+	var duration := _working_frames.get_frame_duration(animation, index)
+	_working_frames.remove_frame(animation, index)
+	_working_frames.add_frame(animation, texture, duration, next_index)
 	_refresh_frame_list(next_index)
 	return true
 
