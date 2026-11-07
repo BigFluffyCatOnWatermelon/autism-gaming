@@ -437,47 +437,51 @@ func _build_editor_tabs(parent: VBoxContainer) -> void:
 	_editor_view.name = "ObjectEditorView"
 	parent.add_child(_editor_view)
 	_editor_view.call("build")
-	_build_simple_editor(_editor_view.get("simple_content") as VBoxContainer)
+	_build_appearance_editor(_editor_view.get("appearance_content") as VBoxContainer)
+	_build_capability_editor(_editor_view.get("capabilities_content") as VBoxContainer)
+	_build_object_settings_editor(_editor_view.get("settings_content") as VBoxContainer)
 	_build_advanced_editor(_editor_view.get("advanced_content") as VBoxContainer)
 	_build_dialogs()
 
-func _build_simple_editor(parent: VBoxContainer) -> void:
-	var simple_editor := parent
-	simple_editor.add_theme_constant_override("separation", 10)
-	ObjectBuilderUIFactory.create_section_title(simple_editor, "СОЗДАЙ СВОЙ ОБЪЕКТ", 18)
-	
-	_name_edit = ObjectBuilderUIFactory.add_labeled_line_edit(simple_editor, "Название", "Например, Волшебный сундук")
-	
+
+func _build_appearance_editor(parent: VBoxContainer) -> void:
+	ObjectBuilderUIFactory.create_section_title(parent, "ВНЕШНИЙ ВИД ОБЪЕКТА", 18)
+	var hint := Label.new()
+	hint.text = "Собери внешний вид: добавляй изображения и отдельные визуальные части, перемещай их на холсте."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	parent.add_child(hint)
+	_build_canvas_editor(parent)
+	ObjectBuilderUIFactory.add_action_button(
+		parent,
+		"+ Добавить изображение",
+		_on_simple_add_image_pressed,
+		"Добавить картинку или ещё одну часть объекта"
+	)
+
+
+func _build_object_settings_editor(parent: VBoxContainer) -> void:
+	parent.add_theme_constant_override("separation", 10)
+	ObjectBuilderUIFactory.create_section_title(parent, "ОБЩИЕ НАСТРОЙКИ", 18)
+	_name_edit = ObjectBuilderUIFactory.add_labeled_line_edit(parent, "Название", "Например, Волшебный сундук")
+
 	_description_edit = TextEdit.new()
-	_description_edit.custom_minimum_size = Vector2(0, 54)
+	_description_edit.custom_minimum_size = Vector2(0, 72)
 	_description_edit.placeholder_text = "Что это за объект? (необязательно)"
-	ObjectBuilderUIFactory.add_labeled_control(simple_editor, "Описание", _description_edit)
-	
+	ObjectBuilderUIFactory.add_labeled_control(parent, "Описание", _description_edit)
+	_category_edit = ObjectBuilderUIFactory.add_labeled_line_edit(parent, "Категория", "Например, Nature")
+
 	var favorite_row := HBoxContainer.new()
-	simple_editor.add_child(favorite_row)
+	parent.add_child(favorite_row)
 	_favorite_button = Button.new()
 	_favorite_button.text = "☆ В избранное"
 	_favorite_button.tooltip_text = "Сохраняется локально в настройках редактора этого проекта."
 	_favorite_button.pressed.connect(_on_toggle_favorite_pressed)
 	favorite_row.add_child(_favorite_button)
-	
-	ObjectBuilderUIFactory.create_section_title(simple_editor, "ВНЕШНИЙ ВИД", 16)
-	_build_canvas_editor(simple_editor)
 
-	ObjectBuilderUIFactory.add_action_button(
-		simple_editor,
-		"+ Добавить изображение",
-		_on_simple_add_image_pressed,
-		"Добавить картинку или ещё одну часть объекта"
-	)
-	
-	_build_capability_editor(simple_editor)
-	
-	ObjectBuilderUIFactory.add_action_button(simple_editor, "Сохранить объект", _on_save_pressed)
-	
+	ObjectBuilderUIFactory.add_action_button(parent, "Сохранить объект", _on_save_pressed)
 	_status_label = Label.new()
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	simple_editor.add_child(_status_label)
+	parent.add_child(_status_label)
 
 func _build_advanced_editor(parent: VBoxContainer) -> void:
 	var advanced_editor := parent
@@ -491,7 +495,6 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	_object_type_label.text = "Не выбран"
 	ObjectBuilderUIFactory.add_labeled_control(advanced_editor, "Стартовый профиль", _object_type_label)
 	
-	_category_edit = ObjectBuilderUIFactory.add_labeled_line_edit(advanced_editor, "Категория библиотеки", "Например, Nature")
 	_tags_edit = ObjectBuilderUIFactory.add_labeled_line_edit(advanced_editor, "Теги", "дерево, ресурс, лес")
 	
 	_root_type = OptionButton.new()
