@@ -21,7 +21,7 @@ class_name ObjectCapabilityDefinition
 @export var kind_id: String = ""
 @export_enum("unclassified", "editor_only", "runtime", "hybrid", "data_only") var execution_scope: String = "unclassified"
 @export var implementation_type: String = "unclassified"
-@export_enum("ready", "partial", "planned", "blocked", "error") var readiness_status: String = ""
+@export var readiness_status: String = ""
 @export var icon_resource_path: String = ""
 @export var illustration_resource_path: String = ""
 @export var synonyms: PackedStringArray = PackedStringArray()
