@@ -289,6 +289,12 @@ func remove_local_entry(object_id: String) -> void:
 		return
 	favorites.erase(object_id)
 	recent_ids.erase(object_id)
+	for collection_id in collections:
+		var collection: Dictionary = collections[collection_id]
+		var object_ids := _to_packed_string_array(collection.get("object_ids", PackedStringArray()))
+		if object_ids.erase(object_id):
+			collection["object_ids"] = object_ids
+			collections[collection_id] = collection
 
 
 func build_detail_data(definition: ObjectDefinition) -> Dictionary:
