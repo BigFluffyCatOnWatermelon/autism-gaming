@@ -100,7 +100,8 @@ func build() -> void:
 	_duration.min_value = 0.01
 	_duration.max_value = 60.0
 	_duration.step = 0.01
-	_duration.suffix = " сек."
+	_duration.suffix = "×"
+	_duration.tooltip_text = "Относительная длительность кадра: множитель к базовой длительности кадра анимации."
 	_duration.value_changed.connect(_on_duration_changed)
 	body.add_child(_duration)
 
@@ -201,7 +202,7 @@ func _refresh_frame_list(preferred_index: int = -1) -> void:
 	for index in range(count):
 		var texture := _working_frames.get_frame_texture(animation, index)
 		_frame_list.add_item("Кадр %02d" % (index + 1), texture)
-		_frame_list.set_item_tooltip(index, "Длительность: %.2f сек." % _working_frames.get_frame_duration(animation, index))
+		_frame_list.set_item_tooltip(index, "Длительность кадра: %.2f×" % _working_frames.get_frame_duration(animation, index))
 	if count > 0:
 		var selected_index := clampi(preferred_index, 0, count - 1) if preferred_index >= 0 else 0
 		_frame_list.select(selected_index)
@@ -286,7 +287,7 @@ func _on_duration_changed(value: float) -> void:
 		return
 	var texture := _working_frames.get_frame_texture(animation, index)
 	_working_frames.set_frame(animation, index, texture, clampf(value, 0.01, 60.0))
-	_frame_list.set_item_tooltip(index, "Длительность: %.2f сек." % value)
+	_frame_list.set_item_tooltip(index, "Длительность кадра: %.2f×" % value)
 
 
 func add_frame(texture: Texture2D, duration: float = 1.0) -> bool:
