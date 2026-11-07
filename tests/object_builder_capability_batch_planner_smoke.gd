@@ -88,10 +88,31 @@ func _test_editor_only_capability() -> void:
 	data.kind_id = "data"
 	data.execution_scope = "data_only"
 	data.implementation_type = "declarative_data"
-	data.incompatible_capability_ids = PackedStringArray([VISUAL_ID])
+	data.relations.append({
+		"type": "conflicts",
+		"target_id": VISUAL_ID,
+		"explanation": "Эта проверка моделирует реальную несовместимость двух возможностей."
+	})
+
+	var relation_dependent := DefinitionScript.new()
+	relation_dependent.capability_id = "smoke_relation_dependent"
+	relation_dependent.display_name = "Возможность с декларативной зависимостью"
+	relation_dependent.description = "Проверяет отношение requires без legacy dependency ID."
+	relation_dependent.category_id = "general"
+	relation_dependent.category_name = "Основное"
+	relation_dependent.runtime_status = "Planned"
+	relation_dependent.readiness_status = "ready"
+	relation_dependent.kind_id = "data"
+	relation_dependent.execution_scope = "data_only"
+	relation_dependent.implementation_type = "declarative_data"
+	relation_dependent.relations.append({
+		"type": "requires",
+		"target_id": "has_health",
+		"explanation": "Этой возможности нужны данные здоровья."
+	})
 
 	var registration_errors := ObjectCapabilityCatalog.register_definitions(
-		[visual, data],
+		[visual, data, relation_dependent],
 		"smoke_capability_batch"
 	)
 	_expect(registration_errors.is_empty(), "editor-only and data-only capabilities register without runtime components")
@@ -119,6 +140,19 @@ func _test_editor_only_capability() -> void:
 	_expect(
 		bool(app_plan.get("ok", false)) and added_components.is_empty(),
 		"editor-only application plan contains no runtime component"
+	)
+
+	var relation_dependency_plan := BatchPlannerScript.build_addition_plan(
+		[],
+		PackedStringArray(["smoke_relation_dependent"])
+	)
+	_expect(
+		bool(relation_dependency_plan.get("ok", false)),
+		"typed requires relation participates in dependency planning"
+	)
+	_expect(
+		relation_dependency_plan.get("auto_required_ids", PackedStringArray()) == PackedStringArray(["has_health"]),
+		"typed requires relation adds the target capability automatically"
 	)
 
 
