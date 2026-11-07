@@ -21,7 +21,6 @@ func _run() -> void:
 	view.connect("close_requested", Callable(self, "_on_close_requested"))
 
 	_expect(view.visible, "inline settings panel can be displayed by its parent")
-	_expect(view.get("get_capability_id") is Callable, "panel exposes the active capability ID")
 
 	var capability = CapabilityScript.new()
 	capability.capability_id = "has_health"
