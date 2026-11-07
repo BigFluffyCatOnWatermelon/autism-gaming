@@ -45,7 +45,7 @@ func _run() -> void:
 	view.connect("preset_select_all_requested", Callable(self, "_on_preset_select_all_requested"))
 	view.connect("preset_action_requested", Callable(self, "_on_preset_action_requested"))
 
-	_expect(view.get_child_count() == 10, "capability view owns title, hint, search, filter, selection, relation/recommendation/preset panels, entries and pagination")
+	_expect(view.get_child_count() == 11, "capability view owns title, hint, search, filter, full map action, selection, relation/recommendation/preset panels, entries and pagination")
 	_expect(str(view.call("get_selected_category")) == "", "capability filter starts with all categories")
 	var search_input := view.get("search_input") as LineEdit
 	search_input.text_changed.emit("tree")
