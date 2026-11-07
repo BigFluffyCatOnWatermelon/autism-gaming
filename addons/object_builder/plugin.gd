@@ -337,6 +337,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_visual_parts_view.connect("visibility_batch_requested", Callable(self, "_on_visual_parts_visibility_batch_requested"))
 	_visual_parts_view.connect("part_lock_changed", Callable(self, "_on_visual_part_lock_changed"))
 	_visual_parts_view.connect("draw_order_change_requested", Callable(self, "_on_visual_part_draw_order_change_requested"))
+	_visual_parts_view.connect("rename_requested", Callable(self, "_on_scene_tree_node_rename_requested"))
 	parent.add_child(_visual_parts_view)
 
 
@@ -2260,13 +2261,25 @@ func _on_scene_tree_node_rename_requested(path: NodePath, requested_name: String
 		_refresh_scene_tree()
 		return
 	var old_name := str(node.name)
+	var was_locked := _locked_visual_part_keys.has(_get_visual_part_lock_key(scene_root, path))
 	var undo_redo := EditorInterface.get_editor_undo_redo()
 	undo_redo.create_action("Object Builder: переименовать часть", 0, scene_root)
 	undo_redo.add_do_property(node, "name", next_name)
 	undo_redo.add_undo_property(node, "name", old_name)
 	undo_redo.commit_action()
+	if was_locked:
+		_locked_visual_part_keys.erase(_get_visual_part_lock_key(scene_root, path))
+		var parent_path := scene_root.get_path_to(parent_node)
+		var next_path := NodePath(str(parent_path) + ("/" if str(parent_path) != "." else "") + next_name)
+		var next_lock_key := _get_visual_part_lock_key(scene_root, next_path)
+		if not _locked_visual_part_keys.has(next_lock_key):
+			_locked_visual_part_keys.append(next_lock_key)
+		_save_local_state()
 	EditorInterface.edit_node(node)
 	_refresh_scene_tree()
+	_refresh_canvas()
+	_refresh_visual_parts()
+	_sync_scene_tree_selection(node)
 	_set_status("Часть переименована в «%s». Ctrl+Z отменяет изменение." % next_name, false)
 
 

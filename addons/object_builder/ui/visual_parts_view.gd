@@ -9,6 +9,7 @@ signal remove_requested(path: NodePath)
 signal visibility_batch_requested(visible: bool)
 signal part_lock_changed(path: NodePath, locked: bool)
 signal draw_order_change_requested(path: NodePath, delta: int)
+signal rename_requested(path: NodePath, new_name: String)
 
 const ROW_HEIGHT := 44.0
 const THUMB_SIZE := Vector2(34.0, 34.0)
@@ -23,7 +24,12 @@ var _selected_path := NodePath("")
 var _row_buttons: Array[Button] = []
 var _row_paths: Array[NodePath] = []
 var _row_lock_checkboxes: Array[CheckBox] = []
+var _row_name_buttons: Array[Button] = []
+var _row_name_edits: Array[LineEdit] = []
 var _locked_paths: Dictionary = {}
+var _renaming_path := NodePath("")
+var _renaming_button: Button
+var _renaming_edit: LineEdit
 
 
 func build() -> void:
@@ -155,6 +161,9 @@ func _render_rows() -> void:
 	_row_buttons.clear()
 	_row_paths.clear()
 	_row_lock_checkboxes.clear()
+	_row_name_buttons.clear()
+	_row_name_edits.clear()
+	_cancel_inline_rename()
 
 	if _scene_root == null or not is_instance_valid(_scene_root):
 		_status_label.text = "Открой сцену объекта, чтобы управлять её частями."
@@ -219,6 +228,23 @@ func _add_part_row(entry: Dictionary) -> void:
 	content.add_child(name_button)
 	_row_buttons.append(name_button)
 	_row_paths.append(path)
+	_row_name_buttons.append(name_button)
+
+	var name_edit := LineEdit.new()
+	name_edit.text = str(entry.get("name", ""))
+	name_edit.visible = false
+	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_edit.text_submitted.connect(_on_inline_rename_submitted.bind(path))
+	name_edit.focus_exited.connect(_on_inline_rename_focus_exited.bind(path))
+	name_edit.gui_input.connect(_on_inline_rename_gui_input.bind(path))
+	content.add_child(name_edit)
+	_row_name_edits.append(name_edit)
+
+	var rename_button := Button.new()
+	rename_button.text = "✎"
+	rename_button.tooltip_text = "Переименовать часть"
+	rename_button.pressed.connect(_begin_inline_rename.bind(path, name_button, name_edit))
+	content.add_child(rename_button)
 
 	var locked := CheckBox.new()
 	locked.button_pressed = _locked_paths.has(path)
@@ -315,6 +341,61 @@ func _on_duplicate_requested(path: NodePath) -> void:
 
 func _on_remove_requested(path: NodePath) -> void:
 	remove_requested.emit(path)
+
+
+func _begin_inline_rename(path: NodePath, name_button: Button, name_edit: LineEdit) -> void:
+	_cancel_inline_rename()
+	if name_button == null or name_edit == null:
+		return
+	_renaming_path = path
+	_renaming_button = name_button
+	_renaming_edit = name_edit
+	_renaming_button.hide()
+	_renaming_edit.show()
+	_renaming_edit.text = _renaming_button.text
+	_renaming_edit.call_deferred("grab_focus")
+	_renaming_edit.call_deferred("select_all")
+
+
+func _on_inline_rename_submitted(_value: String, path: NodePath) -> void:
+	_commit_inline_rename(path)
+
+
+func _on_inline_rename_focus_exited(path: NodePath) -> void:
+	_commit_inline_rename(path)
+
+
+func _on_inline_rename_gui_input(event: InputEvent, path: NodePath) -> void:
+	if event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_ESCAPE:
+			_cancel_inline_rename()
+			_renaming_edit.accept_event()
+
+
+func _commit_inline_rename(path: NodePath) -> void:
+	if path != _renaming_path or _renaming_edit == null or _renaming_button == null:
+		return
+	var clean_name := _renaming_edit.text.strip_edges()
+	var previous_name := _renaming_button.text
+	_finish_inline_rename()
+	if clean_name.is_empty() or clean_name == previous_name:
+		return
+	rename_requested.emit(path, clean_name)
+
+
+func _cancel_inline_rename() -> void:
+	if _renaming_button != null and is_instance_valid(_renaming_button):
+		_renaming_button.show()
+	if _renaming_edit != null and is_instance_valid(_renaming_edit):
+		_renaming_edit.hide()
+	_finish_inline_rename()
+
+
+func _finish_inline_rename() -> void:
+	_renaming_path = NodePath("")
+	_renaming_button = null
+	_renaming_edit = null
 
 
 func _on_draw_order_change_requested(path: NodePath, delta: int) -> void:

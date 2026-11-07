@@ -10,6 +10,7 @@ var remove_paths: Array[NodePath] = []
 var visibility_batch_events: Array[bool] = []
 var lock_events: Array[Dictionary] = []
 var draw_order_events: Array[Dictionary] = []
+var rename_events: Array[Dictionary] = []
 
 
 func _initialize() -> void:
@@ -27,6 +28,7 @@ func _run() -> void:
 	view.connect("visibility_batch_requested", Callable(self, "_on_visibility_batch_requested"))
 	view.connect("part_lock_changed", Callable(self, "_on_part_lock_changed"))
 	view.connect("draw_order_change_requested", Callable(self, "_on_draw_order_change_requested"))
+	view.connect("rename_requested", Callable(self, "_on_rename_requested"))
 
 	var scene_root := Node2D.new()
 	scene_root.name = "ObjectRoot"
@@ -94,6 +96,13 @@ func _run() -> void:
 		{"path": NodePath("Visuals/Leaf"), "delta": 1},
 		{"path": NodePath("Visuals/Glow"), "delta": -1}
 	], "draw-order controls emit relative part paths and direction")
+	var name_buttons: Array = view.get("_row_name_buttons")
+	var name_edits: Array = view.get("_row_name_edits")
+	view.call("_begin_inline_rename", NodePath("Visuals/Leaf"), name_buttons[0], name_edits[0])
+	_expect(name_edits[0].visible and not name_buttons[0].visible, "rename replaces the row name with an inline edit field")
+	name_edits[0].text = "LeafNew"
+	name_edits[0].text_submitted.emit("LeafNew")
+	_expect(rename_events == [{"path": NodePath("Visuals/Leaf"), "name": "LeafNew"}], "inline rename forwards the relative path and new name")
 
 	var search_input := view.get("_search_input") as LineEdit
 	search_input.text = "glow"
@@ -147,6 +156,10 @@ func _on_part_lock_changed(path: NodePath, locked: bool) -> void:
 
 func _on_draw_order_change_requested(path: NodePath, delta: int) -> void:
 	draw_order_events.append({"path": path, "delta": delta})
+
+
+func _on_rename_requested(path: NodePath, new_name: String) -> void:
+	rename_events.append({"path": path, "name": new_name})
 
 
 func _expect(condition: bool, description: String) -> void:
