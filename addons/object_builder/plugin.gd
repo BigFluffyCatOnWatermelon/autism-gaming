@@ -3050,7 +3050,11 @@ func _on_visual_part_draw_order_change_requested(path: NodePath, delta: int) -> 
 	_set_status("Порядок отрисовки обновлён. Ctrl+Z отменяет изменение.", false)
 
 
-func _on_visual_part_draw_order_reorder_requested(source_path: NodePath, target_path: NodePath) -> void:
+func _on_visual_part_draw_order_reorder_requested(
+	source_path: NodePath,
+	target_path: NodePath,
+	insert_after: bool = false
+) -> void:
 	var scene_root := _get_open_object_scene_root()
 	if scene_root == null:
 		return
@@ -3081,11 +3085,11 @@ func _on_visual_part_draw_order_reorder_requested(source_path: NodePath, target_
 	var target_index := ordered.find(target)
 	if source_index < 0 or target_index < 0:
 		return
-	ordered.remove_at(source_index)
-	var insertion_index := target_index
-	if source_index < target_index:
+	var insertion_index := target_index + (1 if insert_after else 0)
+	if source_index < insertion_index:
 		insertion_index -= 1
-	ordered.insert(insertion_index, source)
+	ordered.remove_at(source_index)
+	ordered.insert(clampi(insertion_index, 0, ordered.size()), source)
 	var minimum_z := 0
 	if not sorted_z_indices.is_empty():
 		minimum_z = sorted_z_indices[0]
