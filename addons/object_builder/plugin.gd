@@ -5,6 +5,7 @@ const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic
 const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 const ObjectBuilderLibraryViewScript = preload("res://addons/object_builder/ui/library_view.gd")
 const ObjectBuilderLibraryDetailsViewScript = preload("res://addons/object_builder/ui/library_details_view.gd")
+const ObjectBuilderPropertiesInspectorScript = preload("res://addons/object_builder/ui/properties_inspector_view.gd")
 const ObjectBuilderLibraryActionDialogsScript = preload("res://addons/object_builder/ui/library_action_dialogs.gd")
 const ObjectBuilderLibraryActionsService = preload("res://addons/object_builder/services/library_actions_service.gd")
 const ObjectBuilderObjectCreationService = preload("res://addons/object_builder/services/object_creation_service.gd")
@@ -61,6 +62,7 @@ var _workspace_view: Control
 var _workspace_layout_state: Dictionary = {}
 var _library_view: Control
 var _library_details_view: Control
+var _properties_inspector: Control
 var _library_action_dialogs: Node
 var _pending_library_definition: ObjectDefinition
 var _pending_collection_id := ""
@@ -431,9 +433,13 @@ func _build_library_panel(parent: VBoxContainer) -> void:
 	_library_view.connect("collection_management_requested", Callable(self, "_on_collection_management_requested"))
 
 func _build_library_details(parent: VBoxContainer) -> void:
+	_properties_inspector = ObjectBuilderPropertiesInspectorScript.new()
+	_properties_inspector.name = "PropertiesInspector"
+	parent.add_child(_properties_inspector)
+	_properties_inspector.call("build")
 	_library_details_view = ObjectBuilderLibraryDetailsViewScript.new()
 	_library_details_view.name = "LibraryDetailsView"
-	parent.add_child(_library_details_view)
+	_properties_inspector.call("set_details_view", _library_details_view)
 	_library_details_view.call("build")
 
 
@@ -726,10 +732,12 @@ func _build_capability_settings_panel(parent: VBoxContainer) -> void:
 	_capability_settings_panel.call("build")
 	_capability_settings_panel.connect("apply_requested", Callable(self, "_on_capability_settings_panel_apply"))
 	_capability_settings_panel.connect("close_requested", Callable(self, "_on_capability_settings_panel_close"))
-	parent.add_child(_capability_settings_panel)
+	if _properties_inspector != null:
+		_properties_inspector.call("set_capability_settings_view", _capability_settings_panel)
+	else:
+		parent.add_child(_capability_settings_panel)
 	_capability_settings_panel.custom_minimum_size = Vector2.ZERO
 	_capability_settings_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_capability_settings_panel.visible = false
 
 
 func _on_capability_search_changed(_query: String) -> void:
@@ -1123,8 +1131,8 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 		selection,
 		ObjectCapabilityCatalog.get_settings_schema(capability_id)
 	)
-	_library_details_view.visible = false
-	_capability_settings_panel.visible = true
+	if _properties_inspector != null:
+		_properties_inspector.call("show_capability_settings")
 	_workspace_view.call("set_inspector_visible", true)
 
 
@@ -1188,11 +1196,10 @@ func _on_capability_settings_panel_apply() -> void:
 
 func _on_capability_settings_panel_close() -> void:
 	if _capability_settings_panel != null:
-		_capability_settings_panel.visible = false
 		_capability_settings_panel.call("clear")
 	_editing_capability_selection = null
-	if _library_details_view != null:
-		_library_details_view.visible = true
+	if _properties_inspector != null:
+		_properties_inspector.call("show_object_details")
 		var selected_index := int(_library_view.call("get_selected_index")) if _library_view != null else -1
 		var selected_definition := (
 			_library_controller.call("get_visible_definition", selected_index) as ObjectDefinition
@@ -1575,8 +1582,10 @@ func _refresh_library_details(definition: ObjectDefinition) -> void:
 		return
 	var details: Dictionary = _library_controller.call("build_detail_data", definition)
 	_library_details_view.call("set_details", details)
-	if _capability_settings_panel != null and _capability_settings_panel.visible:
-		_library_details_view.visible = false
+	if _properties_inspector != null and _properties_inspector.call("is_showing_capability_settings"):
+		return
+	if _properties_inspector != null:
+		_properties_inspector.call("show_object_details")
 
 
 func _on_search_changed(_value: String) -> void:

@@ -327,6 +327,12 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_properties_inspector_smoke.gd 2>&1 | tee object-builder-properties-inspector-test.log
+          errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-properties-inspector-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
+          if [[ -n "$errors" ]]; then
+            echo "$errors"
+            exit 1
+          fi
           godot --headless --path . --script res://tests/object_builder_library_details_view_smoke.gd 2>&1 | tee object-builder-library-details-test.log
           errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-library-details-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
           if [[ -n "$errors" ]]; then
