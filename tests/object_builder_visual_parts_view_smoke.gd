@@ -83,7 +83,8 @@ func _run() -> void:
 	_expect(visibility_batch_events == [true, false], "show-all and hide-all emit one batch visibility action each")
 	view.call("_on_lock_toggled", true, NodePath("Visuals/Leaf"))
 	_expect(lock_events == [{"path": NodePath("Visuals/Leaf"), "locked": true}], "part lock emits its relative path and enabled state")
-	view.call("set_locked_paths", [NodePath("Visuals/Glow")])
+	var restored_lock_paths: Array[NodePath] = [NodePath("Visuals/Glow")]
+	view.call("set_locked_paths", restored_lock_paths)
 	_expect(view.call("get_locked_paths") == [NodePath("Visuals/Glow")], "locked part paths can be restored from project editor settings")
 
 	var search_input := view.get("_search_input") as LineEdit

@@ -45,8 +45,6 @@ func _run() -> void:
 	_expect(bool(canvas.get("_editing_enabled")), "canvas enables edits for an open scene")
 	var interaction: RefCounted = canvas.get("_interaction_controller")
 	_expect(interaction != null, "canvas delegates pointer handling to a separate controller")
-	canvas.call("set_locked_paths", [NodePath("Sprite")])
-	_expect(bool(interaction.call("is_path_locked", NodePath("Sprite"))), "canvas forwards locked part paths to the interaction controller")
 	_expect(bool(canvas.get("_grid_enabled")) and bool(canvas.get("_snap_enabled")), "grid and pixel snapping are enabled by default")
 
 	var preview_root := canvas.get("_preview_instance") as Node
@@ -103,6 +101,18 @@ func _run() -> void:
 			interaction.call("_finish_drag")
 			_expect(is_equal_approx(preview_sprite.rotation_degrees, 45.0), "rotation handle rotates the selected part around its origin")
 			_expect(committed_transforms.size() == 3 and committed_transforms[2].get("property") == "rotation_degrees", "rotation drag commits one undoable rotation change")
+
+	var locked_paths: Array[NodePath] = [NodePath("Sprite")]
+	canvas.call("set_locked_paths", locked_paths)
+	_expect(bool(interaction.call("is_path_locked", NodePath("Sprite"))), "canvas forwards locked part paths to the interaction controller")
+	if preview_sprite != null:
+		var locked_start := preview_sprite.position
+		var locked_viewport_point := viewport.get_canvas_transform() * preview_sprite.global_position
+		var locked_screen_point := locked_viewport_point * surface.size / Vector2(viewport.size)
+		interaction.call("_begin_selection", locked_screen_point)
+		interaction.call("_update_drag", locked_screen_point + Vector2(40.0, 24.0))
+		interaction.call("_finish_drag")
+		_expect(preview_sprite.position == locked_start, "locked visual parts cannot be moved on the canvas")
 
 	var initial_zoom := float(canvas.get("_zoom"))
 	canvas.call("_on_zoom_in_pressed")
