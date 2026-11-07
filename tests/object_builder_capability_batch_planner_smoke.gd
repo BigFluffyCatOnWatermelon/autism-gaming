@@ -171,6 +171,22 @@ func _test_dependency_resolution_and_settings() -> void:
 		"planning does not mutate the caller's current selection"
 	)
 
+	manual_health.enabled = false
+	var reenabled_manual := BatchPlannerScript.build_addition_plan(
+		[manual_health],
+		PackedStringArray(["can_receive_damage"])
+	)
+	var preserved_manual := _find_selection(reenabled_manual.get("selections", []), "has_health")
+	_expect(bool(reenabled_manual.get("ok", false)), "batch re-enables an existing disabled dependency")
+	_expect(
+		preserved_manual != null and preserved_manual.enabled and not preserved_manual.automatically_added,
+		"re-enabled manual dependency keeps its original ownership"
+	)
+	_expect(
+		reenabled_manual.get("auto_required_ids", PackedStringArray()).is_empty(),
+		"manually owned dependency is not misreported as a new automatic dependency"
+	)
+
 
 func _test_atomic_conflict_rejection() -> void:
 	var conflict_plan := BatchPlannerScript.build_addition_plan(
