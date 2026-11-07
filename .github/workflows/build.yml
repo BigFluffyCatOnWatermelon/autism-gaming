@@ -275,6 +275,30 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder creation wizard tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_creation_wizard_smoke.gd 2>&1 | tee object-builder-creation-wizard-test.log
+          errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-creation-wizard-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
+          if [[ -n "$errors" ]]; then
+            echo "$errors"
+            echo "Object Builder creation wizard tests reported an error."
+            exit 1
+          fi
+
+      - name: Run Object Builder object creation service tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_object_creation_service_smoke.gd 2>&1 | tee object-builder-object-creation-test.log
+          errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-object-creation-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
+          if [[ -n "$errors" ]]; then
+            echo "$errors"
+            echo "Object Builder object creation service tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder preview service checks
         shell: bash
         run: |
