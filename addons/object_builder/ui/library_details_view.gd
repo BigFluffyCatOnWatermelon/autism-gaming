@@ -21,11 +21,7 @@ func build() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 
-	var title := Label.new()
-	title.text = "ОБЪЕКТ"
-	title.add_theme_font_size_override("font_size", 11)
-	add_child(title)
-	add_child(HSeparator.new())
+	# The workspace owns the single «СВОЙСТВА» header; do not duplicate it here.
 
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL

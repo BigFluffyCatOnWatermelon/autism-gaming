@@ -15,6 +15,7 @@ func _run() -> void:
 	details_view.call("build")
 	_expect(details_view.visible, "unified Properties inspector shows an empty-state prompt before selection")
 	_expect(details_view.custom_minimum_size == Vector2.ZERO, "details view does not impose a second panel minimum size")
+	_expect(details_view.get_child_count() == 1, "details view does not add a duplicate inner header")
 
 	details_view.call("set_details", {
 		"display_name": "Дуб",
