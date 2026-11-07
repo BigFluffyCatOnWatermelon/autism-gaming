@@ -87,7 +87,7 @@ func _run() -> void:
 			_expect(is_equal_approx(preview_sprite.scale.x, 1.5) and is_equal_approx(preview_sprite.scale.y, 1.5), "scale handle changes both sprite axes uniformly")
 			_expect(committed_transforms.size() == 2 and committed_transforms[1].get("property") == "scale", "scale drag commits one undoable scale change")
 
-		handles = canvas.call("_get_transform_handle_positions")
+		handles = interaction.call("_get_transform_handle_positions")
 		if handles.has("rotate"):
 			var rotate_handle: Vector2 = handles["rotate"]
 			interaction.call("_begin_selection", rotate_handle)
@@ -98,7 +98,7 @@ func _run() -> void:
 			var rotate_end_viewport := viewport.get_canvas_transform() * rotate_end_world
 			var rotate_end_screen := rotate_end_viewport * surface.size / Vector2(viewport.size)
 			interaction.call("_update_drag", rotate_end_screen)
-			canvas.call("_finish_canvas_drag")
+			interaction.call("_finish_drag")
 			_expect(is_equal_approx(preview_sprite.rotation_degrees, 45.0), "rotation handle rotates the selected part around its origin")
 			_expect(committed_transforms.size() == 3 and committed_transforms[2].get("property") == "rotation_degrees", "rotation drag commits one undoable rotation change")
 
