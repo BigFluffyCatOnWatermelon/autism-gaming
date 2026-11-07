@@ -269,6 +269,7 @@ static func _append_category(
 		definition.implementation_note = category_hint + " Runtime-поведение ещё не реализовано."
 		definition.available_in_simple_mode = true
 		definition.display_order = output.size() + 100
+		definition.icon_atlas_index = output.size()
 		output.append(definition)
 
 
