@@ -12,7 +12,7 @@ signal draw_order_change_requested(path: NodePath, delta: int)
 signal rename_requested(path: NodePath, new_name: String)
 signal resource_edit_requested(path: NodePath)
 signal sprite_frames_editor_requested(path: NodePath)
-signal draw_order_reorder_requested(source_path: NodePath, target_path: NodePath)
+signal draw_order_reorder_requested(source_path: NodePath, target_path: NodePath, insert_after: bool)
 
 const VisualPartRowScript = preload("res://addons/object_builder/ui/visual_part_row.gd")
 const VisualPartDragHandleScript = preload("res://addons/object_builder/ui/visual_part_drag_handle.gd")
