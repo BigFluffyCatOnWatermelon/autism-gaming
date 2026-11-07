@@ -33,6 +33,9 @@ var _creation_import_path := ""
 var _creation_file_dialog: FileDialog
 var _creation_name_edit: LineEdit
 var _creation_suggested_name := ""
+var _creation_suggested_category := ""
+var _creation_suggested_tags := ""
+var _creation_suggested_description := ""
 var _creation_category_option: OptionButton
 var _creation_tags_edit: LineEdit
 var _creation_description_edit: TextEdit
@@ -274,11 +277,13 @@ func _build_creation_dialog(profiles: Array) -> void:
 
 	_creation_tags_edit = LineEdit.new()
 	_creation_tags_edit.placeholder_text = "дерево, ресурс, лес (необязательно)"
+	_creation_tags_edit.text_changed.connect(_on_creation_tags_changed)
 	UIFactory.add_labeled_control(form, "Теги через запятую", _creation_tags_edit)
 
 	_creation_description_edit = TextEdit.new()
 	_creation_description_edit.custom_minimum_size = Vector2(0, 64)
 	_creation_description_edit.placeholder_text = "Короткое описание объекта (необязательно)"
+	_creation_description_edit.text_changed.connect(_on_creation_description_changed)
 	UIFactory.add_labeled_control(form, "Описание", _creation_description_edit)
 
 	_creation_file_dialog = FileDialog.new()
@@ -305,6 +310,24 @@ func set_creation_category_options(options: Array[Dictionary], selected_id: Stri
 
 func set_creation_category(category_id: String) -> void:
 	_select_option_metadata(_creation_category_option, category_id)
+
+
+func suggest_creation_category(category_id: String) -> void:
+	var current_category := ""
+	if _creation_category_option != null and _creation_category_option.selected >= 0:
+		current_category = str(_creation_category_option.get_item_metadata(_creation_category_option.selected))
+	if current_category.is_empty() or current_category == "Other" or current_category == _creation_suggested_category:
+		set_creation_category(category_id)
+	_creation_suggested_category = category_id
+
+
+func clear_creation_category_suggestion() -> void:
+	var current_category := ""
+	if _creation_category_option != null and _creation_category_option.selected >= 0:
+		current_category = str(_creation_category_option.get_item_metadata(_creation_category_option.selected))
+	if not _creation_suggested_category.is_empty() and current_category == _creation_suggested_category:
+		set_creation_category("Other")
+	_creation_suggested_category = ""
 
 
 func set_creation_sources(template_sources: Array[Dictionary], object_sources: Array[Dictionary]) -> void:
@@ -364,6 +387,9 @@ func reset_creation_wizard(mode: String = "new") -> void:
 	if _creation_name_edit == null:
 		return
 	_creation_suggested_name = ""
+	_creation_suggested_category = ""
+	_creation_suggested_tags = ""
+	_creation_suggested_description = ""
 	_creation_name_edit.text = ""
 	_creation_tags_edit.text = ""
 	_creation_description_edit.text = ""
@@ -377,10 +403,25 @@ func reset_creation_wizard(mode: String = "new") -> void:
 
 func _on_creation_mode_selected(_index: int) -> void:
 	var mode := get_creation_mode()
+	if mode not in ["template", "duplicate"]:
+		_clear_source_suggestions()
 	_creation_profile_host.visible = mode == "new"
 	_creation_source_host.visible = mode in ["template", "duplicate"]
 	_creation_import_host.visible = mode == "import"
 	_populate_creation_source_options()
+
+
+func _clear_source_suggestions() -> void:
+	if not _creation_suggested_name.is_empty() and _creation_name_edit.text == _creation_suggested_name:
+		_creation_name_edit.text = ""
+		_creation_suggested_name = ""
+	if not _creation_suggested_tags.is_empty() and _creation_tags_edit.text == _creation_suggested_tags:
+		_creation_tags_edit.text = ""
+		_creation_suggested_tags = ""
+	if not _creation_suggested_description.is_empty() and _creation_description_edit.text == _creation_suggested_description:
+		_creation_description_edit.text = ""
+		_creation_suggested_description = ""
+	clear_creation_category_suggestion()
 
 
 func _on_creation_source_selected(_index: int) -> void:
@@ -392,15 +433,49 @@ func _suggest_creation_name_from_source() -> void:
 		return
 	if _creation_source_option.selected < 0 or _creation_source_option.item_count == 0:
 		return
-	if not _creation_name_edit.text.is_empty() and _creation_name_edit.text != _creation_suggested_name:
+	var selected_id := str(_creation_source_option.get_item_metadata(_creation_source_option.selected))
+	var source_items := _creation_template_sources if get_creation_mode() == "template" else _creation_object_sources
+	for source in source_items:
+		if str(source.get("id", "")) != selected_id:
+			continue
+		var suggested_name := str(source.get("label", "Без названия")) + " — копия"
+		if _creation_name_edit.text.is_empty() or _creation_name_edit.text == _creation_suggested_name:
+			_creation_suggested_name = suggested_name
+			_creation_name_edit.text = suggested_name
+		var source_category := str(source.get("category", "Other"))
+		if not source_category.is_empty():
+			suggest_creation_category(source_category)
+		var source_tags := PackedStringArray()
+		var raw_tags: Variant = source.get("tags", PackedStringArray())
+		if raw_tags is PackedStringArray or raw_tags is Array:
+			for raw_tag in raw_tags:
+				var clean_tag := str(raw_tag).strip_edges()
+				if not clean_tag.is_empty() and not source_tags.has(clean_tag):
+					source_tags.append(clean_tag)
+		var suggested_tags := ", ".join(source_tags)
+		if _creation_tags_edit.text.is_empty() or _creation_tags_edit.text == _creation_suggested_tags:
+			_creation_suggested_tags = suggested_tags
+			_creation_tags_edit.text = suggested_tags
+		var suggested_description := str(source.get("description", ""))
+		if _creation_description_edit.text.is_empty() or _creation_description_edit.text == _creation_suggested_description:
+			_creation_suggested_description = suggested_description
+			_creation_description_edit.text = suggested_description
 		return
-	_creation_suggested_name = _creation_source_option.get_item_text(_creation_source_option.selected) + " — копия"
-	_creation_name_edit.text = _creation_suggested_name
 
 
 func _on_creation_name_changed(next_name: String) -> void:
 	if next_name != _creation_suggested_name:
 		_creation_suggested_name = ""
+
+
+func _on_creation_tags_changed(next_tags: String) -> void:
+	if next_tags != _creation_suggested_tags:
+		_creation_suggested_tags = ""
+
+
+func _on_creation_description_changed() -> void:
+	if _creation_description_edit.text != _creation_suggested_description:
+		_creation_suggested_description = ""
 
 func _on_creation_import_browse_pressed() -> void:
 	DialogService.popup_window_safely(_creation_file_dialog, Vector2i(780, 540), 0.82)
