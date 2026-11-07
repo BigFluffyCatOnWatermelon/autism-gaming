@@ -15,6 +15,21 @@ class_name ObjectCapabilityDefinition
 @export var incompatible_capability_ids: PackedStringArray = PackedStringArray()
 @export var component_ids: PackedStringArray = PackedStringArray()
 @export var available_in_simple_mode: bool = true
+
+## Catalog classification is independent from the implementation and readiness.
+@export_group("Catalog metadata")
+@export var kind_id: String = ""
+@export_enum("unclassified", "editor_only", "runtime", "hybrid", "data_only") var execution_scope: String = "unclassified"
+@export var implementation_type: String = "unclassified"
+@export_enum("ready", "partial", "planned", "blocked", "error") var readiness_status: String = ""
+@export var icon_resource_path: String = ""
+@export var illustration_resource_path: String = ""
+@export var synonyms: PackedStringArray = PackedStringArray()
+@export var example_queries: PackedStringArray = PackedStringArray()
+@export_storage var relations: Array[Dictionary] = []
+@export_storage var compatibility_rules: Array[Dictionary] = []
+
+## Legacy runtime status is kept for old modules and saved resources.
 @export_enum("Implemented", "Planned") var runtime_status: String = "Implemented"
 @export_multiline var implementation_note: String = ""
 @export_range(0, 100000, 1) var display_order: int = 100
@@ -26,3 +41,17 @@ class_name ObjectCapabilityDefinition
 ## Typed, user-facing settings exposed by this capability. Empty schemas are generated
 ## from the settings of its registered runtime components.
 @export_storage var settings_schema: Array[Dictionary] = []
+
+
+func is_ready() -> bool:
+	var normalized_status := readiness_status.strip_edges().to_lower()
+	if normalized_status.is_empty():
+		return runtime_status == "Implemented"
+	return normalized_status == "ready"
+
+
+func get_effective_readiness_status() -> String:
+	var normalized_status := readiness_status.strip_edges().to_lower()
+	if not normalized_status.is_empty():
+		return normalized_status
+	return "ready" if runtime_status == "Implemented" else "planned"
