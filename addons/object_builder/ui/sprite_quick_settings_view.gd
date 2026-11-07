@@ -1,13 +1,14 @@
 @tool
 extends VBoxContainer
-## Small, contextual Sprite2D controls for the Object Builder simple workflow.
+## Contextual visual settings for static and animated sprites in the simple workflow.
 
 signal property_changed(path: NodePath, property_name: String, value: Variant)
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 
 var _panel: VBoxContainer
-var _heading: Label
+var _sprite_controls: VBoxContainer
+var _animated_controls: VBoxContainer
 var _hframes: SpinBox
 var _vframes: SpinBox
 var _frame: SpinBox
@@ -17,6 +18,10 @@ var _region_x: SpinBox
 var _region_y: SpinBox
 var _region_width: SpinBox
 var _region_height: SpinBox
+var _animation_option: OptionButton
+var _animated_frame: SpinBox
+var _animated_speed: SpinBox
+var _animation_hint: Label
 var _selected_path := NodePath("")
 
 
@@ -30,13 +35,26 @@ func build() -> void:
 	_panel.add_theme_constant_override("separation", 4)
 	add_child(_panel)
 
-	_heading = Label.new()
-	_heading.text = "КАДР И АТЛАС"
-	_heading.add_theme_font_size_override("font_size", 13)
-	_panel.add_child(_heading)
+	var heading := Label.new()
+	heading.text = "ВНЕШНИЙ ВИД ЧАСТИ"
+	heading.add_theme_font_size_override("font_size", 13)
+	_panel.add_child(heading)
+
+	_build_static_sprite_controls()
+	_build_animated_sprite_controls()
+
+
+func _build_static_sprite_controls() -> void:
+	_sprite_controls = VBoxContainer.new()
+	_sprite_controls.add_theme_constant_override("separation", 4)
+	_panel.add_child(_sprite_controls)
+
+	var subheading := Label.new()
+	subheading.text = "КАДР И АТЛАС"
+	_sprite_controls.add_child(subheading)
 
 	var grid_row := HBoxContainer.new()
-	_panel.add_child(grid_row)
+	_sprite_controls.add_child(grid_row)
 	_hframes = UIFactory.make_spin_box(1.0, 128.0, 1.0)
 	_hframes.value_changed.connect(_on_grid_value_changed.bind("hframes"))
 	UIFactory.add_labeled_control(grid_row, "Колонки", _hframes, 92.0)
@@ -50,11 +68,11 @@ func build() -> void:
 	_region_enabled = CheckBox.new()
 	_region_enabled.text = "Использовать область атласа"
 	_region_enabled.toggled.connect(_on_region_enabled_toggled)
-	_panel.add_child(_region_enabled)
+	_sprite_controls.add_child(_region_enabled)
 
 	_region_controls = VBoxContainer.new()
 	_region_controls.add_theme_constant_override("separation", 3)
-	_panel.add_child(_region_controls)
+	_sprite_controls.add_child(_region_controls)
 
 	var position_row := HBoxContainer.new()
 	_region_controls.add_child(position_row)
@@ -75,30 +93,92 @@ func build() -> void:
 	UIFactory.add_labeled_control(size_row, "Высота", _region_height, 92.0)
 
 	var hint := Label.new()
-	hint.text = "Настройки применяются к выбранному Sprite2D и сохраняются вместе со сценой."
+	hint.text = "Изменения сохраняются вместе со сценой."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 10)
-	_panel.add_child(hint)
+	_sprite_controls.add_child(hint)
+
+
+func _build_animated_sprite_controls() -> void:
+	_animated_controls = VBoxContainer.new()
+	_animated_controls.visible = false
+	_animated_controls.add_theme_constant_override("separation", 4)
+	_panel.add_child(_animated_controls)
+
+	var subheading := Label.new()
+	subheading.text = "АНИМАЦИЯ"
+	_animated_controls.add_child(subheading)
+
+	_animation_option = OptionButton.new()
+	_animation_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_animation_option.item_selected.connect(_on_animation_selected)
+	UIFactory.add_labeled_control(_animated_controls, "Анимация", _animation_option)
+
+	var animation_row := HBoxContainer.new()
+	_animated_controls.add_child(animation_row)
+	_animated_frame = UIFactory.make_spin_box(0.0, 16383.0, 1.0)
+	_animated_frame.value_changed.connect(_on_animated_frame_changed)
+	UIFactory.add_labeled_control(animation_row, "Кадр", _animated_frame, 78.0)
+	_animated_speed = UIFactory.make_spin_box(-10.0, 10.0, 0.1)
+	_animated_speed.value_changed.connect(_on_animated_speed_changed)
+	UIFactory.add_labeled_control(animation_row, "Скорость", _animated_speed, 92.0)
+
+	_animation_hint = Label.new()
+	_animation_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_animation_hint.add_theme_font_size_override("font_size", 10)
+	_animated_controls.add_child(_animation_hint)
 
 
 func set_selected_node(node: Node, path: NodePath) -> void:
 	_selected_path = path
-	var sprite := node as Sprite2D
 	if _panel == null:
 		return
-	_panel.visible = sprite != null
-	if sprite == null:
-		return
-	_hframes.set_value_no_signal(float(sprite.hframes))
-	_vframes.set_value_no_signal(float(sprite.vframes))
-	_frame.max_value = maxf(0.0, float(sprite.hframes * sprite.vframes - 1))
-	_frame.set_value_no_signal(float(sprite.frame))
-	_region_enabled.set_pressed_no_signal(sprite.region_enabled)
-	_region_controls.visible = sprite.region_enabled
-	_region_x.set_value_no_signal(sprite.region_rect.position.x)
-	_region_y.set_value_no_signal(sprite.region_rect.position.y)
-	_region_width.set_value_no_signal(sprite.region_rect.size.x)
-	_region_height.set_value_no_signal(sprite.region_rect.size.y)
+	var sprite := node as Sprite2D
+	var animated := node as AnimatedSprite2D
+	_panel.visible = sprite != null or animated != null
+	_sprite_controls.visible = sprite != null
+	_animated_controls.visible = animated != null
+	if sprite != null:
+		_hframes.set_value_no_signal(float(sprite.hframes))
+		_vframes.set_value_no_signal(float(sprite.vframes))
+		_frame.max_value = maxf(0.0, float(sprite.hframes * sprite.vframes - 1))
+		_frame.set_value_no_signal(float(sprite.frame))
+		_region_enabled.set_pressed_no_signal(sprite.region_enabled)
+		_region_controls.visible = sprite.region_enabled
+		_region_x.set_value_no_signal(sprite.region_rect.position.x)
+		_region_y.set_value_no_signal(sprite.region_rect.position.y)
+		_region_width.set_value_no_signal(sprite.region_rect.size.x)
+		_region_height.set_value_no_signal(sprite.region_rect.size.y)
+	elif animated != null:
+		_refresh_animated_controls(animated)
+
+
+func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
+	_animation_option.clear()
+	var frames := sprite.sprite_frames
+	if frames == null:
+		_animation_option.disabled = true
+		_animated_frame.editable = false
+		_animation_hint.text = "Назначь SpriteFrames через кнопку «Кадры…» в списке частей."
+	else:
+		var names := frames.get_animation_names()
+		for animation_name in names:
+			_animation_option.add_item(str(animation_name))
+			_animation_option.set_item_metadata(_animation_option.item_count - 1, str(animation_name))
+		var selected_index := -1
+		for index in range(_animation_option.item_count):
+			if str(_animation_option.get_item_metadata(index)) == str(sprite.animation):
+				selected_index = index
+				break
+		if selected_index >= 0:
+			_animation_option.select(selected_index)
+		_animation_option.disabled = names.is_empty()
+		var frame_count := frames.get_frame_count(sprite.animation) if frames.has_animation(sprite.animation) else 0
+		_animated_frame.editable = frame_count > 0
+		_animated_frame.max_value = maxf(0.0, float(frame_count - 1))
+		_animated_frame.set_value_no_signal(float(clampi(sprite.frame, 0, maxi(0, frame_count - 1))))
+		_animation_hint.text = "Выбери анимацию и кадр. Воспроизведение включается кнопкой на холсте."
+	_animated_speed.set_value_no_signal(sprite.speed_scale)
 
 
 func is_visible_for_selection() -> bool:
@@ -124,3 +204,24 @@ func _on_region_enabled_toggled(enabled: bool) -> void:
 func _on_region_value_changed(value: float, property_name: String) -> void:
 	if not _selected_path.is_empty():
 		property_changed.emit(_selected_path, property_name, value)
+
+
+func _on_animation_selected(index: int) -> void:
+	if _selected_path.is_empty() or index < 0 or index >= _animation_option.item_count:
+		return
+	property_changed.emit(
+		_selected_path,
+		"animation",
+		StringName(str(_animation_option.get_item_metadata(index)))
+	)
+
+
+func _on_animated_frame_changed(value: float) -> void:
+	if _selected_path.is_empty():
+		return
+	property_changed.emit(_selected_path, "frame", int(round(value)))
+
+
+func _on_animated_speed_changed(value: float) -> void:
+	if not _selected_path.is_empty():
+		property_changed.emit(_selected_path, "speed_scale", value)
