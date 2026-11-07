@@ -210,6 +210,41 @@ func _run() -> void:
 	view.call("set_related_entries", [])
 	_expect(not (view.get("_related_section") as PanelContainer).visible, "related strip hides when the focused capability has no links")
 
+	var recommendation_entries: Array[Dictionary] = [{
+		"capability_id": "can_dig",
+		"definition": selectable,
+		"score": 86,
+		"relation_type": "profile",
+		"explanation": "Подходит профилю «Ресурс»: объект можно добывать.",
+		"automatic_dependencies": PackedStringArray(["Здоровье"])
+	}]
+	view.call("set_recommended_entries", recommendation_entries, "Дерево · Ресурс")
+	var recommendation_section := view.get("_recommendation_section") as PanelContainer
+	var recommendation_container := view.get("_recommendation_container") as HFlowContainer
+	_expect(recommendation_section.visible, "contextual recommendations appear when the controller provides compatible candidates")
+	_expect(view.call("get_recommendation_card_count") == 1, "each recommendation has its own explanatory card")
+	var recommendation_card := recommendation_container.get_child(0) as PanelContainer
+	var recommendation_content := recommendation_card.get_child(0) as VBoxContainer
+	_expect(recommendation_content.get_child_count() == 5, "recommendation card contains title, type, explanation, dependency and action")
+	var recommendation_header := recommendation_content.get_child(0) as HBoxContainer
+	var recommendation_name := recommendation_header.get_child(1) as Label
+	var recommendation_type := recommendation_content.get_child(1) as Label
+	var recommendation_reason := recommendation_content.get_child(2) as Label
+	var recommendation_dependency := recommendation_content.get_child(3) as Label
+	var recommendation_action := recommendation_content.get_child(4) as Button
+	_expect(recommendation_name.text == "Можно копать", "recommendation card displays the capability name")
+	_expect(recommendation_type.text == "Для этого профиля", "recommendation card distinguishes profile suggestions from mechanic relations")
+	_expect(recommendation_reason.text.contains("Ресурс"), "recommendation reason is visible without opening a tooltip")
+	_expect(recommendation_dependency.text.contains("Здоровье"), "automatic dependency is visible before selection")
+	_expect(recommendation_action.text == "Выбрать", "recommendation action only selects the mechanic")
+	recommendation_action.pressed.emit()
+	_expect(
+		selection_events.back() == "true:can_dig",
+		"choosing a recommendation adds it to the global selection session instead of the object immediately"
+	)
+	view.call("set_recommended_entries", [])
+	_expect(not recommendation_section.visible, "recommendation section hides when there are no compatible suggestions")
+
 	var many_entries: Array[Dictionary] = []
 	for index in range(45):
 		many_entries.append({
