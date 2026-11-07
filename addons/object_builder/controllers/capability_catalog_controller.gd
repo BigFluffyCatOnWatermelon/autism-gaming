@@ -179,7 +179,7 @@ func _tokenize(value: String) -> PackedStringArray:
 func _tokens_share_stem(first: String, second: String) -> bool:
 	if first == second:
 		return true
-	var shared_length := mini(5, mini(first.length(), second.length()))
+	var shared_length := mini(4, mini(first.length(), second.length()))
 	if shared_length < 4:
 		return false
 	return first.left(shared_length) == second.left(shared_length)
