@@ -30,6 +30,7 @@ func _run() -> void:
 		{"id": "combat", "display_name": "Бой"}
 	]
 	view.call("build", categories)
+	_expect((view.get("_full_map_button") as Button).visible, "full 200-capability graph is available from the catalog")
 	_expect(not (view.get("_related_section") as PanelContainer).visible, "related suggestions stay hidden until a capability is focused")
 	_expect(not (view.get("_recommendation_section") as PanelContainer).visible, "contextual recommendations stay hidden until an object capability is active")
 	_expect(not (view.get("_preset_section") as PanelContainer).visible, "preset area stays hidden until the catalog provides its preset list")
