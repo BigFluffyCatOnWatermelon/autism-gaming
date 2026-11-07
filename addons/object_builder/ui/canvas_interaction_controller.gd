@@ -613,13 +613,8 @@ func _finish_drag() -> void:
 			continue
 		var path := _drag_group_paths[index]
 		var old_position := _drag_group_old_positions[index]
-		if node.global_position != old_position:
-			changes.append({
-				"path": path,
-				"property": "global_position",
-				"new": node.global_position,
-				"old": old_position
-			})
+		# Apply basis changes before origin changes so custom pivots remain fixed
+		# both when the action is redone and when its inverse is replayed.
 		if _drag_mode == "scale" and node.scale != _drag_group_old_scales[index]:
 			changes.append({
 				"path": path,
@@ -633,6 +628,13 @@ func _finish_drag() -> void:
 				"property": "rotation_degrees",
 				"new": node.rotation_degrees,
 				"old": _drag_group_old_rotations[index]
+			})
+		if node.global_position != old_position:
+			changes.append({
+				"path": path,
+				"property": "global_position",
+				"new": node.global_position,
+				"old": old_position
 			})
 	if _drag_mode == "move" and _drag_group_nodes.size() == 1 and changes.size() == 1:
 		changes[0]["property"] = "position"
