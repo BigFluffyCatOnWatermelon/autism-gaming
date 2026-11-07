@@ -75,12 +75,16 @@ func _run() -> void:
 			_expect(context_menu.get_item_index(6) >= 0, "context menu exposes delete")
 		canvas.call("_on_context_menu_item_selected", 1)
 		_expect(context_action_events == ["duplicate:Sprite"], "context menu forwards a stable duplicate action and selected path")
+		if context_menu != null:
+			context_menu.hide()
 		canvas.call("set_locked_paths", [NodePath("Sprite")])
 		canvas.call("_on_context_menu_requested", NodePath("Sprite"))
 		if context_menu != null:
 			var lock_item_index := context_menu.get_item_index(3)
 			_expect(context_menu.get_item_text(lock_item_index) == "Снять фиксацию", "context menu reflects the current locked state")
 		canvas.call("set_locked_paths", [])
+		if context_menu != null:
+			context_menu.hide()
 		interaction.call("_begin_selection", screen_position)
 		_expect(not selected_paths.is_empty() and selected_paths[-1] == NodePath("Sprite"), "clicking the sprite emits its scene-relative path")
 		var world_delta := Vector2(10.0, 0.0)
