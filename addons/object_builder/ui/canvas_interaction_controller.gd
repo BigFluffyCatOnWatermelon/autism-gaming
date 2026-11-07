@@ -150,11 +150,11 @@ func _set_selected_paths(paths: Array[NodePath], active_path: NodePath = NodePat
 	)
 	if _surface != null:
 		_surface.queue_redraw()
-	parts_selected.emit(_selected_paths.duplicate())
 	if not _selected_path.is_empty():
 		part_selected.emit(_selected_path)
 	else:
 		part_selected.emit(NodePath(""))
+	parts_selected.emit(_selected_paths.duplicate())
 
 
 func is_path_locked(path: NodePath) -> bool:
