@@ -5,6 +5,7 @@
 - Добавлен редактор SpriteFrames с управлением анимациями/кадрами, массовым импортом изображений, длительностью, FPS и режимами Loop None/Linear/Ping-Pong.
 - Texture2D и SpriteFrames используют единый ресурсный picker; отдельная кнопка открывает редактор анимаций.
 - Canvas preview использует nearest filtering для пиксельной графики.
+- Контекстная панель AnimatedSprite2D тоже поддерживает Loop None/Linear/Ping-Pong с Undo/Redo.
 - Добавлены smoke-тесты и CI шаг для SpriteFrames editor.
 
 ## 2026-11-07 — Object Builder: полная карта умного каталога
