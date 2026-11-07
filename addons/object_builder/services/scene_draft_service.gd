@@ -115,7 +115,16 @@ static func import_scene(source_path: String, target_definition: ObjectDefinitio
 		property_data = ObjectPropertyData.new()
 		property_data.name = "ObjectProperties"
 		imported_root.add_child(property_data)
-	property_data.configure(target_definition.custom_properties, {}, true)
+		property_data.configure(target_definition.custom_properties, {}, true)
+	else:
+		if target_definition.custom_properties.is_empty():
+			for existing_property in property_data.property_definitions:
+				if existing_property != null:
+					target_definition.custom_properties.append(
+						existing_property.duplicate(true) as ObjectPropertyDefinition
+					)
+		if not target_definition.custom_properties.is_empty():
+			property_data.configure(target_definition.custom_properties, {}, true)
 	property_data.owner = imported_root
 
 	return _pack_and_save(imported_root, target_definition)
