@@ -330,6 +330,8 @@ func _finish_marquee() -> void:
 func _collect_marquee_hits(node: Node, selection_rect: Rect2, paths: Array[NodePath]) -> void:
 	if node == null or not is_instance_valid(node):
 		return
+	if node is CanvasItem and not (node as CanvasItem).is_visible_in_tree():
+		return
 	if CanvasGeometry.is_visual_node(node):
 		var bounds: Dictionary = CanvasGeometry.collect_visual_bounds(node)
 		if bounds.has("rect") and selection_rect.intersects(bounds["rect"], true):
