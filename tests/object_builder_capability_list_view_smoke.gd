@@ -76,7 +76,12 @@ func _run() -> void:
 			"selected_in_catalog": false,
 			"automatically_added": false,
 			"can_toggle": true,
-			"can_configure": false
+			"can_configure": false,
+			"relation_highlight": {
+				"type": "requires",
+				"explanation": "Для этой механики требуется основная способность.",
+				"is_reverse": false
+			}
 		},
 		{
 			"definition": planned,
@@ -95,8 +100,10 @@ func _run() -> void:
 	var implemented_card := entries_container.get_child(1) as PanelContainer
 	var implemented_content := implemented_card.get_child(0) as VBoxContainer
 	var implemented_header := implemented_content.get_child(0) as HBoxContainer
-	var enabled_check := implemented_header.get_child(0) as CheckBox
-	var settings_button := implemented_header.get_child(2) as Button
+	var icon_slot := implemented_header.get_child(0) as PanelContainer
+	var enabled_check := implemented_header.get_child(1) as CheckBox
+	var settings_button := implemented_header.get_child(3) as Button
+	_expect(icon_slot != null and icon_slot.get_child_count() == 1, "every capability card owns a dedicated icon slot")
 	_expect(enabled_check.button_pressed and not enabled_check.disabled, "implemented capabilities can be toggled")
 	_expect(not settings_button.disabled, "enabled implemented capability can open settings")
 	enabled_check.toggled.emit(false)
@@ -107,8 +114,13 @@ func _run() -> void:
 	var selectable_card := entries_container.get_child(2) as PanelContainer
 	var selectable_content := selectable_card.get_child(0) as VBoxContainer
 	var selectable_header := selectable_content.get_child(0) as HBoxContainer
-	var selectable_check := selectable_header.get_child(0) as CheckBox
+	var selectable_check := selectable_header.get_child(1) as CheckBox
 	_expect(not selectable_check.disabled and not selectable_check.button_pressed, "ready uninstalled capabilities can be selected without being applied immediately")
+	var relation_chip := selectable_content.get_child(1) as Label
+	_expect(
+		relation_chip.text == "Обязательная зависимость" and relation_chip.tooltip_text.contains("требуется"),
+		"related card exposes a typed relationship and its explanation"
+	)
 	selectable_check.toggled.emit(true)
 	_expect(selection_events == ["true:can_dig"], "uninstalled capability checkbox adds the ID to the catalog selection")
 	view.call("set_selected_count", 2)
@@ -126,9 +138,9 @@ func _run() -> void:
 	var planned_card := entries_container.get_child(3) as PanelContainer
 	var planned_content := planned_card.get_child(0) as VBoxContainer
 	var planned_header := planned_content.get_child(0) as HBoxContainer
-	var planned_check := planned_header.get_child(0) as CheckBox
-	var planned_state := planned_header.get_child(1) as Label
-	var planned_settings := planned_header.get_child(2) as Button
+	var planned_check := planned_header.get_child(1) as CheckBox
+	var planned_state := planned_header.get_child(2) as Label
+	var planned_settings := planned_header.get_child(3) as Button
 	_expect(planned_check.disabled and planned_state.text == "В разработке", "planned capabilities remain clearly unavailable")
 	_expect(planned_settings.disabled, "planned capabilities cannot be configured")
 
