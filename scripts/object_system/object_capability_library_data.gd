@@ -242,7 +242,57 @@ static func create_definitions() -> Array[ObjectCapabilityDefinition]:
 		["supports_region_rules", "Правила региона", "Ограничения появления и поведения по регионам."],
 	])
 
+	_apply_curated_relations(result)
 	return result
+
+
+static func _apply_curated_relations(definitions: Array[ObjectCapabilityDefinition]) -> void:
+	var definitions_by_id: Dictionary = {}
+	for definition in definitions:
+		definitions_by_id[definition.capability_id] = definition
+
+	var relation_rows := [
+		["plays_walk_animation", "recommends", "can_walk", "Анимация ходьбы подходит объектам, которые действительно перемещаются пешком."],
+		["plays_run_animation", "recommends", "can_run", "Анимация бега дополняет возможность ускоренного движения."],
+		["plays_attack_animation", "recommends", "can_attack", "Анимация атаки визуально сопровождает выполнение атакующего действия."],
+		["plays_hit_animation", "recommends", "can_receive_damage", "Реакция на удар полезна объектам, которые принимают урон."],
+		["plays_death_animation", "recommends", "breaks_when_health_empty", "Анимация смерти может сопровождать разрушение после потери здоровья."],
+		["has_sprite", "recommends", "plays_idle_animation", "Для живого или анимируемого объекта можно добавить отдельное состояние ожидания."],
+		["supports_directional_sprites", "related", "can_move", "Спрайты по направлениям часто отражают сторону движения или взгляда объекта."],
+		["has_multiple_visual_parts", "related", "has_sprite", "Составные изображения обычно используют одну или несколько отдельных визуальных частей."],
+		["can_be_harvested", "recommends", "yields_resources", "После добычи обычно выдаётся ресурс или другой результат."],
+		["requires_tool", "related", "can_be_harvested", "Требование инструмента уточняет правила добычи объекта."],
+		["yields_resources", "recommends", "is_pickup_item", "Ресурсы, появившиеся в мире, часто можно подобрать."],
+		["can_be_opened", "recommends", "can_be_closed", "Для открываемого объекта обычно полезно предусмотреть обратный переход в закрытое состояние."],
+		["can_be_closed", "related", "can_be_opened", "Закрытие является обратной стороной открытия объекта."],
+		["can_be_locked", "recommends", "can_be_unlocked", "Запираемый объект должен иметь предусмотренный способ снятия блокировки."],
+		["can_be_unlocked", "related", "can_be_locked", "Отпирание связано с состоянием блокировки объекта."],
+		["can_block", "related", "has_shield", "Блокирование может использовать отдельный запас щита или защитное состояние."],
+		["has_armor", "related", "has_damage_resistance", "Броня и сопротивления по-разному уменьшают входящий урон."],
+		["has_damage_resistance", "related", "can_receive_damage", "Сопротивление меняет обработку урона, который получает объект."],
+		["can_chase", "recommends", "can_target_enemy", "Для преследования полезно определить цель, которую нужно отслеживать."],
+		["has_patrol_route", "recommends", "can_move", "Маршрут патруля предполагает возможность перемещения между точками."],
+		["can_flee", "related", "can_move", "Убегание использует перемещение для увеличения дистанции до опасности."],
+		["can_be_tamed", "recommends", "can_be_fed", "Кормление часто используется как часть приручения и роста доверия."],
+		["can_produce_resources", "related", "has_periodic_output", "Периодическая выдача описывает расписание производства ресурсов."],
+		["can_be_placed", "recommends", "snaps_to_grid", "Привязка к сетке помогает точно размещать объекты на карте."],
+		["supports_frame_events", "extends", "supports_animation_events", "События кадров уточняют запуск действий в конкретный момент анимации."],
+		["plays_attack_sound", "recommends", "can_attack", "Звук атаки сопровождает выполнение атакующего действия."],
+		["plays_damage_sound", "recommends", "can_receive_damage", "Звук получения урона нужен объекту, который реагирует на попадания."],
+		["plays_destroy_sound", "recommends", "breaks_when_health_empty", "Звук разрушения дополняет переход в разрушенное состояние."],
+		["has_cooldown", "related", "can_attack", "Перезарядка часто ограничивает частоту повторных атак."]
+	]
+
+	for row in relation_rows:
+		var source_id := str(row[0])
+		var definition := definitions_by_id.get(source_id) as ObjectCapabilityDefinition
+		if definition == null:
+			continue
+		definition.relations.append({
+			"type": str(row[1]),
+			"target_id": str(row[2]),
+			"explanation": str(row[3])
+		})
 
 
 static func _append_category(
