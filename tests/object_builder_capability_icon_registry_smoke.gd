@@ -55,7 +55,7 @@ func _run_tests() -> void:
 				attack_relation_found = true
 	_expect(attack_relation_found, "curated relations connect attack animation with attack capability")
 	var total_relation_count := 0
-	var valid_relation_targets := {
+	var known_ids: Dictionary = {
 		"has_health": true,
 		"can_receive_damage": true,
 		"can_attack": true,
@@ -64,15 +64,12 @@ func _run_tests() -> void:
 		"can_interact": true
 	}
 	for definition in definitions:
+		known_ids[definition.capability_id] = true
+	for definition in definitions:
 		for relation in definition.relations:
 			total_relation_count += 1
 			var target_id := str(relation.get("target_id", ""))
-			var is_known_target := valid_relation_targets.has(target_id)
-			if not is_known_target:
-				is_known_target = definitions.any(func(item: ObjectCapabilityDefinition) -> bool:
-					return item.capability_id == target_id
-				)
-			_expect(is_known_target, "curated relationship target resolves to a catalogue capability")
+			_expect(known_ids.has(target_id), "curated relationship target resolves to a catalogue capability")
 			_expect(not str(relation.get("explanation", "")).strip_edges().is_empty(), "curated relationship has a user-facing explanation")
 	_expect(total_relation_count >= 20, "catalogue begins with a useful curated set of semantic relationships")
 
