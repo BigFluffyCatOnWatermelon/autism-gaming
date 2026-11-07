@@ -793,6 +793,7 @@ func _on_capability_batch_add_requested() -> void:
 func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
 	if _working_definition == null:
 		return
+	_capability_catalog_controller.call("set_focused_capability", capability_id)
 
 	var plan := ObjectCapabilityService.plan_selection_change(
 		_working_definition.capabilities,
