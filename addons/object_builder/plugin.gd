@@ -114,10 +114,10 @@ func _exit_tree() -> void:
 		_editor_session.call("clear")
 	_working_definition = null
 	if _preview_view != null and is_instance_valid(_preview_view):
-		_preview_view.queue_free()
+		_preview_view.free()
 		_preview_view = null
-	if _main_screen != null:
-		_main_screen.queue_free()
+	if _main_screen != null and is_instance_valid(_main_screen):
+		_main_screen.free()
 		_main_screen = null
 
 

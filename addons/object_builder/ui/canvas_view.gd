@@ -43,6 +43,10 @@ var _animation_preview_playing := false
 
 
 
+func _exit_tree() -> void:
+	_clear_preview()
+
+
 func build() -> void:
 	if _viewport != null:
 		return
