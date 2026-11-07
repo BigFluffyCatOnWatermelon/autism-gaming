@@ -27,6 +27,8 @@ func build() -> void:
 	if search_input != null:
 		return
 	custom_minimum_size = Vector2(210, 0)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_theme_constant_override("separation", 6)
 	search_input = LineEdit.new()
 	search_input.placeholder_text = "Найти объект…"
@@ -84,6 +86,7 @@ func _build_card_view() -> void:
 	_cards_scroll = ScrollContainer.new()
 	_cards_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cards_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_cards_scroll.custom_minimum_size = Vector2(0, 120)
 	_cards_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(_cards_scroll)
 	_cards_flow = HFlowContainer.new()
