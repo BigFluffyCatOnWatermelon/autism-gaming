@@ -1775,6 +1775,7 @@ func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> voi
 	if previous_object_id != definition.object_id:
 		_on_capability_settings_panel_close()
 		_capability_catalog_controller.call("clear_selection")
+		_capability_catalog_controller.call("set_active_preset", "")
 	_cleanup_abandoned_new_draft(definition)
 	if is_new and _editor_view != null:
 		_editor_view.current_tab = 0
