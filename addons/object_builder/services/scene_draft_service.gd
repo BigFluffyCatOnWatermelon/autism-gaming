@@ -131,7 +131,12 @@ static func import_scene(source_path: String, target_definition: ObjectDefinitio
 			property_data.configure(target_definition.custom_properties, {}, true)
 	property_data.owner = imported_root
 
-	return _pack_and_save(imported_root, target_definition)
+	var import_report := _build_import_report(imported_root)
+	var save_result := _pack_and_save(imported_root, target_definition)
+	if not bool(save_result.get("ok", false)):
+		return save_result
+	save_result["import_report"] = import_report
+	return save_result
 
 
 static func clone_object_scene(
@@ -180,6 +185,39 @@ static func _pack_and_save(scene_root: Node, definition: ObjectDefinition) -> Di
 		"message": ""
 	}
 
+
+static func _build_import_report(scene_root: Node) -> Dictionary:
+	var visual_parts := PackedStringArray()
+	var advanced_nodes := PackedStringArray()
+	var total_nodes := 0
+	_collect_import_report(scene_root, "", visual_parts, advanced_nodes, total_nodes)
+	return {
+		"visual_part_count": visual_parts.size(),
+		"visual_part_paths": visual_parts,
+		"advanced_node_count": advanced_nodes.size(),
+		"advanced_node_paths": advanced_nodes,
+		"total_node_count": total_nodes
+	}
+
+
+static func _collect_import_report(
+	parent: Node,
+	parent_path: String,
+	visual_parts: PackedStringArray,
+	advanced_nodes: PackedStringArray,
+	total_nodes: int
+) -> void:
+	for child in parent.get_children():
+		if not child is Node:
+			continue
+		var child_node := child as Node
+		var child_path := child_node.name if parent_path.is_empty() else parent_path.path_join(child_node.name)
+		total_nodes += 1
+		if child_node is Sprite2D or child_node is AnimatedSprite2D or child_node is Polygon2D or child_node is Line2D:
+			visual_parts.append(child_path + " (" + child_node.get_class() + ")")
+		else:
+			advanced_nodes.append(child_path + " (" + child_node.get_class() + ")")
+		_collect_import_report(child_node, child_path, visual_parts, advanced_nodes, total_nodes)
 
 static func _get_missing_dependency_paths(scene_path: String) -> PackedStringArray:
 	var missing := PackedStringArray()
