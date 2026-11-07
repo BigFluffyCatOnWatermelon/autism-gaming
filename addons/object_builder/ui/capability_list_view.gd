@@ -550,8 +550,11 @@ func _on_full_map_pressed() -> void:
 func _on_relation_map_pressed() -> void:
 	if _related_focused_definition == null or _related_entries.is_empty():
 		return
-	_active_relation_map = RelationMapViewScript.new()
-	_active_relation_map.connect("focus_requested", Callable(self, "_on_focus_requested"))
+	if _active_relation_map == null:
+		_active_relation_map = RelationMapViewScript.new()
+	var focus_callback := Callable(self, "_on_focus_requested")
+	if not _active_relation_map.is_connected("focus_requested", focus_callback):
+		_active_relation_map.connect("focus_requested", focus_callback)
 	_active_relation_map.call("open", self, _related_focused_definition, _related_entries)
 
 
