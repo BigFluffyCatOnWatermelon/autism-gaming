@@ -10,6 +10,7 @@ signal visibility_batch_requested(visible: bool)
 signal part_lock_changed(path: NodePath, locked: bool)
 signal draw_order_change_requested(path: NodePath, delta: int)
 signal rename_requested(path: NodePath, new_name: String)
+signal resource_edit_requested(path: NodePath)
 
 const ROW_HEIGHT := 44.0
 const THUMB_SIZE := Vector2(34.0, 34.0)
@@ -20,6 +21,7 @@ var _search_input: LineEdit
 var _rows_host: VBoxContainer
 var _scroll: ScrollContainer
 var _status_label: Label
+var _resource_button: Button
 var _selected_path := NodePath("")
 var _row_buttons: Array[Button] = []
 var _row_paths: Array[NodePath] = []
@@ -55,6 +57,12 @@ func build() -> void:
 	hide_all_button.tooltip_text = "Скрыть все визуальные части"
 	hide_all_button.pressed.connect(_on_hide_all_pressed)
 	heading_row.add_child(hide_all_button)
+	_resource_button = Button.new()
+	_resource_button.text = "Ресурс…"
+	_resource_button.tooltip_text = "Изменить текстуру или набор кадров выбранной части"
+	_resource_button.disabled = true
+	_resource_button.pressed.connect(_on_resource_edit_pressed)
+	heading_row.add_child(_resource_button)
 
 	_search_input = LineEdit.new()
 	_search_input.placeholder_text = "Найти часть…"
@@ -89,11 +97,13 @@ func set_scene_root(scene_root: Node, selected_path: NodePath = NodePath("")) ->
 		for child in scene_root.get_children():
 			_collect_visual_parts(child, scene_root)
 	_render_rows()
+	_update_resource_button()
 
 
 func set_selected_path(path: NodePath) -> void:
 	_selected_path = path
 	_update_row_selection()
+	_update_resource_button()
 
 
 func set_locked_paths(paths: Array[NodePath]) -> void:
@@ -101,6 +111,22 @@ func set_locked_paths(paths: Array[NodePath]) -> void:
 	for path in paths:
 		_locked_paths[path] = true
 	_update_row_locks()
+
+
+func _update_resource_button() -> void:
+	if _resource_button == null:
+		return
+	var selected_node := _scene_root.get_node_or_null(_selected_path) if _scene_root != null and not _selected_path.is_empty() else null
+	_resource_button.disabled = not (selected_node is Sprite2D or selected_node is AnimatedSprite2D)
+	if selected_node is AnimatedSprite2D:
+		_resource_button.text = "Кадры…"
+	else:
+		_resource_button.text = "Текстура…"
+
+
+func _on_resource_edit_pressed() -> void:
+	if not _resource_button.disabled and not _selected_path.is_empty():
+		resource_edit_requested.emit(_selected_path)
 
 
 func get_locked_paths() -> Array[NodePath]:
@@ -167,6 +193,7 @@ func _render_rows() -> void:
 
 	if _scene_root == null or not is_instance_valid(_scene_root):
 		_status_label.text = "Открой сцену объекта, чтобы управлять её частями."
+		_update_resource_button()
 		return
 
 	var query := _search_input.text.strip_edges().to_lower()

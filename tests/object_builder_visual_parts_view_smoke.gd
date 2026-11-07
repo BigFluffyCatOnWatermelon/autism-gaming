@@ -11,6 +11,7 @@ var visibility_batch_events: Array[bool] = []
 var lock_events: Array[Dictionary] = []
 var draw_order_events: Array[Dictionary] = []
 var rename_events: Array[Dictionary] = []
+var resource_edit_paths: Array[NodePath] = []
 
 
 func _initialize() -> void:
@@ -29,6 +30,7 @@ func _run() -> void:
 	view.connect("part_lock_changed", Callable(self, "_on_part_lock_changed"))
 	view.connect("draw_order_change_requested", Callable(self, "_on_draw_order_change_requested"))
 	view.connect("rename_requested", Callable(self, "_on_rename_requested"))
+	view.connect("resource_edit_requested", Callable(self, "_on_resource_edit_requested"))
 
 	var scene_root := Node2D.new()
 	scene_root.name = "ObjectRoot"
@@ -75,6 +77,9 @@ func _run() -> void:
 	view.call("_on_part_selected", NodePath("Visuals/Glow"))
 	_expect(selected_paths == [NodePath("Visuals/Glow")], "part selection emits the relative scene path")
 	_expect(str(view.call("get_selected_path")) == "Visuals/Glow", "selected part state updates")
+	_expect(not (view.get("_resource_button") as Button).disabled, "resource button is enabled for a selected AnimatedSprite2D")
+	(view.get("_resource_button") as Button).pressed.emit()
+	_expect(resource_edit_paths == [NodePath("Visuals/Glow")], "resource edit action forwards the selected visual part path")
 
 	view.call("_on_visibility_toggled", false, NodePath("Visuals/Leaf"))
 	view.call("_on_duplicate_requested", NodePath("Visuals/Glow"))
@@ -169,6 +174,10 @@ func _on_draw_order_change_requested(path: NodePath, delta: int) -> void:
 
 func _on_rename_requested(path: NodePath, new_name: String) -> void:
 	rename_events.append({"path": path, "name": new_name})
+
+
+func _on_resource_edit_requested(path: NodePath) -> void:
+	resource_edit_paths.append(path)
 
 
 func _expect(condition: bool, description: String) -> void:

@@ -338,6 +338,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_visual_parts_view.connect("part_lock_changed", Callable(self, "_on_visual_part_lock_changed"))
 	_visual_parts_view.connect("draw_order_change_requested", Callable(self, "_on_visual_part_draw_order_change_requested"))
 	_visual_parts_view.connect("rename_requested", Callable(self, "_on_scene_tree_node_rename_requested"))
+	_visual_parts_view.connect("resource_edit_requested", Callable(self, "_on_visual_part_resource_edit_requested"))
 	parent.add_child(_visual_parts_view)
 
 
@@ -2004,6 +2005,22 @@ func _on_visual_part_remove_requested(path: NodePath) -> void:
 	if node == null or node == scene_root:
 		return
 	_remove_scene_node(node)
+
+
+func _on_visual_part_resource_edit_requested(path: NodePath) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		_set_status("Открой сцену объекта, чтобы изменить ресурс части.", true)
+		return
+	var node := scene_root.get_node_or_null(path)
+	if node == null:
+		return
+	_sync_scene_tree_selection(node)
+	EditorInterface.edit_node(node)
+	if node is Sprite2D:
+		_visual_editor_view.call("popup_texture_dialog")
+	elif node is AnimatedSprite2D:
+		_visual_editor_view.call("popup_sprite_frames_dialog")
 
 
 func _on_visual_part_draw_order_change_requested(path: NodePath, delta: int) -> void:
