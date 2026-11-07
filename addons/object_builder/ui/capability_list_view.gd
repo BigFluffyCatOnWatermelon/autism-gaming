@@ -24,6 +24,9 @@ var _previous_page_button: Button
 var _next_page_button: Button
 var _page_label: Label
 var _selection_bar: PanelContainer
+var _related_section: PanelContainer
+var _related_title: Label
+var _related_container: HFlowContainer
 var _selection_summary: Label
 var _add_selected_button: Button
 var _clear_selection_button: Button
@@ -66,6 +69,7 @@ func build(categories: Array[Dictionary]) -> void:
 	add_child(category_option)
 
 	_build_selection_bar()
+	_build_related_section()
 
 	_entries_scroll = ScrollContainer.new()
 	_entries_scroll.custom_minimum_size = Vector2(0, 420)
@@ -123,6 +127,64 @@ func _build_selection_bar() -> void:
 	row.add_child(_add_selected_button)
 
 
+func _build_related_section() -> void:
+	_related_section = PanelContainer.new()
+	_related_section.visible = false
+	add_child(_related_section)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 4)
+	_related_section.add_child(content)
+
+	_related_title = Label.new()
+	_related_title.text = "СВЯЗАННЫЕ ВОЗМОЖНОСТИ"
+	_related_title.add_theme_font_size_override("font_size", 10)
+	content.add_child(_related_title)
+
+	_related_container = HFlowContainer.new()
+	_related_container.add_theme_constant_override("h_separation", 5)
+	_related_container.add_theme_constant_override("v_separation", 4)
+	content.add_child(_related_container)
+
+
+func set_related_entries(entries: Array[Dictionary], focused_name: String = "") -> void:
+	if _related_container == null:
+		return
+	UIFactory.clear_children(_related_container)
+	_related_section.visible = not entries.is_empty()
+	if entries.is_empty():
+		return
+	_related_title.text = (
+		"СВЯЗАНО С: " + focused_name.to_upper()
+		if not focused_name.is_empty()
+		else "СВЯЗАННЫЕ ВОЗМОЖНОСТИ"
+	)
+	for entry in entries:
+		var capability := entry.get("definition") as ObjectCapabilityDefinition
+		if capability == null:
+			continue
+		var relation_button := Button.new()
+		relation_button.text = capability.display_name
+		relation_button.custom_minimum_size = Vector2(130, 30)
+		relation_button.icon = CapabilityIconRegistryScript.get_icon(capability)
+		var relation_type := str(entry.get("relation_type", "related"))
+		var tooltip := _get_relation_caption(relation_type)
+		var explanation := str(entry.get("explanation", ""))
+		if bool(entry.get("is_reverse", false)):
+			tooltip += "\nСвязано с выбранной механикой."
+		if not explanation.is_empty():
+			tooltip += "\n" + explanation
+		if not bool(entry.get("ready", capability.is_ready())):
+			tooltip += "\nМеханика ещё в разработке, можно изучить её связь."
+		relation_button.tooltip_text = tooltip
+		relation_button.pressed.connect(_on_focus_requested.bind(capability.capability_id))
+		_related_container.add_child(relation_button)
+
+
+func get_related_button_count() -> int:
+	return _related_container.get_child_count() if _related_container != null else 0
+
+
 func get_search_query() -> String:
 	return search_input.text if search_input != null else ""
 
@@ -155,6 +217,7 @@ func show_empty_state(message: String) -> void:
 	UIFactory.clear_children(entries_container)
 	UIFactory.add_empty_state(entries_container, message)
 	_entries_scroll.scroll_vertical = 0
+	set_related_entries([])
 	set_selected_count(_selected_count)
 
 
