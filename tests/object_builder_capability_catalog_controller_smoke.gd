@@ -42,8 +42,14 @@ func _run_tests() -> void:
 		"target_id": DATA_ID,
 		"explanation": "Для оформления объекта можно добавить отдельные пользовательские данные."
 	})
+	visual.relations.append({
+		"type": "recommends",
+		"target_id": "smoke_catalog_controller_incompatible_candidate",
+		"explanation": "Проверка исключения реального конфликта из рекомендаций."
+	})
 
 	var data := DefinitionScript.new()
+	data.incompatible_capability_ids = PackedStringArray(["smoke_catalog_controller_incompatible_candidate"])
 	data.capability_id = DATA_ID
 	data.display_name = "Пользовательские данные"
 	data.description = "Хранит дополнительные значения объекта."
@@ -56,8 +62,21 @@ func _run_tests() -> void:
 	data.implementation_type = "declarative_data"
 	data.synonyms = PackedStringArray(["свойства", "характеристики"])
 
+	var incompatible_candidate := DefinitionScript.new()
+	incompatible_candidate.capability_id = "smoke_catalog_controller_incompatible_candidate"
+	incompatible_candidate.display_name = "Несовместимый режим"
+	incompatible_candidate.description = "Тестовая возможность, несовместимая с пользовательскими данными."
+	incompatible_candidate.category_id = "general"
+	incompatible_candidate.category_name = "Основное"
+	incompatible_candidate.runtime_status = "Planned"
+	incompatible_candidate.readiness_status = "ready"
+	incompatible_candidate.kind_id = "data"
+	incompatible_candidate.execution_scope = "data_only"
+	incompatible_candidate.implementation_type = "declarative_data"
+	incompatible_candidate.incompatible_capability_ids = PackedStringArray([DATA_ID])
+
 	var registration_errors := ObjectCapabilityCatalog.register_definitions(
-		[visual, data],
+		[visual, data, incompatible_candidate],
 		"smoke_catalog_controller"
 	)
 	_expect(registration_errors.is_empty(), "test capabilities register")
@@ -174,12 +193,19 @@ func _run_tests() -> void:
 		8
 	)
 	var installed_data_was_recommended := false
+	var incompatible_candidate_was_recommended := false
 	for recommendation in filtered_recommendations:
 		if str(recommendation.get("capability_id", "")) == DATA_ID:
 			installed_data_was_recommended = true
+		if str(recommendation.get("capability_id", "")) == "smoke_catalog_controller_incompatible_candidate":
+			incompatible_candidate_was_recommended = true
 	_expect(
 		not installed_data_was_recommended,
 		"already installed capabilities are not recommended again"
+	)
+	_expect(
+		not incompatible_candidate_was_recommended,
+		"incompatible mechanics are removed by the actual capability validation plan"
 	)
 
 	var phrase_entries: Array[Dictionary] = controller.call(
