@@ -412,6 +412,15 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	_scene_tree_view.call("build")
 	advanced_editor.add_child(_scene_tree_view)
 
+	_open_scene_button = ObjectBuilderUIFactory.add_action_button(
+		advanced_editor,
+		"Открыть сцену в Godot",
+		_on_open_scene_pressed,
+		"Открыть текущую сцену объекта в штатном редакторе Godot"
+	)
+	_open_scene_button.disabled = true
+	_build_visual_editor(advanced_editor)
+
 	ObjectBuilderUIFactory.create_section_title(advanced_editor, "ПОЛЬЗОВАТЕЛЬСКИЕ СВОЙСТВА")
 	
 	var properties_hint := Label.new()
@@ -790,6 +799,9 @@ func _on_capability_settings_confirmed() -> void:
 func _on_simple_add_image_pressed() -> void:
 	if _working_definition == null:
 		_set_status("Сначала создай объект.", true)
+		return
+	if _visual_editor_view == null:
+		_set_status("Панель настройки изображения не загружена. Перезапусти Object Builder.", true)
 		return
 	if _working_definition.scene_path.is_empty() or not FileAccess.file_exists(_working_definition.scene_path):
 		if not _create_scene_for_definition():
@@ -1171,7 +1183,8 @@ func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> voi
 	_template_check.button_pressed = _working_definition.is_template
 	_template_check.disabled = not _can_save_as_template
 	_select_root_type(_working_definition.root_type)
-	_open_scene_button.disabled = _working_definition.scene_path.is_empty() or not FileAccess.file_exists(_working_definition.scene_path)
+	if _open_scene_button != null:
+		_open_scene_button.disabled = _working_definition.scene_path.is_empty() or not FileAccess.file_exists(_working_definition.scene_path)
 	_rebuild_property_list()
 	_rebuild_component_list()
 	_rebuild_capability_list()
@@ -1456,7 +1469,8 @@ func _on_save_pressed() -> void:
 
 	_editor_session.call("accept_saved_state", _working_definition)
 	_id_edit.text = _working_definition.object_id
-	_open_scene_button.disabled = false
+	if _open_scene_button != null:
+		_open_scene_button.disabled = false
 	_can_save_as_template = false
 	_template_check.disabled = true
 	if _working_definition.is_template:
@@ -1474,6 +1488,8 @@ func _create_scene_for_definition() -> bool:
 		_set_status(str(result.get("message", "Не удалось создать сцену объекта.")), true)
 		return false
 	_mark_editor_session_changed()
+	if _open_scene_button != null:
+		_open_scene_button.disabled = false
 	EditorInterface.get_resource_filesystem().scan()
 	return true
 
