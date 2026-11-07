@@ -37,6 +37,11 @@ func _run_tests() -> void:
 		"target_id": DATA_ID,
 		"explanation": "Дополнительные пользовательские данные дополняют оформление объекта."
 	})
+	visual.relations.append({
+		"type": "recommends",
+		"target_id": DATA_ID,
+		"explanation": "Для оформления объекта можно добавить отдельные пользовательские данные."
+	})
 
 	var data := DefinitionScript.new()
 	data.capability_id = DATA_ID
@@ -133,6 +138,47 @@ func _run_tests() -> void:
 		):
 			attack_recommendation_found = true
 	_expect(attack_recommendation_found, "curated recommendation appears in the related-mechanics strip")
+
+	controller.call("clear_selection")
+	controller.call("set_focused_capability", VISUAL_ID)
+	var recommendations: Array[Dictionary] = controller.call(
+		"build_recommended_entries",
+		no_current_selections,
+		"",
+		8
+	)
+	var data_recommendation_found := false
+	for recommendation in recommendations:
+		if str(recommendation.get("capability_id", "")) == DATA_ID:
+			data_recommendation_found = true
+			_expect(
+				str(recommendation.get("relation_type", "")) == "recommends",
+				"recommendation ranking prefers explicit recommends relations over generic related links"
+			)
+			_expect(
+				str(recommendation.get("explanation", "")).contains("оформления"),
+				"recommendation carries a user-facing explanation"
+			)
+			_expect(
+				int(recommendation.get("score", 0)) >= 90,
+				"explicit recommendations receive a higher score than related links"
+			)
+	_expect(data_recommendation_found, "contextual engine suggests a ready capability related to the focused object")
+
+	var installed_data := ObjectCapabilityCatalog.create_selection(DATA_ID)
+	var current_with_data: Array[ObjectCapabilitySelection] = [installed_data]
+	var filtered_recommendations: Array[Dictionary] = controller.call(
+		"build_recommended_entries",
+		current_with_data,
+		"",
+		8
+	)
+	_expect(
+		not filtered_recommendations.any(func(entry: Dictionary) -> bool:
+			return str(entry.get("capability_id", "")) == DATA_ID
+		),
+		"already installed capabilities are not recommended again"
+	)
 
 	var phrase_entries: Array[Dictionary] = controller.call(
 		"build_entries",
