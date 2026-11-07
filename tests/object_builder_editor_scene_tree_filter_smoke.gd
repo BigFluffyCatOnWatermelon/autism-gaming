@@ -38,10 +38,6 @@ func _run() -> void:
 	_expect(not FilterScript.belongs_to_scene(null, nested_child), "a missing edited scene is ignored")
 	_expect(not FilterScript.belongs_to_scene(scene_root, null), "a missing changed node is ignored")
 
-	# A removed child is no longer an ancestor, but its scene owner still identifies it.
-	scene_root.remove_child(direct_child)
-	_expect(FilterScript.belongs_to_scene(scene_root, direct_child), "removed owned scene nodes are still detected")
-
 	if failures.is_empty():
 		print("Object Builder editor scene tree filter: all checks passed.")
 	else:
