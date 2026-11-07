@@ -105,6 +105,26 @@ func set_selected_path(path: NodePath) -> void:
 	_update_resource_button()
 
 
+func request_inline_rename(path: NodePath) -> bool:
+	if path.is_empty() or path == NodePath("."):
+		return false
+	var row_index := _row_paths.find(path)
+	if row_index < 0:
+		var part_exists := false
+		for entry in _parts:
+			if entry.get("path", NodePath("")) == path:
+				part_exists = true
+				break
+		if not part_exists:
+			return false
+		_search_input.clear()
+		_render_rows()
+		row_index = _row_paths.find(path)
+	if row_index < 0 or row_index >= _row_name_buttons.size() or row_index >= _row_name_edits.size():
+		return false
+	_begin_inline_rename(path, _row_name_buttons[row_index], _row_name_edits[row_index])
+	return true
+
 func set_locked_paths(paths: Array[NodePath]) -> void:
 	_locked_paths.clear()
 	for path in paths:
