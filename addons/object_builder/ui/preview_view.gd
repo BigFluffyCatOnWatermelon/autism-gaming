@@ -88,7 +88,7 @@ func build() -> void:
 	camera.position = Vector2.ZERO
 	camera.zoom = Vector2.ONE
 	_stage.add_child(camera)
-	camera.make_current()
+	camera.call_deferred("make_current")
 
 	_message = Label.new()
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
