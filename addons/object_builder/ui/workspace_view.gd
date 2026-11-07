@@ -142,26 +142,9 @@ func _create_panel(parent: Container, title_text: String, minimum_width: float) 
 
 
 func _build_inspector(host: VBoxContainer) -> void:
+	# The inspector content is built by Object Builder views. Keep this host
+	# empty so object metadata is not duplicated by a second summary panel.
 	host.add_theme_constant_override("separation", 5)
-	_add_section(host, "ТЕКУЩИЙ ОБЪЕКТ")
-	_document_name = _add_info_label(host, "Объект не выбран")
-	_document_category = _add_info_label(host, "Категория: —")
-	_document_kind = _add_info_label(host, "Тип: —")
-	_document_state = _add_info_label(host, "Состояние: —")
-
-	host.add_child(HSeparator.new())
-	_add_section(host, "ВЫБРАННАЯ ЧАСТЬ")
-	_selection_name = _add_info_label(host, "Ничего не выбрано")
-	_selection_path = _add_info_label(host, "")
-	_selection_path.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_selection_path.add_theme_font_size_override("font_size", 10)
-
-	host.add_child(HSeparator.new())
-	var hint := Label.new()
-	hint.text = "Точные параметры выбранного узла доступны в штатном Inspector Godot и в расширенном режиме."
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.modulate = Color(0.75, 0.75, 0.75)
-	host.add_child(hint)
 
 
 func _add_section(parent: Container, section_title: String) -> void:
@@ -202,28 +185,15 @@ func _build_diagnostics_panel() -> void:
 	content.add_child(_diagnostics_message)
 
 
-func set_document_info(display_name: String, category: String, is_template: bool, is_dirty: bool) -> void:
-	if _document_name == null:
+func set_document_info(display_name: String, _category: String, _is_template: bool, _is_dirty: bool) -> void:
+	if _document_title == null:
 		return
-	if display_name.is_empty():
-		_document_name.text = "Объект не выбран"
-		_document_category.text = "Категория: —"
-		_document_kind.text = "Тип: —"
-		_document_state.text = "Состояние: —"
-		_document_title.text = "Библиотека объектов"
-		return
-	_document_name.text = display_name
-	_document_category.text = "Категория: " + (category if not category.is_empty() else "Без категории")
-	_document_kind.text = "Тип: Шаблон" if is_template else "Тип: Игровой объект"
-	_document_state.text = "Состояние: Есть изменения" if is_dirty else "Состояние: Сохранено"
-	_document_title.text = display_name
+	_document_title.text = display_name if not display_name.is_empty() else "Библиотека объектов"
 
 
-func set_selection_info(node_name: String, node_path: String) -> void:
-	if _selection_name == null:
-		return
-	_selection_name.text = node_name if not node_name.is_empty() else "Ничего не выбрано"
-	_selection_path.text = node_path
+func set_selection_info(_node_name: String, _node_path: String) -> void:
+	# Selection is shown in the scene tree/canvas, not repeated in Properties.
+	return
 
 
 func set_status(message: String, is_error: bool) -> void:
@@ -310,11 +280,11 @@ func get_diagnostics_message() -> String:
 
 
 func get_document_name_text() -> String:
-	return _document_name.text if _document_name != null else ""
+	return _document_title.text if _document_title != null else ""
 
 
 func get_selection_name_text() -> String:
-	return _selection_name.text if _selection_name != null else ""
+	return ""
 
 
 func is_library_visible() -> bool:

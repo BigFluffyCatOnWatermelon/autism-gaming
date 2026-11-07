@@ -1,6 +1,6 @@
 @tool
 extends VBoxContainer
-## Displays focused information about the selected library entry.
+## Displays the selected object summary inside the unified Properties inspector.
 
 var _scroll: ScrollContainer
 var _content: VBoxContainer
@@ -20,11 +20,9 @@ func build() -> void:
 		return
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
-	custom_minimum_size = Vector2(0, 120)
 
 	var title := Label.new()
-	title.text = "СВЕДЕНИЯ О ЗАПИСИ"
-	title.tooltip_text = "Потяни вертикальный разделитель между редактором и свойствами, чтобы изменить ширину этой панели."
+	title.text = "ОБЪЕКТ"
 	title.add_theme_font_size_override("font_size", 11)
 	add_child(title)
 	add_child(HSeparator.new())
@@ -99,14 +97,14 @@ func set_details(details: Dictionary) -> void:
 	if _name_label == null:
 		return
 	var has_entry := not details.is_empty()
-	visible = has_entry
+	visible = true
 	if not has_entry:
 		_preview.texture = null
 		_name_label.text = "Объект не выбран"
 		_kind_label.text = ""
 		_category_label.text = ""
 		_id_label.text = ""
-		_description_label.text = "Выбери запись в библиотеке, чтобы увидеть подробности."
+		_description_label.text = "Выбери объект в библиотеке, чтобы увидеть его свойства."
 		_tags_label.text = "—"
 		_capabilities_label.text = "—"
 		_dependencies_label.text = "—"

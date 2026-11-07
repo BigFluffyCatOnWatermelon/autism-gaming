@@ -13,9 +13,8 @@ func _run() -> void:
 	var details_view = DetailsViewScript.new()
 	root.add_child(details_view)
 	details_view.call("build")
-	_expect(not details_view.visible, "details panel starts hidden until a library entry is selected")
-	_expect(details_view.custom_minimum_size.x >= 280.0, "details view requests a usable minimum width")
-	_expect(details_view.custom_minimum_size.y >= 200.0, "details view requests enough height for its content")
+	_expect(details_view.visible, "unified Properties inspector shows an empty-state prompt before selection")
+	_expect(details_view.custom_minimum_size == Vector2.ZERO, "details view does not impose a second panel minimum size")
 
 	details_view.call("set_details", {
 		"display_name": "Дуб",
@@ -34,7 +33,7 @@ func _run() -> void:
 	_expect(str(details_view.call("get_dependencies_text")).contains("Есть здоровье"), "details panel displays capability dependencies")
 
 	details_view.call("set_details", {})
-	_expect(not details_view.visible, "details panel hides when the selection is cleared")
+	_expect(details_view.visible, "unified Properties inspector remains present when the selection is cleared")
 
 	root.remove_child(details_view)
 	details_view.free()

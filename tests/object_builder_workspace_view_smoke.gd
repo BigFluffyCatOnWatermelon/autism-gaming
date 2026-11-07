@@ -23,9 +23,10 @@ func _run() -> void:
 	_expect(not workspace.call("is_diagnostics_visible"), "diagnostics panel starts collapsed")
 
 	workspace.call("set_document_info", "Дуб", "Nature", false, true)
-	_expect(workspace.call("get_document_name_text") == "Дуб", "inspector shows the selected object name")
+	_expect(workspace.call("get_document_name_text") == "Дуб", "workspace title follows the selected object")
 	workspace.call("set_selection_info", "Sprite2D", "Object/Visuals/Sprite2D")
-	_expect(workspace.call("get_selection_name_text") == "Sprite2D", "inspector shows the selected scene part")
+	_expect(workspace.call("get_selection_name_text").is_empty(), "selected scene part is not duplicated in Properties")
+	_expect(workspace.call("get_inspector_host").get_child_count() == 0, "workspace does not add a duplicate metadata summary to Properties")
 
 	var initial_state: Dictionary = workspace.call("get_layout_state")
 	_expect(bool(initial_state.get("library_visible", false)), "workspace layout stores library visibility")
