@@ -369,8 +369,10 @@ func _on_inline_rename_gui_input(event: InputEvent, path: NodePath) -> void:
 	if event is InputEventKey:
 		var key_event := event as InputEventKey
 		if key_event.pressed and not key_event.echo and key_event.keycode == KEY_ESCAPE:
+			var edit := _renaming_edit
 			_cancel_inline_rename()
-			_renaming_edit.accept_event()
+			if edit != null:
+				edit.accept_event()
 
 
 func _commit_inline_rename(path: NodePath) -> void:

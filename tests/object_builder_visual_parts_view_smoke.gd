@@ -106,8 +106,11 @@ func _run() -> void:
 	_expect(not name_edits[0].visible and name_buttons[0].visible, "confirmed rename restores the normal row display")
 	view.call("_begin_inline_rename", NodePath("Visuals/Glow"), name_buttons[1], name_edits[1])
 	name_edits[1].text = "ShouldNotApply"
-	view.call("_cancel_inline_rename")
-	_expect(not name_edits[1].visible and name_buttons[1].visible, "cancelled rename restores the normal row display")
+	var escape_event := InputEventKey.new()
+	escape_event.pressed = true
+	escape_event.keycode = KEY_ESCAPE
+	view.call("_on_inline_rename_gui_input", escape_event, NodePath("Visuals/Glow"))
+	_expect(not name_edits[1].visible and name_buttons[1].visible, "Escape cancels inline rename and restores the normal row display")
 	_expect(rename_events.size() == 1, "cancelled rename does not emit a scene change")
 
 	var search_input := view.get("_search_input") as LineEdit
