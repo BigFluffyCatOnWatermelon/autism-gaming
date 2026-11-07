@@ -1087,6 +1087,18 @@ func _save_local_state() -> void:
 	settings.set_project_metadata(METADATA_SECTION, "locked_visual_parts", _locked_visual_part_keys)
 	if _workspace_view != null:
 		settings.set_project_metadata(METADATA_SECTION, "workspace_layout", _workspace_view.call("get_layout_state"))
+
+
+func _to_packed_string_array(value: Variant) -> PackedStringArray:
+	if value is PackedStringArray:
+		return value.duplicate()
+	var result := PackedStringArray()
+	if value is Array:
+		for entry in value:
+			var item := str(entry).strip_edges()
+			if not item.is_empty() and not result.has(item):
+				result.append(item)
+	return result
 func _refresh_library() -> void:
 	_library_controller.call("load_library")
 	_rebuild_category_filter()
