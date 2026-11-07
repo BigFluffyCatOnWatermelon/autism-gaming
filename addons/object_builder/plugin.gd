@@ -3069,6 +3069,14 @@ func _on_visual_part_draw_order_reorder_requested(source_path: NodePath, target_
 			return a.get_index() < b.get_index()
 		return a.z_index < b.z_index
 	)
+	var sorted_z_indices: Array[int] = []
+	for sibling in ordered:
+		sorted_z_indices.append(sibling.z_index)
+	var requires_unique_z := false
+	for index in range(1, sorted_z_indices.size()):
+		if sorted_z_indices[index] <= sorted_z_indices[index - 1]:
+			requires_unique_z = true
+			break
 	var source_index := ordered.find(source)
 	var target_index := ordered.find(target)
 	if source_index < 0 or target_index < 0:
@@ -3079,13 +3087,13 @@ func _on_visual_part_draw_order_reorder_requested(source_path: NodePath, target_
 		insertion_index -= 1
 	ordered.insert(insertion_index, source)
 	var minimum_z := 0
-	if not ordered.is_empty():
-		minimum_z = ordered[0].z_index
+	if not sorted_z_indices.is_empty():
+		minimum_z = sorted_z_indices[0]
 	var start_z := clampi(minimum_z, -4096, 4096 - ordered.size() + 1)
 	var changes: Array[Dictionary] = []
 	for index in range(ordered.size()):
 		var node := ordered[index]
-		var next_z := start_z + index
+		var next_z := start_z + index if requires_unique_z else sorted_z_indices[index]
 		if node.z_index != next_z:
 			changes.append({"node": node, "old": node.z_index, "new": next_z})
 	if changes.is_empty():
