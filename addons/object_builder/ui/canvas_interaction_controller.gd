@@ -255,14 +255,18 @@ func draw_selection(target: Control) -> void:
 		for point in corners:
 			surface_corners.append(point * scale_to_surface)
 		target.draw_polyline(surface_corners, Color(0.35, 0.85, 1.0, 0.95), 2.0, true)
-		if path != _selected_path or _selected_paths.size() > 1:
-			continue
-		var handles := _get_transform_handle_positions()
-		if handles.is_empty() or is_path_locked(path):
-			continue
+
+	var handles := _get_transform_handle_positions()
+	if not handles.is_empty() and not _get_selected_transform_nodes().is_empty():
+		var selection_corners := _get_selection_viewport_corners()
+		var selection_surface_corners := PackedVector2Array()
+		for point in selection_corners:
+			selection_surface_corners.append(point * scale_to_surface)
+		if _selected_paths.size() > 1 and selection_surface_corners.size() >= 4:
+			target.draw_polyline(selection_surface_corners, Color(0.95, 0.75, 0.32, 0.8), 1.5, true)
 		var rotate_point: Vector2 = handles["rotate"]
 		var pivot_point: Vector2 = handles["pivot"]
-		var top_middle := (surface_corners[0] + surface_corners[1]) * 0.5
+		var top_middle := (selection_surface_corners[0] + selection_surface_corners[1]) * 0.5
 		target.draw_line(top_middle, rotate_point, Color(0.95, 0.75, 0.32), 1.5)
 		target.draw_circle(rotate_point, 6.0, Color(0.95, 0.75, 0.32))
 		target.draw_circle(handles["scale"], 6.0, Color(0.35, 0.9, 0.55))
