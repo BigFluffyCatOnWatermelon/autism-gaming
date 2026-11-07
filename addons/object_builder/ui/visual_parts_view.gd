@@ -6,6 +6,7 @@ signal part_selected(path: NodePath)
 signal part_visibility_changed(path: NodePath, visible: bool)
 signal duplicate_requested(path: NodePath)
 signal remove_requested(path: NodePath)
+signal visibility_batch_requested(visible: bool)
 
 const ROW_HEIGHT := 44.0
 const THUMB_SIZE := Vector2(34.0, 34.0)
@@ -26,10 +27,23 @@ func build() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_theme_constant_override("separation", 5)
 
+	var heading_row := HBoxContainer.new()
+	add_child(heading_row)
 	var heading := Label.new()
 	heading.text = "ЧАСТИ ОБЪЕКТА"
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_theme_font_size_override("font_size", 13)
-	add_child(heading)
+	heading_row.add_child(heading)
+	var show_all_button := Button.new()
+	show_all_button.text = "Показать"
+	show_all_button.tooltip_text = "Сделать видимыми все визуальные части"
+	show_all_button.pressed.connect(_on_show_all_pressed)
+	heading_row.add_child(show_all_button)
+	var hide_all_button := Button.new()
+	hide_all_button.text = "Скрыть"
+	hide_all_button.tooltip_text = "Скрыть все визуальные части"
+	hide_all_button.pressed.connect(_on_hide_all_pressed)
+	heading_row.add_child(hide_all_button)
 
 	_search_input = LineEdit.new()
 	_search_input.placeholder_text = "Найти часть…"
@@ -255,3 +269,11 @@ func _on_duplicate_requested(path: NodePath) -> void:
 
 func _on_remove_requested(path: NodePath) -> void:
 	remove_requested.emit(path)
+
+
+func _on_show_all_pressed() -> void:
+	visibility_batch_requested.emit(true)
+
+
+func _on_hide_all_pressed() -> void:
+	visibility_batch_requested.emit(false)

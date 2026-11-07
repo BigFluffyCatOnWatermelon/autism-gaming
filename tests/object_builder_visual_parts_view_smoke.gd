@@ -7,6 +7,7 @@ var selected_paths: Array[NodePath] = []
 var visibility_events: Array[Dictionary] = []
 var duplicate_paths: Array[NodePath] = []
 var remove_paths: Array[NodePath] = []
+var visibility_batch_events: Array[bool] = []
 
 
 func _initialize() -> void:
@@ -21,6 +22,7 @@ func _run() -> void:
 	view.connect("part_visibility_changed", Callable(self, "_on_visibility_changed"))
 	view.connect("duplicate_requested", Callable(self, "_on_duplicate_requested"))
 	view.connect("remove_requested", Callable(self, "_on_remove_requested"))
+	view.connect("visibility_batch_requested", Callable(self, "_on_visibility_batch_requested"))
 
 	var scene_root := Node2D.new()
 	scene_root.name = "ObjectRoot"
@@ -74,6 +76,9 @@ func _run() -> void:
 	_expect(visibility_events == [{"path": NodePath("Visuals/Leaf"), "visible": false}], "visibility requests carry the part path and new state")
 	_expect(duplicate_paths == [NodePath("Visuals/Glow")], "duplicate action forwards the selected path")
 	_expect(remove_paths == [NodePath("Visuals/Shadow")], "remove action forwards the selected path")
+	view.call("_on_show_all_pressed")
+	view.call("_on_hide_all_pressed")
+	_expect(visibility_batch_events == [true, false], "show-all and hide-all emit one batch visibility action each")
 
 	var search_input := view.get("_search_input") as LineEdit
 	search_input.text = "glow"
@@ -115,6 +120,10 @@ func _on_duplicate_requested(path: NodePath) -> void:
 
 func _on_remove_requested(path: NodePath) -> void:
 	remove_paths.append(path)
+
+
+func _on_visibility_batch_requested(visible: bool) -> void:
+	visibility_batch_events.append(visible)
 
 
 func _expect(condition: bool, description: String) -> void:

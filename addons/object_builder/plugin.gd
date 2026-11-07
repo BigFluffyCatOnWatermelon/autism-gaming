@@ -333,6 +333,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_visual_parts_view.connect("part_visibility_changed", Callable(self, "_on_visual_part_visibility_changed"))
 	_visual_parts_view.connect("duplicate_requested", Callable(self, "_on_visual_part_duplicate_requested"))
 	_visual_parts_view.connect("remove_requested", Callable(self, "_on_visual_part_remove_requested"))
+	_visual_parts_view.connect("visibility_batch_requested", Callable(self, "_on_visual_parts_visibility_batch_requested"))
 	parent.add_child(_visual_parts_view)
 
 
@@ -1983,6 +1984,32 @@ func _on_visual_part_remove_requested(path: NodePath) -> void:
 	_remove_scene_node(node)
 
 
+func _on_visual_parts_visibility_batch_requested(visible: bool) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null or _visual_parts_view == null:
+		return
+	var changes: Array[Dictionary] = []
+	var part_paths: Array[NodePath] = _visual_parts_view.call("get_part_paths")
+	for part_path in part_paths:
+		var part := scene_root.get_node_or_null(part_path) as CanvasItem
+		if part == null or part.visible == visible:
+			continue
+		changes.append({"node": part, "old": part.visible})
+	if changes.is_empty():
+		_set_status("Видимость частей уже соответствует выбранному действию.", false)
+		return
+	var action_name := "показать все визуальные части" if visible else "скрыть все визуальные части"
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: " + action_name, 0, scene_root)
+	for change in changes:
+		var part := change.get("node") as CanvasItem
+		undo_redo.add_do_property(part, "visible", visible)
+		undo_redo.add_undo_property(part, "visible", bool(change.get("old", true)))
+	undo_redo.commit_action()
+	_refresh_canvas()
+	_set_status("Видимость обновлена для %d частей. Ctrl+Z отменяет действие." % changes.size(), false)
+
+
 func _on_sprite_grid_value_changed(value: float, property_name: String) -> void:
 	var sprite := _get_selected_sprite_node()
 	if sprite == null:
@@ -2122,7 +2149,10 @@ func _on_duplicate_node_pressed() -> void:
 	undo_redo.add_undo_method(parent_node, "remove_child", duplicate_node)
 	undo_redo.add_do_reference(duplicate_node)
 	undo_redo.commit_action()
+	EditorInterface.get_selection().clear()
+	EditorInterface.get_selection().add_node(duplicate_node)
 	EditorInterface.edit_node(duplicate_node)
+	_refresh_scene_tree()
 	_sync_scene_tree_selection(duplicate_node)
 	_set_status("Создана копия «%s». Измени её независимо от оригинала и сохрани сцену через Ctrl+S." % duplicate_node.name, false)
 
