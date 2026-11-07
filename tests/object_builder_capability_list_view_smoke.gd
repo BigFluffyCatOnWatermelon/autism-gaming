@@ -139,8 +139,8 @@ func _run() -> void:
 	)
 	selectable_check.toggled.emit(true)
 	_expect(
-		selection_events == ["true:can_swim", "true:can_dig"],
-		"both recommendation and card checkboxes add IDs to the shared catalog selection"
+		selection_events == ["true:can_dig"],
+		"capability card adds its ID to the shared catalog selection"
 	)
 	view.call("set_selected_count", 2)
 	var selection_bar := view.get("_selection_bar") as PanelContainer
@@ -177,18 +177,30 @@ func _run() -> void:
 	}]
 	view.call("set_recommended_entries", recommendation_entries)
 	_expect((view.get("_recommendation_section") as PanelContainer).visible, "context-aware suggestions appear in a dedicated panel")
-	_expect(view.call("get_recommendation_button_count") == 1, "recommendation panel shows each ranked suggestion")
+	_expect(view.call("get_recommendation_card_count") == 1, "recommendation panel shows each ranked suggestion as a card")
 	var recommendation_container := view.get("_recommendation_container") as HFlowContainer
-	var recommendation_button := recommendation_container.get_child(0) as Button
-	_expect(
-		recommendation_button.text == "+ Плавание"
-		and recommendation_button.tooltip_text.contains("движение объекта")
-		and recommendation_button.tooltip_text.contains("не добавит её в объект"),
-		"recommendation explains why it fits and clarifies that it only selects the capability"
-	)
+	var profile_recommendation_card := profile_recommendation_container.get_child(0) as PanelContainer
+	var profile_recommendation_content := profile_recommendation_card.get_child(0) as VBoxContainer
+	_expect(recommendation_content.get_child_count() == 4, "recommendation card contains title, type, explanation and action")
+	var recommendation_header := recommendation_content.get_child(0) as HBoxContainer
+	var recommendation_name := recommendation_header.get_child(1) as Label
+	var recommendation_type := recommendation_content.get_child(1) as Label
+	var recommendation_reason := recommendation_content.get_child(2) as Label
+	var recommendation_button := recommendation_content.get_child(3) as Button
+	_expect(recommendation_name.text == "Плавание", "recommendation card shows the capability name")
+	_expect(recommendation_type.text == "Рекомендуется вместе", "recommendation card identifies the typed relation")
+	_expect(recommendation_reason.text.contains("движение объекта"), "recommendation explains why it fits without requiring a tooltip")
+	_expect(recommendation_button.text == "Выбрать", "recommendation action only selects the capability")
+	var batch_count_before_recommendation := batch_add_count
 	recommendation_button.pressed.emit()
-	_expect(selection_events == ["true:can_swim"], "recommendation selects the capability into the batch without applying it")
-	_expect(batch_add_count == 0, "choosing a recommendation does not apply the batch automatically")
+	_expect(
+		selection_events == ["true:can_dig", "true:can_swim"],
+		"recommendation joins the same multi-selection session as ordinary catalogue cards"
+	)
+	_expect(
+		batch_add_count == batch_count_before_recommendation,
+		"choosing a recommendation does not apply the batch automatically"
+	)
 	view.call("set_recommended_entries", [])
 	_expect(not (view.get("_recommendation_section") as PanelContainer).visible, "recommendation strip hides when no candidates remain")
 
@@ -210,7 +222,7 @@ func _run() -> void:
 	view.call("set_related_entries", [])
 	_expect(not (view.get("_related_section") as PanelContainer).visible, "related strip hides when the focused capability has no links")
 
-	var recommendation_entries: Array[Dictionary] = [{
+	var profile_recommendation_entries: Array[Dictionary] = [{
 		"capability_id": "can_dig",
 		"definition": selectable,
 		"score": 86,
@@ -218,26 +230,26 @@ func _run() -> void:
 		"explanation": "Подходит профилю «Ресурс»: объект можно добывать.",
 		"automatic_dependencies": PackedStringArray(["Здоровье"])
 	}]
-	view.call("set_recommended_entries", recommendation_entries, "Дерево · Ресурс")
+	view.call("set_recommended_entries", profile_recommendation_entries, "Дерево · Ресурс")
 	var recommendation_section := view.get("_recommendation_section") as PanelContainer
-	var recommendation_container := view.get("_recommendation_container") as HFlowContainer
+	var profile_recommendation_container := view.get("_recommendation_container") as HFlowContainer
 	_expect(recommendation_section.visible, "contextual recommendations appear when the controller provides compatible candidates")
 	_expect(view.call("get_recommendation_card_count") == 1, "each recommendation has its own explanatory card")
 	var recommendation_card := recommendation_container.get_child(0) as PanelContainer
 	var recommendation_content := recommendation_card.get_child(0) as VBoxContainer
-	_expect(recommendation_content.get_child_count() == 5, "recommendation card contains title, type, explanation, dependency and action")
-	var recommendation_header := recommendation_content.get_child(0) as HBoxContainer
-	var recommendation_name := recommendation_header.get_child(1) as Label
-	var recommendation_type := recommendation_content.get_child(1) as Label
-	var recommendation_reason := recommendation_content.get_child(2) as Label
-	var recommendation_dependency := recommendation_content.get_child(3) as Label
-	var recommendation_action := recommendation_content.get_child(4) as Button
-	_expect(recommendation_name.text == "Можно копать", "recommendation card displays the capability name")
-	_expect(recommendation_type.text == "Для этого профиля", "recommendation card distinguishes profile suggestions from mechanic relations")
-	_expect(recommendation_reason.text.contains("Ресурс"), "recommendation reason is visible without opening a tooltip")
-	_expect(recommendation_dependency.text.contains("Здоровье"), "automatic dependency is visible before selection")
-	_expect(recommendation_action.text == "Выбрать", "recommendation action only selects the mechanic")
-	recommendation_action.pressed.emit()
+	_expect(profile_recommendation_content.get_child_count() == 5, "profile recommendation card contains title, type, explanation, dependency and action")
+	var profile_recommendation_header := profile_recommendation_content.get_child(0) as HBoxContainer
+	var profile_recommendation_name := profile_recommendation_header.get_child(1) as Label
+	var profile_recommendation_type := profile_recommendation_content.get_child(1) as Label
+	var profile_recommendation_reason := profile_recommendation_content.get_child(2) as Label
+	var profile_recommendation_dependency := profile_recommendation_content.get_child(3) as Label
+	var profile_recommendation_action := profile_recommendation_content.get_child(4) as Button
+	_expect(profile_recommendation_name.text == "Можно копать", "recommendation card displays the capability name")
+	_expect(profile_recommendation_type.text == "Для этого профиля", "recommendation card distinguishes profile suggestions from mechanic relations")
+	_expect(profile_recommendation_reason.text.contains("Ресурс"), "recommendation reason is visible without opening a tooltip")
+	_expect(profile_recommendation_dependency.text.contains("Здоровье"), "automatic dependency is visible before selection")
+	_expect(profile_recommendation_action.text == "Выбрать", "recommendation action only selects the mechanic")
+	profile_recommendation_action.pressed.emit()
 	_expect(
 		selection_events.back() == "true:can_dig",
 		"choosing a recommendation adds it to the global selection session instead of the object immediately"
