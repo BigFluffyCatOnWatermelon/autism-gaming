@@ -451,6 +451,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_visual_parts_view.connect("visibility_batch_requested", Callable(self, "_on_visual_parts_visibility_batch_requested"))
 	_visual_parts_view.connect("part_lock_changed", Callable(self, "_on_visual_part_lock_changed"))
 	_visual_parts_view.connect("draw_order_change_requested", Callable(self, "_on_visual_part_draw_order_change_requested"))
+	_visual_parts_view.connect("draw_order_reorder_requested", Callable(self, "_on_visual_part_draw_order_reorder_requested"))
 	_visual_parts_view.connect("rename_requested", Callable(self, "_on_scene_tree_node_rename_requested"))
 	_visual_parts_view.connect("resource_edit_requested", Callable(self, "_on_visual_part_resource_edit_requested"))
 	parent.add_child(_visual_parts_view)
@@ -2983,6 +2984,55 @@ func _on_visual_part_draw_order_change_requested(path: NodePath, delta: int) -> 
 	_commit_visual_node_property(part, "z_index", next_z_index, "изменить порядок отрисовки")
 	_refresh_canvas()
 	_set_status("Порядок отрисовки обновлён. Ctrl+Z отменяет изменение.", false)
+
+
+func _on_visual_part_draw_order_reorder_requested(source_path: NodePath, target_path: NodePath) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var source := scene_root.get_node_or_null(source_path) as CanvasItem
+	var target := scene_root.get_node_or_null(target_path) as CanvasItem
+	if source == null or target == null or source == target or source.get_parent() != target.get_parent():
+		_set_status("Перетаскивать можно только части с одним родителем.", true)
+		return
+	var parent := source.get_parent()
+	var ordered: Array[CanvasItem] = []
+	for child in parent.get_children():
+		if child is CanvasItem:
+			ordered.append(child as CanvasItem)
+	ordered.sort_custom(func(a: CanvasItem, b: CanvasItem) -> bool:
+		if a.z_index == b.z_index:
+			return a.get_index() < b.get_index()
+		return a.z_index < b.z_index
+	)
+	var source_index := ordered.find(source)
+	var target_index := ordered.find(target)
+	if source_index < 0 or target_index < 0:
+		return
+	ordered.remove_at(source_index)
+	ordered.insert(target_index, source)
+	var minimum_z := 0
+	if not ordered.is_empty():
+		minimum_z = ordered[0].z_index
+	var start_z := clampi(minimum_z, -4096, 4096 - ordered.size() + 1)
+	var changes: Array[Dictionary] = []
+	for index in range(ordered.size()):
+		var node := ordered[index]
+		var next_z := start_z + index
+		if node.z_index != next_z:
+			changes.append({"node": node, "old": node.z_index, "new": next_z})
+	if changes.is_empty():
+		return
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: изменить порядок частей перетаскиванием", 0, scene_root)
+	for change in changes:
+		var node := change.get("node") as CanvasItem
+		undo_redo.add_do_property(node, "z_index", int(change.get("new", 0)))
+		undo_redo.add_undo_property(node, "z_index", int(change.get("old", 0)))
+	undo_redo.commit_action()
+	_refresh_canvas()
+	_refresh_visual_parts()
+	_set_status("Порядок отрисовки изменён перетаскиванием. Ctrl+Z отменяет перестановку.", false)
 
 
 func _on_visual_part_lock_changed(path: NodePath, locked: bool) -> void:
