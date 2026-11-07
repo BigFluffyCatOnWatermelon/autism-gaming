@@ -64,18 +64,23 @@ func build() -> void:
 	hide_all_button.tooltip_text = "Скрыть все визуальные части"
 	hide_all_button.pressed.connect(_on_hide_all_pressed)
 	heading_row.add_child(hide_all_button)
+	var resource_actions_row := HBoxContainer.new()
+	resource_actions_row.add_theme_constant_override("separation", 4)
+	add_child(resource_actions_row)
 	_resource_button = Button.new()
-	_resource_button.text = "Ресурс…"
-	_resource_button.tooltip_text = "Изменить текстуру или набор кадров выбранной части"
+	_resource_button.text = "Текстура…"
+	_resource_button.tooltip_text = "Изменить текстуру Sprite2D или ресурс SpriteFrames AnimatedSprite2D"
 	_resource_button.disabled = true
+	_resource_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_resource_button.pressed.connect(_on_resource_edit_pressed)
-	heading_row.add_child(_resource_button)
+	resource_actions_row.add_child(_resource_button)
 	_frames_editor_button = Button.new()
 	_frames_editor_button.text = "Анимации…"
-	_frames_editor_button.tooltip_text = "Создать и редактировать анимации, кадры, FPS и зацикливание."
+	_frames_editor_button.tooltip_text = "Создать и редактировать анимации, кадры, FPS и режим зацикливания."
 	_frames_editor_button.disabled = true
+	_frames_editor_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_frames_editor_button.pressed.connect(_on_frames_editor_pressed)
-	heading_row.add_child(_frames_editor_button)
+	resource_actions_row.add_child(_frames_editor_button)
 
 	_search_input = LineEdit.new()
 	_search_input.placeholder_text = "Найти часть…"
