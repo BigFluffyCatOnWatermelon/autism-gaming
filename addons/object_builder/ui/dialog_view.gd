@@ -314,6 +314,8 @@ func set_creation_category(category_id: String) -> void:
 func set_creation_sources(template_sources: Array[Dictionary], object_sources: Array[Dictionary]) -> void:
 	_creation_template_sources = template_sources.duplicate(true)
 	_creation_object_sources = object_sources.duplicate(true)
+	_creation_mode_option.set_item_disabled(1, _creation_template_sources.is_empty())
+	_creation_mode_option.set_item_disabled(2, _creation_object_sources.is_empty())
 	_populate_creation_source_options()
 
 
@@ -327,6 +329,9 @@ func _populate_creation_source_options() -> void:
 		_creation_source_option.set_item_metadata(_creation_source_option.item_count - 1, str(source.get("id", "")))
 	if _creation_source_option.item_count > 0:
 		_creation_source_option.select(0)
+	else:
+		_creation_source_option.add_item("Список пока пуст")
+		_creation_source_option.set_item_disabled(0, true)
 
 
 func get_creation_mode() -> String:
