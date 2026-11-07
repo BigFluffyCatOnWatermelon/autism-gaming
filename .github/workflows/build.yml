@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --editor --path . --quit 2>&1 | tee godot-editor.log
+          godot --headless --verbose --editor --path . --quit 2>&1 | tee godot-editor.log
           if grep -E 'SCRIPT ERROR:|ERROR:' godot-editor.log; then
             echo "Godot reported script or resource errors."
             exit 1
