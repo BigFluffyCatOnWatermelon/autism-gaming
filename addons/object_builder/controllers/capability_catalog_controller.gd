@@ -7,13 +7,23 @@ const SelectionSessionScript = preload("res://addons/object_builder/controllers/
 const BatchPlannerScript = preload("res://addons/object_builder/services/capability_batch_planner.gd")
 
 var _selection_session: RefCounted = SelectionSessionScript.new()
+var _focused_capability_id := ""
 
 
 func set_selected(capability_id: String, selected: bool) -> void:
+	_focused_capability_id = capability_id.strip_edges().to_lower()
 	if selected:
 		_selection_session.call("select", capability_id)
 	else:
 		_selection_session.call("deselect", capability_id)
+
+
+func set_focused_capability(capability_id: String) -> void:
+	_focused_capability_id = capability_id.strip_edges().to_lower()
+
+
+func get_focused_capability_id() -> String:
+	return _focused_capability_id
 
 
 func is_selected(capability_id: String) -> bool:
@@ -22,6 +32,7 @@ func is_selected(capability_id: String) -> bool:
 
 func clear_selection() -> void:
 	_selection_session.call("clear")
+	_focused_capability_id = ""
 
 
 func get_selected_ids() -> PackedStringArray:
@@ -44,6 +55,7 @@ func build_entries(
 			continue
 		selections_by_id[selection.capability_id.strip_edges().to_lower()] = selection
 
+	var relationship_highlights := _build_relationship_highlights()
 	var result: Array[Dictionary] = []
 	for capability_id in capability_ids:
 		var definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
@@ -62,7 +74,8 @@ func build_entries(
 			"selected_in_catalog": is_selected(capability_id),
 			"automatically_added": selection != null and selection.automatically_added,
 			"can_toggle": is_ready and not (selection != null and selection.automatically_added),
-			"can_configure": is_enabled and is_ready
+			"can_configure": is_enabled and is_ready,
+			"relation_highlight": relationship_highlights.get(capability_id, {})
 		})
 	return result
 
@@ -122,6 +135,100 @@ func build_batch_summary(plan: Dictionary) -> PackedStringArray:
 		for line in summary_value:
 			lines.append(str(line))
 	return lines
+
+
+func _build_relationship_highlights() -> Dictionary:
+	var highlights: Dictionary = {}
+	if _focused_capability_id.is_empty():
+		return highlights
+	var focused_definition := ObjectCapabilityCatalog.get_definition_reference(_focused_capability_id)
+	if focused_definition == null:
+		return highlights
+
+	for relation in _get_declared_relations(focused_definition):
+		var target_id := str(relation.get("target_id", ""))
+		if target_id.is_empty() or target_id == _focused_capability_id:
+			continue
+		_store_relationship_highlight(
+			highlights,
+			target_id,
+			str(relation.get("type", "related")),
+			str(relation.get("explanation", "")),
+			false
+		)
+
+	for other_id in ObjectCapabilityCatalog.get_capability_ids("", false):
+		if other_id == _focused_capability_id:
+			continue
+		var other_definition := ObjectCapabilityCatalog.get_definition_reference(other_id)
+		if other_definition == null:
+			continue
+		for relation in _get_declared_relations(other_definition):
+			if str(relation.get("target_id", "")) != _focused_capability_id:
+				continue
+			var relation_type := str(relation.get("type", "related"))
+			var explanation := str(relation.get("explanation", ""))
+			if explanation.is_empty():
+				explanation = "Эта возможность связана с выбранной механикой."
+			_store_relationship_highlight(
+				highlights,
+				other_id,
+				relation_type,
+				explanation,
+				true
+			)
+	return highlights
+
+
+func _get_declared_relations(definition: ObjectCapabilityDefinition) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	if definition == null:
+		return result
+	for required_id in definition.required_capability_ids:
+		result.append({
+			"type": "requires",
+			"target_id": str(required_id).strip_edges().to_lower(),
+			"explanation": "Обязательная зависимость: нужна для работы выбранной возможности."
+		})
+	for conflict_id in definition.incompatible_capability_ids:
+		result.append({
+			"type": "conflicts",
+			"target_id": str(conflict_id).strip_edges().to_lower(),
+			"explanation": "Эти две возможности нельзя использовать вместе."
+		})
+	for relation in definition.relations:
+		var relation_type := str(relation.get("type", "related")).strip_edges().to_lower()
+		var target_id := str(relation.get("target_id", "")).strip_edges().to_lower()
+		if target_id.is_empty():
+			continue
+		var duplicate := false
+		for existing in result:
+			if str(existing.get("type", "")) == relation_type and str(existing.get("target_id", "")) == target_id:
+				duplicate = true
+				break
+		if not duplicate:
+			result.append({
+				"type": relation_type,
+				"target_id": target_id,
+				"explanation": str(relation.get("explanation", "")).strip_edges()
+			})
+	return result
+
+
+func _store_relationship_highlight(
+	highlights: Dictionary,
+	capability_id: String,
+	relation_type: String,
+	explanation: String,
+	is_reverse: bool
+) -> void:
+	if highlights.has(capability_id):
+		return
+	highlights[capability_id] = {
+		"type": relation_type,
+		"explanation": explanation,
+		"is_reverse": is_reverse
+	}
 
 
 func _get_display_names(capability_ids: PackedStringArray) -> String:
