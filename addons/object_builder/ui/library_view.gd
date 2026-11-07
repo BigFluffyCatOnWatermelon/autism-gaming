@@ -7,6 +7,7 @@ const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factor
 signal search_changed(query: String)
 signal filter_changed(index: int)
 signal object_selected(index: int)
+signal entry_action_requested(action: String, index: int)
 
 var search_input: LineEdit
 var mode_filter: OptionButton
@@ -17,6 +18,8 @@ var _cards_scroll: ScrollContainer
 var _cards_flow: HFlowContainer
 var _card_mode_button: Button
 var _list_mode_button: Button
+var _entry_actions_button: Button
+var _entry_actions_menu: PopupMenu
 var _display_mode := "cards"
 var _entries: Array[Dictionary] = []
 var _selected_index := -1
@@ -81,6 +84,29 @@ func _build_view_mode_controls() -> void:
 	_list_mode_button.pressed.connect(_on_list_mode_pressed)
 	view_mode_row.add_child(_list_mode_button)
 
+	var action_row := HBoxContainer.new()
+	action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	add_child(action_row)
+	_entry_actions_button = Button.new()
+	_entry_actions_button.text = "Действия с записью…"
+	_entry_actions_button.tooltip_text = "Открыть, копировать, переименовать, удалить или экспортировать выбранную запись"
+	_entry_actions_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_entry_actions_button.disabled = true
+	_entry_actions_button.pressed.connect(_show_entry_actions_menu)
+	action_row.add_child(_entry_actions_button)
+
+	_entry_actions_menu = PopupMenu.new()
+	_entry_actions_menu.add_item("Открыть", 0)
+	_entry_actions_menu.add_item("Создать копию", 1)
+	_entry_actions_menu.add_item("Создать шаблон из объекта", 2)
+	_entry_actions_menu.add_separator()
+	_entry_actions_menu.add_item("Переименовать", 3)
+	_entry_actions_menu.add_item("Удалить…", 4)
+	_entry_actions_menu.add_separator()
+	_entry_actions_menu.add_item("Экспортировать .tres…", 5)
+	_entry_actions_menu.id_pressed.connect(_on_entry_action_selected)
+	add_child(_entry_actions_menu)
+
 
 func _build_card_view() -> void:
 	_cards_scroll = ScrollContainer.new()
@@ -106,6 +132,7 @@ func _build_list_view() -> void:
 	object_list.max_text_lines = 2
 	object_list.max_columns = 1
 	object_list.item_selected.connect(_on_object_selected)
+	object_list.item_clicked.connect(_on_list_item_clicked)
 	add_child(object_list)
 
 
@@ -137,6 +164,10 @@ func get_card_count() -> int:
 	return _entries.size()
 
 
+func get_selected_index() -> int:
+	return _selected_index
+
+
 func get_card_button(index: int) -> Button:
 	if _cards_flow == null or index < 0 or index >= _cards_flow.get_child_count():
 		return null
@@ -166,11 +197,18 @@ func set_tag_options(options: Array[Dictionary], selected_value: String) -> void
 
 
 func set_entries(entries: Array[Dictionary], empty_message: String) -> void:
+	var previous_id := _get_selected_entry_id()
 	_entries = entries.duplicate()
 	_empty_message = empty_message
 	_selected_index = -1
+	if not previous_id.is_empty():
+		for index in range(_entries.size()):
+			if _get_entry_id(_entries[index]) == previous_id:
+				_selected_index = index
+				break
 	_render_card_entries()
 	_render_list_entries()
+	_update_entry_actions_state()
 
 
 func _render_card_entries() -> void:
@@ -187,6 +225,7 @@ func _render_card_entries() -> void:
 		card.toggle_mode = true
 		card.tooltip_text = str(entry.get("tooltip", ""))
 		card.pressed.connect(_on_card_pressed.bind(index))
+		card.gui_input.connect(_on_card_gui_input.bind(index))
 		_cards_flow.add_child(card)
 		var margin := MarginContainer.new()
 		margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -307,11 +346,71 @@ func _on_object_selected(index: int) -> void:
 
 
 func _on_card_pressed(index: int) -> void:
+	_select_entry(index)
+	object_selected.emit(index)
+
+
+func _select_entry(index: int) -> void:
+	if index < 0 or index >= _entries.size():
+		return
 	_selected_index = index
 	_update_card_selection()
-	if index >= 0 and index < object_list.item_count:
+	if index < object_list.item_count:
 		object_list.select(index)
-	object_selected.emit(index)
+	_update_entry_actions_state()
+
+
+func _get_entry_id(entry: Dictionary) -> String:
+	var definition := entry.get("definition") as ObjectDefinition
+	return definition.object_id if definition != null else ""
+
+
+func _get_selected_entry_id() -> String:
+	if _selected_index < 0 or _selected_index >= _entries.size():
+		return ""
+	return _get_entry_id(_entries[_selected_index])
+
+
+func _update_entry_actions_state() -> void:
+	if _entry_actions_button != null:
+		_entry_actions_button.disabled = _selected_index < 0 or _selected_index >= _entries.size()
+
+
+func _show_entry_actions_menu() -> void:
+	if _selected_index < 0 or _selected_index >= _entries.size() or _entry_actions_menu == null:
+		return
+	_entry_actions_menu.position = Vector2i(get_global_mouse_position())
+	_entry_actions_menu.reset_size()
+	_entry_actions_menu.popup()
+
+
+func _on_card_gui_input(event: InputEvent, index: int) -> void:
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
+			_select_entry(index)
+			_show_entry_actions_menu()
+
+
+func _on_list_item_clicked(index: int, _at_position: Vector2, mouse_button_index: int) -> void:
+	if mouse_button_index == MOUSE_BUTTON_RIGHT:
+		_select_entry(index)
+		_show_entry_actions_menu()
+
+
+func _on_entry_action_selected(action_id: int) -> void:
+	if _selected_index < 0 or _selected_index >= _entries.size():
+		return
+	var actions := {
+		0: "open",
+		1: "duplicate",
+		2: "create_template",
+		3: "rename",
+		4: "delete",
+		5: "export"
+	}
+	if actions.has(action_id):
+		entry_action_requested.emit(str(actions[action_id]), _selected_index)
 
 
 func _on_card_mode_pressed() -> void:
