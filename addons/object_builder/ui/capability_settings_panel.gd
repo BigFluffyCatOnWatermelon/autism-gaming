@@ -23,7 +23,6 @@ func build() -> void:
 	add_theme_constant_override("separation", 6)
 
 	var header := HBoxContainer.new()
-	add_child(header)
 
 	var title_column := VBoxContainer.new()
 	title_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
