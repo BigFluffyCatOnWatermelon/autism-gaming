@@ -225,7 +225,6 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 		_full_node_names_by_id[capability_id] = node_name
 		_full_category_by_id[capability_id] = definition.category_id
 		var readiness := "Готово" if definition.is_ready() else "В разработке"
-		var subtitle := definition.category_name + " · " + readiness
 		var graph_node := _create_full_graph_node(node_name, definition)
 		graph_node.custom_minimum_size = Vector2(215, 190)
 		graph_node.position_offset = Vector2(
@@ -415,6 +414,12 @@ func _create_full_graph_node(node_name: String, definition: ObjectCapabilityDefi
 		var type_id := int(RELATION_TYPE_IDS[relation_type])
 		var color := _get_relation_type_color(type_id)
 		graph_node.set_slot(slot_index, true, type_id, color, true, type_id, color)
+
+	var status_label := Label.new()
+	status_label.text = definition.category_name + " · " + ("Готово" if definition.is_ready() else "В разработке")
+	status_label.add_theme_font_size_override("font_size", 9)
+	status_label.modulate = Color(0.65, 0.82, 0.68) if definition.is_ready() else Color(0.85, 0.72, 0.55)
+	graph_node.add_child(status_label)
 
 	var action := Button.new()
 	action.text = "Открыть карточку"
