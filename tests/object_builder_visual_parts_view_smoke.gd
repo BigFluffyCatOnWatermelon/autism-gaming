@@ -12,6 +12,7 @@ var lock_events: Array[Dictionary] = []
 var draw_order_events: Array[Dictionary] = []
 var rename_events: Array[Dictionary] = []
 var resource_edit_paths: Array[NodePath] = []
+var reorder_events: Array[Dictionary] = []
 
 
 func _initialize() -> void:
@@ -31,6 +32,7 @@ func _run() -> void:
 	view.connect("draw_order_change_requested", Callable(self, "_on_draw_order_change_requested"))
 	view.connect("rename_requested", Callable(self, "_on_rename_requested"))
 	view.connect("resource_edit_requested", Callable(self, "_on_resource_edit_requested"))
+	view.connect("draw_order_reorder_requested", Callable(self, "_on_draw_order_reorder_requested"))
 
 	var scene_root := Node2D.new()
 	scene_root.name = "ObjectRoot"
@@ -90,6 +92,8 @@ func _run() -> void:
 	view.call("_on_show_all_pressed")
 	view.call("_on_hide_all_pressed")
 	_expect(visibility_batch_events == [true, false], "show-all and hide-all emit one batch visibility action each")
+	view.call("_on_row_reorder_requested", NodePath("Visuals/Leaf"), NodePath("Visuals/Glow"))
+	_expect(reorder_events == [{"source": NodePath("Visuals/Leaf"), "target": NodePath("Visuals/Glow")}], "dragging a row emits source and target paths")
 	view.call("_on_lock_toggled", true, NodePath("Visuals/Leaf"))
 	_expect(lock_events == [{"path": NodePath("Visuals/Leaf"), "locked": true}], "part lock emits its relative path and enabled state")
 	var restored_lock_paths: Array[NodePath] = [NodePath("Visuals/Glow")]
@@ -177,6 +181,10 @@ func _on_draw_order_change_requested(path: NodePath, delta: int) -> void:
 
 func _on_rename_requested(path: NodePath, new_name: String) -> void:
 	rename_events.append({"path": path, "name": new_name})
+
+
+func _on_draw_order_reorder_requested(source_path: NodePath, target_path: NodePath) -> void:
+	reorder_events.append({"source": source_path, "target": target_path})
 
 
 func _on_resource_edit_requested(path: NodePath) -> void:
