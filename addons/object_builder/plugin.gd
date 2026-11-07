@@ -393,6 +393,7 @@ func _build_library_panel(parent: VBoxContainer) -> void:
 	_library_view.connect("filter_changed", Callable(self, "_on_filter_changed"))
 	_library_view.connect("object_selected", Callable(self, "_on_library_item_selected"))
 	_library_view.connect("entry_action_requested", Callable(self, "_on_library_entry_action_requested"))
+	_library_view.connect("collection_create_requested", Callable(self, "_on_collection_create_requested"))
 
 func _build_library_details(parent: VBoxContainer) -> void:
 	_library_details_view = ObjectBuilderLibraryDetailsViewScript.new()
@@ -406,6 +407,7 @@ func _build_library_action_dialogs() -> void:
 	_library_action_dialogs.connect("rename_confirmed", Callable(self, "_on_library_rename_confirmed"))
 	_library_action_dialogs.connect("delete_confirmed", Callable(self, "_on_library_delete_confirmed"))
 	_library_action_dialogs.connect("export_path_selected", Callable(self, "_on_library_export_path_selected"))
+	_library_action_dialogs.connect("collection_create_confirmed", Callable(self, "_on_collection_create_confirmed"))
 	_main_screen.add_child(_library_action_dialogs)
 	_library_action_dialogs.call("build")
 
@@ -1125,6 +1127,7 @@ func _load_local_state() -> void:
 	var settings := EditorInterface.get_editor_settings()
 	var stored_favorites: Variant = settings.get_project_metadata(METADATA_SECTION, "favorites", PackedStringArray())
 	var stored_recent: Variant = settings.get_project_metadata(METADATA_SECTION, "recent", PackedStringArray())
+	var stored_collections: Variant = settings.get_project_metadata(METADATA_SECTION, "custom_collections", {})
 	var stored_layout: Variant = settings.get_project_metadata(METADATA_SECTION, "workspace_layout", {})
 	var stored_locked_parts: Variant = settings.get_project_metadata(METADATA_SECTION, "locked_visual_parts", PackedStringArray())
 	_locked_visual_part_keys = PackedStringArray()
@@ -1136,11 +1139,12 @@ func _load_local_state() -> void:
 			if not lock_key.is_empty() and not _locked_visual_part_keys.has(lock_key):
 				_locked_visual_part_keys.append(lock_key)
 	_workspace_layout_state = stored_layout.duplicate(true) if stored_layout is Dictionary else {}
-	_library_controller.call("set_local_state", stored_favorites, stored_recent)
+	_library_controller.call("set_local_state", stored_favorites, stored_recent, stored_collections)
 func _save_local_state() -> void:
 	var settings := EditorInterface.get_editor_settings()
 	settings.set_project_metadata(METADATA_SECTION, "favorites", _library_controller.call("get_favorites"))
 	settings.set_project_metadata(METADATA_SECTION, "recent", _library_controller.call("get_recent_ids"))
+	settings.set_project_metadata(METADATA_SECTION, "custom_collections", _library_controller.call("get_collections_state"))
 	settings.set_project_metadata(METADATA_SECTION, "locked_visual_parts", _locked_visual_part_keys)
 	if _workspace_view != null:
 		settings.set_project_metadata(METADATA_SECTION, "workspace_layout", _workspace_view.call("get_layout_state"))
@@ -1148,6 +1152,7 @@ func _refresh_library() -> void:
 	_library_controller.call("load_library")
 	_rebuild_category_filter()
 	_rebuild_tag_filter()
+	_rebuild_collection_filter()
 	_refresh_library_list()
 	_refresh_favorite_button()
 	_refresh_scene_tree()
@@ -1174,6 +1179,11 @@ func _rebuild_tag_filter() -> void:
 	var previous_tag := str(_library_view.call("get_selected_tag"))
 	var options: Array[Dictionary] = _library_controller.call("get_tag_options", previous_tag)
 	_library_view.call("set_tag_options", options, previous_tag)
+
+
+func _rebuild_collection_filter(selected_mode: String = "") -> void:
+	var options: Array[Dictionary] = _library_controller.call("get_collection_options")
+	_library_view.call("set_collection_options", options, selected_mode)
 
 func _refresh_library_list() -> void:
 	if _library_view == null or _library_controller == null:
@@ -1231,6 +1241,24 @@ func _on_library_entry_action_requested(action: String, index: int) -> void:
 	if definition == null:
 		return
 	_refresh_library_details(definition)
+	if action.begins_with("add_to_collection:"):
+		var collection_id := action.trim_prefix("add_to_collection:")
+		if _library_controller.call("add_to_collection", collection_id, definition.object_id):
+			_save_local_state()
+			_refresh_library_list()
+			_set_status("«%s» добавлен в коллекцию." % definition.display_name, false)
+		else:
+			_set_status("Объект уже находится в этой коллекции или коллекция не найдена.", false)
+		return
+	if action == "remove_from_collection":
+		var selected_mode := str(_library_view.call("get_selected_mode"))
+		if selected_mode.begins_with("collection:"):
+			var current_collection_id := selected_mode.trim_prefix("collection:")
+			if _library_controller.call("remove_from_collection", current_collection_id, definition.object_id):
+				_save_local_state()
+				_refresh_library_list()
+				_set_status("«%s» удалён из коллекции." % definition.display_name, false)
+		return
 	if action == "open":
 		_pending_library_definition = null
 		_on_library_item_selected(index)
@@ -1305,6 +1333,21 @@ func _perform_library_copy(source: ObjectDefinition, as_template: bool) -> void:
 		else "Создана независимая копия «%s»." % created.display_name,
 		false
 	)
+
+
+func _on_collection_create_requested() -> void:
+	_library_action_dialogs.call("popup_create_collection")
+
+
+func _on_collection_create_confirmed(display_name: String) -> void:
+	var collection_id := str(_library_controller.call("create_collection", display_name))
+	if collection_id.is_empty():
+		_set_status("Укажи название коллекции.", true)
+		return
+	_save_local_state()
+	_rebuild_collection_filter("collection:" + collection_id)
+	_refresh_library_list()
+	_set_status("Коллекция «%s» создана. Выбери объект и добавь его через меню «Действия…»." % display_name.strip_edges(), false)
 
 
 func _on_library_rename_confirmed(new_name: String) -> void:
