@@ -27,6 +27,7 @@ func _run() -> void:
 	]
 	view.call("build", categories)
 	_expect(not (view.get("_related_section") as PanelContainer).visible, "related suggestions stay hidden until a capability is focused")
+	_expect(not (view.get("_recommendation_section") as PanelContainer).visible, "contextual recommendations stay hidden until an object capability is active")
 	view.connect("search_changed", Callable(self, "_on_search_changed"))
 	view.connect("category_changed", Callable(self, "_on_category_changed"))
 	view.connect("toggle_requested", Callable(self, "_on_toggle_requested"))
@@ -36,7 +37,7 @@ func _run() -> void:
 	view.connect("batch_add_requested", Callable(self, "_on_batch_add_requested"))
 	view.connect("clear_selection_requested", Callable(self, "_on_clear_selection_requested"))
 
-	_expect(view.get_child_count() == 8, "capability view owns title, hint, search, filter, selection, related suggestions, entries and pagination")
+	_expect(view.get_child_count() == 9, "capability view owns title, hint, search, filter, selection, relation and recommendation strips, entries and pagination")
 	_expect(str(view.call("get_selected_category")) == "", "capability filter starts with all categories")
 	var search_input := view.get("search_input") as LineEdit
 	search_input.text_changed.emit("tree")
@@ -63,6 +64,11 @@ func _run() -> void:
 	planned.description = "Позволяет летать."
 	planned.runtime_status = "Planned"
 	planned.implementation_note = "Ещё разрабатывается."
+	var recommended = DefinitionScript.new()
+	recommended.capability_id = "can_swim"
+	recommended.display_name = "Плавание"
+	recommended.description = "Позволяет двигаться в воде."
+	recommended.runtime_status = "Implemented"
 	var entries: Array[Dictionary] = [
 		{
 			"definition": implemented,
@@ -157,6 +163,31 @@ func _run() -> void:
 	_expect(not planned_relations.disabled, "planned capabilities can still be explored through their relationships")
 	planned_relations.pressed.emit()
 	_expect(focus_events == ["can_attack", "can_fly"], "planned relationship browsing does not enable the mechanic")
+
+	var recommendation_entries: Array[Dictionary] = [{
+		"definition": recommended,
+		"capability_id": "can_swim",
+		"relation_type": "recommends",
+		"explanation": "Это дополнит движение объекта.",
+		"score": 90,
+		"ready": true
+	}]
+	view.call("set_recommended_entries", recommendation_entries)
+	_expect((view.get("_recommendation_section") as PanelContainer).visible, "context-aware suggestions appear in a dedicated panel")
+	_expect(view.call("get_recommendation_button_count") == 1, "recommendation panel shows each ranked suggestion")
+	var recommendation_container := view.get("_recommendation_container") as HFlowContainer
+	var recommendation_button := recommendation_container.get_child(0) as Button
+	_expect(
+		recommendation_button.text == "+ Плавание"
+		and recommendation_button.tooltip_text.contains("движение объекта")
+		and recommendation_button.tooltip_text.contains("не добавит её в объект"),
+		"recommendation explains why it fits and clarifies that it only selects the capability"
+	)
+	recommendation_button.pressed.emit()
+	_expect(selection_events == ["true:can_swim"], "recommendation selects the capability into the batch without applying it")
+	_expect(batch_add_count == 0, "choosing a recommendation does not apply the batch automatically")
+	view.call("set_recommended_entries", [])
+	_expect(not (view.get("_recommendation_section") as PanelContainer).visible, "recommendation strip hides when no candidates remain")
 
 	var related_entries: Array[Dictionary] = [{
 		"definition": planned,
