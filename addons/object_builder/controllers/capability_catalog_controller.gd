@@ -246,7 +246,7 @@ func build_recommended_entries(
 	)
 	if explicit_profile != null and not explicit_profile.suggested_capability_ids.is_empty():
 		recommendation_profiles.append(explicit_profile)
-	elif normalized_profile_id.is_empty() or normalized_profile_id == "other":
+	elif explicit_profile == null or normalized_profile_id.is_empty() or normalized_profile_id == "other":
 		var normalized_object_category := object_category.strip_edges().to_lower()
 		if not normalized_object_category.is_empty():
 			for category_profile_id in ObjectCreationProfileRegistry.get_profile_ids():
