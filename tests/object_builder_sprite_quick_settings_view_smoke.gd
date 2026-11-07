@@ -91,12 +91,7 @@ func _run() -> void:
 	_expect(changes.size() == 13, "FPS and loop controls emit resource-setting changes")
 	_expect(changes[11].get("property") == "animation_speed" and changes[11].get("value") == 12.0, "animation FPS emits animation_speed")
 	_expect(changes[12].get("property") == "animation_loop" and changes[12].get("value") == false, "loop checkbox emits animation_loop")
-	(view.get("_animation_play_button") as Button).pressed.emit()
-	_expect(bool(view.call("is_animation_preview_playing")), "play button starts a local animation preview")
-	view.call("_process", 1.0)
-	_expect((view.get("_animation_preview") as TextureRect).texture != null, "local animation preview displays a SpriteFrames texture")
-	(view.get("_animation_play_button") as Button).pressed.emit()
-	_expect(not bool(view.call("is_animation_preview_playing")), "play button pauses the local animation preview")
+	_expect(_has_control_hint(view, "изолированный предпросмотр") or str((view.get("_animation_hint") as Label).text).contains("холсте"), "animation panel directs playback to the isolated canvas preview")
 	view.call("set_selected_node", null, NodePath(""))
 	_expect(not bool(view.call("is_visible_for_selection")), "sprite quick settings are hidden when no part is selected")
 
@@ -112,6 +107,10 @@ func _run() -> void:
 		for failure in failures:
 			push_error(failure)
 		quit(1)
+
+
+func _has_control_hint(view: Node, expected: String) -> bool:
+	return str((view.get("_animation_hint") as Label).text).to_lower().contains(expected)
 
 
 func _on_property_changed(path: NodePath, property_name: String, value: Variant) -> void:
