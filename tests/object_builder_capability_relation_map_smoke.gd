@@ -2,6 +2,7 @@ extends SceneTree
 
 const MapViewScript = preload("res://addons/object_builder/ui/capability_relation_map_view.gd")
 const DefinitionScript = preload("res://scripts/object_system/object_capability_definition.gd")
+const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 
 var failures := PackedStringArray()
 var focused_id := ""
@@ -47,6 +48,19 @@ func _run() -> void:
 	_expect(focused_id.is_empty(), "opening the map does not change the catalog focus")
 	map.call("_on_focus_pressed", "can_move")
 	_expect(focused_id == "can_move", "selecting a graph node requests navigation to its capability")
+	var module_errors := MechanicModuleLoaderScript.register_modules_in_directory()
+	for error_message in module_errors:
+		failures.append("module registration: " + error_message)
+	map.call("open_full", host_control, "can_attack")
+	_expect(int(map.call("get_node_count")) >= 200, "full graph creates all 200 catalogue capability nodes")
+	_expect(int(map.call("get_connection_count")) >= 60, "full graph renders the curated relationship network")
+	_expect(int(map.call("get_focus_button_count")) == 200, "all catalogue nodes provide a navigation action")
+	_expect(int(map.call("get_visible_node_count")) == 200, "full graph starts with every capability visible")
+	map.call("filter_full_map", "атака")
+	var filtered_count := int(map.call("get_visible_node_count"))
+	_expect(filtered_count > 0 and filtered_count < 200, "full graph search filters nodes by localized capability metadata")
+	map.call("filter_full_map", "")
+	_expect(int(map.call("get_visible_node_count")) == 200, "clearing full graph search restores all nodes")
 	host_control.queue_free()
 
 	if failures.is_empty():
