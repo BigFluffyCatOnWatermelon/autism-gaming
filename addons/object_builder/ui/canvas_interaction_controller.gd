@@ -74,6 +74,9 @@ func set_scene(instance: Node, editing_enabled: bool, selected_path: NodePath = 
 
 func set_selected_path(path: NodePath) -> void:
 	_selected_path = path
+	_selected_paths.clear()
+	if not path.is_empty():
+		_selected_paths.append(path)
 	if _surface != null:
 		_surface.queue_redraw()
 
