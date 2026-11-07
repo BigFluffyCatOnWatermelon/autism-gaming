@@ -2932,7 +2932,7 @@ func _on_sprite_quick_setting_changed(
 					clampf(float(value), -10.0, 10.0),
 					"изменить скорость анимации"
 				)
-			"animation_speed", "animation_loop":
+			"animation_speed", "animation_loop", "animation_loop_mode":
 				_commit_sprite_frames_animation_setting(
 					animated,
 					property_name,
@@ -2961,14 +2961,18 @@ func _commit_sprite_frames_animation_setting(
 		undo_redo.create_action("Object Builder: изменить FPS анимации", 0, _get_open_object_scene_root())
 		undo_redo.add_do_method(frames, "set_animation_speed", animation_name, new_speed)
 		undo_redo.add_undo_method(frames, "set_animation_speed", animation_name, old_speed)
-	elif setting_name == "animation_loop":
-		var old_loop := frames.get_animation_loop(animation_name)
-		var new_loop := bool(value)
-		if old_loop == new_loop:
+	elif setting_name == "animation_loop" or setting_name == "animation_loop_mode":
+		var old_loop_mode := int(frames.get_animation_loop_mode(animation_name))
+		var new_loop_mode := (
+			(1 if bool(value) else 0)
+			if setting_name == "animation_loop"
+			else clampi(int(value), 0, 2)
+		)
+		if old_loop_mode == new_loop_mode:
 			return
-		undo_redo.create_action("Object Builder: изменить зацикливание анимации", 0, _get_open_object_scene_root())
-		undo_redo.add_do_method(frames, "set_animation_loop", animation_name, new_loop)
-		undo_redo.add_undo_method(frames, "set_animation_loop", animation_name, old_loop)
+		undo_redo.create_action("Object Builder: изменить режим зацикливания анимации", 0, _get_open_object_scene_root())
+		undo_redo.add_do_method(frames, "set_animation_loop_mode", animation_name, new_loop_mode)
+		undo_redo.add_undo_method(frames, "set_animation_loop_mode", animation_name, old_loop_mode)
 	else:
 		return
 	undo_redo.commit_action()
