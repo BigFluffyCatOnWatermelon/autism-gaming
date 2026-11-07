@@ -323,7 +323,7 @@ jobs:
             exit 1
           fi
 
-      - name: Run Object Builder library details view tests
+      - name: Run Object Builder properties inspector and library details tests
         shell: bash
         run: |
           set -o pipefail
