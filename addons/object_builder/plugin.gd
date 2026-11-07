@@ -1617,8 +1617,9 @@ func _refresh_scene_tree() -> void:
 	_refresh_canvas()
 
 func _on_scene_tree_item_selected(_path: NodePath = NodePath()) -> void:
+	var scene_root := _get_open_object_scene_root()
 	var node := _get_selected_scene_tree_node()
-	if node == null:
+	if node == null or scene_root == null:
 		return
 	if _syncing_tree_selection:
 		_refresh_visual_editor(node)
