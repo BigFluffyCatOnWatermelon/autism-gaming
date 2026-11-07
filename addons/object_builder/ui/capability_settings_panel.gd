@@ -185,6 +185,19 @@ func configure(
 				line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 				line.placeholder_text = str(descriptor.get("placeholder", ""))
 				control = line
+			"Vector2":
+				var vector_value: Vector2 = current_value if current_value is Vector2 else Vector2.ZERO
+				var vector_row := HBoxContainer.new()
+				for axis in ["x", "y"]:
+					var axis_spin := SpinBox.new()
+					axis_spin.prefix = axis.to_upper() + " "
+					axis_spin.min_value = float(descriptor.get("minimum", -1000000.0))
+					axis_spin.max_value = float(descriptor.get("maximum", 1000000.0))
+					axis_spin.step = float(descriptor.get("step", 1.0))
+					axis_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+					axis_spin.value = vector_value.x if axis == "x" else vector_value.y
+					vector_row.add_child(axis_spin)
+				control = vector_row
 			_:
 				var unsupported := Label.new()
 				unsupported.text = "Этот тип параметра пока редактируется в расширенном режиме."
@@ -219,7 +232,7 @@ func configure(
 			"default_value": descriptor.get("default_value"),
 			"searchable_text": searchable_text
 		})
-		supported_count += 1 if value_type in ["Integer", "Float", "Boolean", "String"] else 0
+		supported_count += 1 if value_type in ["Integer", "Float", "Boolean", "String", "Vector2"] else 0
 
 	_empty_state = Label.new()
 	_empty_state.text = "Параметры не найдены. Измени запрос или фильтр."
@@ -277,6 +290,14 @@ func get_values() -> Array[Dictionary]:
 				value = (control as CheckBox).button_pressed
 			"String":
 				value = (control as LineEdit).text
+			"Vector2":
+				var vector_row := control as HBoxContainer
+				if vector_row == null or vector_row.get_child_count() != 2:
+					continue
+				value = Vector2(
+					(vector_row.get_child(0) as SpinBox).value,
+					(vector_row.get_child(1) as SpinBox).value
+				)
 			_:
 				continue
 		result.append({
@@ -358,6 +379,12 @@ func _set_control_value(control: Control, value_type: String, value: Variant) ->
 			(control as CheckBox).button_pressed = bool(value)
 		"String":
 			(control as LineEdit).text = str(value)
+		"Vector2":
+			var vector_row := control as HBoxContainer
+			if vector_row != null and vector_row.get_child_count() == 2:
+				var vector_value: Vector2 = value if value is Vector2 else Vector2.ZERO
+				(vector_row.get_child(0) as SpinBox).value = vector_value.x
+				(vector_row.get_child(1) as SpinBox).value = vector_value.y
 
 
 func _on_search_changed(value: String) -> void:

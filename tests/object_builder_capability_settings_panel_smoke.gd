@@ -64,6 +64,16 @@ func _run() -> void:
 		},
 		{
 			"component_id": "health",
+			"setting_key": "parts_offset",
+			"display_name": "Смещение частей",
+			"value_type": "Vector2",
+			"default_value": Vector2(0, 8),
+			"level": "Basic",
+			"group_name": "Геометрия",
+			"step": 1.0
+		},
+		{
+			"component_id": "health",
 			"setting_key": "label",
 			"display_name": "Название",
 			"value_type": "String",
@@ -78,10 +88,14 @@ func _run() -> void:
 	var title_label := view.get("_title_label") as Label
 	_expect(title_label.text == "Здоровье", "panel title uses the capability display name")
 	var form := view.get("_form") as VBoxContainer
-	_expect(view.call("get_setting_control_count") == 3, "panel builds every setting descriptor")
-	_expect((view.call("get_visible_setting_keys") as PackedStringArray) == PackedStringArray(["max_health"]), "basic filter shows only basic settings by default")
+	_expect(view.call("get_setting_control_count") == 4, "panel builds every setting descriptor")
+	_expect((view.call("get_visible_setting_keys") as PackedStringArray) == PackedStringArray(["max_health", "parts_offset"]), "basic filter shows only basic settings by default")
 	var health_spin := view.call("get_setting_control", "health", "max_health") as SpinBox
 	_expect(health_spin != null and is_equal_approx(health_spin.value, 50.0), "panel loads the selected object's current setting")
+	var offset_control := view.call("get_setting_control", "health", "parts_offset") as HBoxContainer
+	_expect(offset_control != null and offset_control.get_child_count() == 2, "Vector2 settings use two numeric axis controls")
+	(offset_control.get_child(0) as SpinBox).value = 12.0
+	(offset_control.get_child(1) as SpinBox).value = 24.0
 	var health_entry: Dictionary = view.call("get_setting_entry", "health", "max_health")
 	var health_label_row := (health_entry.get("row") as VBoxContainer).get_child(0) as HBoxContainer
 	var health_label := health_label_row.get_child(0) as Label
@@ -102,10 +116,11 @@ func _run() -> void:
 	view.call("_on_level_filter_selected", 0)
 
 	var setting_values: Array[Dictionary] = view.call("get_values")
-	_expect(setting_values.size() == 3, "filtering never drops values from the pending apply payload")
+	_expect(setting_values.size() == 4, "filtering never drops values from the pending apply payload")
 	_expect(is_equal_approx(float(setting_values[0].get("value", 0.0)), 100.0), "reset value is included in the pending apply payload")
-	_expect(setting_values[1].get("value") == false, "boolean value preserves its type")
-	_expect(setting_values[2].get("value") == "Обычный", "string value is read from the inline control")
+	_expect(setting_values[1].get("value") == Vector2(12.0, 24.0), "Vector2 value preserves both edited axes")
+	_expect(setting_values[2].get("value") == false, "boolean value preserves its type")
+	_expect(setting_values[3].get("value") == "Обычный", "string value is read from the inline control")
 
 	var footer := view.get_child(view.get_child_count() - 1) as HBoxContainer
 	var cancel_button := footer.get_child(0) as Button
