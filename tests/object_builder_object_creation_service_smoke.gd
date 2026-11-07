@@ -34,11 +34,6 @@ func _run() -> void:
 	source.description = "Исходное описание"
 	source.tags = PackedStringArray(["old"])
 	source.scene = _make_source_scene()
-	var source_root := source.scene.instantiate()
-	source_root.set_meta("source_marker", "unchanged")
-	source_root.free()
-	var packed_source := _make_source_scene()
-	source.scene = packed_source
 
 	var duplicate_result: Dictionary = CreationService.create_from_source(source, {
 		"display_name": "Мой дуб",
