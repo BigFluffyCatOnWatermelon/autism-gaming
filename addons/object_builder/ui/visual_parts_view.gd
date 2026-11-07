@@ -11,6 +11,9 @@ signal part_lock_changed(path: NodePath, locked: bool)
 signal draw_order_change_requested(path: NodePath, delta: int)
 signal rename_requested(path: NodePath, new_name: String)
 signal resource_edit_requested(path: NodePath)
+signal draw_order_reorder_requested(source_path: NodePath, target_path: NodePath)
+
+const VisualPartRowScript = preload("res://addons/object_builder/ui/visual_part_row.gd")
 
 const ROW_HEIGHT := 44.0
 const THUMB_SIZE := Vector2(34.0, 34.0)
@@ -188,6 +191,7 @@ func _collect_visual_parts(node: Node, scene_root: Node) -> void:
 					texture = animated.sprite_frames.get_frame_texture(animated.animation, frame_index)
 		_parts.append({
 			"path": scene_root.get_path_to(node),
+			"parent_path": scene_root.get_path_to(node.get_parent()),
 			"name": str(node.name),
 			"type": node.get_class(),
 			"texture": texture,
@@ -236,7 +240,10 @@ func _render_rows() -> void:
 
 func _add_part_row(entry: Dictionary) -> void:
 	var path: NodePath = entry.get("path", NodePath(""))
-	var row := PanelContainer.new()
+	var row = VisualPartRowScript.new()
+	row.part_path = path
+	row.parent_path = entry.get("parent_path", NodePath(""))
+	row.connect("reorder_requested", Callable(self, "_on_row_reorder_requested"))
 	row.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 	_rows_host.add_child(row)
 
@@ -451,6 +458,12 @@ func _finish_inline_rename() -> void:
 	_renaming_path = NodePath("")
 	_renaming_button = null
 	_renaming_edit = null
+
+
+func _on_row_reorder_requested(source_path: NodePath, target_path: NodePath) -> void:
+	if source_path.is_empty() or target_path.is_empty() or source_path == target_path:
+		return
+	draw_order_reorder_requested.emit(source_path, target_path)
 
 
 func _on_draw_order_change_requested(path: NodePath, delta: int) -> void:
