@@ -82,6 +82,10 @@ func _run() -> void:
 	var row_buttons: Array = view.get("_row_buttons")
 	_expect(row_buttons.size() == 3, "each visual part has a selection control")
 
+	view.call("set_selected_paths", [NodePath("Visuals/Leaf"), NodePath("Visuals/Glow")])
+	_expect(view.call("get_selected_paths").size() == 2, "visual list stores multiple selected paths")
+	var multi_buttons: Array = view.get("_row_buttons")
+	_expect((multi_buttons[0] as Button).button_pressed and (multi_buttons[1] as Button).button_pressed, "visual list highlights every selected part")
 	view.call("_on_part_selected", NodePath("Visuals/Glow"))
 	_expect(selected_paths == [NodePath("Visuals/Glow")], "part selection emits the relative scene path")
 	_expect(str(view.call("get_selected_path")) == "Visuals/Glow", "selected part state updates")
