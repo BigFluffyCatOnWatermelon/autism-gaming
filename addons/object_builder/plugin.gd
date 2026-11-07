@@ -354,6 +354,7 @@ func _build_scene_node_delete_dialog() -> void:
 	_scene_node_delete_dialog.title = "Удалить часть со связями?"
 	_scene_node_delete_dialog.ok_button_text = "Удалить всё равно"
 	_scene_node_delete_dialog.get_cancel_button().text = "Отмена"
+	_scene_node_delete_dialog.get_cancel_button().pressed.connect(_on_scene_node_delete_cancelled)
 	_scene_node_delete_dialog.confirmed.connect(_on_scene_node_delete_confirmed)
 	add_child(_scene_node_delete_dialog)
 
@@ -2841,17 +2842,25 @@ func _build_scene_node_dependency_warning(selected_node: Node, dependencies: Arr
 	var lines := PackedStringArray()
 	lines.append("У части «%s» найдены связи, которые могут перестать работать после удаления:" % selected_node.name)
 	lines.append("")
-	for dependency in dependencies:
+	var visible_reference_count := mini(dependencies.size(), 8)
+	for index in range(visible_reference_count):
+		var dependency: Dictionary = dependencies[index]
 		var kind := str(dependency.get("kind", "Связь"))
 		var source_path := str(dependency.get("source_path", ""))
 		var details := str(dependency.get("details", ""))
 		lines.append("• %s — %s" % [kind, source_path])
 		if not details.is_empty():
 			lines.append("  %s" % details)
+	if dependencies.size() > visible_reference_count:
+		lines.append("…и ещё %d связей." % (dependencies.size() - visible_reference_count))
 	lines.append("")
 	lines.append("Удаление затронет перечисленные связи. Исходные данные не изменятся до подтверждения.")
 	lines.append("Отдельной модели сокетов в текущей версии Object System пока нет.")
 	return "\n".join(lines)
+
+
+func _on_scene_node_delete_cancelled() -> void:
+	_pending_scene_node_removal = null
 
 
 func _on_scene_node_delete_confirmed() -> void:
