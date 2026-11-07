@@ -44,6 +44,10 @@ func _run() -> void:
 	weapon.tags = PackedStringArray(["weapon", "steel"])
 	weapon.object_type = "equipment"
 
+	var damageable_selection := ObjectCapabilitySelection.new()
+	damageable_selection.capability_id = "can_receive_damage"
+	oak.capabilities.append(damageable_selection)
+
 	var definitions: Array[ObjectDefinition] = [stone, weapon, pine, oak]
 	var no_templates: Array[ObjectDefinition] = []
 	controller.call("set_library_data", definitions, no_templates)
@@ -74,6 +78,11 @@ func _run() -> void:
 	_expect(entries.size() == 1 and entries[0].get("definition") == weapon, "category filter is applied")
 	entries = controller.call("build_visible_entries", "", "", "stone", "all")
 	_expect(entries.size() == 1 and entries[0].get("definition") == stone, "tag filter is applied")
+	entries = controller.call("build_visible_entries", "можно повредить", "", "", "all")
+	_expect(entries.size() == 1 and entries[0].get("definition") == oak, "search includes enabled capability names and descriptions")
+	var detail_data: Dictionary = controller.call("build_detail_data", oak)
+	_expect(str(detail_data.get("capabilities_text", "")).contains("Можно повредить"), "details include enabled capability display names")
+	_expect(str(detail_data.get("dependencies_text", "")).contains("Есть здоровье"), "details explain required capability dependencies")
 
 	controller.call("toggle_favorite", "tree_oak")
 	controller.call("toggle_favorite", "weapon_sword")
