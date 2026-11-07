@@ -543,7 +543,6 @@ func _build_object_settings_editor(parent: VBoxContainer) -> void:
 	_favorite_button.pressed.connect(_on_toggle_favorite_pressed)
 	favorite_row.add_child(_favorite_button)
 
-	ObjectBuilderUIFactory.add_action_button(parent, "Сохранить объект", _on_save_pressed)
 	_status_label = Label.new()
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	parent.add_child(_status_label)
