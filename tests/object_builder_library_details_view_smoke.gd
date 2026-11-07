@@ -14,6 +14,8 @@ func _run() -> void:
 	root.add_child(details_view)
 	details_view.call("build")
 	_expect(not details_view.visible, "details panel starts hidden until a library entry is selected")
+	_expect(details_view.custom_minimum_size.x >= 280.0, "details view requests a usable minimum width")
+	_expect(details_view.custom_minimum_size.y >= 200.0, "details view requests enough height for its content")
 
 	details_view.call("set_details", {
 		"display_name": "Дуб",

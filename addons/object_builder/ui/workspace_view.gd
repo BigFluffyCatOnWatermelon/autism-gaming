@@ -6,7 +6,8 @@ extends VBoxContainer
 signal layout_changed
 
 const DEFAULT_LIBRARY_SPLIT := -260
-const DEFAULT_INSPECTOR_SPLIT := -250
+const DEFAULT_INSPECTOR_SPLIT := -340
+const MIN_INSPECTOR_WIDTH := 300
 
 var _toolbar_actions: HBoxContainer
 var _library_host: VBoxContainer
@@ -108,7 +109,7 @@ func _build_workspace_panels() -> void:
 
 	var editor_parts := _create_panel(_content_split, "РЕДАКТОР", 180.0)
 	_editor_host = editor_parts.get("host") as VBoxContainer
-	var inspector_parts := _create_panel(_content_split, "СВОЙСТВА", 190.0)
+	var inspector_parts := _create_panel(_content_split, "СВОЙСТВА", MIN_INSPECTOR_WIDTH)
 	_inspector_panel = inspector_parts.get("panel") as PanelContainer
 	_inspector_host = inspector_parts.get("host") as VBoxContainer
 	_build_inspector(_inspector_host)
@@ -298,6 +299,10 @@ func get_editor_host() -> VBoxContainer:
 
 func get_inspector_host() -> VBoxContainer:
 	return _inspector_host
+
+
+func get_inspector_minimum_width() -> float:
+	return MIN_INSPECTOR_WIDTH
 
 
 func get_diagnostics_message() -> String:

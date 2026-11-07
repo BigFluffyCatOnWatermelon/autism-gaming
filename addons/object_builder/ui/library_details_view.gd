@@ -20,10 +20,11 @@ func build() -> void:
 		return
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
-	custom_minimum_size = Vector2(0, 120)
+	custom_minimum_size = Vector2(280, 220)
 
 	var title := Label.new()
 	title.text = "СВЕДЕНИЯ О ЗАПИСИ"
+	title.tooltip_text = "Потяни вертикальный разделитель между редактором и свойствами, чтобы изменить ширину этой панели."
 	title.add_theme_font_size_override("font_size", 11)
 	add_child(title)
 	add_child(HSeparator.new())
