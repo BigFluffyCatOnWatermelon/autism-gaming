@@ -292,7 +292,8 @@ func remove_local_entry(object_id: String) -> void:
 	for collection_id in collections:
 		var collection: Dictionary = collections[collection_id]
 		var object_ids := _to_packed_string_array(collection.get("object_ids", PackedStringArray()))
-		if object_ids.erase(object_id):
+		if object_ids.has(object_id):
+			object_ids.erase(object_id)
 			collection["object_ids"] = object_ids
 			collections[collection_id] = collection
 
