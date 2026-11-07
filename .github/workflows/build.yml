@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Keep the newest validation run for each branch; obsolete queued runs add noise
+# and delay feedback without providing useful coverage.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   godot-check:
     name: Import, parse and launch Godot project
