@@ -4,6 +4,9 @@ extends EditorPlugin
 const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 const ObjectBuilderLibraryViewScript = preload("res://addons/object_builder/ui/library_view.gd")
+const ObjectBuilderLibraryDetailsViewScript = preload("res://addons/object_builder/ui/library_details_view.gd")
+const ObjectBuilderLibraryActionDialogsScript = preload("res://addons/object_builder/ui/library_action_dialogs.gd")
+const ObjectBuilderLibraryActionsService = preload("res://addons/object_builder/services/library_actions_service.gd")
 const ObjectBuilderEditorViewScript = preload("res://addons/object_builder/ui/object_editor_view.gd")
 const ObjectPropertyValueCodec = preload("res://scripts/object_system/object_property_value_codec.gd")
 const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder/ui/property_list_view.gd")
@@ -53,6 +56,9 @@ var _main_screen: MarginContainer
 var _workspace_view: Control
 var _workspace_layout_state: Dictionary = {}
 var _library_view: Control
+var _library_details_view: Control
+var _library_action_dialogs: Node
+var _pending_library_definition: ObjectDefinition
 var _editor_view: TabContainer
 var _dialog_view: Node
 var _library_controller: RefCounted = ObjectBuilderLibraryControllerScript.new()
@@ -327,6 +333,8 @@ func _build_ui() -> void:
 	_workspace_view.call("build")
 	_workspace_view.call("apply_layout_state", _workspace_layout_state)
 	_workspace_view.connect("layout_changed", Callable(self, "_save_local_state"))
+	_build_library_details(_workspace_view.call("get_inspector_host") as VBoxContainer)
+	_build_library_action_dialogs()
 
 	_build_workspace_toolbar(_workspace_view.call("get_toolbar_actions") as HBoxContainer)
 	_build_library_panel(_workspace_view.call("get_library_host") as VBoxContainer)
@@ -384,6 +392,22 @@ func _build_library_panel(parent: VBoxContainer) -> void:
 	_library_view.connect("search_changed", Callable(self, "_on_search_changed"))
 	_library_view.connect("filter_changed", Callable(self, "_on_filter_changed"))
 	_library_view.connect("object_selected", Callable(self, "_on_library_item_selected"))
+	_library_view.connect("entry_action_requested", Callable(self, "_on_library_entry_action_requested"))
+
+func _build_library_details(parent: VBoxContainer) -> void:
+	_library_details_view = ObjectBuilderLibraryDetailsViewScript.new()
+	_library_details_view.name = "LibraryDetailsView"
+	parent.add_child(_library_details_view)
+	_library_details_view.call("build")
+
+func _build_library_action_dialogs() -> void:
+	_library_action_dialogs = ObjectBuilderLibraryActionDialogsScript.new()
+	_library_action_dialogs.name = "LibraryActionDialogs"
+	_library_action_dialogs.connect("rename_confirmed", Callable(self, "_on_library_rename_confirmed"))
+	_library_action_dialogs.connect("delete_confirmed", Callable(self, "_on_library_delete_confirmed"))
+	_library_action_dialogs.connect("export_path_selected", Callable(self, "_on_library_export_path_selected"))
+	_main_screen.add_child(_library_action_dialogs)
+	_library_action_dialogs.call("build")
 
 func _build_editor_tabs(parent: VBoxContainer) -> void:
 	_editor_view = ObjectBuilderEditorViewScript.new()
@@ -1162,6 +1186,21 @@ func _refresh_library_list() -> void:
 		str(_library_view.call("get_selected_mode"))
 	)
 	_library_view.call("set_entries", entries, "Объекты не найдены")
+	var selected_index := int(_library_view.call("get_selected_index"))
+	if selected_index >= 0:
+		_refresh_library_details(_library_controller.call("get_visible_definition", selected_index) as ObjectDefinition)
+	elif _working_definition != null:
+		_refresh_library_details(_working_definition)
+	else:
+		_refresh_library_details(null)
+
+
+func _refresh_library_details(definition: ObjectDefinition) -> void:
+	if _library_details_view == null or _library_controller == null:
+		return
+	var details: Dictionary = _library_controller.call("build_detail_data", definition)
+	_library_details_view.call("set_details", details)
+
 
 func _on_search_changed(_value: String) -> void:
 	_refresh_library_list()
@@ -1175,6 +1214,7 @@ func _on_library_item_selected(index: int) -> void:
 	var definition := _library_controller.call("get_visible_definition", index) as ObjectDefinition
 	if definition == null:
 		return
+	_refresh_library_details(definition)
 	if definition.is_template:
 		var template_copy := _create_definition_from_template(definition)
 		if template_copy != null:
@@ -1185,6 +1225,132 @@ func _on_library_item_selected(index: int) -> void:
 	_can_save_as_template = false
 	_record_recent(definition.object_id)
 	_load_definition(definition)
+
+func _on_library_entry_action_requested(action: String, index: int) -> void:
+	var definition := _library_controller.call("get_visible_definition", index) as ObjectDefinition
+	if definition == null:
+		return
+	_pending_library_definition = definition
+	_refresh_library_details(definition)
+	if action == "open":
+		_on_library_item_selected(index)
+		return
+
+	if _has_unsaved_changes_for_library_entry(definition):
+		_set_status("Сначала сохрани изменения этого объекта. Действие библиотеки использует сохранённую версию.", true)
+		return
+
+	match action:
+		"duplicate":
+			_perform_library_copy(definition, false)
+		"create_template":
+			if definition.is_template:
+				_set_status("Выбранная запись уже является шаблоном.", true)
+				return
+			_perform_library_copy(definition, true)
+		"rename":
+			_library_action_dialogs.call("popup_rename", definition.display_name)
+		"delete":
+			if _working_definition != null and _working_definition.object_id == definition.object_id:
+				_set_status("Сначала открой другой объект. Нельзя удалять запись, которая сейчас открыта в редакторе.", true)
+				return
+			_library_action_dialogs.call("popup_delete", definition.display_name)
+		"export":
+			_library_action_dialogs.call("popup_export", definition.object_id)
+
+
+func _has_unsaved_changes_for_library_entry(definition: ObjectDefinition) -> bool:
+	return (
+		definition != null
+		and _working_definition != null
+		and _working_definition.object_id == definition.object_id
+		and _editor_session != null
+		and bool(_editor_session.call("is_dirty"))
+	)
+
+
+func _perform_library_copy(source: ObjectDefinition, as_template: bool) -> void:
+	var result: Dictionary = (
+		ObjectBuilderLibraryActionsService.create_template(source)
+		if as_template
+		else ObjectBuilderLibraryActionsService.duplicate_definition(source)
+	)
+	if not bool(result.get("ok", false)):
+		_set_status(str(result.get("message", "Не удалось выполнить операцию с библиотекой.")), true)
+		return
+	var created := result.get("definition") as ObjectDefinition
+	if created == null:
+		_set_status("Операция завершилась без результата.", true)
+		return
+	_refresh_library()
+	_can_save_as_template = not created.is_template
+	_load_definition(created)
+	if not created.is_template:
+		_library_controller.call("record_recent", created.object_id)
+		_save_local_state()
+		_refresh_library_list()
+		_refresh_library_details(created)
+	EditorInterface.get_resource_filesystem().scan()
+	_set_status(
+		"Создан шаблон «%s»." % created.display_name
+		if as_template
+		else "Создана независимая копия «%s»." % created.display_name,
+		false
+	)
+
+
+func _on_library_rename_confirmed(new_name: String) -> void:
+	if _pending_library_definition == null:
+		return
+	if new_name.strip_edges().is_empty():
+		_set_status("Название не может быть пустым.", true)
+		return
+	var definition := _pending_library_definition
+	_pending_library_definition = null
+	var result: Dictionary = ObjectBuilderLibraryActionsService.rename_definition(definition, new_name)
+	if not bool(result.get("ok", false)):
+		_set_status(str(result.get("message", "Не удалось переименовать запись.")), true)
+		return
+	_refresh_library()
+	if _working_definition != null and _working_definition.object_id == definition.object_id:
+		_load_definition(definition)
+	else:
+		_refresh_library_details(definition)
+	EditorInterface.get_resource_filesystem().scan()
+	_set_status(str(result.get("message", "Запись переименована.")), false)
+
+
+func _on_library_delete_confirmed() -> void:
+	if _pending_library_definition == null:
+		return
+	var definition := _pending_library_definition
+	_pending_library_definition = null
+	var result: Dictionary = ObjectBuilderLibraryActionsService.delete_definition(definition)
+	if not bool(result.get("ok", false)):
+		_set_status(str(result.get("message", "Не удалось удалить запись.")), true)
+		return
+	_library_controller.call("remove_local_entry", definition.object_id)
+	_save_local_state()
+	_refresh_library()
+	EditorInterface.get_resource_filesystem().scan()
+	_set_status(str(result.get("message", "Запись удалена.")), false)
+
+
+func _on_library_export_path_selected(path: String) -> void:
+	if _pending_library_definition == null:
+		return
+	var definition := _pending_library_definition
+	_pending_library_definition = null
+	var target_path := path if path.get_extension().to_lower() == "tres" else path + ".tres"
+	var save_error := ObjectBuilderLibraryActionsService.export_definition(definition, target_path)
+	if save_error != OK:
+		_set_status("Не удалось экспортировать определение. Код ошибки: %d" % save_error, true)
+		return
+	_set_status(
+		"Определение экспортировано: %s. Сцена и внешние ресурсы остаются ссылками на исходный проект." % target_path,
+		false
+	)
+
 
 func _record_recent(object_id: String) -> void:
 	_library_controller.call("record_recent", object_id)
@@ -1284,6 +1450,7 @@ func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> voi
 	_refresh_scene_tree()
 	_is_loading_editor_form = false
 	_refresh_workspace_document_info()
+	_refresh_library_details(_working_definition)
 	if _workspace_view != null:
 		_workspace_view.call("set_selection_info", "", "")
 func _select_root_type(type_name: String) -> void:
