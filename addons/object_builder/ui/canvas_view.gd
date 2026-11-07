@@ -272,6 +272,7 @@ func set_preview_instance(
 		clear_canvas("Не удалось собрать предпросмотр сцены.")
 		return
 	_preview_instance = instance
+	_apply_pixel_art_preview_settings(_preview_instance)
 	_selected_path = selected_path
 	_disable_preview_processing(_preview_instance)
 	_stage.add_child(_preview_instance)
@@ -324,6 +325,15 @@ func set_locked_paths(paths: Array[NodePath]) -> void:
 		_locked_paths[path] = true
 	if _interaction_controller != null:
 		_interaction_controller.call("set_locked_paths", paths)
+
+
+func _apply_pixel_art_preview_settings(node: Node) -> void:
+	if node == null:
+		return
+	if node is CanvasItem:
+		(node as CanvasItem).texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	for child in node.get_children():
+		_apply_pixel_art_preview_settings(child)
 
 
 func _disable_preview_processing(node: Node) -> void:
