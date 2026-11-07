@@ -167,6 +167,7 @@ func set_selected_node(node: Node, path: NodePath) -> void:
 
 func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 	_animation_option.clear()
+	_animated_speed.set_value_no_signal(sprite.speed_scale)
 	var frames := sprite.sprite_frames
 	if frames == null:
 		_animation_option.disabled = true
