@@ -672,6 +672,7 @@ func _build_capability_editor(parent: VBoxContainer) -> void:
 	view.connect("category_changed", Callable(self, "_on_capability_category_selected"))
 	view.connect("toggle_requested", Callable(self, "_on_capability_toggled"))
 	view.connect("settings_requested", Callable(self, "_on_capability_settings_pressed"))
+	view.connect("focus_requested", Callable(self, "_on_capability_focus_requested"))
 	view.connect("selection_toggled", Callable(self, "_on_capability_catalog_selection_toggled"))
 	view.connect("batch_add_requested", Callable(self, "_on_capability_batch_add_requested"))
 	view.connect("clear_selection_requested", Callable(self, "_on_capability_catalog_selection_cleared"))
@@ -749,6 +750,13 @@ func _rebuild_capability_list() -> void:
 		"set_selected_count",
 		_capability_catalog_controller.call("get_selected_count")
 	)
+
+func _on_capability_focus_requested(capability_id: String) -> void:
+	if _working_definition == null:
+		return
+	_capability_catalog_controller.call("set_focused_capability", capability_id)
+	_rebuild_capability_list()
+
 
 func _on_capability_catalog_selection_toggled(selected: bool, capability_id: String) -> void:
 	if _working_definition == null:
@@ -919,6 +927,8 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 		return
 
 	_editing_capability_selection = selection
+	_capability_catalog_controller.call("set_focused_capability", capability_id)
+	_rebuild_capability_list()
 	_capability_settings_panel.call(
 		"configure",
 		capability,
