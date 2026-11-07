@@ -70,7 +70,8 @@ func _run() -> void:
 	_expect(int(library.call("get_selected_index")) == 0, "selected library entry remains available for actions")
 	library.call("_on_entry_action_selected", 1)
 	_expect(action_events.size() == 1 and action_events[0] == "duplicate:0", "selected-entry action emits its stable action ID and index")
-	library.call("set_collection_options", [{"id": "collection_forest", "label": "Лес"}], "collection:collection_forest")
+	var custom_collection_options: Array[Dictionary] = [{"id": "collection_forest", "label": "Лес"}]
+	library.call("set_collection_options", custom_collection_options, "collection:collection_forest")
 	_expect(str(library.call("get_selected_mode")) == "collection:collection_forest", "collection navigation restores the selected custom collection")
 	_expect(not (library.get("_collection_management_button") as Button).disabled, "collection management is enabled for a selected collection")
 	library.call("_on_collection_management_item_selected", 0)
