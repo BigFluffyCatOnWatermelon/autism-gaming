@@ -1133,7 +1133,20 @@ func _on_new_object_dialog_confirmed() -> void:
 		"duplicate": "Создана независимая копия существующего объекта. Исходник не изменён.",
 		"import": "Сцена импортирована в отдельную копию. Исходный файл не изменён."
 	}
-	_set_status(str(status_by_mode.get(mode, "Объект создан.")) + " Нажми «Сохранить объект», чтобы добавить определение в библиотеку.", false)
+	var status_message := str(status_by_mode.get(mode, "Объект создан."))
+	if mode == "import":
+		var import_report: Dictionary = result.get("import_report", {})
+		var visual_count := int(import_report.get("visual_part_count", 0))
+		var advanced_count := int(import_report.get("advanced_node_count", 0))
+		status_message += "\nРаспознано визуальных частей: %d. Дополнительных узлов сохранено для расширенного режима: %d." % [visual_count, advanced_count]
+		var advanced_paths: Variant = import_report.get("advanced_node_paths", PackedStringArray())
+		if advanced_paths is PackedStringArray and not advanced_paths.is_empty():
+			var examples := PackedStringArray()
+			for index in range(mini(3, advanced_paths.size())):
+				examples.append(str(advanced_paths[index]))
+			status_message += "\nПримеры: " + "; ".join(examples)
+	status_message += " Нажми «Сохранить объект», чтобы добавить определение в библиотеку."
+	_set_status(status_message, false)
 
 
 func _build_visual_editor(parent: VBoxContainer) -> void:
