@@ -189,8 +189,7 @@ static func _pack_and_save(scene_root: Node, definition: ObjectDefinition) -> Di
 static func _build_import_report(scene_root: Node) -> Dictionary:
 	var visual_parts := PackedStringArray()
 	var advanced_nodes := PackedStringArray()
-	var total_nodes := 0
-	_collect_import_report(scene_root, "", visual_parts, advanced_nodes, total_nodes)
+	var total_nodes := _collect_import_report(scene_root, "", visual_parts, advanced_nodes)
 	return {
 		"visual_part_count": visual_parts.size(),
 		"visual_part_paths": visual_parts,
@@ -204,20 +203,18 @@ static func _collect_import_report(
 	parent: Node,
 	parent_path: String,
 	visual_parts: PackedStringArray,
-	advanced_nodes: PackedStringArray,
-	total_nodes: int
-) -> void:
+	advanced_nodes: PackedStringArray
+) -> int:
+	var total_nodes := 0
 	for child in parent.get_children():
-		if not child is Node:
-			continue
-		var child_node := child as Node
-		var child_path := child_node.name if parent_path.is_empty() else parent_path.path_join(child_node.name)
+		var child_path := child.name if parent_path.is_empty() else parent_path.path_join(child.name)
 		total_nodes += 1
-		if child_node is Sprite2D or child_node is AnimatedSprite2D or child_node is Polygon2D or child_node is Line2D:
-			visual_parts.append(child_path + " (" + child_node.get_class() + ")")
+		if child is Sprite2D or child is AnimatedSprite2D or child is Polygon2D or child is Line2D:
+			visual_parts.append(child_path + " (" + child.get_class() + ")")
 		else:
-			advanced_nodes.append(child_path + " (" + child_node.get_class() + ")")
-		_collect_import_report(child_node, child_path, visual_parts, advanced_nodes, total_nodes)
+			advanced_nodes.append(child_path + " (" + child.get_class() + ")")
+		total_nodes += _collect_import_report(child, child_path, visual_parts, advanced_nodes)
+	return total_nodes
 
 static func _get_missing_dependency_paths(scene_path: String) -> PackedStringArray:
 	var missing := PackedStringArray()
