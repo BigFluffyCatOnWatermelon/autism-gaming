@@ -5,7 +5,6 @@ extends RefCounted
 const SceneDraftService = preload("res://addons/object_builder/services/scene_draft_service.gd")
 const LibraryActionsService = preload("res://addons/object_builder/services/library_actions_service.gd")
 const DefinitionScript = preload("res://scripts/object_system/object_definition.gd")
-const PropertyScript = preload("res://scripts/object_system/object_property_definition.gd")
 
 
 static func create_empty_draft(values: Dictionary, profile: Object = null) -> Dictionary:
