@@ -104,8 +104,9 @@ func _run() -> void:
 	view.call("_on_show_all_pressed")
 	view.call("_on_hide_all_pressed")
 	_expect(visibility_batch_events == [true, false], "show-all and hide-all emit one batch visibility action each")
-	view.call("_on_row_reorder_requested", NodePath("Visuals/Leaf"), NodePath("Visuals/Glow"), true)
-	_expect(reorder_events == [{"source": NodePath("Visuals/Leaf"), "target": NodePath("Visuals/Glow"), "after": true}], "dragging a row emits source and target paths")
+	var target_row = (view.get("_rows_host") as VBoxContainer).get_child(1)
+	target_row.call("_drop_data", Vector2(0.0, 100.0), drag_payload)
+	_expect(reorder_events == [{"source": NodePath("Visuals/Leaf"), "target": NodePath("Visuals/Glow"), "after": true}], "dropping in the lower half of a row requests insertion after the target")
 	view.call("_on_lock_toggled", true, NodePath("Visuals/Leaf"))
 	_expect(lock_events == [{"path": NodePath("Visuals/Leaf"), "locked": true}], "part lock emits its relative path and enabled state")
 	var restored_lock_paths: Array[NodePath] = [NodePath("Visuals/Glow")]
