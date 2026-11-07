@@ -3,6 +3,7 @@ extends SceneTree
 const LibraryDataScript = preload("res://scripts/object_system/object_capability_library_data.gd")
 const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 const IconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
+const IconIndexDataScript = preload("res://scripts/object_system/object_capability_icon_index_data.gd")
 
 var failures := PackedStringArray()
 
@@ -17,15 +18,44 @@ func _run_tests() -> void:
 		failures.append("module registration: " + error_message)
 
 	var definitions: Array[ObjectCapabilityDefinition] = LibraryDataScript.create_definitions()
-	_expect(definitions.size() == 200, "built-in library contains exactly 200 capability definitions")
+	_expect(definitions.size() == 196, "library data contains 196 non-builtin definitions")
+	_expect(IconIndexDataScript.get_count() == 200, "stable ID-to-icon map contains exactly 200 catalogue entries")
 
-	var seen_indices: Dictionary = {}
+	var seen_library_indices: Dictionary = {}
 	for definition in definitions:
 		var atlas_index := definition.icon_atlas_index
-		_expect(atlas_index >= 0 and atlas_index < 200, "library capability has a reserved atlas index")
-		_expect(not seen_indices.has(atlas_index), "each library capability owns a unique atlas cell")
-		seen_indices[atlas_index] = definition.capability_id
-	_expect(seen_indices.size() == 200, "all 200 catalogue atlas cells have an owner")
+		_expect(atlas_index >= 0 and atlas_index < 200, "library capability has a stable atlas index")
+		_expect(
+			IconIndexDataScript.get_index(definition.capability_id) == atlas_index,
+			"library capability index matches its permanent ID mapping"
+		)
+		_expect(not seen_library_indices.has(atlas_index), "library entries never share an atlas cell")
+		seen_library_indices[atlas_index] = definition.capability_id
+	_expect(seen_library_indices.size() == 196, "all 196 library definitions own unique cells")
+
+	var builtin_expected := {
+		"has_health": 60,
+		"can_attack": 70,
+		"can_receive_damage": 71,
+		"breaks_when_health_empty": 90
+	}
+	for capability_id in builtin_expected:
+		var expected_index := int(builtin_expected[capability_id])
+		_expect(
+			IconIndexDataScript.get_index(capability_id) == expected_index,
+			"built-in ID uses its position in the 200-entry catalogue"
+		)
+		var builtin_definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
+		_expect(builtin_definition != null, "built-in capability is registered")
+		if builtin_definition != null:
+			_expect(
+				builtin_definition.icon_atlas_index == expected_index,
+				"built-in definition uses its permanent catalogue cell"
+			)
+			_expect(
+				IconRegistryScript.get_icon(builtin_definition) is AtlasTexture,
+				"built-in capability resolves its own atlas icon"
+			)
 
 	var first_icon := IconRegistryScript.get_icon(definitions[0])
 	_expect(first_icon is AtlasTexture, "capability icon registry returns an AtlasTexture for library cards")
@@ -33,18 +63,10 @@ func _run_tests() -> void:
 		var first_atlas := first_icon as AtlasTexture
 		_expect(first_atlas.atlas != null, "atlas texture references the shared SVG atlas")
 		_expect(first_atlas.region.size == Vector2(40, 40), "each card icon uses an isolated 40 by 40 cell")
-
-	var builtin_health := ObjectCapabilityCatalog.get_definition_reference("has_health")
-	_expect(builtin_health != null and builtin_health.icon_atlas_index == 200, "Health owns its reserved built-in atlas cell")
-	if builtin_health != null:
-		_expect(IconRegistryScript.get_icon(builtin_health) is AtlasTexture, "built-in Health card resolves its own atlas icon")
-
-	var builtin_damage := ObjectCapabilityCatalog.get_definition_reference("can_receive_damage")
-	var builtin_attack := ObjectCapabilityCatalog.get_definition_reference("can_attack")
-	var builtin_destroy := ObjectCapabilityCatalog.get_definition_reference("breaks_when_health_empty")
-	_expect(builtin_damage != null and builtin_damage.icon_atlas_index == 201, "Damageable owns its reserved atlas cell")
-	_expect(builtin_attack != null and builtin_attack.icon_atlas_index == 202, "Attack owns its reserved atlas cell")
-	_expect(builtin_destroy != null and builtin_destroy.icon_atlas_index == 203, "Destructible owns its reserved atlas cell")
+		_expect(
+			first_atlas.region.position.y + first_atlas.region.size.y <= 800,
+			"icon regions stay inside the 400 by 800 atlas"
+		)
 
 	var attack_animation := ObjectCapabilityCatalog.get_definition_reference("plays_attack_animation")
 	_expect(attack_animation != null, "attack animation capability is registered")
@@ -54,17 +76,11 @@ func _run_tests() -> void:
 			if str(relation.get("target_id", "")) == "can_attack" and str(relation.get("type", "")) == "recommends":
 				attack_relation_found = true
 	_expect(attack_relation_found, "curated relations connect attack animation with attack capability")
+
 	var total_relation_count := 0
-	var known_ids: Dictionary = {
-		"has_health": true,
-		"can_receive_damage": true,
-		"can_attack": true,
-		"breaks_when_health_empty": true,
-		"is_pickup_item": true,
-		"can_interact": true
-	}
-	for definition in definitions:
-		known_ids[definition.capability_id] = true
+	var known_ids: Dictionary = {}
+	for capability_id in IconIndexDataScript.ICON_INDEX_BY_ID:
+		known_ids[capability_id] = true
 	for definition in definitions:
 		for relation in definition.relations:
 			total_relation_count += 1
@@ -76,6 +92,23 @@ func _run_tests() -> void:
 	var registry_errors := ObjectCapabilityCatalog.validate_registry()
 	for error_message in registry_errors:
 		failures.append("registry validation: " + error_message)
+
+	var registered_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
+	_expect(registered_ids.size() == 200, "complete capability registry has exactly 200 cards")
+	var registered_indices: Dictionary = {}
+	for capability_id in registered_ids:
+		var registered_definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
+		_expect(registered_definition != null, "every ID resolves to a registered capability")
+		if registered_definition == null:
+			continue
+		var atlas_index := registered_definition.icon_atlas_index
+		_expect(
+			IconIndexDataScript.get_index(capability_id) == atlas_index,
+			"registered capability retains the permanent ID mapping"
+		)
+		_expect(not registered_indices.has(atlas_index), "registered cards never share an atlas cell")
+		registered_indices[atlas_index] = capability_id
+	_expect(registered_indices.size() == 200, "all 200 registered cards have unique icon cells")
 
 	for library_definition in definitions:
 		var registered_definition := ObjectCapabilityCatalog.get_definition_reference(library_definition.capability_id)
