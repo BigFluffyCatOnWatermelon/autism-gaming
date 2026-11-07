@@ -1700,6 +1700,7 @@ func _cleanup_abandoned_new_draft(next_definition: ObjectDefinition) -> void:
 func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> void:
 	var previous_object_id := _working_definition.object_id if _working_definition != null else ""
 	if previous_object_id != definition.object_id:
+		_on_capability_settings_panel_close()
 		_capability_catalog_controller.call("clear_selection")
 	_cleanup_abandoned_new_draft(definition)
 	if is_new and _editor_view != null:
