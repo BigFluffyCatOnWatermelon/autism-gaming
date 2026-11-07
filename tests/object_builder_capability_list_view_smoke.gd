@@ -26,6 +26,7 @@ func _run() -> void:
 		{"id": "combat", "display_name": "Бой"}
 	]
 	view.call("build", categories)
+	_expect(not (view.get("_related_section") as PanelContainer).visible, "related suggestions stay hidden until a capability is focused")
 	view.connect("search_changed", Callable(self, "_on_search_changed"))
 	view.connect("category_changed", Callable(self, "_on_category_changed"))
 	view.connect("toggle_requested", Callable(self, "_on_toggle_requested"))
@@ -35,7 +36,7 @@ func _run() -> void:
 	view.connect("batch_add_requested", Callable(self, "_on_batch_add_requested"))
 	view.connect("clear_selection_requested", Callable(self, "_on_clear_selection_requested"))
 
-	_expect(view.get_child_count() == 7, "capability view owns title, hint, search, filter, entries, pagination and selection bar")
+	_expect(view.get_child_count() == 8, "capability view owns title, hint, search, filter, selection, related suggestions, entries and pagination")
 	_expect(str(view.call("get_selected_category")) == "", "capability filter starts with all categories")
 	var search_input := view.get("search_input") as LineEdit
 	search_input.text_changed.emit("tree")
@@ -152,6 +153,24 @@ func _run() -> void:
 	_expect(not planned_relations.disabled, "planned capabilities can still be explored through their relationships")
 	planned_relations.pressed.emit()
 	_expect(focus_events == ["can_attack", "can_fly"], "planned relationship browsing does not enable the mechanic")
+
+	var related_entries: Array[Dictionary] = [{
+		"definition": planned,
+		"relation_type": "recommends",
+		"explanation": "Проверь связанное поведение.",
+		"is_reverse": true,
+		"ready": false
+	}]
+	view.call("set_related_entries", related_entries, "Атака")
+	_expect((view.get("_related_section") as PanelContainer).visible, "related capabilities appear in a dedicated compact strip")
+	_expect(view.call("get_related_button_count") == 1, "related strip contains one button per connected capability")
+	var related_container := view.get("_related_container") as HFlowContainer
+	var related_button := related_container.get_child(0) as Button
+	_expect(related_button.text == "Полёт" and related_button.tooltip_text.contains("Проверь"), "related strip displays the mechanic name and relation explanation")
+	related_button.pressed.emit()
+	_expect(focus_events == ["can_attack", "can_fly", "can_fly"], "following a related suggestion moves focus without enabling it")
+	view.call("set_related_entries", [])
+	_expect(not (view.get("_related_section") as PanelContainer).visible, "related strip hides when the focused capability has no links")
 
 	var many_entries: Array[Dictionary] = []
 	for index in range(45):
