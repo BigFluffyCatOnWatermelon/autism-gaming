@@ -1077,7 +1077,14 @@ func _load_local_state() -> void:
 	var stored_recent: Variant = settings.get_project_metadata(METADATA_SECTION, "recent", PackedStringArray())
 	var stored_layout: Variant = settings.get_project_metadata(METADATA_SECTION, "workspace_layout", {})
 	var stored_locked_parts: Variant = settings.get_project_metadata(METADATA_SECTION, "locked_visual_parts", PackedStringArray())
-	_locked_visual_part_keys = _to_packed_string_array(stored_locked_parts)
+	_locked_visual_part_keys = PackedStringArray()
+	if stored_locked_parts is PackedStringArray:
+		_locked_visual_part_keys = stored_locked_parts.duplicate()
+	elif stored_locked_parts is Array:
+		for stored_key in stored_locked_parts:
+			var lock_key := str(stored_key).strip_edges()
+			if not lock_key.is_empty() and not _locked_visual_part_keys.has(lock_key):
+				_locked_visual_part_keys.append(lock_key)
 	_workspace_layout_state = stored_layout.duplicate(true) if stored_layout is Dictionary else {}
 	_library_controller.call("set_local_state", stored_favorites, stored_recent)
 func _save_local_state() -> void:
@@ -1087,18 +1094,6 @@ func _save_local_state() -> void:
 	settings.set_project_metadata(METADATA_SECTION, "locked_visual_parts", _locked_visual_part_keys)
 	if _workspace_view != null:
 		settings.set_project_metadata(METADATA_SECTION, "workspace_layout", _workspace_view.call("get_layout_state"))
-
-
-func _to_packed_string_array(value: Variant) -> PackedStringArray:
-	if value is PackedStringArray:
-		return value.duplicate()
-	var result := PackedStringArray()
-	if value is Array:
-		for entry in value:
-			var item := str(entry).strip_edges()
-			if not item.is_empty() and not result.has(item):
-				result.append(item)
-	return result
 func _refresh_library() -> void:
 	_library_controller.call("load_library")
 	_rebuild_category_filter()

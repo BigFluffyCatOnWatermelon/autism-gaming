@@ -63,6 +63,8 @@ func set_locked_paths(paths: Array[NodePath]) -> void:
 	_locked_paths.clear()
 	for path in paths:
 		_locked_paths[path] = true
+	if _surface != null:
+		_surface.queue_redraw()
 
 
 func is_path_locked(path: NodePath) -> bool:
