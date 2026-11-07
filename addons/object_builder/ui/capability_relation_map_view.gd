@@ -165,6 +165,7 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 			_full_relation_filter.item_count - 1,
 			str(relation_type)
 		)
+	_full_relation_filter.select(0)
 	_full_relation_filter.item_selected.connect(_on_full_relation_filter_selected)
 	filter_row.add_child(_full_relation_filter)
 
@@ -238,6 +239,7 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 			+ " ".join(definition.synonyms) + " " + " ".join(definition.example_queries)
 		).to_lower().replace("ё", "е")
 
+	_full_category_filter.select(0)
 	var connected_pairs: Dictionary = {}
 	for capability_id in definitions_by_id:
 		var definition := definitions_by_id[capability_id] as ObjectCapabilityDefinition
