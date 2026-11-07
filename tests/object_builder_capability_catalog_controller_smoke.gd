@@ -31,7 +31,7 @@ func _run_tests() -> void:
 	visual.execution_scope = "editor_only"
 	visual.implementation_type = "scene_resource"
 	visual.synonyms = PackedStringArray(["покрасить", "изменить цвет"])
-	visual.example_queries = PackedStringArray(["сделать объект красным"])
+	visual.example_queries = PackedStringArray(["сделать объект красным", "ломать дерево топором"])
 
 	var data := DefinitionScript.new()
 	data.capability_id = DATA_ID
@@ -90,6 +90,17 @@ func _run_tests() -> void:
 	_expect(
 		bool(data_entries[0].get("selected_in_catalog", false)),
 		"selection remains after changing the result category"
+	)
+
+	var phrase_entries: Array[Dictionary] = controller.call(
+		"build_entries",
+		visual_ids,
+		no_current_selections,
+		"чтобы дерево ломалось от топора"
+	)
+	_expect(
+		phrase_entries.size() == 1,
+		"search matches natural-language phrases with common Russian word endings"
 	)
 
 	var all_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
