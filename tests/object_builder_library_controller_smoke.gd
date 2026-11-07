@@ -59,14 +59,14 @@ func _run() -> void:
 			found_equipment = true
 	_expect(found_equipment, "known category names are translated")
 	var tags: Array[Dictionary] = controller.call("get_tag_options", "")
-	_expect(tags.size() == 8, "tag options are unique")
+	_expect(tags.size() == 7, "tag options are unique")
 
 	var entries: Array[Dictionary] = controller.call("build_visible_entries", "", "", "", "all")
 	_expect(entries.size() == 4, "all mode returns every library definition")
-	_expect(entries[0].get("definition") == oak, "library entries are sorted by display name")
-	_expect(controller.call("get_visible_definition", 0) == oak, "visible item index resolves to its definition")
-	_expect(str(entries[0].get("title")).begins_with("Дуб"), "library entry titles preserve the display name")
-	_expect(str(entries[0].get("tooltip")).contains("Большое дерево"), "library entry tooltip includes description")
+	_expect(entries[0].get("definition") == stone and entries[1].get("definition") == oak, "library entries are sorted by display name")
+	_expect(controller.call("get_visible_definition", 0) == stone and controller.call("get_visible_definition", 1) == oak, "visible item index resolves to its definition")
+	_expect(str(entries[0].get("title")).begins_with("Гранит"), "library entry titles preserve the display name")
+	_expect(str(entries[0].get("tooltip")).contains("Твёрдый камень"), "library entry tooltip includes description")
 
 	entries = controller.call("build_visible_entries", "дерево", "", "", "all")
 	_expect(entries.size() == 2, "search uses cached case-normalized text")
