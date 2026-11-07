@@ -29,11 +29,26 @@ func build() -> void:
 func popup_rename(current_name: String) -> void:
 	if _rename_dialog == null:
 		return
+	_rename_dialog.title = "Переименовать запись"
 	_rename_input.text = current_name
 	_rename_input.select_all()
 	DialogService.popup_window_safely(_rename_dialog, Vector2i(440, 170), 0.62)
 	_rename_input.grab_focus()
 
+
+func popup_rename_collection(current_name: String) -> void:
+	if _rename_dialog == null:
+		return
+	_rename_dialog.title = "Переименовать коллекцию"
+	popup_rename(current_name)
+
+
+func popup_delete_collection(display_name: String) -> void:
+	if _delete_dialog == null:
+		return
+	_delete_dialog.title = "Удалить коллекцию?"
+	_delete_dialog.dialog_text = "Удалить коллекцию «%s»? Сами объекты останутся в библиотеке." % display_name
+	DialogService.popup_window_safely(_delete_dialog, Vector2i(440, 180), 0.62)
 
 func popup_delete(display_name: String) -> void:
 	if _delete_dialog == null:
