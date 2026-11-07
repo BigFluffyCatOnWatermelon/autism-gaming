@@ -39,7 +39,7 @@ func _run() -> void:
 		}
 	]
 	var map = MapViewScript.new()
-	map.focus_requested.connect(_on_focus_requested)
+	map.connect("focus_requested", Callable(self, "_on_focus_requested"))
 	map.open(host_control, focused, entries)
 	_expect(map.get_node_count() >= 3, "relation map creates a focused node and related capability nodes")
 	_expect(map.get_connection_count() == 2, "each related capability receives a visible graph connection")
