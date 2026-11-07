@@ -66,7 +66,6 @@ func build() -> void:
 
 	_search_input = LineEdit.new()
 	_search_input.placeholder_text = "Найти часть…"
-	_search_input.clear_button_enabled = true
 	_search_input.text_changed.connect(_on_search_changed)
 	add_child(_search_input)
 
