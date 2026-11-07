@@ -18,7 +18,7 @@ func _run() -> void:
 	root.add_child(view)
 	view.call("build")
 	view.connect("part_selected", Callable(self, "_on_part_selected"))
-	view.connect("visibility_changed", Callable(self, "_on_visibility_changed"))
+	view.connect("part_visibility_changed, Callable(self, "_on_visibility_changed"))
 	view.connect("duplicate_requested", Callable(self, "_on_duplicate_requested"))
 	view.connect("remove_requested", Callable(self, "_on_remove_requested"))
 

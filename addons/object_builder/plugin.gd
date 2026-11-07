@@ -330,7 +330,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_visual_parts_view.name = "VisualPartsView"
 	_visual_parts_view.call("build")
 	_visual_parts_view.connect("part_selected", Callable(self, "_on_canvas_part_selected"))
-	_visual_parts_view.connect("visibility_changed", Callable(self, "_on_visual_part_visibility_changed"))
+	_visual_parts_view.connect("part_visibility_changed, Callable(self, "_on_visual_part_visibility_changed"))
 	_visual_parts_view.connect("duplicate_requested", Callable(self, "_on_visual_part_duplicate_requested"))
 	_visual_parts_view.connect("remove_requested", Callable(self, "_on_visual_part_remove_requested"))
 	parent.add_child(_visual_parts_view)

@@ -3,7 +3,7 @@ extends VBoxContainer
 ## Compact visual-parts list for the Object Builder canvas.
 
 signal part_selected(path: NodePath)
-signal visibility_changed(path: NodePath, visible: bool)
+signal part_visibility_changed(path: NodePath, visible: bool)
 signal duplicate_requested(path: NodePath)
 signal remove_requested(path: NodePath)
 
@@ -246,7 +246,7 @@ func _on_part_selected(path: NodePath) -> void:
 
 
 func _on_visibility_toggled(visible: bool, path: NodePath) -> void:
-	visibility_changed.emit(path, visible)
+	part_visibility_changed.emit(path, visible)
 
 
 func _on_duplicate_requested(path: NodePath) -> void:
