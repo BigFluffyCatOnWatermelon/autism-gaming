@@ -16,6 +16,7 @@ func _run() -> void:
 	_expect(workspace.call("get_toolbar_actions") is HBoxContainer, "workspace exposes a toolbar action host")
 	_expect(workspace.call("get_library_host") is VBoxContainer, "workspace exposes a library host")
 	_expect(workspace.call("get_editor_host") is VBoxContainer, "workspace exposes an editor host")
+	_expect(workspace.call("get_inspector_host") is VBoxContainer, "workspace exposes a contextual inspector host")
 	_expect(workspace.call("is_library_visible"), "library panel is visible by default")
 	_expect(workspace.call("is_inspector_visible"), "inspector panel is visible by default")
 	_expect(not workspace.call("is_diagnostics_visible"), "diagnostics panel starts collapsed")
