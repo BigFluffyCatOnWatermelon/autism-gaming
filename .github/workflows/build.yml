@@ -123,6 +123,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder sprite quick settings view tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_sprite_quick_settings_view_smoke.gd 2>&1 | tee object-builder-sprite-quick-settings-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-sprite-quick-settings-test.log; then
+            echo "Object Builder sprite quick settings tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder visual parts view tests
         shell: bash
         run: |

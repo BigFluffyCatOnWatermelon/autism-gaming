@@ -22,6 +22,7 @@ const ObjectBuilderPreviewService = preload("res://addons/object_builder/service
 const ObjectBuilderPreviewViewScript = preload("res://addons/object_builder/ui/preview_view.gd")
 const ObjectBuilderCanvasViewScript = preload("res://addons/object_builder/ui/canvas_view.gd")
 const ObjectBuilderVisualPartsViewScript = preload("res://addons/object_builder/ui/visual_parts_view.gd")
+const ObjectBuilderSpriteQuickSettingsViewScript = preload("res://addons/object_builder/ui/sprite_quick_settings_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const ROOT_TYPES := [
@@ -78,6 +79,7 @@ var _scene_tree_view: Control
 var _visual_editor_view: Control
 var _canvas_view: Control
 var _visual_parts_view: Control
+var _sprite_quick_settings_view: Control
 var _status_label: Label
 var _preview_view: Window
 var _open_scene_button: Button
@@ -340,6 +342,12 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_visual_parts_view.connect("rename_requested", Callable(self, "_on_scene_tree_node_rename_requested"))
 	_visual_parts_view.connect("resource_edit_requested", Callable(self, "_on_visual_part_resource_edit_requested"))
 	parent.add_child(_visual_parts_view)
+
+	_sprite_quick_settings_view = ObjectBuilderSpriteQuickSettingsViewScript.new()
+	_sprite_quick_settings_view.name = "SpriteQuickSettingsView"
+	_sprite_quick_settings_view.call("build")
+	_sprite_quick_settings_view.connect("property_changed", Callable(self, "_on_sprite_quick_setting_changed"))
+	parent.add_child(_sprite_quick_settings_view)
 
 
 func _build_preview_window() -> void:
@@ -1669,6 +1677,12 @@ func _on_scene_tree_item_selected(_path: NodePath = NodePath()) -> void:
 
 
 func _refresh_visual_editor(node: Node) -> void:
+	if _sprite_quick_settings_view != null:
+		var scene_root := _get_open_object_scene_root()
+		var selected_path := NodePath("")
+		if scene_root != null and node != null and (node == scene_root or scene_root.is_ancestor_of(node)):
+			selected_path = scene_root.get_path_to(node)
+		_sprite_quick_settings_view.call("set_selected_node", node, selected_path)
 	if _visual_editor_view == null:
 		return
 	if node is Sprite2D:
@@ -2005,6 +2019,50 @@ func _on_visual_part_remove_requested(path: NodePath) -> void:
 	if node == null or node == scene_root:
 		return
 	_remove_scene_node(node)
+
+
+func _on_sprite_quick_setting_changed(
+	path: NodePath,
+	property_name: String,
+	value: Variant
+) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var sprite := scene_root.get_node_or_null(path) as Sprite2D
+	if sprite == null:
+		return
+	match property_name:
+		"hframes", "vframes":
+			_commit_visual_node_property(
+				sprite,
+				property_name,
+				clampi(int(value), 1, 128),
+				"изменить %s" % property_name
+			)
+		"frame":
+			var frame_limit := sprite.hframes * sprite.vframes - 1
+			_commit_visual_node_property(
+				sprite,
+				"frame",
+				clampi(int(value), 0, maxi(0, frame_limit)),
+				"выбрать кадр спрайта"
+			)
+		"region_enabled":
+			_commit_visual_node_property(sprite, "region_enabled", bool(value), "переключить область атласа")
+		"region_x", "region_y", "region_width", "region_height":
+			var next_region := sprite.region_rect
+			match property_name:
+				"region_x":
+					next_region.position.x = float(value)
+				"region_y":
+					next_region.position.y = float(value)
+				"region_width":
+					next_region.size.x = maxf(0.0, float(value))
+				"region_height":
+					next_region.size.y = maxf(0.0, float(value))
+			_commit_visual_node_property(sprite, "region_rect", next_region, "изменить область атласа")
+	_refresh_visual_editor(sprite)
 
 
 func _on_visual_part_resource_edit_requested(path: NodePath) -> void:
