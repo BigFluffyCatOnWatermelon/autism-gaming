@@ -52,6 +52,7 @@ func build() -> void:
 	_animation_name = LineEdit.new()
 	_animation_name.placeholder_text = "Имя выбранной анимации"
 	_animation_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_animation_name.text_submitted.connect(_on_animation_name_submitted)
 	rename_row.add_child(_animation_name)
 	var rename_button := Button.new()
 	rename_button.text = "Переименовать"
@@ -115,6 +116,7 @@ func build() -> void:
 	_file_dialog.access = FileDialog.ACCESS_RESOURCES
 	_file_dialog.filters = PackedStringArray(["*.png, *.webp, *.jpg, *.jpeg, *.svg, *.bmp, *.tga ; Изображения"])
 	_file_dialog.file_selected.connect(_on_frame_file_selected)
+	_file_dialog.files_selected.connect(_on_frame_files_selected)
 	add_child(_file_dialog)
 	confirmed.connect(_on_confirmed)
 
@@ -231,6 +233,10 @@ func _add_animation() -> void:
 	_refresh_animation_list(StringName(candidate))
 
 
+func _on_animation_name_submitted(_value: String) -> void:
+	_rename_current_animation()
+
+
 func _rename_current_animation() -> void:
 	var old_name := _get_selected_animation()
 	var new_name := StringName(_animation_name.text.strip_edges())
@@ -336,6 +342,7 @@ func move_selected_frame(delta: int) -> bool:
 
 func _on_add_frame_pressed() -> void:
 	_file_mode = "add"
+	_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
 	DialogService.popup_window_safely(_file_dialog, Vector2i(760, 560), 0.88)
 
 
@@ -343,6 +350,7 @@ func _on_replace_frame_pressed() -> void:
 	if _get_selected_frame() < 0:
 		return
 	_file_mode = "replace"
+	_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	DialogService.popup_window_safely(_file_dialog, Vector2i(760, 560), 0.88)
 
 
@@ -355,6 +363,17 @@ func _on_frame_file_selected(path: String) -> void:
 		replace_selected_frame(texture)
 	else:
 		add_frame(texture)
+
+
+func _on_frame_files_selected(paths: PackedStringArray) -> void:
+	if _file_mode != "add":
+		return
+	for path in paths:
+		var texture := ResourceLoader.load(path) as Texture2D
+		if texture != null:
+			add_frame(texture)
+		else:
+			_status.text = "Не удалось загрузить Texture2D: " + path
 
 
 func _on_move_frame_up_pressed() -> void:
