@@ -5,12 +5,15 @@ extends Node
 signal rename_confirmed(new_name: String)
 signal delete_confirmed
 signal export_path_selected(path: String)
+signal collection_create_confirmed(name: String)
 
 const DialogService = preload("res://addons/object_builder/services/dialog_service.gd")
 
 var _rename_dialog: ConfirmationDialog
 var _rename_input: LineEdit
 var _delete_dialog: ConfirmationDialog
+var _collection_dialog: ConfirmationDialog
+var _collection_input: LineEdit
 var _export_dialog: FileDialog
 
 
@@ -19,6 +22,7 @@ func build() -> void:
 		return
 	_build_rename_dialog()
 	_build_delete_dialog()
+	_build_collection_dialog()
 	_build_export_dialog()
 
 
@@ -40,6 +44,14 @@ func popup_delete(display_name: String) -> void:
 		+ "в user://object_builder_trash."
 	) % display_name
 	DialogService.popup_window_safely(_delete_dialog, Vector2i(480, 210), 0.68)
+
+
+func popup_create_collection() -> void:
+	if _collection_dialog == null:
+		return
+	_collection_input.text = ""
+	DialogService.popup_window_safely(_collection_dialog, Vector2i(440, 170), 0.62)
+	_collection_input.grab_focus()
 
 
 func popup_export(suggested_file_name: String) -> void:
@@ -77,6 +89,27 @@ func _build_delete_dialog() -> void:
 		delete_confirmed.emit()
 	)
 	add_child(_delete_dialog)
+
+
+func _build_collection_dialog() -> void:
+	_collection_dialog = ConfirmationDialog.new()
+	_collection_dialog.title = "Новая коллекция"
+	_collection_dialog.ok_button_text = "Создать"
+	_collection_dialog.confirmed.connect(func() -> void:
+		collection_create_confirmed.emit(_collection_input.text.strip_edges())
+	)
+	add_child(_collection_dialog)
+
+	var content := VBoxContainer.new()
+	content.custom_minimum_size = Vector2(360, 44)
+	_collection_dialog.add_child(content)
+	var hint := Label.new()
+	hint.text = "Название коллекции"
+	content.add_child(hint)
+	_collection_input = LineEdit.new()
+	_collection_input.placeholder_text = "Например, Лесные ресурсы"
+	_collection_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_child(_collection_input)
 
 
 func _build_export_dialog() -> void:
