@@ -8,7 +8,7 @@ var selected_paths: Array[NodePath] = []
 var committed_transforms: Array[Dictionary] = []
 var open_scene_requests := 0
 var context_action_events: Array[String] = []
-var batch_transform_events: Array[Array] = []
+var batch_transform_events: Array[Dictionary] = []
 var pivot_events: Array[Dictionary] = []
 var guide_events: Array[Dictionary] = []
 
@@ -140,7 +140,7 @@ func _run() -> void:
 		interaction.call("_finish_drag")
 		_expect(preview_sprite.global_position == before_first + Vector2(16.0, 8.0), "group drag moves the first selected part")
 		_expect(second_preview.global_position == before_second + Vector2(16.0, 8.0), "group drag moves every selected part")
-		_expect(batch_transform_events.size() == 1 and batch_transform_events[0].size() == 2, "group movement emits one batch containing both part transforms")
+		_expect(batch_transform_events.size() == 1 and batch_transform_events[0].get("changes", []).size() == 2, "group movement emits one batch containing both part transforms")
 
 		# Independent pivot metadata is editable and emits a scene commit request.
 		canvas.call("set_selected_path", NodePath("Sprite"))
@@ -289,7 +289,7 @@ func _on_transform_committed(path: NodePath, property_name: String, new_value: V
 
 
 func _on_batch_transform_committed(changes: Array[Dictionary]) -> void:
-	batch_transform_events.append(changes)
+	batch_transform_events.append({"changes": changes})
 
 
 func _on_pivot_committed(path: NodePath, new_value: Vector2, old_value: Variant) -> void:
