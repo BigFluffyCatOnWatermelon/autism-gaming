@@ -1245,6 +1245,12 @@ func _on_library_entry_action_requested(action: String, index: int) -> void:
 	if definition == null:
 		return
 	_refresh_library_details(definition)
+	if action == "toggle_favorite":
+		_library_controller.call("toggle_favorite", definition.object_id)
+		_save_local_state()
+		_refresh_library_list()
+		_refresh_favorite_button()
+		return
 	if action.begins_with("add_to_collection:"):
 		var collection_id := action.trim_prefix("add_to_collection:")
 		if _library_controller.call("add_to_collection", collection_id, definition.object_id):
