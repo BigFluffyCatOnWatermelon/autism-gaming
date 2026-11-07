@@ -1574,6 +1574,8 @@ func _cleanup_abandoned_new_draft(next_definition: ObjectDefinition) -> void:
 
 func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> void:
 	_cleanup_abandoned_new_draft(definition)
+	if is_new and _editor_view != null:
+		_editor_view.current_tab = 0
 	_is_loading_editor_form = true
 	if is_new:
 		_editor_session.call("begin_new", definition)
