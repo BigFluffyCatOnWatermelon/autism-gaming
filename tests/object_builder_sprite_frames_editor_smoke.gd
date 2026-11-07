@@ -13,6 +13,7 @@ func _initialize() -> void:
 func _run() -> void:
 	var source := SpriteFrames.new()
 	source.clear_all()
+	source.remove_animation(&"default")
 	source.add_animation(&"idle")
 	var first_image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
 	first_image.fill(Color.WHITE)
