@@ -109,7 +109,7 @@ static func _ensure_required_selections(
 		return false
 
 	states[capability_id] = 1
-	for dependency_id_value in definition.required_capability_ids:
+	for dependency_id_value in _get_required_capability_ids(definition):
 		var dependency_id := str(dependency_id_value).strip_edges().to_lower()
 		var dependency_index := _find_selection_index(selections, dependency_id)
 		if dependency_index < 0:
@@ -146,7 +146,7 @@ static func _capability_requires(
 	var definition := ObjectCapabilityCatalog.get_definition(capability_id)
 	if definition == null:
 		return false
-	for dependency_id_value in definition.required_capability_ids:
+	for dependency_id_value in _get_required_capability_ids(definition):
 		var dependency_id := str(dependency_id_value).strip_edges().to_lower()
 		if dependency_id == required_id:
 			return true
@@ -575,13 +575,18 @@ static func validate_selections(
 		if not _append_with_dependencies(str(capability_id), dependency_states, resolved_ids, errors):
 			continue
 
+	var reported_conflicts: Dictionary = {}
 	for capability_id in resolved_ids:
 		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
 		if capability == null:
 			continue
-		for incompatible_id in capability.incompatible_capability_ids:
+		for incompatible_id in _get_conflicting_capability_ids(capability):
 			var normalized_incompatible_id := str(incompatible_id).strip_edges().to_lower()
 			if resolved_ids.has(normalized_incompatible_id):
+				var conflict_key := _make_capability_pair_key(capability_id, normalized_incompatible_id)
+				if reported_conflicts.has(conflict_key):
+					continue
+				reported_conflicts[conflict_key] = true
 				var incompatible_capability := ObjectCapabilityCatalog.get_definition(normalized_incompatible_id)
 				if incompatible_capability != null:
 					errors.append(
@@ -612,6 +617,48 @@ static func validate_selections(
 	return errors
 
 
+static func _get_required_capability_ids(definition: ObjectCapabilityDefinition) -> PackedStringArray:
+	var result := PackedStringArray()
+	if definition == null:
+		return result
+	for dependency_id_value in definition.required_capability_ids:
+		var dependency_id := str(dependency_id_value).strip_edges().to_lower()
+		if not dependency_id.is_empty() and not result.has(dependency_id):
+			result.append(dependency_id)
+	for relation in definition.relations:
+		if str(relation.get("type", "")).strip_edges().to_lower() != "requires":
+			continue
+		var dependency_id := str(relation.get("target_id", "")).strip_edges().to_lower()
+		if not dependency_id.is_empty() and not result.has(dependency_id):
+			result.append(dependency_id)
+	return result
+
+
+static func _get_conflicting_capability_ids(definition: ObjectCapabilityDefinition) -> PackedStringArray:
+	var result := PackedStringArray()
+	if definition == null:
+		return result
+	for capability_id_value in definition.incompatible_capability_ids:
+		var capability_id := str(capability_id_value).strip_edges().to_lower()
+		if not capability_id.is_empty() and not result.has(capability_id):
+			result.append(capability_id)
+	for relation in definition.relations:
+		if str(relation.get("type", "")).strip_edges().to_lower() != "conflicts":
+			continue
+		var capability_id := str(relation.get("target_id", "")).strip_edges().to_lower()
+		if not capability_id.is_empty() and not result.has(capability_id):
+			result.append(capability_id)
+	return result
+
+
+static func _make_capability_pair_key(first_id: String, second_id: String) -> String:
+	var normalized_first := first_id.strip_edges().to_lower()
+	var normalized_second := second_id.strip_edges().to_lower()
+	if normalized_first < normalized_second:
+		return normalized_first + "@" + normalized_second
+	return normalized_second + "@" + normalized_first
+
+
 static func _append_with_dependencies(
 	capability_id: String,
 	states: Dictionary,
@@ -630,7 +677,7 @@ static func _append_with_dependencies(
 		return false
 
 	states[capability_id] = 1
-	for dependency_id in definition.required_capability_ids:
+	for dependency_id in _get_required_capability_ids(definition):
 		if not _append_with_dependencies(str(dependency_id).strip_edges().to_lower(), states, output, errors):
 			return false
 	states[capability_id] = 2
