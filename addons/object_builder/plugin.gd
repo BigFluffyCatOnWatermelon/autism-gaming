@@ -479,7 +479,7 @@ func _on_editor_tags_changed(value: String) -> void:
 	var next_tags := PackedStringArray()
 	for raw_tag in value.split(","):
 		var tag := raw_tag.strip_edges()
-		if not tag.is_empty() and not next_tags.has(tag):
+		if not tag.is_empty():
 			next_tags.append(tag)
 	if _working_definition.tags == next_tags:
 		return
@@ -1403,7 +1403,7 @@ func _on_save_pressed() -> void:
 	var next_tags := PackedStringArray()
 	for raw_tag in _tags_edit.text.split(","):
 		var tag := raw_tag.strip_edges()
-		if not tag.is_empty() and not next_tags.has(tag):
+		if not tag.is_empty():
 			next_tags.append(tag)
 	var form_changed := (
 		_working_definition.display_name != next_name
