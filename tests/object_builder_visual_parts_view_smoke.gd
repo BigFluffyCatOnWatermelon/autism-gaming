@@ -143,6 +143,13 @@ func _run() -> void:
 	_expect((view.get("_renaming_edit") as LineEdit).visible, "context rename focuses the part name field")
 	view.call("_on_inline_rename_gui_input", escape_event, NodePath("Visuals/Leaf"))
 
+	sprite.z_index = 3
+	animated.z_index = -2
+	polygon.z_index = 1
+	view.call("set_scene_root", scene_root, NodePath("Visuals/Leaf"))
+	_expect(view.call("get_part_paths") == [
+		NodePath("Visuals/Glow"), NodePath("Visuals/Shadow"), NodePath("Visuals/Leaf")
+	], "visual list order follows actual z-index draw order")
 	view.call("set_scene_root", null)
 	_expect(int(view.call("get_part_count")) == 0, "closing the object scene clears the parts model")
 	_expect(int(view.call("get_visible_row_count")) == 0, "closing the object scene clears rendered rows")
