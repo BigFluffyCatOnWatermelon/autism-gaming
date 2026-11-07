@@ -8,6 +8,7 @@ signal search_changed(query: String)
 signal filter_changed(index: int)
 signal object_selected(index: int)
 signal entry_action_requested(action: String, index: int)
+signal collection_create_requested
 
 var search_input: LineEdit
 var mode_filter: OptionButton
@@ -20,6 +21,7 @@ var _card_mode_button: Button
 var _list_mode_button: Button
 var _entry_actions_button: Button
 var _entry_actions_menu: PopupMenu
+var _collection_options: Array[Dictionary] = []
 var _display_mode := "cards"
 var _entries: Array[Dictionary] = []
 var _selected_index := -1
@@ -88,24 +90,25 @@ func _build_view_mode_controls() -> void:
 	action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(action_row)
 	_entry_actions_button = Button.new()
-	_entry_actions_button.text = "Действия с записью…"
-	_entry_actions_button.tooltip_text = "Открыть, копировать, переименовать, удалить или экспортировать выбранную запись"
+	_entry_actions_button.text = "Действия…"
+	_entry_actions_button.tooltip_text = "Действия над выбранной записью"
 	_entry_actions_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_entry_actions_button.disabled = true
 	_entry_actions_button.pressed.connect(_show_entry_actions_menu)
 	action_row.add_child(_entry_actions_button)
 
+	var create_collection_button := Button.new()
+	create_collection_button.text = "+ Коллекция"
+	create_collection_button.tooltip_text = "Создать собственную подборку объектов"
+	create_collection_button.pressed.connect(func() -> void:
+		collection_create_requested.emit()
+	)
+	action_row.add_child(create_collection_button)
+
 	_entry_actions_menu = PopupMenu.new()
-	_entry_actions_menu.add_item("Открыть", 0)
-	_entry_actions_menu.add_item("Создать копию", 1)
-	_entry_actions_menu.add_item("Создать шаблон из объекта", 2)
-	_entry_actions_menu.add_separator()
-	_entry_actions_menu.add_item("Переименовать", 3)
-	_entry_actions_menu.add_item("Удалить…", 4)
-	_entry_actions_menu.add_separator()
-	_entry_actions_menu.add_item("Экспортировать .tres…", 5)
 	_entry_actions_menu.id_pressed.connect(_on_entry_action_selected)
 	add_child(_entry_actions_menu)
+	set_collection_options([], "all")
 
 
 func _build_card_view() -> void:
@@ -194,6 +197,25 @@ func set_category_options(options: Array[Dictionary], selected_value: String) ->
 
 func set_tag_options(options: Array[Dictionary], selected_value: String) -> void:
 	_set_filter_options(tag_filter, "Все теги", options, selected_value)
+
+
+func set_collection_options(options: Array[Dictionary], selected_value: String = "") -> void:
+	var previous_mode := get_selected_mode() if selected_value.is_empty() else selected_value
+	_collection_options = options.duplicate(true)
+	mode_filter.clear()
+	var base_modes := [
+		{"label": "Все объекты", "id": "all"},
+		{"label": "Избранное", "id": "favorites"},
+		{"label": "Недавние", "id": "recent"},
+		{"label": "Шаблоны", "id": "templates"}
+	]
+	for mode in base_modes:
+		mode_filter.add_item(str(mode.label))
+		mode_filter.set_item_metadata(mode_filter.item_count - 1, str(mode.id))
+	for collection in _collection_options:
+		mode_filter.add_item("Коллекция: " + str(collection.get("label", "Без названия")))
+		mode_filter.set_item_metadata(mode_filter.item_count - 1, "collection:" + str(collection.get("id", "")))
+	_select_option_metadata(mode_filter, previous_mode)
 
 
 func set_entries(entries: Array[Dictionary], empty_message: String) -> void:
@@ -380,9 +402,30 @@ func _update_entry_actions_state() -> void:
 func _show_entry_actions_menu() -> void:
 	if _selected_index < 0 or _selected_index >= _entries.size() or _entry_actions_menu == null:
 		return
+	_rebuild_entry_actions_menu()
 	_entry_actions_menu.position = DisplayServer.mouse_get_position()
 	_entry_actions_menu.reset_size()
 	_entry_actions_menu.popup()
+
+
+func _rebuild_entry_actions_menu() -> void:
+	_entry_actions_menu.clear()
+	_entry_actions_menu.add_item("Открыть", 0)
+	_entry_actions_menu.add_item("Создать копию", 1)
+	_entry_actions_menu.add_item("Создать шаблон из объекта", 2)
+	_entry_actions_menu.add_separator()
+	_entry_actions_menu.add_item("Переименовать", 3)
+	_entry_actions_menu.add_item("Удалить…", 4)
+	_entry_actions_menu.add_separator()
+	_entry_actions_menu.add_item("Экспортировать .tres…", 5)
+	if not _collection_options.is_empty():
+		_entry_actions_menu.add_separator()
+		for index in range(_collection_options.size()):
+			var collection: Dictionary = _collection_options[index]
+			_entry_actions_menu.add_item("В коллекцию: " + str(collection.get("label", "Без названия")), 1000 + index)
+	if get_selected_mode().begins_with("collection:"):
+		_entry_actions_menu.add_separator()
+		_entry_actions_menu.add_item("Убрать из этой коллекции", 6)
 
 
 func _on_card_gui_input(event: InputEvent, index: int) -> void:
@@ -408,8 +451,15 @@ func _on_entry_action_selected(action_id: int) -> void:
 		2: "create_template",
 		3: "rename",
 		4: "delete",
-		5: "export"
+		5: "export",
+		6: "remove_from_collection"
 	}
+	if action_id >= 1000:
+		var collection_index := action_id - 1000
+		if collection_index >= 0 and collection_index < _collection_options.size():
+			var collection_id := str(_collection_options[collection_index].get("id", ""))
+			entry_action_requested.emit("add_to_collection:" + collection_id, _selected_index)
+		return
 	if actions.has(action_id):
 		entry_action_requested.emit(str(actions[action_id]), _selected_index)
 
