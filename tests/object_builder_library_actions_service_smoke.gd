@@ -13,8 +13,9 @@ func _initialize() -> void:
 func _run() -> void:
 	var first_id := str(ActionsService.create_unique_id("object", "tree oak"))
 	var second_id := str(ActionsService.create_unique_id("object", "tree oak"))
-	_expect(first_id.begins_with("object_tree_oak_"), "generated object IDs are normalized and readable")
+	_expect(first_id.begins_with("object_tree_oak_"), "generated object IDs replace spaces and remain readable")
 	_expect(first_id != second_id, "rapid duplicate operations receive independent IDs")
+	_expect(not first_id.contains(" "), "generated object IDs never contain spaces")
 	_expect(not bool(ActionsService.duplicate_definition(null).get("ok", false)), "duplicate rejects a missing source")
 	_expect(not bool(ActionsService.create_template(null).get("ok", false)), "template creation rejects a missing source")
 	_expect(not bool(ActionsService.delete_definition(null).get("ok", false)), "delete rejects a missing source")
