@@ -14,8 +14,7 @@ const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder
 const ObjectBuilderComponentEditorViewScript = preload("res://addons/object_builder/ui/component_editor_view.gd")
 const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_builder/ui/capability_list_view.gd")
 const ObjectBuilderCapabilitySettingsViewScript = preload("res://addons/object_builder/ui/capability_settings_view.gd")
-const ObjectBuilderCapabilitySelectionSessionScript = preload("res://addons/object_builder/controllers/capability_selection_session.gd")
-const ObjectBuilderCapabilityBatchPlannerScript = preload("res://addons/object_builder/services/capability_batch_planner.gd")
+const ObjectBuilderCapabilityCatalogControllerScript = preload("res://addons/object_builder/controllers/capability_catalog_controller.gd")
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
 const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
@@ -87,7 +86,7 @@ var _editing_capability_selection: ObjectCapabilitySelection
 var _capability_change_dialog: AcceptDialog
 var _pending_capability_values: Array[ObjectCapabilitySelection] = []
 var _pending_capability_summary := PackedStringArray()
-var _capability_selection_session: RefCounted = ObjectBuilderCapabilitySelectionSessionScript.new()
+var _capability_catalog_controller: RefCounted = ObjectBuilderCapabilityCatalogControllerScript.new()
 var _pending_capability_batch := false
 var _editing_property: ObjectPropertyDefinition
 var _scene_tree_view: Control
@@ -130,7 +129,7 @@ func _exit_tree() -> void:
 	if _editor_session != null:
 		_editor_session.call("clear")
 	_working_definition = null
-	_capability_selection_session.call("clear")
+	_capability_catalog_controller.call("clear_selection")
 	if _preview_view != null and is_instance_valid(_preview_view):
 		_preview_view.queue_free()
 		_preview_view = null
@@ -721,42 +720,16 @@ func _rebuild_capability_list() -> void:
 		return
 
 	var category_id := str(_capability_view.call("get_selected_category"))
-	var query := str(_capability_view.call("get_search_query")).strip_edges().to_lower()
+	var query := str(_capability_view.call("get_search_query")).strip_edges()
 	var capability_ids := ObjectCapabilityCatalog.get_capability_ids(category_id)
 	var all_capability_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
-	var ready_count := 0
-	for catalog_id in all_capability_ids:
-		var catalog_definition := ObjectCapabilityCatalog.get_definition_reference(catalog_id)
-		if catalog_definition != null and catalog_definition.is_ready():
-			ready_count += 1
-
-	var entries: Array[Dictionary] = []
-	for capability_id in capability_ids:
-		var capability := ObjectCapabilityCatalog.get_definition_reference(capability_id)
-		if capability == null:
-			continue
-		var searchable := (
-			capability.display_name + " " + capability.description + " "
-			+ " ".join(capability.keywords) + " "
-			+ " ".join(capability.synonyms) + " "
-			+ " ".join(capability.example_queries) + " "
-			+ capability.category_name + " " + capability.kind_id
-		).to_lower()
-		if not query.is_empty() and not searchable.contains(query):
-			continue
-
-		var selection := _find_capability_selection(capability_id)
-		var is_enabled := selection != null and selection.enabled
-		var is_implemented := capability.is_ready()
-		entries.append({
-			"definition": capability,
-			"installed": selection != null,
-			"enabled": is_enabled,
-			"selected_in_catalog": bool(_capability_selection_session.call("contains", capability_id)),
-			"automatically_added": selection != null and selection.automatically_added,
-			"can_toggle": is_implemented and not (selection != null and selection.automatically_added),
-			"can_configure": is_enabled and is_implemented
-		})
+	var ready_count := int(_capability_catalog_controller.call("count_ready", all_capability_ids))
+	var entries: Array[Dictionary] = _capability_catalog_controller.call(
+		"build_entries",
+		capability_ids,
+		_working_definition.capabilities,
+		query
+	)
 
 	_capability_view.call(
 		"set_entries",
@@ -764,34 +737,30 @@ func _rebuild_capability_list() -> void:
 		all_capability_ids.size(),
 		ready_count
 	)
-	_capability_view.call("set_selected_count", _capability_selection_session.call("get_count"))
-
+	_capability_view.call(
+		"set_selected_count",
+		_capability_catalog_controller.call("get_selected_count")
+	)
 
 func _on_capability_catalog_selection_toggled(selected: bool, capability_id: String) -> void:
 	if _working_definition == null:
 		return
-	if selected:
-		_capability_selection_session.call("select", capability_id)
-	else:
-		_capability_selection_session.call("deselect", capability_id)
+	_capability_catalog_controller.call("set_selected", capability_id, selected)
 	_rebuild_capability_list()
-
 
 func _on_capability_catalog_selection_cleared() -> void:
-	_capability_selection_session.call("clear")
+	_capability_catalog_controller.call("clear_selection")
 	_rebuild_capability_list()
-
 
 func _on_capability_batch_add_requested() -> void:
 	if _working_definition == null:
 		return
-	var selected_ids: PackedStringArray = _capability_selection_session.call("get_selected_ids")
-	if selected_ids.is_empty():
+	if int(_capability_catalog_controller.call("get_selected_count")) <= 0:
 		return
 
-	var batch_plan: Dictionary = ObjectBuilderCapabilityBatchPlannerScript.build_addition_plan(
-		_working_definition.capabilities,
-		selected_ids
+	var batch_plan: Dictionary = _capability_catalog_controller.call(
+		"build_addition_plan",
+		_working_definition.capabilities
 	)
 	if not bool(batch_plan.get("ok", false)):
 		var errors: PackedStringArray = batch_plan.get("errors", PackedStringArray())
@@ -799,63 +768,19 @@ func _on_capability_batch_add_requested() -> void:
 		_rebuild_capability_list()
 		return
 
-	var next_values := _duplicate_capability_selections_from_variant(batch_plan.get("selections", []))
+	_pending_capability_values = _capability_catalog_controller.call("get_plan_selections", batch_plan)
 	var application_plan: Dictionary = batch_plan.get("application_plan", {})
 	if not bool(application_plan.get("changed", false)):
-		_capability_selection_session.call("clear")
+		_capability_catalog_controller.call("clear_selection")
 		_rebuild_capability_list()
 		_set_status("Выбранные возможности уже установлены. Изменений нет.", false)
 		return
 
-	_pending_capability_values = next_values
-	_pending_capability_summary = _build_capability_batch_summary(batch_plan)
+	_pending_capability_summary = _capability_catalog_controller.call("build_batch_summary", batch_plan)
 	_pending_capability_batch = true
 	_capability_change_dialog.dialog_text = "\n".join(_pending_capability_summary)
 	_rebuild_capability_list()
 	ObjectBuilderDialogService.popup_window_safely(_capability_change_dialog, Vector2i(600, 440), 0.84)
-
-
-func _build_capability_batch_summary(batch_plan: Dictionary) -> PackedStringArray:
-	var lines := PackedStringArray()
-	var user_selected: PackedStringArray = batch_plan.get("user_selected_ids", PackedStringArray())
-	var auto_required: PackedStringArray = batch_plan.get("auto_required_ids", PackedStringArray())
-	var auto_existing: PackedStringArray = batch_plan.get("auto_required_already_present_ids", PackedStringArray())
-	var already_present: PackedStringArray = batch_plan.get("already_present_ids", PackedStringArray())
-	if not user_selected.is_empty():
-		lines.append("Выбрано тобой: " + _get_capability_display_names(user_selected) + ".")
-	if not auto_required.is_empty():
-		lines.append("Добавятся автоматически как зависимости: " + _get_capability_display_names(auto_required) + ".")
-	if not auto_existing.is_empty():
-		lines.append("Уже есть необходимые зависимости: " + _get_capability_display_names(auto_existing) + ".")
-	if not already_present.is_empty():
-		lines.append("Уже установлено: " + _get_capability_display_names(already_present) + ".")
-	var application_plan: Dictionary = batch_plan.get("application_plan", {})
-	var summary_value: Variant = application_plan.get("summary_lines", PackedStringArray())
-	if summary_value is PackedStringArray:
-		lines.append_array(summary_value)
-	elif summary_value is Array:
-		for line in summary_value:
-			lines.append(str(line))
-	return lines
-
-
-func _get_capability_display_names(capability_ids: PackedStringArray) -> String:
-	var names := PackedStringArray()
-	for capability_id in capability_ids:
-		var definition := ObjectCapabilityCatalog.get_definition(capability_id)
-		names.append(definition.display_name if definition != null else capability_id)
-	return ", ".join(names)
-
-
-func _duplicate_capability_selections_from_variant(values: Variant) -> Array[ObjectCapabilitySelection]:
-	var result: Array[ObjectCapabilitySelection] = []
-	if not values is Array:
-		return result
-	for value in values:
-		if value is ObjectCapabilitySelection:
-			result.append((value as ObjectCapabilitySelection).duplicate(true) as ObjectCapabilitySelection)
-	return result
-
 
 func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
 	if _working_definition == null:
@@ -918,7 +843,7 @@ func _on_capability_change_confirmed() -> void:
 	_commit_working_capabilities(_pending_capability_values, "Изменить возможности объекта")
 	_set_status("Изменения применены. Нажми «Сохранить объект», чтобы записать их в библиотеку.", false)
 	if _pending_capability_batch:
-		_capability_selection_session.call("clear")
+		_capability_catalog_controller.call("clear_selection")
 	_pending_capability_batch = false
 	_pending_capability_values.clear()
 	_pending_capability_summary.clear()
@@ -1705,7 +1630,7 @@ func _cleanup_abandoned_new_draft(next_definition: ObjectDefinition) -> void:
 func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> void:
 	var previous_object_id := _working_definition.object_id if _working_definition != null else ""
 	if previous_object_id != definition.object_id:
-		_capability_selection_session.call("clear")
+		_capability_catalog_controller.call("clear_selection")
 	_cleanup_abandoned_new_draft(definition)
 	if is_new and _editor_view != null:
 		_editor_view.current_tab = 0
