@@ -12,8 +12,8 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var owner := Control.new()
-	root.add_child(owner)
+	var host_control := Control.new()
+	root.add_child(host_control)
 	var focused = DefinitionScript.new()
 	focused.capability_id = "can_attack"
 	focused.display_name = "Атака"
@@ -40,14 +40,14 @@ func _run() -> void:
 	]
 	var map = MapViewScript.new()
 	map.focus_requested.connect(_on_focus_requested)
-	map.open(owner, focused, entries)
+	map.open(host_control, focused, entries)
 	_expect(map.get_node_count() >= 3, "relation map creates a focused node and related capability nodes")
 	_expect(map.get_connection_count() == 2, "each related capability receives a visible graph connection")
 	_expect(map.get_focus_button_count() == 2, "each related node has a navigation action")
 	_expect(focused_id.is_empty(), "opening the map does not change the catalog focus")
 	map._on_focus_pressed("can_move")
 	_expect(focused_id == "can_move", "selecting a graph node requests navigation to its capability")
-	owner.queue_free()
+	host_control.queue_free()
 
 	if failures.is_empty():
 		print("Object Builder capability relation map tests passed.")
