@@ -238,16 +238,33 @@ func build_recommended_entries(
 			)
 
 	var normalized_profile_id := profile_id.strip_edges().to_lower()
-	if not normalized_profile_id.is_empty():
-		var profile := ObjectCreationProfileRegistry.get_definition(normalized_profile_id)
-		if profile != null:
-			for suggested_id in profile.suggested_capability_ids:
-				_add_profile_recommendation_candidate(
-					candidates,
-					str(suggested_id),
-					profile,
-					already_present
-				)
+	var recommendation_profiles: Array[ObjectCreationProfileDefinition] = []
+	var explicit_profile := (
+		ObjectCreationProfileRegistry.get_definition(normalized_profile_id)
+		if not normalized_profile_id.is_empty()
+		else null
+	)
+	if explicit_profile != null and not explicit_profile.suggested_capability_ids.is_empty():
+		recommendation_profiles.append(explicit_profile)
+	elif normalized_profile_id.is_empty() or normalized_profile_id == "other":
+		var normalized_object_category := object_category.strip_edges().to_lower()
+		if not normalized_object_category.is_empty():
+			for category_profile_id in ObjectCreationProfileRegistry.get_profile_ids():
+				var category_profile := ObjectCreationProfileRegistry.get_definition(category_profile_id)
+				if category_profile == null or category_profile.suggested_capability_ids.is_empty():
+					continue
+				if category_profile.suggested_category.strip_edges().to_lower() != normalized_object_category:
+					continue
+				recommendation_profiles.append(category_profile)
+
+	for profile in recommendation_profiles:
+		for suggested_id in profile.suggested_capability_ids:
+			_add_profile_recommendation_candidate(
+				candidates,
+				str(suggested_id),
+				profile,
+				already_present
+			)
 
 	var normalized_query := query.strip_edges().to_lower()
 	var normalized_category := object_category.strip_edges().to_lower()
@@ -420,6 +437,7 @@ func _add_profile_recommendation_candidate(
 	if not source_names.has(profile.display_name):
 		source_names.append(profile.display_name)
 		existing["source_names"] = source_names
+		existing["explanation"] = str(existing.get("explanation", "")) + " Также подходит профилю «%s»." % profile.display_name
 	candidates[normalized_id] = existing
 
 
