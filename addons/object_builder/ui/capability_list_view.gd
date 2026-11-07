@@ -21,6 +21,7 @@ const PAGE_SIZE := 20
 
 var search_input: LineEdit
 var category_option: OptionButton
+var _full_map_button: Button
 var entries_container: VBoxContainer
 var _entries_scroll: ScrollContainer
 var _pagination_row: HBoxContainer
@@ -90,6 +91,12 @@ func build(categories: Array[Dictionary]) -> void:
 	category_option.select(0)
 	category_option.item_selected.connect(_on_category_selected)
 	add_child(category_option)
+
+	_full_map_button = Button.new()
+	_full_map_button.text = "Открыть полную карту механик (200)"
+	_full_map_button.tooltip_text = "Показать все механики, их категории и связи в одном графе. Поиск работает прямо на карте."
+	_full_map_button.pressed.connect(_on_full_map_pressed)
+	add_child(_full_map_button)
 
 	_build_selection_bar()
 	_build_related_section()
@@ -524,6 +531,20 @@ func set_related_entries(
 
 func get_related_button_count() -> int:
 	return _related_container.get_child_count() if _related_container != null else 0
+
+
+func _on_full_map_pressed() -> void:
+	if _active_relation_map == null:
+		_active_relation_map = RelationMapViewScript.new()
+	var focus_callback := Callable(self, "_on_focus_requested")
+	if not _active_relation_map.is_connected("focus_requested", focus_callback):
+		_active_relation_map.connect("focus_requested", focus_callback)
+	var focused_id := (
+		_related_focused_definition.capability_id
+		if _related_focused_definition != null
+		else ""
+	)
+	_active_relation_map.call("open_full", self, focused_id)
 
 
 func _on_relation_map_pressed() -> void:
