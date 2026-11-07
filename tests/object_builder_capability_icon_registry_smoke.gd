@@ -1,6 +1,7 @@
 extends SceneTree
 
 const LibraryDataScript = preload("res://scripts/object_system/object_capability_library_data.gd")
+const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 const IconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
 
 var failures := PackedStringArray()
@@ -11,6 +12,10 @@ func _initialize() -> void:
 
 
 func _run_tests() -> void:
+	var module_errors := MechanicModuleLoaderScript.register_modules_in_directory()
+	for error_message in module_errors:
+		failures.append("module registration: " + error_message)
+
 	var definitions: Array[ObjectCapabilityDefinition] = LibraryDataScript.create_definitions()
 	_expect(definitions.size() == 200, "built-in library contains exactly 200 capability definitions")
 
@@ -40,6 +45,40 @@ func _run_tests() -> void:
 	_expect(builtin_damage != null and builtin_damage.icon_atlas_index == 201, "Damageable owns its reserved atlas cell")
 	_expect(builtin_attack != null and builtin_attack.icon_atlas_index == 202, "Attack owns its reserved atlas cell")
 	_expect(builtin_destroy != null and builtin_destroy.icon_atlas_index == 203, "Destructible owns its reserved atlas cell")
+
+	var attack_animation := ObjectCapabilityCatalog.get_definition_reference("plays_attack_animation")
+	_expect(attack_animation != null, "attack animation capability is registered")
+	var attack_relation_found := false
+	if attack_animation != null:
+		for relation in attack_animation.relations:
+			if str(relation.get("target_id", "")) == "can_attack" and str(relation.get("type", "")) == "recommends":
+				attack_relation_found = true
+	_expect(attack_relation_found, "curated relations connect attack animation with attack capability")
+	var total_relation_count := 0
+	var valid_relation_targets := {
+		"has_health": true,
+		"can_receive_damage": true,
+		"can_attack": true,
+		"breaks_when_health_empty": true,
+		"is_pickup_item": true,
+		"can_interact": true
+	}
+	for definition in definitions:
+		for relation in definition.relations:
+			total_relation_count += 1
+			var target_id := str(relation.get("target_id", ""))
+			var is_known_target := valid_relation_targets.has(target_id)
+			if not is_known_target:
+				is_known_target = definitions.any(func(item: ObjectCapabilityDefinition) -> bool:
+					return item.capability_id == target_id
+				)
+			_expect(is_known_target, "curated relationship target resolves to a catalogue capability")
+			_expect(not str(relation.get("explanation", "")).strip_edges().is_empty(), "curated relationship has a user-facing explanation")
+	_expect(total_relation_count >= 20, "catalogue begins with a useful curated set of semantic relationships")
+
+	var registry_errors := ObjectCapabilityCatalog.validate_registry()
+	for error_message in registry_errors:
+		failures.append("registry validation: " + error_message)
 
 	IconRegistryScript.clear_cache()
 	if failures.is_empty():
