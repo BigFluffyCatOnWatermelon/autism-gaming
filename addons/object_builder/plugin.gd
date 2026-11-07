@@ -1239,6 +1239,7 @@ func _on_library_item_selected(index: int) -> void:
 	_load_definition(definition)
 
 func _on_library_entry_action_requested(action: String, index: int) -> void:
+	_pending_collection_id = ""
 	var definition := _library_controller.call("get_visible_definition", index) as ObjectDefinition
 	if definition == null:
 		return
