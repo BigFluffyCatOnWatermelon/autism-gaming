@@ -7,6 +7,7 @@ const ObjectBuilderLibraryViewScript = preload("res://addons/object_builder/ui/l
 const ObjectBuilderLibraryDetailsViewScript = preload("res://addons/object_builder/ui/library_details_view.gd")
 const ObjectBuilderLibraryActionDialogsScript = preload("res://addons/object_builder/ui/library_action_dialogs.gd")
 const ObjectBuilderLibraryActionsService = preload("res://addons/object_builder/services/library_actions_service.gd")
+const ObjectBuilderObjectCreationService = preload("res://addons/object_builder/services/object_creation_service.gd")
 const ObjectBuilderEditorViewScript = preload("res://addons/object_builder/ui/object_editor_view.gd")
 const ObjectPropertyValueCodec = preload("res://scripts/object_system/object_property_value_codec.gd")
 const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder/ui/property_list_view.gd")
@@ -630,6 +631,7 @@ func _build_dialogs() -> void:
 		})
 
 	_dialog_view.call("build", property_types, creation_profiles, CHILD_NODE_TYPES)
+	_dialog_view.call("set_creation_category_options", _library_controller.call("get_category_options"), "Other")
 	(_dialog_view.call("get_property_dialog") as AcceptDialog).confirmed.connect(_on_property_dialog_confirmed)
 	(_dialog_view.call("get_creation_dialog") as AcceptDialog).confirmed.connect(_on_new_object_dialog_confirmed)
 	(_dialog_view.call("get_template_dialog") as AcceptDialog).confirmed.connect(_on_template_dialog_confirmed)
@@ -1077,32 +1079,58 @@ func _update_new_object_type_hint() -> void:
 	)
 
 func _on_new_object_dialog_confirmed() -> void:
-	var profile_id := str(_dialog_view.call("get_selected_creation_profile_id"))
-	var profile := ObjectCreationProfileRegistry.get_definition(profile_id) if not profile_id.is_empty() else null
+	var values: Dictionary = _dialog_view.call("get_creation_form_values")
+	var display_name := str(values.get("display_name", "")).strip_edges()
+	var category := str(values.get("category", "")).strip_edges()
+	if display_name.is_empty():
+		_set_status("Укажи название объекта.", true)
+		return
+	if category.is_empty():
+		_set_status("Выбери категорию объекта.", true)
+		return
 
-	var definition := ObjectDefinition.new()
-	definition.object_id = "object_%d_%d" % [
-		int(Time.get_unix_time_from_system()),
-		Time.get_ticks_msec()
-	]
-	definition.display_name = profile.display_name if profile != null else "Новый объект"
-	definition.description = profile.description if profile != null else ""
-	definition.object_type = profile.profile_id if profile != null else "other"
-	definition.category = profile.suggested_category if profile != null else "Other"
-	definition.root_type = profile.suggested_root_type if profile != null else "Node2D"
-	definition.is_template = false
+	var mode := str(values.get("mode", "new"))
+	var result: Dictionary = {}
+	match mode:
+		"new":
+			var profile_id := str(values.get("profile_id", ""))
+			var profile := ObjectCreationProfileRegistry.get_definition(profile_id) if not profile_id.is_empty() else null
+			result = ObjectBuilderObjectCreationService.create_empty_draft(values, profile)
+		"template":
+			var template_id := str(values.get("source_id", ""))
+			var template_definition := _library_controller.call("find_template", template_id) as ObjectDefinition
+			result = ObjectBuilderObjectCreationService.create_from_source(template_definition, values)
+		"duplicate":
+			var source_id := str(values.get("source_id", ""))
+			var source_definition := _library_controller.call("find_definition", source_id) as ObjectDefinition
+			result = ObjectBuilderObjectCreationService.create_from_source(source_definition, values)
+		"import":
+			result = ObjectBuilderObjectCreationService.import_scene_draft(
+				str(values.get("import_path", "")),
+				values
+			)
+		_:
+			_set_status("Неизвестный способ создания объекта.", true)
+			return
 
-	if profile != null:
-		for property_template in profile.suggested_properties:
-			if property_template != null:
-				definition.custom_properties.append(
-					property_template.duplicate(true) as ObjectPropertyDefinition
-				)
+	if not bool(result.get("ok", false)):
+		_set_status(str(result.get("message", "Не удалось создать объект.")), true)
+		return
+	var definition := result.get("definition") as ObjectDefinition
+	if definition == null:
+		_set_status("Конструктор не вернул определение объекта.", true)
+		return
 
 	_can_save_as_template = true
 	_load_definition(definition, true)
-	_set_status("Создан обычный объект. Настрой его и сохрани в библиотеку." if profile == null else
-		"Создан объект «%s». Настрой его и сохрани в библиотеку." % profile.display_name, false)
+	var status_by_mode := {
+		"new": "Создан обычный объект. Настрой его и сохрани в библиотеку.",
+		"template": "Создана независимая копия шаблона. Исходный шаблон не изменён.",
+		"duplicate": "Создана независимая копия существующего объекта. Исходник не изменён.",
+		"import": "Сцена импортирована в отдельную копию. Исходный файл не изменён."
+	}
+	_set_status(str(status_by_mode.get(mode, "Объект создан.")) + " Нажми «Сохранить объект», чтобы добавить определение в библиотеку.", false)
+
 
 func _build_visual_editor(parent: VBoxContainer) -> void:
 	_visual_editor_view = ObjectBuilderVisualEditorViewScript.new()
@@ -1476,19 +1504,27 @@ func _refresh_favorite_button() -> void:
 	else:
 		_favorite_button.text = "☆ В избранное"
 
-func _on_new_object_pressed() -> void:
-	_dialog_view.call("reset_creation_profile")
+func _prepare_creation_wizard(mode: String = "new") -> void:
+	_library_controller.call("load_library")
+	var template_options: Array[Dictionary] = _library_controller.call("get_creation_source_options", true)
+	var object_options: Array[Dictionary] = _library_controller.call("get_creation_source_options", false)
+	_dialog_view.call("set_creation_sources", template_options, object_options)
+	_dialog_view.call("set_creation_category_options", _library_controller.call("get_category_options"), "Other")
+	_dialog_view.call("reset_creation_wizard", mode)
 	_update_new_object_type_hint()
+
+
+func _on_new_object_pressed() -> void:
+	_prepare_creation_wizard("new")
 	_dialog_view.call("popup_creation_dialog")
 
+
 func _on_create_from_template_pressed() -> void:
-	_library_controller.call("load_templates")
+	_prepare_creation_wizard("template")
 	if int(_library_controller.call("get_template_count")) == 0:
-		_set_status("Шаблоны не найдены.", true)
+		_set_status("Шаблоны не найдены. Создай или импортируй объект, а затем сохрани его как шаблон.", true)
 		return
-	var template_names: Array[String] = _library_controller.call("get_template_names")
-	_dialog_view.call("set_template_options", template_names)
-	_dialog_view.call("popup_template_dialog")
+	_dialog_view.call("popup_creation_dialog")
 
 func _on_template_dialog_confirmed() -> void:
 	var selected_index := int(_dialog_view.call("get_selected_template_index"))
@@ -1506,23 +1542,17 @@ func _on_template_dialog_confirmed() -> void:
 func _create_definition_from_template(template_definition: ObjectDefinition) -> ObjectDefinition:
 	if template_definition == null:
 		return null
-	var definition := template_definition.duplicate(true) as ObjectDefinition
-	definition.object_id = "object_%d_%d" % [int(Time.get_unix_time_from_system()), Time.get_ticks_msec()]
-	definition.display_name = template_definition.display_name + " — копия"
-	definition.is_template = false
-	definition.template_id = template_definition.object_id
-	definition.scene = null
-	definition.scene_path = ""
-	_clone_template_scene(template_definition, definition)
-	return definition
-
-func _clone_template_scene(template_definition: ObjectDefinition, target_definition: ObjectDefinition) -> void:
-	var result: Dictionary = ObjectBuilderSceneDraftService.clone_template_scene(
-		template_definition,
-		target_definition
-	)
+	var values := {
+		"display_name": template_definition.display_name + " — копия",
+		"category": template_definition.category,
+		"description": template_definition.description,
+		"tags": template_definition.tags
+	}
+	var result: Dictionary = ObjectBuilderObjectCreationService.create_from_source(template_definition, values)
 	if not bool(result.get("ok", false)):
-		push_warning("Object Builder: " + str(result.get("message", "Не удалось скопировать сцену шаблона.")))
+		_set_status(str(result.get("message", "Не удалось создать копию шаблона.")), true)
+		return null
+	return result.get("definition") as ObjectDefinition
 
 func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> void:
 	_is_loading_editor_form = true
