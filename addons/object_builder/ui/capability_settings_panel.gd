@@ -45,6 +45,7 @@ func build() -> void:
 	close_button.tooltip_text = "Вернуться к сведениям об объекте"
 	close_button.pressed.connect(_on_close_pressed)
 	header.add_child(close_button)
+	add_child(header)
 	add_child(HSeparator.new())
 
 	_scroll = ScrollContainer.new()
