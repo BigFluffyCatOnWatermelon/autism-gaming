@@ -543,6 +543,10 @@ func _finish_drag() -> void:
 				"new": _drag_node.rotation_degrees,
 				"old": _drag_old_rotation
 			})
+	if _drag_mode == "move" and _drag_group_nodes.size() == 1 and changes.size() == 1:
+		changes[0]["property"] = "position"
+		changes[0]["new"] = _drag_node.position
+		changes[0]["old"] = _drag_old_position
 	_clear_drag()
 	if changes.size() == 1:
 		transform_committed.emit(
