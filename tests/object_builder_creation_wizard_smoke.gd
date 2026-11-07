@@ -32,6 +32,7 @@ func _run() -> void:
 	_expect(form.get("mode") == "template", "wizard selects the template creation path")
 	_expect(form.get("source_id") == "template_chest", "wizard resolves templates by stable object ID")
 	_expect(form.get("category") == "Nature", "wizard stores the category ID rather than the translated label")
+	_expect(form.get("display_name") == "Сундук — копия", "wizard suggests a copy name for a selected template")
 
 	(dialog_view.get("_creation_name_edit") as LineEdit).text = "Дубовый сундук"
 	(dialog_view.get("_creation_tags_edit") as LineEdit).text = "wood, chest, wood"
@@ -45,12 +46,14 @@ func _run() -> void:
 	form = dialog_view.call("get_creation_form_values")
 	_expect(form.get("mode") == "duplicate", "wizard switches to existing-object copy mode")
 	_expect(form.get("source_id") == "tree_oak", "wizard resolves existing objects by stable ID")
+	_expect(form.get("display_name") == "Дуб — копия", "wizard suggests a copy name for an existing object")
 
 	dialog_view.call("reset_creation_wizard", "import")
 	dialog_view.call("_on_creation_import_file_selected", "res://scenes/import_me.tscn")
 	form = dialog_view.call("get_creation_form_values")
 	_expect(form.get("mode") == "import", "wizard switches to scene import mode")
 	_expect(form.get("import_path") == "res://scenes/import_me.tscn", "wizard preserves the selected scene path")
+	_expect(form.get("display_name") == "import_me", "wizard suggests an object name from the imported scene file")
 
 	dialog_view.call("set_creation_sources", [], [])
 	var mode_option := dialog_view.get("_creation_mode_option") as OptionButton
