@@ -9,6 +9,7 @@ var search_events: Array[String] = []
 var filter_events: Array[int] = []
 var selection_events: Array[int] = []
 var action_events: Array[String] = []
+var collection_management_events: Array[String] = []
 
 
 func _initialize() -> void:
@@ -28,6 +29,7 @@ func _run() -> void:
 	library.connect("filter_changed", Callable(self, "_on_filter_changed"))
 	library.connect("object_selected", Callable(self, "_on_object_selected"))
 	library.connect("entry_action_requested", Callable(self, "_on_entry_action_requested"))
+	library.connect("collection_management_requested", Callable(self, "_on_collection_management_requested"))
 
 	var search_input := library.get("search_input") as LineEdit
 	search_input.text_changed.emit("oak")
@@ -68,6 +70,15 @@ func _run() -> void:
 	_expect(int(library.call("get_selected_index")) == 0, "selected library entry remains available for actions")
 	library.call("_on_entry_action_selected", 1)
 	_expect(action_events.size() == 1 and action_events[0] == "duplicate:0", "selected-entry action emits its stable action ID and index")
+	library.call("set_collection_options", [{"id": "collection_forest", "label": "Лес"}], "collection:collection_forest")
+	_expect(str(library.call("get_selected_mode")) == "collection:collection_forest", "collection navigation restores the selected custom collection")
+	_expect(not (library.get("_collection_management_button") as Button).disabled, "collection management is enabled for a selected collection")
+	library.call("_on_collection_management_item_selected", 0)
+	_expect(collection_management_events == ["rename"], "collection management emits the requested rename action")
+	library.call("_on_entry_action_selected", 1000)
+	_expect(action_events.size() == 2 and action_events[1] == "add_to_collection:collection_forest:0", "selected object can be added to a custom collection")
+	library.call("_on_entry_action_selected", 6)
+	_expect(action_events.size() == 3 and action_events[2] == "remove_from_collection:0", "selected object can be removed from the active collection")
 	library.call("set_display_mode", "list")
 	_expect(not (library.get("_cards_scroll") as ScrollContainer).visible and object_list.visible, "list mode swaps the visible result view")
 	_expect(object_list.item_count == 2, "compact list renders the same entries")
@@ -121,6 +132,10 @@ func _on_object_selected(index: int) -> void:
 
 func _on_entry_action_requested(action: String, index: int) -> void:
 	action_events.append(action + ":" + str(index))
+
+
+func _on_collection_management_requested(action: String) -> void:
+	collection_management_events.append(action)
 
 
 func _expect(condition: bool, description: String) -> void:
