@@ -351,6 +351,10 @@ static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> 
 static func _apply_default_catalog_metadata(definition: ObjectCapabilityDefinition) -> void:
 	if definition == null:
 		return
+	if definition.icon_atlas_index < 0 and _library_definitions.has(definition.capability_id):
+		var library_icon_definition := _library_definitions[definition.capability_id] as ObjectCapabilityDefinition
+		if library_icon_definition != null:
+			definition.icon_atlas_index = library_icon_definition.icon_atlas_index
 
 	var category_kinds := {
 		"general": "general",
@@ -414,6 +418,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	health.category_id = "stats"
 	health.category_name = "Характеристики"
 	health.icon = "heart"
+	health.icon_atlas_index = 200
 	health.keywords = PackedStringArray(["здоровье", "прочность", "жизнь", "hp"])
 	health.component_ids = PackedStringArray(["health"])
 	health.display_order = 10
@@ -426,6 +431,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	damageable.category_id = "combat"
 	damageable.category_name = "Бой"
 	damageable.icon = "shield"
+	damageable.icon_atlas_index = 201
 	damageable.keywords = PackedStringArray(["урон", "повреждение", "атака", "здоровье"])
 	damageable.required_capability_ids = PackedStringArray(["has_health"])
 	damageable.component_ids = PackedStringArray(["damageable"])
@@ -439,6 +445,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	attack.category_id = "combat"
 	attack.category_name = "Бой"
 	attack.icon = "swords"
+	attack.icon_atlas_index = 202
 	attack.keywords = PackedStringArray(["атака", "урон", "нападение"])
 	attack.component_ids = PackedStringArray(["attack"])
 	attack.display_order = 20
@@ -451,6 +458,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	destructible.category_id = "destruction"
 	destructible.category_name = "Разрушение"
 	destructible.icon = "hammer"
+	destructible.icon_atlas_index = 203
 	destructible.keywords = PackedStringArray(["разрушение", "сломать", "ломается", "прочность"])
 	destructible.required_capability_ids = PackedStringArray(["has_health"])
 	destructible.component_ids = PackedStringArray(["destructible"])
@@ -530,6 +538,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 		if active_by_id.has(capability_id):
 			var active_definition := active_by_id[capability_id] as ObjectCapabilityDefinition
 			active_definition.display_order = library_copy.display_order
+			active_definition.icon_atlas_index = library_copy.icon_atlas_index
 			result.append(active_definition)
 		else:
 			result.append(library_copy.duplicate(true) as ObjectCapabilityDefinition)
