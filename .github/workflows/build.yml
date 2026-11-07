@@ -71,6 +71,18 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder interactive relation map smoke tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_capability_relation_map_smoke.gd 2>&1 | tee object-builder-capability-relation-map-test.log
+          errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-capability-relation-map-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
+          if [[ -n "$errors" ]]; then
+            echo "$errors"
+            echo "Object Builder capability relation map tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder capability catalog controller smoke tests
         shell: bash
         run: |
