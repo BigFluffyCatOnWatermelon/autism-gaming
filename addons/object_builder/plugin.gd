@@ -23,6 +23,7 @@ const ObjectBuilderWorkspaceViewScript = preload("res://addons/object_builder/ui
 const ObjectBuilderLibraryControllerScript = preload("res://addons/object_builder/controllers/library_controller.gd")
 const ObjectBuilderEditorSessionScript = preload("res://addons/object_builder/controllers/object_editor_session.gd")
 const ObjectBuilderSceneDraftService = preload("res://addons/object_builder/services/scene_draft_service.gd")
+const ObjectBuilderSceneNodeDependencyService = preload("res://addons/object_builder/services/scene_node_dependency_service.gd")
 const ObjectBuilderPreviewService = preload("res://addons/object_builder/services/preview_service.gd")
 const ObjectBuilderPreviewViewScript = preload("res://addons/object_builder/ui/preview_view.gd")
 const ObjectBuilderCanvasViewScript = preload("res://addons/object_builder/ui/canvas_view.gd")
@@ -61,6 +62,8 @@ var _library_details_view: Control
 var _library_action_dialogs: Node
 var _pending_library_definition: ObjectDefinition
 var _pending_collection_id := ""
+var _pending_scene_node_removal: Node
+var _scene_node_delete_dialog: ConfirmationDialog
 var _editor_view: TabContainer
 var _dialog_view: Node
 var _library_controller: RefCounted = ObjectBuilderLibraryControllerScript.new()
@@ -343,6 +346,18 @@ func _build_ui() -> void:
 	_build_library_panel(_workspace_view.call("get_library_host") as VBoxContainer)
 	_build_editor_tabs(_workspace_view.call("get_editor_host") as VBoxContainer)
 	_build_preview_window()
+	_build_scene_node_delete_dialog()
+
+
+func _build_scene_node_delete_dialog() -> void:
+	_scene_node_delete_dialog = ConfirmationDialog.new()
+	_scene_node_delete_dialog.title = "Удалить часть со связями?"
+	_scene_node_delete_dialog.ok_button_text = "Удалить всё равно"
+	_scene_node_delete_dialog.get_cancel_button().text = "Отмена"
+	_scene_node_delete_dialog.confirmed.connect(_on_scene_node_delete_confirmed)
+	add_child(_scene_node_delete_dialog)
+
+
 func _build_workspace_toolbar(parent: HBoxContainer) -> void:
 	ObjectBuilderUIFactory.add_action_button(parent, "Создать объект", _on_new_object_pressed, "Начать создание нового игрового объекта")
 	ObjectBuilderUIFactory.add_action_button(parent, "Из шаблона", _on_create_from_template_pressed)
@@ -2805,6 +2820,57 @@ func _remove_scene_node(selected_node: Node) -> void:
 		return
 	if selected_node == scene_root:
 		_set_status("Нельзя удалить корневой узел объекта.", true)
+		return
+	if selected_node == null or not is_instance_valid(selected_node) or not scene_root.is_ancestor_of(selected_node):
+		_set_status("Выбранная часть больше не находится в открытой сцене.", true)
+		return
+	var dependencies: Array[Dictionary] = ObjectBuilderSceneNodeDependencyService.inspect(
+		scene_root, selected_node, _working_definition
+	)
+	if not dependencies.is_empty():
+		_pending_scene_node_removal = selected_node
+		_scene_node_delete_dialog.dialog_text = _build_scene_node_dependency_warning(selected_node, dependencies)
+		ObjectBuilderDialogService.popup_window_safely(
+			_scene_node_delete_dialog, Vector2i(620, 420), 0.84
+		)
+		return
+	_perform_scene_node_removal(selected_node)
+
+
+func _build_scene_node_dependency_warning(selected_node: Node, dependencies: Array[Dictionary]) -> String:
+	var lines := PackedStringArray()
+	lines.append("У части «%s» найдены связи, которые могут перестать работать после удаления:" % selected_node.name)
+	lines.append("")
+	for dependency in dependencies:
+		var kind := str(dependency.get("kind", "Связь"))
+		var source_path := str(dependency.get("source_path", ""))
+		var details := str(dependency.get("details", ""))
+		lines.append("• %s — %s" % [kind, source_path])
+		if not details.is_empty():
+			lines.append("  %s" % details)
+	lines.append("")
+	lines.append("Удаление затронет перечисленные связи. Исходные данные не изменятся до подтверждения.")
+	lines.append("Отдельной модели сокетов в текущей версии Object System пока нет.")
+	return "\n".join(lines)
+
+
+func _on_scene_node_delete_confirmed() -> void:
+	var selected_node := _pending_scene_node_removal
+	_pending_scene_node_removal = null
+	if selected_node == null or not is_instance_valid(selected_node):
+		return
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null or (selected_node != scene_root and not scene_root.is_ancestor_of(selected_node)):
+		_set_status("Сцена изменилась. Удаление отменено.", true)
+		return
+	_perform_scene_node_removal(selected_node)
+
+
+func _perform_scene_node_removal(selected_node: Node) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null or selected_node == null or not is_instance_valid(selected_node):
+		return
+	if selected_node == scene_root:
 		return
 	var parent_node := selected_node.get_parent()
 	if parent_node == null:
