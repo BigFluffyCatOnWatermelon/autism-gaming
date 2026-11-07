@@ -2604,9 +2604,14 @@ func _on_canvas_batch_transform_committed(changes: Array[Dictionary]) -> void:
 		var property_name := str(change.get("property", ""))
 		undo_redo.add_do_property(node, property_name, change.get("new"))
 		undo_redo.add_undo_property(node, property_name, change.get("old"))
+	var selected_paths: Array[NodePath] = _canvas_view.call("get_selected_paths") if _canvas_view != null else []
 	undo_redo.commit_action()
 	_refresh_canvas()
 	_refresh_visual_parts()
+	if not selected_paths.is_empty() and _canvas_view != null:
+		_canvas_view.call("set_selected_paths", selected_paths)
+		if _visual_parts_view != null:
+			_visual_parts_view.call("set_selected_paths", selected_paths)
 	_set_status("Изменения применены к %d свойствам выбранных частей одним действием Undo/Redo." % resolved_changes.size(), false)
 
 
