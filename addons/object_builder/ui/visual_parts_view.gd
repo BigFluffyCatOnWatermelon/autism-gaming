@@ -526,10 +526,10 @@ func _finish_inline_rename() -> void:
 	_renaming_edit = null
 
 
-func _on_row_reorder_requested(source_path: NodePath, target_path: NodePath) -> void:
+func _on_row_reorder_requested(source_path: NodePath, target_path: NodePath, insert_after: bool = false) -> void:
 	if source_path.is_empty() or target_path.is_empty() or source_path == target_path:
 		return
-	draw_order_reorder_requested.emit(source_path, target_path)
+	draw_order_reorder_requested.emit(source_path, target_path, insert_after)
 
 
 func _on_draw_order_change_requested(path: NodePath, delta: int) -> void:
