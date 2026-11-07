@@ -19,8 +19,22 @@ var _property_minimum_edit: LineEdit
 var _property_maximum_edit: LineEdit
 
 var _creation_dialog: AcceptDialog
+var _creation_mode_option: OptionButton
+var _creation_profile_host: VBoxContainer
 var _creation_profile_option: OptionButton
 var _creation_profile_hint: Label
+var _creation_source_host: VBoxContainer
+var _creation_source_option: OptionButton
+var _creation_template_sources: Array[Dictionary] = []
+var _creation_object_sources: Array[Dictionary] = []
+var _creation_import_host: VBoxContainer
+var _creation_import_path_label: Label
+var _creation_import_path := ""
+var _creation_file_dialog: FileDialog
+var _creation_name_edit: LineEdit
+var _creation_category_option: OptionButton
+var _creation_tags_edit: LineEdit
+var _creation_description_edit: TextEdit
 
 var _template_dialog: AcceptDialog
 var _template_option: OptionButton
@@ -189,32 +203,190 @@ func _update_property_range_controls() -> void:
 
 func _build_creation_dialog(profiles: Array) -> void:
 	_creation_dialog = AcceptDialog.new()
-	_creation_dialog.title = "Новый объект · выбери тип"
+	_creation_dialog.title = "Создание объекта"
 	add_child(_creation_dialog)
-	var form := UIFactory.create_scrollable_dialog_body(_creation_dialog, Vector2i(420, 190))
+	var form := UIFactory.create_scrollable_dialog_body(_creation_dialog, Vector2i(500, 500))
+	form.add_theme_constant_override("separation", 7)
+
+	_creation_mode_option = OptionButton.new()
+	_creation_mode_option.add_item("С нуля")
+	_creation_mode_option.set_item_metadata(0, "new")
+	_creation_mode_option.add_item("Из шаблона")
+	_creation_mode_option.set_item_metadata(1, "template")
+	_creation_mode_option.add_item("Копия существующего объекта")
+	_creation_mode_option.set_item_metadata(2, "duplicate")
+	_creation_mode_option.add_item("Импортировать сцену Godot")
+	_creation_mode_option.set_item_metadata(3, "import")
+	_creation_mode_option.item_selected.connect(_on_creation_mode_selected)
+	UIFactory.add_labeled_control(form, "Что хочешь сделать?", _creation_mode_option)
+
+	_creation_profile_host = VBoxContainer.new()
+	_creation_profile_host.add_theme_constant_override("separation", 3)
+	form.add_child(_creation_profile_host)
 	_creation_profile_option = OptionButton.new()
 	_creation_profile_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_creation_profile_option.add_item("Без профиля · обычный объект")
+	_creation_profile_option.add_item("Не знаю — обычный объект")
 	_creation_profile_option.set_item_metadata(0, "")
 	for entry in profiles:
 		if not entry is Dictionary:
 			continue
 		_creation_profile_option.add_item(str(entry.get("label", "")))
-		_creation_profile_option.set_item_metadata(
-			_creation_profile_option.item_count - 1,
-			str(entry.get("id", ""))
-		)
+		_creation_profile_option.set_item_metadata(_creation_profile_option.item_count - 1, str(entry.get("id", "")))
 	_creation_profile_option.item_selected.connect(_on_creation_profile_selected)
-	UIFactory.add_labeled_control(form, "Что создаём?", _creation_profile_option)
+	UIFactory.add_labeled_control(_creation_profile_host, "Начальный профиль (необязательно)", _creation_profile_option)
 	_creation_profile_hint = Label.new()
 	_creation_profile_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_creation_profile_hint.custom_minimum_size = Vector2(0, 58)
-	form.add_child(_creation_profile_hint)
-	var help_label := Label.new()
-	help_label.text = "После подтверждения появятся параметры, подходящие выбранному типу."
-	help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	form.add_child(help_label)
+	_creation_profile_hint.custom_minimum_size = Vector2(0, 34)
+	_creation_profile_host.add_child(_creation_profile_hint)
+
+	_creation_source_host = VBoxContainer.new()
+	_creation_source_host.add_theme_constant_override("separation", 3)
+	form.add_child(_creation_source_host)
+	_creation_source_option = OptionButton.new()
+	_creation_source_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	UIFactory.add_labeled_control(_creation_source_host, "На основе", _creation_source_option)
+	var source_hint := Label.new()
+	source_hint.text = "Будет создана независимая копия. Исходная запись и сцена не изменятся."
+	source_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_creation_source_host.add_child(source_hint)
+
+	_creation_import_host = VBoxContainer.new()
+	_creation_import_host.add_theme_constant_override("separation", 3)
+	form.add_child(_creation_import_host)
+	var import_row := HBoxContainer.new()
+	_creation_import_host.add_child(import_row)
+	var browse_button := Button.new()
+	browse_button.text = "Выбрать сцену…"
+	browse_button.pressed.connect(_on_creation_import_browse_pressed)
+	import_row.add_child(browse_button)
+	_creation_import_path_label = Label.new()
+	_creation_import_path_label.text = "Файл не выбран"
+	_creation_import_path_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_creation_import_path_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	import_row.add_child(_creation_import_path_label)
+	var import_hint := Label.new()
+	import_hint.text = "Поддерживаются .tscn и .scn. Исходный файл останется без изменений; неизвестные узлы и ресурсы сохраняются."
+	import_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_creation_import_host.add_child(import_hint)
+
+	_creation_name_edit = LineEdit.new()
+	_creation_name_edit.placeholder_text = "Например, Дуб или Каменный сундук"
+	UIFactory.add_labeled_control(form, "Название", _creation_name_edit)
+
+	_creation_category_option = OptionButton.new()
+	_creation_category_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	UIFactory.add_labeled_control(form, "Категория", _creation_category_option)
+
+	_creation_tags_edit = LineEdit.new()
+	_creation_tags_edit.placeholder_text = "дерево, ресурс, лес (необязательно)"
+	UIFactory.add_labeled_control(form, "Теги через запятую", _creation_tags_edit)
+
+	_creation_description_edit = TextEdit.new()
+	_creation_description_edit.custom_minimum_size = Vector2(0, 64)
+	_creation_description_edit.placeholder_text = "Короткое описание объекта (необязательно)"
+	UIFactory.add_labeled_control(form, "Описание", _creation_description_edit)
+
+	_creation_file_dialog = FileDialog.new()
+	_creation_file_dialog.title = "Импортировать сцену Godot"
+	_creation_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_creation_file_dialog.access = FileDialog.ACCESS_RESOURCES
+	_creation_file_dialog.filters = PackedStringArray(["*.tscn, *.scn ; Godot Scene"])
+	_creation_file_dialog.file_selected.connect(_on_creation_import_file_selected)
+	add_child(_creation_file_dialog)
 	_creation_profile_option.select(0)
+	_on_creation_mode_selected(0)
+
+
+func set_creation_category_options(options: Array[Dictionary], selected_id: String = "Other") -> void:
+	if _creation_category_option == null:
+		return
+	_creation_category_option.clear()
+	for option in options:
+		_creation_category_option.add_item(str(option.get("label", option.get("id", ""))))
+		_creation_category_option.set_item_metadata(_creation_category_option.item_count - 1, str(option.get("id", "")))
+	_select_option_metadata(_creation_category_option, selected_id)
+
+
+func set_creation_category(category_id: String) -> void:
+	_select_option_metadata(_creation_category_option, category_id)
+
+
+func set_creation_sources(template_sources: Array[Dictionary], object_sources: Array[Dictionary]) -> void:
+	_creation_template_sources = template_sources.duplicate(true)
+	_creation_object_sources = object_sources.duplicate(true)
+	_populate_creation_source_options()
+
+
+func _populate_creation_source_options() -> void:
+	if _creation_source_option == null or _creation_mode_option == null:
+		return
+	_creation_source_option.clear()
+	var source_items := _creation_template_sources if get_creation_mode() == "template" else _creation_object_sources
+	for source in source_items:
+		_creation_source_option.add_item(str(source.get("label", "Без названия")))
+		_creation_source_option.set_item_metadata(_creation_source_option.item_count - 1, str(source.get("id", "")))
+	if _creation_source_option.item_count > 0:
+		_creation_source_option.select(0)
+
+
+func get_creation_mode() -> String:
+	return str(_creation_mode_option.get_item_metadata(_creation_mode_option.selected)) if _creation_mode_option != null and _creation_mode_option.selected >= 0 else "new"
+
+
+func get_creation_form_values() -> Dictionary:
+	var tags := PackedStringArray()
+	for raw_tag in _creation_tags_edit.text.replace(";", ",").split(","):
+		var tag := str(raw_tag).strip_edges()
+		if not tag.is_empty() and not tags.has(tag):
+			tags.append(tag)
+	var source_id := ""
+	if _creation_source_option != null and _creation_source_option.selected >= 0:
+		source_id = str(_creation_source_option.get_item_metadata(_creation_source_option.selected))
+	var category_id := "Other"
+	if _creation_category_option != null and _creation_category_option.selected >= 0:
+		category_id = str(_creation_category_option.get_item_metadata(_creation_category_option.selected))
+	return {
+		"mode": get_creation_mode(),
+		"profile_id": get_selected_creation_profile_id(),
+		"display_name": _creation_name_edit.text.strip_edges(),
+		"category": category_id,
+		"tags": tags,
+		"description": _creation_description_edit.text.strip_edges(),
+		"source_id": source_id,
+		"import_path": _creation_import_path
+	}
+
+
+func reset_creation_wizard(mode: String = "new") -> void:
+	if _creation_name_edit == null:
+		return
+	_creation_name_edit.text = ""
+	_creation_tags_edit.text = ""
+	_creation_description_edit.text = ""
+	_creation_import_path = ""
+	_creation_import_path_label.text = "Файл не выбран"
+	_select_option_metadata(_creation_mode_option, mode)
+	_creation_profile_option.select(0)
+	_select_option_metadata(_creation_category_option, "Other")
+	_on_creation_mode_selected(_creation_mode_option.selected)
+
+
+func _on_creation_mode_selected(_index: int) -> void:
+	var mode := get_creation_mode()
+	_creation_profile_host.visible = mode == "new"
+	_creation_source_host.visible = mode in ["template", "duplicate"]
+	_creation_import_host.visible = mode == "import"
+	_populate_creation_source_options()
+
+
+func _on_creation_import_browse_pressed() -> void:
+	DialogService.popup_window_safely(_creation_file_dialog, Vector2i(780, 540), 0.82)
+
+
+func _on_creation_import_file_selected(path: String) -> void:
+	_creation_import_path = path
+	_creation_import_path_label.text = path.get_file()
+	_creation_import_path_label.tooltip_text = path
 
 
 func _on_creation_profile_selected(_index: int) -> void:
@@ -233,10 +405,7 @@ func set_creation_profile_hint(value: String) -> void:
 
 
 func reset_creation_profile() -> void:
-	if _creation_profile_option != null and _creation_profile_option.item_count > 0:
-		_creation_profile_option.select(0)
-
-
+	reset_creation_wizard("new")
 func _build_template_dialog() -> void:
 	_template_dialog = AcceptDialog.new()
 	_template_dialog.title = "Создать объект из шаблона"
@@ -316,7 +485,7 @@ func popup_property_dialog() -> void:
 
 
 func popup_creation_dialog() -> void:
-	DialogService.popup_window_safely(_creation_dialog, Vector2i(460, 250), 0.82)
+	DialogService.popup_window_safely(_creation_dialog, Vector2i(540, 560), 0.90)
 
 
 func popup_template_dialog() -> void:
