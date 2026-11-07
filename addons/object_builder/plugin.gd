@@ -3046,7 +3046,10 @@ func _on_visual_part_draw_order_reorder_requested(source_path: NodePath, target_
 	if source_index < 0 or target_index < 0:
 		return
 	ordered.remove_at(source_index)
-	ordered.insert(target_index, source)
+	var insertion_index := target_index
+	if source_index < target_index:
+		insertion_index -= 1
+	ordered.insert(insertion_index, source)
 	var minimum_z := 0
 	if not ordered.is_empty():
 		minimum_z = ordered[0].z_index
