@@ -11,7 +11,7 @@ static func build_addition_plan(
 ) -> Dictionary:
 	var unique_selected_ids := _unique_normalized_ids(selected_ids)
 	if unique_selected_ids.is_empty():
-		return _failed_plan(["Выбери хотя бы одну возможность."])
+		return _failed_plan(PackedStringArray(["Выбери хотя бы одну возможность."]))
 
 	var initial_enabled: Dictionary = {}
 	var next_selections: Array[ObjectCapabilitySelection] = []
@@ -36,13 +36,13 @@ static func build_addition_plan(
 
 		var planned_values: Variant = step_plan.get("selections", [])
 		if not planned_values is Array:
-			return _failed_plan(["Планировщик вернул набор возможностей в неизвестном формате."])
+			return _failed_plan(PackedStringArray(["Планировщик вернул набор возможностей в неизвестном формате."]))
 		next_selections.clear()
 		for value in planned_values:
 			if value is ObjectCapabilitySelection:
 				next_selections.append(value as ObjectCapabilitySelection)
 			else:
-				return _failed_plan(["В итоговом плане обнаружена некорректная запись возможности."])
+				return _failed_plan(PackedStringArray(["В итоговом плане обнаружена некорректная запись возможности."]))
 
 	var application_plan := ObjectCapabilityService.build_application_plan(
 		current_selections,
@@ -97,8 +97,9 @@ static func _unique_normalized_ids(values: PackedStringArray) -> PackedStringArr
 
 
 static func _to_packed_errors(value: Variant) -> PackedStringArray:
-	if value is PackedStringArray:
-		return (value as PackedStringArray).duplicate()
+	if typeof(value) == TYPE_PACKED_STRING_ARRAY:
+		var packed_errors: PackedStringArray = value
+		return packed_errors.duplicate()
 	var result := PackedStringArray()
 	if value is Array:
 		for item in value:
