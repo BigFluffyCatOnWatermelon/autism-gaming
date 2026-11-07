@@ -89,6 +89,13 @@ func _run() -> void:
 	imported_definition.object_type = "other"
 	var import_result: Dictionary = SceneDraftService.import_scene(import_source_path, imported_definition)
 	_expect(bool(import_result.get("ok", false)), "existing PackedScene can be imported as a separate object")
+	var import_report: Dictionary = import_result.get("import_report", {})
+	_expect(int(import_report.get("visual_part_count", -1)) == 1, "import report counts parts supported by the simple visual editor")
+	_expect(int(import_report.get("advanced_node_count", 0)) >= 5, "import report counts additional nodes preserved for the advanced editor")
+	var visual_paths: Array = import_report.get("visual_part_paths", [])
+	var advanced_paths: Array = import_report.get("advanced_node_paths", [])
+	_expect(visual_paths.has("VisibleSprite (Sprite2D)"), "import report identifies supported visual parts by path")
+	_expect(advanced_paths.has("UnknownRootChild/NestedUnknown (Marker2D)"), "import report identifies preserved advanced nodes by path")
 	_expect(imported_definition.scene_path != import_source_path, "imported scene is stored at a new path")
 	_expect(imported_definition.root_type == "Node2D", "imported root type is detected from the source scene")
 	_expect(FileAccess.file_exists(import_source_path), "import keeps the original scene file on disk")
@@ -179,6 +186,11 @@ func _make_import_source_scene() -> PackedScene:
 		unknown_marker.set_script(unknown_script)
 	unknown_parent.add_child(unknown_marker)
 	unknown_marker.owner = root
+
+	var visible_sprite := Sprite2D.new()
+	visible_sprite.name = "VisibleSprite"
+	root.add_child(visible_sprite)
+	visible_sprite.owner = root
 
 	var property_data := ObjectPropertyData.new()
 	property_data.name = "ObjectProperties"
