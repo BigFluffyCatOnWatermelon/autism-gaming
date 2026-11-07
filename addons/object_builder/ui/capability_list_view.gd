@@ -255,7 +255,7 @@ func set_preset_data(
 		preset_button.tooltip_text = str(preset.get("description", ""))
 		preset_button.toggle_mode = true
 		preset_button.button_pressed = preset_id == active_id
-		preset_button.pressed.connect(_on_preset_pressed.bind(preset_id))
+		preset_button.toggled.connect(_on_preset_toggled.bind(preset_id))
 		_preset_container.add_child(preset_button)
 
 	_preset_detail_panel.visible = not active_preset.is_empty()
@@ -489,6 +489,7 @@ func show_empty_state(message: String) -> void:
 	_entries_scroll.scroll_vertical = 0
 	set_related_entries([])
 	set_recommended_entries([])
+	set_preset_data([])
 	set_selected_count(_selected_count)
 
 
@@ -712,8 +713,8 @@ func _get_relation_color(relation_type: String) -> Color:
 			return Color(0.85, 0.78, 0.52)
 
 
-func _on_preset_pressed(preset_id: String) -> void:
-	preset_requested.emit(preset_id)
+func _on_preset_toggled(pressed: bool, preset_id: String) -> void:
+	preset_requested.emit(preset_id if pressed else "")
 
 
 func _on_preset_select_all_pressed() -> void:
