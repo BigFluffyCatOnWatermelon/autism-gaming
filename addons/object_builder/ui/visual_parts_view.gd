@@ -183,8 +183,7 @@ func _render_rows() -> void:
 		return
 	_cancel_inline_rename()
 	for child in _rows_host.get_children():
-		_rows_host.remove_child(child)
-		child.queue_free()
+		child.free()
 	_row_buttons.clear()
 	_row_paths.clear()
 	_row_lock_checkboxes.clear()
