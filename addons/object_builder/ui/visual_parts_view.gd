@@ -378,6 +378,8 @@ func _commit_inline_rename(path: NodePath) -> void:
 		return
 	var clean_name := _renaming_edit.text.strip_edges()
 	var previous_name := _renaming_button.text
+	_renaming_button.show()
+	_renaming_edit.hide()
 	_finish_inline_rename()
 	if clean_name.is_empty() or clean_name == previous_name:
 		return

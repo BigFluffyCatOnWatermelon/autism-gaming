@@ -2268,7 +2268,8 @@ func _on_scene_tree_node_rename_requested(path: NodePath, requested_name: String
 	undo_redo.add_undo_property(node, "name", old_name)
 	undo_redo.commit_action()
 	if was_locked:
-		_locked_visual_part_keys.erase(_get_visual_part_lock_key(scene_root, path))
+		# Keep the previous key as well, so Undo can restore the original name
+		# without losing this editor-only lock preference.
 		var parent_path := scene_root.get_path_to(parent_node)
 		var next_path := (
 			NodePath(next_name)

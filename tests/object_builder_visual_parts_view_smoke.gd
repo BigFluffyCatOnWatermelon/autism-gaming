@@ -103,6 +103,7 @@ func _run() -> void:
 	name_edits[0].text = "LeafNew"
 	name_edits[0].text_submitted.emit("LeafNew")
 	_expect(rename_events == [{"path": NodePath("Visuals/Leaf"), "name": "LeafNew"}], "inline rename forwards the relative path and new name")
+	_expect(not name_edits[0].visible and name_buttons[0].visible, "confirmed rename restores the normal row display")
 
 	var search_input := view.get("_search_input") as LineEdit
 	search_input.text = "glow"
