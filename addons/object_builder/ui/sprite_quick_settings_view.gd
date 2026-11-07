@@ -23,7 +23,7 @@ var _animated_frame: SpinBox
 var _animated_speed: SpinBox
 var _animation_hint: Label
 var _animation_fps: SpinBox
-var _animation_loop: CheckBox
+var _animation_loop_mode: OptionButton
 var _selected_path := NodePath("")
 
 
@@ -130,10 +130,15 @@ func _build_animated_sprite_controls() -> void:
 	_animation_fps = UIFactory.make_spin_box(0.1, 120.0, 0.1)
 	_animation_fps.value_changed.connect(_on_animation_fps_changed)
 	UIFactory.add_labeled_control(settings_row, "FPS", _animation_fps, 90.0)
-	_animation_loop = CheckBox.new()
-	_animation_loop.text = "Зациклить"
-	_animation_loop.toggled.connect(_on_animation_loop_toggled)
-	settings_row.add_child(_animation_loop)
+	_animation_loop_mode = OptionButton.new()
+	_animation_loop_mode.add_item("Без цикла")
+	_animation_loop_mode.set_item_metadata(0, 0)
+	_animation_loop_mode.add_item("Цикл")
+	_animation_loop_mode.set_item_metadata(1, 1)
+	_animation_loop_mode.add_item("Пинг-понг")
+	_animation_loop_mode.set_item_metadata(2, 2)
+	_animation_loop_mode.item_selected.connect(_on_animation_loop_mode_selected)
+	UIFactory.add_labeled_control(settings_row, "Режим", _animation_loop_mode)
 
 	_animation_hint = Label.new()
 	_animation_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -173,9 +178,9 @@ func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 		_animation_option.disabled = true
 		_animated_frame.editable = false
 		_animation_fps.editable = false
-		_animation_loop.disabled = true
+		_animation_loop_mode.disabled = true
 		_animation_fps.set_value_no_signal(8.0)
-		_animation_loop.set_pressed_no_signal(true)
+		_animation_loop_mode.select(1)
 		_animation_hint.text = "Назначь SpriteFrames через кнопку «Кадры…» в списке частей."
 		return
 
@@ -191,7 +196,7 @@ func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 	if selected_index >= 0:
 		_animation_option.select(selected_index)
 	_animation_option.disabled = names.is_empty()
-	_animation_loop.disabled = names.is_empty()
+	_animation_loop_mode.disabled = names.is_empty()
 	if not frames.has_animation(sprite.animation):
 		_animated_frame.editable = false
 		_animation_fps.editable = false
@@ -206,7 +211,8 @@ func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 	_animated_frame.set_value_no_signal(float(clampi(sprite.frame, 0, maxi(0, frame_count - 1))))
 	_animation_fps.editable = true
 	_animation_fps.set_value_no_signal(maxf(0.1, frames.get_animation_speed(sprite.animation)))
-	_animation_loop.set_pressed_no_signal(frames.get_animation_loop(sprite.animation))
+	var loop_mode := int(frames.get_animation_loop_mode(sprite.animation))
+	_animation_loop_mode.select(clampi(loop_mode, 0, 2))
 	_animation_hint.text = (
 		"▶ Анимация на холсте запускает изолированный предпросмотр. "
 		+ "Игровая логика объекта остаётся выключенной."
@@ -218,9 +224,13 @@ func _on_animation_fps_changed(value: float) -> void:
 		property_changed.emit(_selected_path, "animation_speed", clampf(value, 0.1, 120.0))
 
 
-func _on_animation_loop_toggled(enabled: bool) -> void:
-	if not _selected_path.is_empty():
-		property_changed.emit(_selected_path, "animation_loop", enabled)
+func _on_animation_loop_mode_selected(index: int) -> void:
+	if not _selected_path.is_empty() and index >= 0 and index < _animation_loop_mode.item_count:
+		property_changed.emit(
+			_selected_path,
+			"animation_loop_mode",
+			int(_animation_loop_mode.get_item_metadata(index))
+		)
 
 
 func is_visible_for_selection() -> bool:
