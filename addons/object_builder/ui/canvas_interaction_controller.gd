@@ -344,9 +344,10 @@ func _collect_marquee_hits(node: Node, selection_rect: Rect2, paths: Array[NodeP
 func _toggle_selected_path(path: NodePath) -> void:
 	if _selected_paths.has(path):
 		_selected_paths.erase(path)
+		_set_selected_paths(_selected_paths)
 	else:
 		_selected_paths.append(path)
-	_set_selected_paths(_selected_paths, path)
+		_set_selected_paths(_selected_paths, path)
 
 
 func _screen_to_world(screen_position: Vector2) -> Vector2:
@@ -418,6 +419,8 @@ func _begin_selection(screen_position: Vector2) -> void:
 	var additive_selection := Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_SHIFT)
 	if additive_selection:
 		_toggle_selected_path(hit_path)
+		if not _selected_paths.has(hit_path):
+			return
 	elif not _selected_paths.has(hit_path):
 		_set_selected_paths([hit_path], hit_path)
 	else:
@@ -462,7 +465,7 @@ func _begin_transform_drag(mode: String, node: Node2D, screen_position: Vector2)
 		_drag_start_vector = world_position - _drag_start_pivot_world
 	elif mode == "rotate":
 		_drag_old_rotation = node.rotation_degrees
-		_drag_start_vector = world_position - node.global_position
+		_drag_start_vector = world_position - _drag_start_pivot_world
 		_drag_start_angle = _drag_start_vector.angle()
 
 
@@ -543,6 +546,9 @@ func _finish_drag() -> void:
 
 
 func _clear_drag() -> void:
+	_marquee_active = false
+	_guide_drag_axis = ""
+	_guide_drag_index = -1
 	_drag_group_nodes.clear()
 	_drag_group_paths.clear()
 	_drag_group_old_positions.clear()
