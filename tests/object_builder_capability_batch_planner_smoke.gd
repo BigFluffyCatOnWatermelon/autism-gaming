@@ -115,8 +115,9 @@ func _test_editor_only_capability() -> void:
 	_expect(plan.get("user_selected_ids", PackedStringArray()) == PackedStringArray([VISUAL_ID]), "batch plan identifies the user's selection")
 	_expect(plan.get("auto_required_ids", PackedStringArray()).is_empty(), "editor-only capability adds no fake runtime dependency")
 	var app_plan: Dictionary = plan.get("application_plan", {})
+	var added_components: Array = app_plan.get("added_components", [])
 	_expect(
-		bool(app_plan.get("ok", false)) and (app_plan.get("added_components", []) as Array).is_empty(),
+		bool(app_plan.get("ok", false)) and added_components.is_empty(),
 		"editor-only application plan contains no runtime component"
 	)
 
@@ -177,14 +178,13 @@ func _test_atomic_conflict_rejection() -> void:
 		PackedStringArray([VISUAL_ID, DATA_ID])
 	)
 	_expect(not bool(conflict_plan.get("ok", false)), "conflicting multi-selection is rejected before application")
+	var failed_selections: Array = conflict_plan.get("selections", [])
+	var conflict_errors: PackedStringArray = conflict_plan.get("errors", PackedStringArray())
 	_expect(
-		(conflict_plan.get("selections", []) as Array).is_empty(),
+		failed_selections.is_empty(),
 		"failed batch plan exposes no partially applied selection set"
 	)
-	_expect(
-		not (conflict_plan.get("errors", PackedStringArray()) as PackedStringArray).is_empty(),
-		"failed batch explains the conflict"
-	)
+	_expect(not conflict_errors.is_empty(), "failed batch explains the conflict")
 
 
 func _find_selection(values: Variant, capability_id: String) -> ObjectCapabilitySelection:
