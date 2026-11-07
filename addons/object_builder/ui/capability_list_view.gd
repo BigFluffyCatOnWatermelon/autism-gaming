@@ -359,7 +359,13 @@ func _create_capability_card(
 
 	var relations_button := Button.new()
 	relations_button.text = "Связи"
-	relations_button.tooltip_text = "Показать обязательные, рекомендуемые и другие связанные возможности"
+	var has_relations := bool(entry.get("has_relations", false))
+	relations_button.disabled = not has_relations
+	relations_button.tooltip_text = (
+		"Показать обязательные, рекомендуемые и другие связанные возможности"
+		if has_relations
+		else "Для этой возможности связи пока не заполнены."
+	)
 	relations_button.pressed.connect(_on_focus_requested.bind(capability.capability_id))
 	card_header.add_child(relations_button)
 
