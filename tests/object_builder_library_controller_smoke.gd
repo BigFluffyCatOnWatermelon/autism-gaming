@@ -111,7 +111,6 @@ func _run() -> void:
 	_expect(controller.call("get_template", -1) == null, "invalid template indices return null")
 	_expect(controller.call("get_template_names") == ["Ящик"], "template names are exposed for the UI")
 
-	controller.free()
 	await process_frame
 	if failures.is_empty():
 		print("Object Builder library controller tests passed.")
