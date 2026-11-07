@@ -321,6 +321,10 @@ func set_selected_path(path: NodePath) -> void:
 		_interaction_controller.call("set_selected_path", path)
 
 
+func get_selected_paths() -> Array[NodePath]:
+	return _interaction_controller.call("get_selected_paths") if _interaction_controller != null else []
+
+
 func set_selected_paths(paths: Array[NodePath]) -> void:
 	if _interaction_controller != null:
 		_interaction_controller.call("_set_selected_paths", paths)
