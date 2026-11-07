@@ -10,6 +10,9 @@ const CanvasInteractionControllerScript = preload("res://addons/object_builder/u
 
 signal part_selected(path: NodePath)
 signal transform_committed(path: NodePath, property_name: String, new_value: Variant, old_value: Variant)
+signal batch_transform_committed(changes: Array[Dictionary])
+signal pivot_committed(path: NodePath, new_value: Vector2, old_value: Variant)
+signal guides_changed(vertical_guides: Array[float], horizontal_guides: Array[float])
 signal part_context_action_requested(action: String, path: NodePath)
 signal open_scene_requested
 
@@ -41,6 +44,7 @@ var _coordinates_label: Label
 var _zoom_label: Label
 var _grid_button: Button
 var _snap_button: CheckBox
+var _pivot_button: CheckBox
 var _open_scene_button: Button
 var _animation_button: Button
 var _has_preview_animations := false
@@ -90,6 +94,15 @@ func build() -> void:
 	_snap_button.tooltip_text = "Перемещать части шагом 8 пикселей"
 	_snap_button.toggled.connect(_on_snap_toggled)
 	toolbar.add_child(_snap_button)
+
+	_pivot_button = CheckBox.new()
+	_pivot_button.text = "Pivot"
+	_pivot_button.tooltip_text = "Включить установку независимой точки вращения и масштабирования щелчком по холсту."
+	_pivot_button.toggled.connect(_on_pivot_mode_toggled)
+	toolbar.add_child(_pivot_button)
+	_add_toolbar_button(toolbar, "V+", "Добавить вертикальную направляющую по центру холста", _on_add_vertical_guide_pressed)
+	_add_toolbar_button(toolbar, "H+", "Добавить горизонтальную направляющую по центру холста", _on_add_horizontal_guide_pressed)
+	_add_toolbar_button(toolbar, "Убрать направляющие", "Удалить все направляющие холста", _on_clear_guides_pressed)
 
 	_open_scene_button = Button.new()
 	_open_scene_button.text = "Открыть сцену"
@@ -153,6 +166,9 @@ func build() -> void:
 	_interaction_controller.connect("context_menu_requested", Callable(self, "_on_context_menu_requested"))
 	_interaction_controller.connect("pointer_position_changed", Callable(self, "_on_pointer_position_changed"))
 	_interaction_controller.connect("transform_committed", Callable(self, "_on_interaction_transform_committed"))
+	_interaction_controller.connect("batch_transform_committed", Callable(self, "_on_interaction_batch_transform_committed"))
+	_interaction_controller.connect("pivot_committed", Callable(self, "_on_interaction_pivot_committed"))
+	_interaction_controller.connect("guides_changed", Callable(self, "_on_interaction_guides_changed"))
 	_interaction_controller.connect("zoom_requested", Callable(self, "_on_interaction_zoom_requested"))
 	_surface.set("canvas_owner", _interaction_controller)
 	_build_context_menu()
@@ -474,6 +490,52 @@ func _on_interaction_zoom_requested(factor: float) -> void:
 	_set_zoom(_zoom * factor)
 
 
+
+
+func set_guides(vertical_guides: Array[float], horizontal_guides: Array[float]) -> void:
+	if _interaction_controller != null:
+		_interaction_controller.call("set_guides", vertical_guides, horizontal_guides)
+
+
+func get_guides() -> Dictionary:
+	return _interaction_controller.call("get_guides") if _interaction_controller != null else {}
+
+
+func _on_pivot_mode_toggled(enabled: bool) -> void:
+	if _interaction_controller != null:
+		_interaction_controller.call("set_pivot_edit_mode", enabled)
+	_status_label.text = (
+		"Режим Pivot: щёлкни по холсту, чтобы установить точку вращения/масштабирования."
+		if enabled
+		else "Режим Pivot выключен. Выделяй и перемещай части обычным способом."
+	)
+
+
+func _on_add_vertical_guide_pressed() -> void:
+	if _interaction_controller != null:
+		_interaction_controller.call("add_guide", "vertical")
+
+
+func _on_add_horizontal_guide_pressed() -> void:
+	if _interaction_controller != null:
+		_interaction_controller.call("add_guide", "horizontal")
+
+
+func _on_clear_guides_pressed() -> void:
+	if _interaction_controller != null:
+		_interaction_controller.call("clear_guides")
+
+
+func _on_interaction_batch_transform_committed(changes: Array[Dictionary]) -> void:
+	batch_transform_committed.emit(changes)
+
+
+func _on_interaction_pivot_committed(path: NodePath, new_value: Vector2, old_value: Variant) -> void:
+	pivot_committed.emit(path, new_value, old_value)
+
+
+func _on_interaction_guides_changed(vertical_guides: Array[float], horizontal_guides: Array[float]) -> void:
+	guides_changed.emit(vertical_guides, horizontal_guides)
 
 
 func _on_open_scene_pressed() -> void:
