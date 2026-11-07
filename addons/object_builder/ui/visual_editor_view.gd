@@ -272,6 +272,7 @@ func _on_resource_file_selected(path: String) -> void:
 func show_sprite(sprite: Sprite2D) -> void:
 	if sprite == null or _visual_panel == null:
 		return
+	_resource_picker_mode = "texture"
 	show_node_2d(sprite)
 	_sprite_visual_controls.visible = true
 	_animated_visual_controls.visible = false
@@ -292,6 +293,7 @@ func show_sprite(sprite: Sprite2D) -> void:
 func show_animated_sprite(sprite: AnimatedSprite2D) -> void:
 	if sprite == null or _visual_panel == null:
 		return
+	_resource_picker_mode = "sprite_frames"
 	show_node_2d(sprite)
 	_sprite_visual_controls.visible = false
 	_animated_visual_controls.visible = true
