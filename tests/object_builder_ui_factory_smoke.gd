@@ -51,8 +51,6 @@ func _run() -> void:
 	var empty_label := UIFactory.add_empty_state(empty_host, "Нет объектов")
 	_expect(empty_label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "empty state wraps long messages")
 
-	UIFactory.popup_window_safely(null, Vector2i(400, 300))
-	_expect(true, "safe popup helper tolerates a missing optional window")
 
 	var dialog := AcceptDialog.new()
 	root.add_child(dialog)

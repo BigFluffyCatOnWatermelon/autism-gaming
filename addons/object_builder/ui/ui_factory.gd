@@ -110,28 +110,4 @@ static func clear_children(container: Node) -> void:
 		child.queue_free()
 
 
-static func popup_window_safely(
-	window: Window,
-	preferred_size: Vector2i,
-	fallback_ratio: float = 0.82
-) -> void:
-	if window == null or not is_instance_valid(window):
-		return
 
-	var screen_index := DisplayServer.window_get_current_screen()
-	var usable_size := DisplayServer.screen_get_usable_rect(screen_index).size
-	if usable_size.x <= 0 or usable_size.y <= 0:
-		window.popup_centered_clamped(preferred_size, fallback_ratio)
-		return
-
-	var maximum_size := Vector2i(
-		mini(usable_size.x, maxi(240, int(floor(float(usable_size.x) * 0.90)))),
-		mini(usable_size.y, maxi(180, int(floor(float(usable_size.y) * 0.84))))
-	)
-	window.max_size = maximum_size
-	var requested_size := Vector2i(
-		mini(preferred_size.x, maximum_size.x),
-		mini(preferred_size.y, maximum_size.y)
-	)
-	window.size = requested_size
-	window.popup_centered_clamped(requested_size, fallback_ratio)

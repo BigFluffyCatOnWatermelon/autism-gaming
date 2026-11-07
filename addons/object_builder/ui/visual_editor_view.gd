@@ -16,6 +16,7 @@ signal animation_frame_changed(value: float)
 signal animation_speed_changed(value: float)
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
+const DialogService = preload("res://addons/object_builder/services/dialog_service.gd")
 
 var _visual_panel: VBoxContainer
 var _visual_type_label: Label
@@ -295,11 +296,11 @@ func set_preview_texture(texture: Texture2D) -> void:
 
 
 func popup_texture_dialog() -> void:
-	UIFactory.popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
+	DialogService.popup_window_safely(_texture_dialog, Vector2i(820, 620), 0.88)
 
 
 func popup_sprite_frames_dialog() -> void:
-	UIFactory.popup_window_safely(_frames_dialog, Vector2i(820, 620), 0.88)
+	DialogService.popup_window_safely(_frames_dialog, Vector2i(820, 620), 0.88)
 
 
 func _on_texture_path_submitted(path: String) -> void:

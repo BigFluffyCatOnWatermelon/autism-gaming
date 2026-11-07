@@ -5,6 +5,7 @@ extends Node
 signal creation_profile_selected(profile_id: String)
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
+const DialogService = preload("res://addons/object_builder/services/dialog_service.gd")
 
 var _property_dialog: AcceptDialog
 var _property_name_edit: LineEdit
@@ -311,16 +312,16 @@ func get_node_name() -> String:
 
 
 func popup_property_dialog() -> void:
-	UIFactory.popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
+	DialogService.popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
 
 
 func popup_creation_dialog() -> void:
-	UIFactory.popup_window_safely(_creation_dialog, Vector2i(460, 250), 0.82)
+	DialogService.popup_window_safely(_creation_dialog, Vector2i(460, 250), 0.82)
 
 
 func popup_template_dialog() -> void:
-	UIFactory.popup_window_safely(_template_dialog, Vector2i(440, 170), 0.82)
+	DialogService.popup_window_safely(_template_dialog, Vector2i(440, 170), 0.82)
 
 
 func popup_node_dialog() -> void:
-	UIFactory.popup_window_safely(_node_dialog, Vector2i(430, 300), 0.82)
+	DialogService.popup_window_safely(_node_dialog, Vector2i(430, 300), 0.82)

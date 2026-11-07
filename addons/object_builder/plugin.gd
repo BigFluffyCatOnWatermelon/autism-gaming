@@ -13,6 +13,7 @@ const ObjectBuilderCapabilitySettingsViewScript = preload("res://addons/object_b
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
 const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
+const ObjectBuilderDialogService = preload("res://addons/object_builder/services/dialog_service.gd")
 const ObjectBuilderWorkspaceViewScript = preload("res://addons/object_builder/ui/workspace_view.gd")
 const ObjectBuilderLibraryControllerScript = preload("res://addons/object_builder/controllers/library_controller.gd")
 const ObjectBuilderEditorSessionScript = preload("res://addons/object_builder/controllers/object_editor_session.gd")
@@ -659,7 +660,7 @@ func _on_capability_toggled(enabled: bool, capability_id: String) -> void:
 	_pending_capability_summary = application_plan.get("summary_lines", PackedStringArray())
 	_capability_change_dialog.dialog_text = "\n".join(_pending_capability_summary)
 	_rebuild_capability_list()
-	ObjectBuilderUIFactory.popup_window_safely(_capability_change_dialog, Vector2i(560, 360), 0.82)
+	ObjectBuilderDialogService.popup_window_safely(_capability_change_dialog, Vector2i(560, 360), 0.82)
 
 
 func _on_capability_change_confirmed() -> void:
@@ -742,7 +743,7 @@ func _on_capability_settings_pressed(capability_id: String) -> void:
 		_editing_capability_selection,
 		ObjectCapabilityCatalog.get_settings_schema(capability_id)
 	)
-	ObjectBuilderUIFactory.popup_window_safely(
+	ObjectBuilderDialogService.popup_window_safely(
 		_capability_settings_dialog,
 		Vector2i(520, 460),
 		0.82

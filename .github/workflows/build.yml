@@ -43,6 +43,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder dialog service tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_dialog_service_smoke.gd 2>&1 | tee object-builder-dialog-service-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-dialog-service-test.log; then
+            echo "Object Builder dialog service tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder UI factory smoke tests
         shell: bash
         run: |
