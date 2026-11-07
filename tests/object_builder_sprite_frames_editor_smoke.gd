@@ -47,12 +47,20 @@ func _run() -> void:
 	_expect(reordered_texture != null and reordered_texture.get_image().get_pixel(0, 0) == Color.RED, "frame reordering changes the actual SpriteFrames order")
 	_expect(bool(dialog.call("replace_selected_frame", first_texture)), "selected frame texture can be replaced")
 	dialog.call("_on_fps_changed", 12.0)
+	dialog.call("_on_loop_mode_selected", 2)
+	_expect(int(working.get_animation_loop_mode(&"walk")) == 2, "ping-pong loop mode is editable")
 	dialog.call("_on_loop_mode_selected", 0)
 	_expect(is_equal_approx(working.get_animation_speed(&"walk"), 12.0), "animation FPS is editable")
-	_expect(int(working.get_animation_loop_mode(&"walk")) == 0, "loop mode is editable")
+	_expect(int(working.get_animation_loop_mode(&"walk")) == 0, "no-loop mode is editable")
 	_expect(bool(dialog.call("remove_selected_frame")), "selected frame can be removed")
 	_expect(int(dialog.call("get_frame_count")) == 1, "removing a frame updates the frame list")
 
+	dialog.call("open_for_sprite_frames", null)
+	var new_resource := dialog.call("get_working_frames") as SpriteFrames
+	_expect(int(dialog.call("get_animation_count")) == 1 and new_resource.has_animation(&"default"), "new SpriteFrames resource starts with an editable default animation")
+	_expect(int(dialog.call("get_frame_count")) == 0, "new default animation starts empty")
+	dialog.call("_remove_current_animation")
+	_expect(int(dialog.call("get_animation_count")) == 1 and (dialog.call("get_working_frames") as SpriteFrames).has_animation(&"default"), "removing the last animation safely recreates an empty default")
 	dialog.call("_on_confirmed")
 	_expect(accepted_frames.size() == 1, "applying the editor emits a completed resource")
 	if not accepted_frames.is_empty():
