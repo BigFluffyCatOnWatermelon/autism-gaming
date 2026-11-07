@@ -2091,7 +2091,47 @@ func _on_sprite_quick_setting_changed(
 					clampf(float(value), -10.0, 10.0),
 					"изменить скорость анимации"
 				)
+			"animation_speed", "animation_loop":
+				_commit_sprite_frames_animation_setting(
+					animated,
+					property_name,
+					value
+				)
 		_refresh_visual_editor(animated)
+
+
+func _commit_sprite_frames_animation_setting(
+	sprite: AnimatedSprite2D,
+	setting_name: String,
+	value: Variant
+) -> void:
+	if sprite == null or sprite.sprite_frames == null:
+		return
+	var frames := sprite.sprite_frames
+	var animation_name := sprite.animation
+	if not frames.has_animation(animation_name):
+		return
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	if setting_name == "animation_speed":
+		var old_speed := frames.get_animation_speed(animation_name)
+		var new_speed := clampf(float(value), 0.1, 120.0)
+		if is_equal_approx(old_speed, new_speed):
+			return
+		undo_redo.create_action("Object Builder: изменить FPS анимации", 0, _get_open_object_scene_root())
+		undo_redo.add_do_method(frames, "set_animation_speed", animation_name, new_speed)
+		undo_redo.add_undo_method(frames, "set_animation_speed", animation_name, old_speed)
+	elif setting_name == "animation_loop":
+		var old_loop := frames.get_animation_loop(animation_name)
+		var new_loop := bool(value)
+		if old_loop == new_loop:
+			return
+		undo_redo.create_action("Object Builder: изменить зацикливание анимации", 0, _get_open_object_scene_root())
+		undo_redo.add_do_method(frames, "set_animation_loop", animation_name, new_loop)
+		undo_redo.add_undo_method(frames, "set_animation_loop", animation_name, old_loop)
+	else:
+		return
+	undo_redo.commit_action()
+	_refresh_visual_editor(sprite)
 
 
 func _on_visual_part_resource_edit_requested(path: NodePath) -> void:

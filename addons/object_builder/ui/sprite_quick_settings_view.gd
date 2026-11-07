@@ -22,6 +22,16 @@ var _animation_option: OptionButton
 var _animated_frame: SpinBox
 var _animated_speed: SpinBox
 var _animation_hint: Label
+var _animation_fps: SpinBox
+var _animation_loop: CheckBox
+var _animation_play_button: Button
+var _animation_preview: TextureRect
+var _preview_frames: SpriteFrames
+var _preview_animation := StringName("")
+var _preview_frame := 0
+var _preview_elapsed := 0.0
+var _preview_playing := false
+var _preview_speed_scale := 1.0
 var _selected_path := NodePath("")
 
 
@@ -123,6 +133,28 @@ func _build_animated_sprite_controls() -> void:
 	_animated_speed.value_changed.connect(_on_animated_speed_changed)
 	UIFactory.add_labeled_control(animation_row, "Скорость", _animated_speed, 92.0)
 
+	var playback_row := HBoxContainer.new()
+	_animated_controls.add_child(playback_row)
+	_animation_play_button = Button.new()
+	_animation_play_button.text = "▶"
+	_animation_play_button.tooltip_text = "Воспроизвести локальный предпросмотр анимации"
+	_animation_play_button.pressed.connect(_on_animation_play_pressed)
+	playback_row.add_child(_animation_play_button)
+	_animation_fps = UIFactory.make_spin_box(0.1, 120.0, 0.1)
+	_animation_fps.value_changed.connect(_on_animation_fps_changed)
+	UIFactory.add_labeled_control(playback_row, "FPS", _animation_fps, 90.0)
+	_animation_loop = CheckBox.new()
+	_animation_loop.text = "Зациклить"
+	_animation_loop.toggled.connect(_on_animation_loop_toggled)
+	playback_row.add_child(_animation_loop)
+
+	_animation_preview = TextureRect.new()
+	_animation_preview.custom_minimum_size = Vector2(0, 104)
+	_animation_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_animation_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_animation_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_animated_controls.add_child(_animation_preview)
+
 	_animation_hint = Label.new()
 	_animation_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_animation_hint.add_theme_font_size_override("font_size", 10)
@@ -138,6 +170,8 @@ func set_selected_node(node: Node, path: NodePath) -> void:
 	_panel.visible = sprite != null or animated != null
 	_sprite_controls.visible = sprite != null
 	_animated_controls.visible = animated != null
+	if animated == null:
+		_stop_animation_preview()
 	if sprite != null:
 		_hframes.set_value_no_signal(float(sprite.hframes))
 		_vframes.set_value_no_signal(float(sprite.vframes))
@@ -177,8 +211,105 @@ func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 		_animated_frame.editable = frame_count > 0
 		_animated_frame.max_value = maxf(0.0, float(frame_count - 1))
 		_animated_frame.set_value_no_signal(float(clampi(sprite.frame, 0, maxi(0, frame_count - 1))))
-		_animation_hint.text = "Выбери анимацию и кадр. Воспроизведение включается кнопкой на холсте."
+		_animation_hint.text = "Назначь SpriteFrames через кнопку «Кадры…» в списке частей."
+		_preview_frames = null
+		_preview_animation = StringName("")
+		_animation_fps.set_value_no_signal(8.0)
+		_animation_loop.set_pressed_no_signal(true)
+		_animation_preview.texture = null
+	else:
+		_preview_frames = frames
+		_preview_animation = sprite.animation
+		_preview_frame = clampi(sprite.frame, 0, maxi(0, frame_count - 1))
+		_preview_speed_scale = sprite.speed_scale
+		if frame_count > 0:
+			_animation_fps.set_value_no_signal(maxf(0.1, frames.get_animation_speed(sprite.animation)))
+			_animation_loop.set_pressed_no_signal(frames.get_animation_loop(sprite.animation))
+			_update_animation_preview_texture()
+		else:
+			_animation_fps.set_value_no_signal(8.0)
+			_animation_loop.set_pressed_no_signal(true)
+			_animation_preview.texture = null
+	_animation_play_button.disabled = frames == null or not frames.has_animation(sprite.animation) or frames.get_frame_count(sprite.animation) <= 0 if frames != null else true
+	_animation_play_button.text = "▶"
 	_animated_speed.set_value_no_signal(sprite.speed_scale)
+	set_process(false)
+
+
+func _process(delta: float) -> void:
+	if not _preview_playing or _preview_frames == null or not _preview_frames.has_animation(_preview_animation):
+		return
+	var frame_count := _preview_frames.get_frame_count(_preview_animation)
+	if frame_count <= 0:
+		_stop_animation_preview()
+		return
+	var fps := maxf(0.1, _preview_frames.get_animation_speed(_preview_animation) * absf(_preview_speed_scale))
+	var duration := _preview_frames.get_frame_duration(_preview_animation, _preview_frame) / fps
+	_preview_elapsed += delta
+	if _preview_elapsed < duration:
+		return
+	_preview_elapsed = 0.0
+	if _preview_frame + 1 >= frame_count:
+		if _animation_loop.button_pressed:
+			_preview_frame = 0
+		else:
+			_preview_frame = frame_count - 1
+			_stop_animation_preview()
+		else:
+		_preview_frame += 1
+	_update_animation_preview_texture()
+
+
+func _update_animation_preview_texture() -> void:
+	if _preview_frames == null or not _preview_frames.has_animation(_preview_animation):
+		_animation_preview.texture = null
+		return
+	var count := _preview_frames.get_frame_count(_preview_animation)
+	if count <= 0:
+		_animation_preview.texture = null
+		return
+	_preview_frame = clampi(_preview_frame, 0, count - 1)
+	_animation_preview.texture = _preview_frames.get_frame_texture(_preview_animation, _preview_frame)
+
+
+func _stop_animation_preview() -> void:
+	_preview_playing = false
+	_preview_elapsed = 0.0
+	set_process(false)
+	if _animation_play_button != null:
+		_animation_play_button.text = "▶"
+
+
+func _on_animation_play_pressed() -> void:
+	if _preview_frames == null or not _preview_frames.has_animation(_preview_animation):
+		return
+	if _preview_playing:
+		_stop_animation_preview()
+		return
+	var count := _preview_frames.get_frame_count(_preview_animation)
+	if count <= 0:
+		return
+	if _preview_frame >= count - 1 and not _animation_loop.button_pressed:
+		_preview_frame = 0
+	_preview_playing = true
+	_preview_elapsed = 0.0
+	_animation_play_button.text = "Ⅱ"
+	_update_animation_preview_texture()
+	set_process(true)
+
+
+func _on_animation_fps_changed(value: float) -> void:
+	if not _selected_path.is_empty():
+		property_changed.emit(_selected_path, "animation_speed", clampf(value, 0.1, 120.0))
+
+
+func _on_animation_loop_toggled(enabled: bool) -> void:
+	if not _selected_path.is_empty():
+		property_changed.emit(_selected_path, "animation_loop", enabled)
+
+
+func is_animation_preview_playing() -> bool:
+	return _preview_playing
 
 
 func is_visible_for_selection() -> bool:
@@ -209,17 +340,22 @@ func _on_region_value_changed(value: float, property_name: String) -> void:
 func _on_animation_selected(index: int) -> void:
 	if _selected_path.is_empty() or index < 0 or index >= _animation_option.item_count:
 		return
-	property_changed.emit(
-		_selected_path,
-		"animation",
-		StringName(str(_animation_option.get_item_metadata(index)))
-	)
+	var animation_name := StringName(str(_animation_option.get_item_metadata(index)))
+	_preview_animation = animation_name
+	_preview_frame = 0
+	_preview_elapsed = 0.0
+	_update_animation_preview_texture()
+	_stop_animation_preview()
+	property_changed.emit(_selected_path, "animation", animation_name)
 
 
 func _on_animated_frame_changed(value: float) -> void:
 	if _selected_path.is_empty():
 		return
-	property_changed.emit(_selected_path, "frame", int(round(value)))
+	_preview_frame = int(round(value))
+	_preview_elapsed = 0.0
+	_update_animation_preview_texture()
+	property_changed.emit(_selected_path, "frame", _preview_frame)
 
 
 func _on_animated_speed_changed(value: float) -> void:
