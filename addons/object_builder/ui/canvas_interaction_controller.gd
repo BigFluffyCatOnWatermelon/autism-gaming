@@ -45,6 +45,9 @@ var _drag_start_parent_position := Vector2.ZERO
 var _drag_group_nodes: Array[Node2D] = []
 var _drag_group_paths: Array[NodePath] = []
 var _drag_group_old_positions: Array[Vector2] = []
+var _drag_group_old_scales: Array[Vector2] = []
+var _drag_group_old_rotations: Array[float] = []
+var _drag_group_old_pivots: Array[Vector2] = []
 var _drag_start_world := Vector2.ZERO
 var _drag_start_pivot_world := Vector2.ZERO
 var _pan_active := false
@@ -365,24 +368,85 @@ func _get_selected_node() -> Node:
 	return _preview_instance.get_node_or_null(_selected_path)
 
 
-func _get_transform_handle_positions() -> Dictionary:
-	var corners: PackedVector2Array = CanvasGeometry.selected_screen_corners(
-		_preview_instance,
-		_selected_path,
-		_viewport
-	)
-	var handles := CanvasGeometry.get_transform_handle_positions(corners, _surface.size, Vector2(_viewport.size))
-	var selected := _get_selected_node() as Node2D
-	if selected != null:
-		var scale_to_surface := Vector2(
-			_surface.size.x / maxf(_viewport.size.x, 1.0),
-			_surface.size.y / maxf(_viewport.size.y, 1.0)
-		)
-		var pivot_screen := _world_to_surface(_get_pivot_world(selected), scale_to_surface)
-		handles["pivot"] = pivot_screen
-		handles["rotate"] = pivot_screen + Vector2(0.0, -28.0)
-	return handles
+func _get_selection_viewport_corners() -> PackedVector2Array:
+	if _selected_paths.size() <= 1:
+		return CanvasGeometry.selected_screen_corners(_preview_instance, _selected_path, _viewport)
+	var has_bounds := false
+	var combined_bounds := Rect2()
+	for path in _selected_paths:
+		var node := _preview_instance.get_node_or_null(path)
+		if node == null:
+			continue
+		var bounds: Dictionary = CanvasGeometry.collect_visual_bounds(node)
+		if not bounds.has("rect"):
+			continue
+		if not has_bounds:
+			combined_bounds = bounds["rect"]
+			has_bounds = true
+		else:
+			combined_bounds = combined_bounds.merge(bounds["rect"])
+	if not has_bounds:
+		return PackedVector2Array()
+	var canvas_transform := _viewport.get_canvas_transform()
+	var top_left := canvas_transform * combined_bounds.position
+	var bottom_right := canvas_transform * combined_bounds.end
+	return PackedVector2Array([
+		top_left,
+		Vector2(bottom_right.x, top_left.y),
+		bottom_right,
+		Vector2(top_left.x, bottom_right.y),
+		top_left
+	])
 
+
+func _get_group_pivot_world() -> Vector2:
+	if _selected_paths.size() <= 1:
+		var selected := _get_selected_node() as Node2D
+		return _get_pivot_world(selected) if selected != null else Vector2.ZERO
+	var corners := _get_selection_viewport_corners()
+	if corners.size() < 4:
+		return Vector2.ZERO
+	var top_left_world := _viewport.get_canvas_transform().affine_inverse() * corners[0]
+	var bottom_right_world := _viewport.get_canvas_transform().affine_inverse() * corners[2]
+	return (top_left_world + bottom_right_world) * 0.5
+
+
+func _get_selected_transform_nodes() -> Array[Node2D]:
+	var result: Array[Node2D] = []
+	if _preview_instance == null or not is_instance_valid(_preview_instance):
+		return result
+	for path in _selected_paths:
+		if is_path_locked(path):
+			continue
+		var node := _preview_instance.get_node_or_null(path) as Node2D
+		if node == null:
+			continue
+		var has_selected_ancestor := false
+		for other_path in _selected_paths:
+			if other_path == path:
+				continue
+			var other_node := _preview_instance.get_node_or_null(other_path)
+			if other_node != null and other_node.is_ancestor_of(node):
+				has_selected_ancestor = true
+				break
+		if not has_selected_ancestor:
+			result.append(node)
+	return result
+
+
+func _get_transform_handle_positions() -> Dictionary:
+	var corners := _get_selection_viewport_corners()
+	var handles := CanvasGeometry.get_transform_handle_positions(corners, _surface.size, Vector2(_viewport.size))
+	if handles.is_empty():
+		return handles
+	var scale_to_surface := Vector2(
+		_surface.size.x / maxf(_viewport.size.x, 1.0),
+		_surface.size.y / maxf(_viewport.size.y, 1.0)
+	)
+	var pivot_screen := _world_to_surface(_get_group_pivot_world(), scale_to_surface)
+	handles["pivot"] = pivot_screen
+	handles["rotate"] = pivot_screen + Vector2(0.0, -28.0)
+	return handles
 
 func _begin_selection(screen_position: Vector2) -> void:
 	if not _editing_enabled or _preview_instance == null:
@@ -402,10 +466,10 @@ func _begin_selection(screen_position: Vector2) -> void:
 		_surface.queue_redraw()
 		return
 	var handles := _get_transform_handle_positions()
-	if selected != null and _selected_paths.size() == 1 and not is_path_locked(_selected_path) and handles.has("scale") and screen_position.distance_to(handles["scale"]) <= 10.0:
+	if selected != null and not _get_selected_transform_nodes().is_empty() and handles.has("scale") and screen_position.distance_to(handles["scale"]) <= 10.0:
 		_begin_transform_drag("scale", selected, screen_position)
 		return
-	if selected != null and _selected_paths.size() == 1 and not is_path_locked(_selected_path) and handles.has("rotate") and screen_position.distance_to(handles["rotate"]) <= 10.0:
+	if selected != null and not _get_selected_transform_nodes().is_empty() and handles.has("rotate") and screen_position.distance_to(handles["rotate"]) <= 10.0:
 		_begin_transform_drag("rotate", selected, screen_position)
 		return
 
@@ -464,19 +528,29 @@ func _begin_transform_drag(mode: String, node: Node2D, screen_position: Vector2)
 	if node == null:
 		return
 	var world_position := _screen_to_world(screen_position)
+	_drag_group_nodes = _get_selected_transform_nodes()
+	if _drag_group_nodes.is_empty():
+		_drag_group_nodes.append(node)
+	_drag_group_paths.clear()
+	_drag_group_old_positions.clear()
+	_drag_group_old_scales.clear()
+	_drag_group_old_rotations.clear()
+	_drag_group_old_pivots.clear()
+	for selected_node in _drag_group_nodes:
+		_drag_group_paths.append(_preview_instance.get_path_to(selected_node))
+		_drag_group_old_positions.append(selected_node.global_position)
+		_drag_group_old_scales.append(selected_node.scale)
+		_drag_group_old_rotations.append(selected_node.rotation_degrees)
+		_drag_group_old_pivots.append(_get_pivot_world(selected_node))
 	_drag_node = node
-	_drag_group_nodes = [node]
-	_drag_group_paths = [_selected_path]
-	_drag_group_old_positions = [node.global_position]
-	_drag_start_pivot_world = _get_pivot_world(node)
 	_drag_path = _selected_path
 	_drag_mode = mode
+	_drag_start_pivot_world = _get_group_pivot_world()
+	_drag_start_vector = world_position - _drag_start_pivot_world
 	if mode == "scale":
 		_drag_old_scale = node.scale
-		_drag_start_vector = world_position - _drag_start_pivot_world
 	elif mode == "rotate":
 		_drag_old_rotation = node.rotation_degrees
-		_drag_start_vector = world_position - _drag_start_pivot_world
 		_drag_start_angle = _drag_start_vector.angle()
 
 
@@ -488,13 +562,29 @@ func _update_drag(screen_position: Vector2) -> void:
 		var current_vector := world_position - _drag_start_pivot_world
 		var start_distance := maxf(_drag_start_vector.length(), 0.001)
 		var scale_factor := clampf(current_vector.length() / start_distance, 0.02, 100.0)
-		_drag_node.scale = _drag_old_scale * scale_factor
-		_drag_node.global_position += _drag_start_pivot_world - _get_pivot_world(_drag_node)
+		for index in range(_drag_group_nodes.size()):
+			var node := _drag_group_nodes[index]
+			if node == null or not is_instance_valid(node):
+				continue
+			var target_pivot := _drag_start_pivot_world + (
+				_drag_group_old_pivots[index] - _drag_start_pivot_world
+			) * scale_factor
+			node.scale = _drag_group_old_scales[index] * scale_factor
+			var pivot_offset := node.global_transform * _get_pivot_local(node) - node.global_position
+			node.global_position = target_pivot - pivot_offset
 	elif _drag_mode == "rotate":
 		var current_vector := world_position - _drag_start_pivot_world
 		var rotation_delta := wrapf(current_vector.angle() - _drag_start_angle, -PI, PI)
-		_drag_node.rotation_degrees = _drag_old_rotation + rad_to_deg(rotation_delta)
-		_drag_node.global_position += _drag_start_pivot_world - _get_pivot_world(_drag_node)
+		for index in range(_drag_group_nodes.size()):
+			var node := _drag_group_nodes[index]
+			if node == null or not is_instance_valid(node):
+				continue
+			var target_pivot := _drag_start_pivot_world + (
+				_drag_group_old_pivots[index] - _drag_start_pivot_world
+			).rotated(rotation_delta)
+			node.rotation_degrees = _drag_group_old_rotations[index] + rad_to_deg(rotation_delta)
+			var pivot_offset := node.global_transform * _get_pivot_local(node) - node.global_position
+			node.global_position = target_pivot - pivot_offset
 	else:
 		var delta := world_position - _drag_group_start_world
 		for index in range(_drag_group_nodes.size()):
@@ -526,21 +616,19 @@ func _finish_drag() -> void:
 				"new": node.global_position,
 				"old": old_position
 			})
-	if _drag_mode == "scale" and _drag_node != null:
-		if _drag_node.scale != _drag_old_scale:
+		if _drag_mode == "scale" and node.scale != _drag_group_old_scales[index]:
 			changes.append({
-				"path": _drag_path,
+				"path": path,
 				"property": "scale",
-				"new": _drag_node.scale,
-				"old": _drag_old_scale
+				"new": node.scale,
+				"old": _drag_group_old_scales[index]
 			})
-	elif _drag_mode == "rotate" and _drag_node != null:
-		if not is_equal_approx(_drag_node.rotation_degrees, _drag_old_rotation):
+		elif _drag_mode == "rotate" and not is_equal_approx(node.rotation_degrees, _drag_group_old_rotations[index]):
 			changes.append({
-				"path": _drag_path,
+				"path": path,
 				"property": "rotation_degrees",
-				"new": _drag_node.rotation_degrees,
-				"old": _drag_old_rotation
+				"new": node.rotation_degrees,
+				"old": _drag_group_old_rotations[index]
 			})
 	if _drag_mode == "move" and _drag_group_nodes.size() == 1 and changes.size() == 1:
 		changes[0]["property"] = "position"
@@ -567,6 +655,9 @@ func _clear_drag() -> void:
 	_drag_group_nodes.clear()
 	_drag_group_paths.clear()
 	_drag_group_old_positions.clear()
+	_drag_group_old_scales.clear()
+	_drag_group_old_rotations.clear()
+	_drag_group_old_pivots.clear()
 	_drag_node = null
 	_drag_path = NodePath("")
 	_drag_mode = "move"
