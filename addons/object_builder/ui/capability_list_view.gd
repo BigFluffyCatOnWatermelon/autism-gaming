@@ -27,6 +27,9 @@ var _selection_bar: PanelContainer
 var _related_section: PanelContainer
 var _related_title: Label
 var _related_container: HFlowContainer
+var _recommendation_section: PanelContainer
+var _recommendation_title: Label
+var _recommendation_container: HFlowContainer
 var _selection_summary: Label
 var _add_selected_button: Button
 var _clear_selection_button: Button
@@ -70,6 +73,7 @@ func build(categories: Array[Dictionary]) -> void:
 
 	_build_selection_bar()
 	_build_related_section()
+	_build_recommendation_section()
 
 	_entries_scroll = ScrollContainer.new()
 	_entries_scroll.custom_minimum_size = Vector2(0, 420)
@@ -147,6 +151,56 @@ func _build_related_section() -> void:
 	content.add_child(_related_container)
 
 
+func _build_recommendation_section() -> void:
+	_recommendation_section = PanelContainer.new()
+	_recommendation_section.visible = false
+	add_child(_recommendation_section)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 4)
+	_recommendation_section.add_child(content)
+
+	_recommendation_title = Label.new()
+	_recommendation_title.text = "ПОДХОДИТ ЭТОМУ ОБЪЕКТУ"
+	_recommendation_title.add_theme_font_size_override("font_size", 10)
+	content.add_child(_recommendation_title)
+
+	_recommendation_container = HFlowContainer.new()
+	_recommendation_container.add_theme_constant_override("h_separation", 5)
+	_recommendation_container.add_theme_constant_override("v_separation", 4)
+	content.add_child(_recommendation_container)
+
+
+func set_recommended_entries(entries: Array[Dictionary]) -> void:
+	if _recommendation_container == null:
+		return
+	UIFactory.clear_children(_recommendation_container)
+	_recommendation_section.visible = not entries.is_empty()
+	if entries.is_empty():
+		return
+	_recommendation_title.text = "ПОДХОДИТ ЭТОМУ ОБЪЕКТУ"
+	for entry in entries:
+		var capability := entry.get("definition") as ObjectCapabilityDefinition
+		if capability == null:
+			continue
+		var select_button := Button.new()
+		select_button.text = "+ " + capability.display_name
+		select_button.custom_minimum_size = Vector2(145, 30)
+		select_button.icon = CapabilityIconRegistryScript.get_icon(capability)
+		var relation_type := str(entry.get("relation_type", "related"))
+		var explanation := str(entry.get("explanation", ""))
+		select_button.tooltip_text = _get_relation_caption(relation_type)
+		if not explanation.is_empty():
+			select_button.tooltip_text += "\n" + explanation
+		select_button.tooltip_text += "\nОтметит механику в общем наборе, но не добавит её в объект."
+		select_button.pressed.connect(_on_selection_toggled.bind(true, capability.capability_id))
+		_recommendation_container.add_child(select_button)
+
+
+func get_recommendation_button_count() -> int:
+	return _recommendation_container.get_child_count() if _recommendation_container != null else 0
+
+
 func set_related_entries(entries: Array[Dictionary], focused_name: String = "") -> void:
 	if _related_container == null:
 		return
@@ -218,6 +272,7 @@ func show_empty_state(message: String) -> void:
 	UIFactory.add_empty_state(entries_container, message)
 	_entries_scroll.scroll_vertical = 0
 	set_related_entries([])
+	set_recommended_entries([])
 	set_selected_count(_selected_count)
 
 
