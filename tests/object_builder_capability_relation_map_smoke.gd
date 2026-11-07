@@ -44,6 +44,8 @@ func _run() -> void:
 	map.open(host_control, focused, entries)
 	_expect(int(map.call("get_node_count")) >= 3, "relation map creates a focused node and related capability nodes")
 	_expect(int(map.call("get_connection_count")) == 2, "each related capability receives a visible graph connection")
+	_expect(bool(map.call("has_connection", "FocusedCapability", "Capability_0")), "outgoing relation is drawn from the focused node")
+	_expect(bool(map.call("has_connection", "Capability_1", "FocusedCapability")), "incoming relation is drawn toward the focused node")
 	_expect(int(map.call("get_focus_button_count")) == 2, "each related node has a navigation action")
 	_expect(focused_id.is_empty(), "opening the map does not change the catalog focus")
 	map.call("_on_focus_pressed", "can_move")
