@@ -6,10 +6,12 @@ class_name CapabilityCatalogController
 const SelectionSessionScript = preload("res://addons/object_builder/controllers/capability_selection_session.gd")
 const BatchPlannerScript = preload("res://addons/object_builder/services/capability_batch_planner.gd")
 const PresetRegistryScript = preload("res://addons/object_builder/services/capability_preset_registry.gd")
+const PresetStoreScript = preload("res://addons/object_builder/services/capability_preset_store.gd")
 
 var _selection_session: RefCounted = SelectionSessionScript.new()
 var _focused_capability_id := ""
 var _active_preset_id := ""
+var _preset_store: RefCounted = PresetStoreScript.new()
 
 
 func set_selected(capability_id: String, selected: bool) -> void:
@@ -47,7 +49,7 @@ func get_selected_count() -> int:
 
 func set_active_preset(preset_id: String) -> void:
 	var normalized_id := preset_id.strip_edges().to_lower()
-	var preset := PresetRegistryScript.get_preset(normalized_id)
+	var preset := _get_preset_definition(normalized_id)
 	_active_preset_id = normalized_id if not preset.is_empty() else ""
 
 
@@ -57,7 +59,7 @@ func get_active_preset_id() -> String:
 
 func build_preset_summaries() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for preset in PresetRegistryScript.get_presets():
+	for preset in _get_all_presets():
 		var capability_ids: Array = preset.get("capability_ids", [])
 		var ready_count := 0
 		var installed_count := 0
@@ -76,9 +78,47 @@ func build_preset_summaries() -> Array[Dictionary]:
 			"icon": str(preset.get("icon", "shapes")),
 			"total_count": capability_ids.size(),
 			"ready_count": ready_count,
-			"selected_count": selected_count
+			"selected_count": selected_count,
+			"is_custom": bool(preset.get("is_custom", false))
 		})
 	return result
+
+
+func save_custom_preset(preset: Dictionary) -> Dictionary:
+	return _preset_store.call("save_preset", preset)
+
+
+func duplicate_custom_preset(source_id: String, new_id: String, new_name: String) -> Dictionary:
+	return _preset_store.call("duplicate_preset", source_id, new_id, new_name)
+
+
+func delete_custom_preset(preset_id: String) -> Dictionary:
+	if _active_preset_id == preset_id:
+		_active_preset_id = ""
+	return _preset_store.call("delete_preset", preset_id)
+
+
+func get_custom_presets() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for preset in _preset_store.call("load_presets"):
+		var copy: Dictionary = preset.duplicate(true)
+		copy["is_custom"] = true
+		result.append(copy)
+	return result
+
+
+func _get_all_presets() -> Array[Dictionary]:
+	var result := PresetRegistryScript.get_presets()
+	for preset in get_custom_presets():
+		result.append(preset)
+	return result
+
+
+func _get_preset_definition(preset_id: String) -> Dictionary:
+	for preset in get_custom_presets():
+		if str(preset.get("id", "")) == preset_id:
+			return preset
+	return PresetRegistryScript.get_preset(preset_id)
 
 
 func build_active_preset_details(
@@ -86,7 +126,7 @@ func build_active_preset_details(
 ) -> Dictionary:
 	if _active_preset_id.is_empty():
 		return {}
-	var preset := PresetRegistryScript.get_preset(_active_preset_id)
+	var preset := _get_preset_definition(_active_preset_id)
 	if preset.is_empty():
 		return {}
 
