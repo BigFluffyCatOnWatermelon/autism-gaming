@@ -235,11 +235,12 @@ func build_visible_entries(
 				candidates.append(collection_definition)
 	elif selected_mode == "templates":
 		candidates.assign(templates)
+	elif selected_mode == "favorites":
+		for definition in definitions + templates:
+			if is_favorite(definition.object_id):
+				candidates.append(definition)
 	else:
-		for definition in definitions:
-			if selected_mode == "favorites" and not is_favorite(definition.object_id):
-				continue
-			candidates.append(definition)
+		candidates.assign(definitions)
 
 	var entries: Array[Dictionary] = []
 	for definition in candidates:
