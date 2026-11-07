@@ -1073,6 +1073,7 @@ func _update_new_object_type_hint() -> void:
 			"Этот профиль больше недоступен. Можно выбрать другой или начать без профиля."
 		)
 		return
+	_dialog_view.call("set_creation_category", profile.suggested_category)
 	_dialog_view.call(
 		"set_creation_profile_hint",
 		"%s\nПрофиль предлагает настройки, но не ограничивает возможности объекта." % profile.description
