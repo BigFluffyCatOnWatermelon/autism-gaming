@@ -436,6 +436,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_canvas_view.name = "ObjectCanvasView"
 	_canvas_view.call("build")
 	_canvas_view.connect("part_selected", Callable(self, "_on_canvas_part_selected"))
+	_canvas_view.connect("parts_selected", Callable(self, "_on_canvas_parts_selected"))
 	_canvas_view.connect("part_context_action_requested", Callable(self, "_on_canvas_part_context_action_requested"))
 	_canvas_view.connect("transform_committed", Callable(self, "_on_canvas_transform_committed"))
 	_canvas_view.connect("batch_transform_committed", Callable(self, "_on_canvas_batch_transform_committed"))
@@ -2523,6 +2524,11 @@ func _on_canvas_part_selected(path: NodePath) -> void:
 		_visual_parts_view.call("set_selected_path", path)
 	if _workspace_view != null:
 		_workspace_view.call("set_selection_info", node.name, str(node.get_path()))
+
+
+func _on_canvas_parts_selected(paths: Array[NodePath]) -> void:
+	if _visual_parts_view != null:
+		_visual_parts_view.call("set_selected_paths", paths)
 
 
 func _on_canvas_part_context_action_requested(action: String, path: NodePath) -> void:
