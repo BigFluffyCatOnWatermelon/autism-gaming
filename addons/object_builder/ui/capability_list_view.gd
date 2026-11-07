@@ -16,6 +16,7 @@ signal preset_action_requested(action: String, preset_id: String)
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 const CapabilityIconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
+const RelationMapViewScript = preload("res://addons/object_builder/ui/capability_relation_map_view.gd")
 const PAGE_SIZE := 20
 
 var search_input: LineEdit
@@ -30,6 +31,9 @@ var _selection_bar: PanelContainer
 var _related_section: PanelContainer
 var _related_title: Label
 var _related_container: HFlowContainer
+var _related_map_button: Button
+var _related_entries: Array[Dictionary] = []
+var _related_focused_definition: ObjectCapabilityDefinition
 var _recommendation_section: PanelContainer
 var _recommendation_title: Label
 var _recommendation_container: HFlowContainer
@@ -165,6 +169,12 @@ func _build_related_section() -> void:
 	_related_container.add_theme_constant_override("h_separation", 5)
 	_related_container.add_theme_constant_override("v_separation", 4)
 	content.add_child(_related_container)
+
+	_related_map_button = Button.new()
+	_related_map_button.text = "Открыть интерактивную карту"
+	_related_map_button.visible = false
+	_related_map_button.pressed.connect(_on_relation_map_pressed)
+	content.add_child(_related_map_button)
 
 
 func _build_recommendation_section() -> void:
@@ -470,11 +480,18 @@ func get_recommendation_card_count() -> int:
 	return get_recommendation_button_count()
 
 
-func set_related_entries(entries: Array[Dictionary], focused_name: String = "") -> void:
+func set_related_entries(
+	entries: Array[Dictionary],
+	focused_name: String = "",
+	focused_definition: ObjectCapabilityDefinition = null
+) -> void:
 	if _related_container == null:
 		return
+	_related_entries = entries.duplicate()
+	_related_focused_definition = focused_definition
 	UIFactory.clear_children(_related_container)
 	_related_section.visible = not entries.is_empty()
+	_related_map_button.visible = not entries.is_empty() and focused_definition != null
 	if entries.is_empty():
 		return
 	_related_title.text = (
@@ -506,6 +523,14 @@ func set_related_entries(entries: Array[Dictionary], focused_name: String = "") 
 
 func get_related_button_count() -> int:
 	return _related_container.get_child_count() if _related_container != null else 0
+
+
+func _on_relation_map_pressed() -> void:
+	if _related_focused_definition == null or _related_entries.is_empty():
+		return
+	var map_view = RelationMapViewScript.new()
+	map_view.focus_requested.connect(_on_focus_requested)
+	map_view.open(self, _related_focused_definition, _related_entries)
 
 
 func get_search_query() -> String:
