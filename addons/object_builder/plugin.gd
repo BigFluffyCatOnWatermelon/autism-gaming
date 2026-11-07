@@ -764,7 +764,19 @@ func _rebuild_capability_list() -> void:
 		_working_definition.category,
 		_working_definition.tags
 	)
-	_capability_view.call("set_recommended_entries", recommended_entries)
+	var recommendation_context_parts := PackedStringArray()
+	if not _working_definition.display_name.strip_edges().is_empty():
+		recommendation_context_parts.append(_working_definition.display_name.strip_edges())
+	var profile_name := ObjectCreationProfileRegistry.get_display_name(_working_definition.object_type)
+	if not profile_name.is_empty():
+		recommendation_context_parts.append(profile_name)
+	elif not _working_definition.category.strip_edges().is_empty():
+		recommendation_context_parts.append(_working_definition.category.strip_edges())
+	_capability_view.call(
+		"set_recommended_entries",
+		recommended_entries,
+		" · ".join(recommendation_context_parts)
+	)
 
 func _on_capability_focus_requested(capability_id: String) -> void:
 	if _working_definition == null:
