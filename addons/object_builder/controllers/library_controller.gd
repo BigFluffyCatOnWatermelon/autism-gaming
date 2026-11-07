@@ -187,6 +187,13 @@ func get_visible_definition(index: int) -> ObjectDefinition:
 	return _visible_definitions[index]
 
 
+func get_category_display_name(category_id: String) -> String:
+	var clean_id := category_id.strip_edges()
+	if clean_id.is_empty():
+		return "Без категории"
+	return str(CATEGORY_LABELS.get(clean_id, clean_id))
+
+
 func get_category_options(_selected_value: String = "") -> Array[Dictionary]:
 	var categories: Array[String] = []
 	for category_key in CATEGORY_LABELS.keys():
@@ -197,7 +204,7 @@ func get_category_options(_selected_value: String = "") -> Array[Dictionary]:
 	categories.sort()
 	var options: Array[Dictionary] = []
 	for category_name in categories:
-		options.append({"id": category_name, "label": str(CATEGORY_LABELS.get(category_name, category_name))})
+		options.append({"id": category_name, "label": get_category_display_name(category_name)})
 	return options
 
 
@@ -262,7 +269,8 @@ func build_visible_entries(
 				definition.object_id,
 				join_tags(definition.tags)
 			],
-			"definition": definition
+			"definition": definition,
+			"category_label": get_category_display_name(definition.category)
 		})
 	return entries
 
@@ -327,7 +335,7 @@ func build_detail_data(definition: ObjectDefinition) -> Dictionary:
 	return {
 		"display_name": definition.display_name,
 		"object_id": definition.object_id,
-		"category": definition.category,
+		"category": get_category_display_name(definition.category),
 		"description": definition.description,
 		"is_template": definition.is_template,
 		"preview_texture": definition.preview_texture,
