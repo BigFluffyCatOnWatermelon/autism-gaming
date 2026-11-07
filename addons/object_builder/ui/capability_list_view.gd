@@ -11,6 +11,7 @@ signal batch_add_requested
 signal clear_selection_requested
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
+const CapabilityIconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
 const PAGE_SIZE := 20
 
 var search_input: LineEdit
@@ -234,6 +235,24 @@ func _create_capability_card(
 	var card_header := HBoxContainer.new()
 	card_content.add_child(card_header)
 
+	var icon_slot := PanelContainer.new()
+	icon_slot.custom_minimum_size = Vector2(40, 40)
+	var icon_texture := TextureRect.new()
+	icon_texture.custom_minimum_size = Vector2(36, 36)
+	icon_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_texture.texture = CapabilityIconRegistryScript.get_icon(capability)
+	if icon_texture.texture == null:
+		var fallback_label := Label.new()
+		fallback_label.text = capability.display_name.left(1).to_upper()
+		fallback_label.add_theme_font_size_override("font_size", 18)
+		fallback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		fallback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		icon_slot.add_child(fallback_label)
+	else:
+		icon_slot.add_child(icon_texture)
+	card_header.add_child(icon_slot)
+
 	var is_ready := capability.is_ready()
 	var is_enabled := bool(entry.get("enabled", false))
 	var is_installed := bool(entry.get("installed", is_enabled))
@@ -274,6 +293,28 @@ func _create_capability_card(
 	state_label.tooltip_text = capability.implementation_note
 	card_header.add_child(state_label)
 
+	var relation_value: Variant = entry.get("relation_highlight", {})
+	if relation_value is Dictionary and not relation_value.is_empty():
+		var relation: Dictionary = relation_value
+		var relation_type := str(relation.get("type", "related"))
+		var relation_label := Label.new()
+		relation_label.text = _get_relation_caption(relation_type)
+		if bool(relation.get("is_reverse", false)):
+			relation_label.text += " · связано с выбранной"
+		relation_label.tooltip_text = str(relation.get("explanation", ""))
+		relation_label.add_theme_font_size_override("font_size", 10)
+		relation_label.modulate = _get_relation_color(relation_type)
+		card_content.add_child(relation_label)
+		var card_style := StyleBoxFlat.new()
+		card_style.bg_color = Color(0.12, 0.15, 0.2, 0.92)
+		card_style.border_width_left = 3
+		card_style.border_color = _get_relation_color(relation_type)
+		card_style.corner_radius_top_left = 5
+		card_style.corner_radius_top_right = 5
+		card_style.corner_radius_bottom_left = 5
+		card_style.corner_radius_bottom_right = 5
+		card.add_theme_stylebox_override("panel", card_style)
+
 	var settings_button := Button.new()
 	settings_button.text = "Настроить"
 	settings_button.disabled = not bool(entry.get("can_configure", is_enabled and is_ready))
@@ -286,6 +327,38 @@ func _create_capability_card(
 	description.modulate = Color(0.78, 0.78, 0.78)
 	card_content.add_child(description)
 	return card
+
+
+func _get_relation_caption(relation_type: String) -> String:
+	match relation_type:
+		"requires":
+			return "Обязательная зависимость"
+		"recommends":
+			return "Рекомендуется вместе"
+		"extends":
+			return "Расширяет поведение"
+		"alternative":
+			return "Альтернативный вариант"
+		"conflicts":
+			return "Несовместимая возможность"
+		_:
+			return "Связанная возможность"
+
+
+func _get_relation_color(relation_type: String) -> Color:
+	match relation_type:
+		"requires":
+			return Color(0.55, 0.75, 1.0)
+		"recommends":
+			return Color(0.55, 0.85, 0.65)
+		"extends":
+			return Color(0.78, 0.66, 0.95)
+		"alternative":
+			return Color(0.55, 0.82, 0.85)
+		"conflicts":
+			return Color(1.0, 0.54, 0.5)
+		_:
+			return Color(0.85, 0.78, 0.52)
 
 
 func _on_search_changed(query: String) -> void:
