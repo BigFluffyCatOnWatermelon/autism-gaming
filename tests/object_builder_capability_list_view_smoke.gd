@@ -8,6 +8,7 @@ var search_events: Array[String] = []
 var category_events: Array[String] = []
 var toggle_events: Array[String] = []
 var settings_events: Array[String] = []
+var focus_events: Array[String] = []
 var selection_events: Array[String] = []
 var batch_add_count := 0
 var clear_selection_count := 0
@@ -29,6 +30,7 @@ func _run() -> void:
 	view.connect("category_changed", Callable(self, "_on_category_changed"))
 	view.connect("toggle_requested", Callable(self, "_on_toggle_requested"))
 	view.connect("settings_requested", Callable(self, "_on_settings_requested"))
+	view.connect("focus_requested", Callable(self, "_on_focus_requested"))
 	view.connect("selection_toggled", Callable(self, "_on_selection_toggled"))
 	view.connect("batch_add_requested", Callable(self, "_on_batch_add_requested"))
 	view.connect("clear_selection_requested", Callable(self, "_on_clear_selection_requested"))
@@ -102,12 +104,15 @@ func _run() -> void:
 	var implemented_header := implemented_content.get_child(0) as HBoxContainer
 	var icon_slot := implemented_header.get_child(0) as PanelContainer
 	var enabled_check := implemented_header.get_child(1) as CheckBox
-	var settings_button := implemented_header.get_child(3) as Button
+	var relations_button := implemented_header.get_child(3) as Button
+	var settings_button := implemented_header.get_child(4) as Button
 	_expect(icon_slot != null and icon_slot.get_child_count() == 1, "every capability card owns a dedicated icon slot")
 	_expect(enabled_check.button_pressed and not enabled_check.disabled, "implemented capabilities can be toggled")
 	_expect(not settings_button.disabled, "enabled implemented capability can open settings")
 	enabled_check.toggled.emit(false)
 	settings_button.pressed.emit()
+	relations_button.pressed.emit()
+	_expect(focus_events == ["can_attack"], "relationship action focuses an installed capability")
 	_expect(toggle_events == ["false:can_attack"], "toggle action forwards state and capability ID")
 	_expect(settings_events == ["can_attack"], "settings action forwards capability ID")
 
@@ -140,9 +145,13 @@ func _run() -> void:
 	var planned_header := planned_content.get_child(0) as HBoxContainer
 	var planned_check := planned_header.get_child(1) as CheckBox
 	var planned_state := planned_header.get_child(2) as Label
-	var planned_settings := planned_header.get_child(3) as Button
+	var planned_relations := planned_header.get_child(3) as Button
+	var planned_settings := planned_header.get_child(4) as Button
 	_expect(planned_check.disabled and planned_state.text == "В разработке", "planned capabilities remain clearly unavailable")
 	_expect(planned_settings.disabled, "planned capabilities cannot be configured")
+	_expect(not planned_relations.disabled, "planned capabilities can still be explored through their relationships")
+	planned_relations.pressed.emit()
+	_expect(focus_events == ["can_attack", "can_fly"], "planned relationship browsing does not enable the mechanic")
 
 	var many_entries: Array[Dictionary] = []
 	for index in range(45):
@@ -199,6 +208,10 @@ func _on_toggle_requested(enabled: bool, capability_id: String) -> void:
 
 func _on_settings_requested(capability_id: String) -> void:
 	settings_events.append(capability_id)
+
+
+func _on_focus_requested(capability_id: String) -> void:
+	focus_events.append(capability_id)
 
 
 func _on_selection_toggled(selected: bool, capability_id: String) -> void:
