@@ -70,6 +70,16 @@ func _build_toolbar() -> void:
 	_document_title.clip_text = true
 	toolbar.add_child(_document_title)
 
+	_document_kind = Label.new()
+	_document_kind.text = ""
+	_document_kind.clip_text = true
+	toolbar.add_child(_document_kind)
+
+	_document_state = Label.new()
+	_document_state.text = ""
+	_document_state.clip_text = true
+	toolbar.add_child(_document_state)
+
 	_toolbar_actions = HBoxContainer.new()
 	_toolbar_actions.add_theme_constant_override("separation", 4)
 	toolbar.add_child(_toolbar_actions)
@@ -195,10 +205,14 @@ func _build_diagnostics_panel() -> void:
 	content.add_child(_diagnostics_message)
 
 
-func set_document_info(display_name: String, _category: String, _is_template: bool, _is_dirty: bool) -> void:
+func set_document_info(display_name: String, category: String, is_template: bool, is_dirty: bool) -> void:
 	if _document_title == null:
 		return
-	_document_title.text = display_name if not display_name.is_empty() else "Библиотека объектов"
+	var has_document := not display_name.is_empty()
+	_document_title.text = display_name if has_document else "Библиотека объектов"
+	_document_kind.text = ("Шаблон" if is_template else "Объект") + (" · " + category if not category.is_empty() else "") if has_document else ""
+	_document_state.text = ("● Изменён" if is_dirty else "✓ Сохранён") if has_document else ""
+	_document_state.tooltip_text = "Есть несохранённые изменения" if is_dirty else "Все изменения сохранены"
 
 
 func set_selection_info(_node_name: String, _node_path: String) -> void:
@@ -295,6 +309,10 @@ func get_diagnostics_message() -> String:
 
 func get_document_name_text() -> String:
 	return _document_title.text if _document_title != null else ""
+
+
+func get_document_state_text() -> String:
+	return _document_state.text if _document_state != null else ""
 
 
 func get_selection_name_text() -> String:

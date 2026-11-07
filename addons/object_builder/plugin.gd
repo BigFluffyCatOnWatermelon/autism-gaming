@@ -62,6 +62,8 @@ var _workspace_view: Control
 var _workspace_layout_state: Dictionary = {}
 var _library_view: Control
 var _library_details_view: Control
+var _undo_toolbar_button: Button
+var _redo_toolbar_button: Button
 var _properties_inspector: Control
 var _library_action_dialogs: Node
 var _pending_library_definition: ObjectDefinition
@@ -378,8 +380,50 @@ func _build_workspace_toolbar(parent: HBoxContainer) -> void:
 	ObjectBuilderUIFactory.add_action_button(parent, "Создать объект", _on_new_object_pressed, "Начать создание нового игрового объекта")
 	ObjectBuilderUIFactory.add_action_button(parent, "Из шаблона", _on_create_from_template_pressed)
 	ObjectBuilderUIFactory.add_action_button(parent, "Сохранить", _on_save_pressed, "Сохранить текущий объект и его сцену")
+	_undo_toolbar_button = ObjectBuilderUIFactory.add_action_button(parent, "↶", _on_undo_toolbar_pressed, "Отменить последнее действие")
+	_redo_toolbar_button = ObjectBuilderUIFactory.add_action_button(parent, "↷", _on_redo_toolbar_pressed, "Повторить отменённое действие")
 	ObjectBuilderUIFactory.add_action_button(parent, "Предпросмотр", _on_preview_pressed, "Показать текущий черновик без сохранения")
 	ObjectBuilderUIFactory.add_action_button(parent, "↻", _on_refresh_pressed, "Обновить библиотеку")
+	var undo_manager := EditorInterface.get_editor_undo_redo()
+	if not undo_manager.history_changed.is_connected(_refresh_undo_redo_toolbar):
+		undo_manager.history_changed.connect(_refresh_undo_redo_toolbar)
+	if not undo_manager.version_changed.is_connected(_refresh_undo_redo_toolbar):
+		undo_manager.version_changed.connect(_refresh_undo_redo_toolbar)
+	_refresh_undo_redo_toolbar()
+
+
+func _get_active_undo_redo() -> UndoRedo:
+	var manager := EditorInterface.get_editor_undo_redo()
+	var edited_root := EditorInterface.get_edited_scene_root()
+	var history_id := manager.get_object_history_id(edited_root) if edited_root != null else 0
+	return manager.get_history_undo_redo(history_id)
+
+
+func _refresh_undo_redo_toolbar() -> void:
+	var history := _get_active_undo_redo()
+	if _undo_toolbar_button != null:
+		_undo_toolbar_button.disabled = not history.has_undo()
+		_undo_toolbar_button.tooltip_text = "Отменить: " + history.get_current_action_name() if history.has_undo() else "Нет действий для отмены"
+	if _redo_toolbar_button != null:
+		_redo_toolbar_button.disabled = not history.has_redo()
+		_redo_toolbar_button.tooltip_text = "Повторить последнее отменённое действие" if history.has_redo() else "Нет действий для повтора"
+
+
+func _on_undo_toolbar_pressed() -> void:
+	var history := _get_active_undo_redo()
+	if history.has_undo():
+		var action_name := history.get_current_action_name()
+		history.undo()
+		_set_status("Отменено: " + action_name, false)
+	_refresh_undo_redo_toolbar()
+
+
+func _on_redo_toolbar_pressed() -> void:
+	var history := _get_active_undo_redo()
+	if history.has_redo():
+		history.redo()
+		_set_status("Действие повторено.", false)
+	_refresh_undo_redo_toolbar()
 
 
 func _build_canvas_editor(parent: VBoxContainer) -> void:

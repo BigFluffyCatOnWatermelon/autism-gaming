@@ -25,6 +25,9 @@ func _run() -> void:
 
 	workspace.call("set_document_info", "Дуб", "Nature", false, true)
 	_expect(workspace.call("get_document_name_text") == "Дуб", "workspace title follows the selected object")
+	_expect(workspace.call("get_document_state_text") == "● Изменён", "workspace shows unsaved document state")
+	workspace.call("set_document_info", "Дуб", "Nature", false, false)
+	_expect(workspace.call("get_document_state_text") == "✓ Сохранён", "workspace shows saved document state")
 	workspace.call("set_selection_info", "Sprite2D", "Object/Visuals/Sprite2D")
 	_expect(workspace.call("get_selection_name_text").is_empty(), "selected scene part is not duplicated in Properties")
 	_expect(workspace.call("get_inspector_host").get_child_count() == 0, "workspace does not add a duplicate metadata summary to Properties")
