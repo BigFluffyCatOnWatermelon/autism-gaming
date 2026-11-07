@@ -239,7 +239,7 @@ func build_recommended_entries(
 
 	var normalized_profile_id := profile_id.strip_edges().to_lower()
 	var recommendation_profiles: Array[ObjectCreationProfileDefinition] = []
-	var explicit_profile := (
+	var explicit_profile: ObjectCreationProfileDefinition = (
 		ObjectCreationProfileRegistry.get_definition(normalized_profile_id)
 		if not normalized_profile_id.is_empty()
 		else null
