@@ -56,6 +56,23 @@ func build(categories: Array[Dictionary]) -> void:
 	entries_container.add_theme_constant_override("separation", 6)
 	add_child(entries_container)
 
+	_pagination_row = HBoxContainer.new()
+	_pagination_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_pagination_row.visible = false
+	_previous_page_button = Button.new()
+	_previous_page_button.text = "← Назад"
+	_previous_page_button.pressed.connect(_on_previous_page_pressed)
+	_pagination_row.add_child(_previous_page_button)
+	_page_label = Label.new()
+	_page_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_page_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pagination_row.add_child(_page_label)
+	_next_page_button = Button.new()
+	_next_page_button.text = "Дальше →"
+	_next_page_button.pressed.connect(_on_next_page_pressed)
+	_pagination_row.add_child(_next_page_button)
+	add_child(_pagination_row)
+
 
 func get_search_query() -> String:
 	return search_input.text if search_input != null else ""
