@@ -2029,40 +2029,69 @@ func _on_sprite_quick_setting_changed(
 	var scene_root := _get_open_object_scene_root()
 	if scene_root == null:
 		return
-	var sprite := scene_root.get_node_or_null(path) as Sprite2D
-	if sprite == null:
+	var selected_node := scene_root.get_node_or_null(path)
+	if selected_node is Sprite2D:
+		var sprite := selected_node as Sprite2D
+		match property_name:
+			"hframes", "vframes":
+				_commit_visual_node_property(
+					sprite,
+					property_name,
+					clampi(int(value), 1, 128),
+					"изменить %s" % property_name
+				)
+			"frame":
+				var frame_limit := sprite.hframes * sprite.vframes - 1
+				_commit_visual_node_property(
+					sprite,
+					"frame",
+					clampi(int(value), 0, maxi(0, frame_limit)),
+					"выбрать кадр спрайта"
+				)
+			"region_enabled":
+				_commit_visual_node_property(sprite, "region_enabled", bool(value), "переключить область атласа")
+			"region_x", "region_y", "region_width", "region_height":
+				var next_region := sprite.region_rect
+				match property_name:
+					"region_x":
+						next_region.position.x = float(value)
+					"region_y":
+						next_region.position.y = float(value)
+					"region_width":
+						next_region.size.x = maxf(0.0, float(value))
+					"region_height":
+						next_region.size.y = maxf(0.0, float(value))
+				_commit_visual_node_property(sprite, "region_rect", next_region, "изменить область атласа")
+		_refresh_visual_editor(sprite)
 		return
-	match property_name:
-		"hframes", "vframes":
-			_commit_visual_node_property(
-				sprite,
-				property_name,
-				clampi(int(value), 1, 128),
-				"изменить %s" % property_name
-			)
-		"frame":
-			var frame_limit := sprite.hframes * sprite.vframes - 1
-			_commit_visual_node_property(
-				sprite,
-				"frame",
-				clampi(int(value), 0, maxi(0, frame_limit)),
-				"выбрать кадр спрайта"
-			)
-		"region_enabled":
-			_commit_visual_node_property(sprite, "region_enabled", bool(value), "переключить область атласа")
-		"region_x", "region_y", "region_width", "region_height":
-			var next_region := sprite.region_rect
-			match property_name:
-				"region_x":
-					next_region.position.x = float(value)
-				"region_y":
-					next_region.position.y = float(value)
-				"region_width":
-					next_region.size.x = maxf(0.0, float(value))
-				"region_height":
-					next_region.size.y = maxf(0.0, float(value))
-			_commit_visual_node_property(sprite, "region_rect", next_region, "изменить область атласа")
-	_refresh_visual_editor(sprite)
+	if selected_node is AnimatedSprite2D:
+		var animated := selected_node as AnimatedSprite2D
+		match property_name:
+			"animation":
+				var animation_name := StringName(str(value))
+				if animated.sprite_frames == null or not animated.sprite_frames.has_animation(animation_name):
+					return
+				_commit_visual_node_property(animated, "animation", animation_name, "выбрать анимацию")
+			"frame":
+				if animated.sprite_frames == null:
+					return
+				var frame_count := animated.sprite_frames.get_frame_count(animated.animation)
+				if frame_count <= 0:
+					return
+				_commit_visual_node_property(
+					animated,
+					"frame",
+					clampi(int(value), 0, frame_count - 1),
+					"выбрать кадр анимации"
+				)
+			"speed_scale":
+				_commit_visual_node_property(
+					animated,
+					"speed_scale",
+					clampf(float(value), -10.0, 10.0),
+					"изменить скорость анимации"
+				)
+		_refresh_visual_editor(animated)
 
 
 func _on_visual_part_resource_edit_requested(path: NodePath) -> void:
