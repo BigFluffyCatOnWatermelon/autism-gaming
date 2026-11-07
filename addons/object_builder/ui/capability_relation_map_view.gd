@@ -11,6 +11,14 @@ var _focus_button_count := 0
 var _full_nodes_by_id: Dictionary = {}
 var _full_search_text_by_id: Dictionary = {}
 var _full_search_input: LineEdit
+var _full_category_filter: OptionButton
+var _full_relation_filter: OptionButton
+var _full_node_names_by_id: Dictionary = {}
+var _full_category_by_id: Dictionary = {}
+var _full_edges: Array[Dictionary] = []
+var _full_search_query := ""
+var _selected_full_category_id := ""
+var _selected_full_relation_type := ""
 
 const RELATION_TYPE_IDS := {
 	"requires": 1,
@@ -131,10 +139,34 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	layout.add_child(hint)
 
+	var filter_row := HBoxContainer.new()
+	layout.add_child(filter_row)
+
 	_full_search_input = LineEdit.new()
-	_full_search_input.placeholder_text = "Найти механику на карте по названию, категории, синониму или описанию…"
+	_full_search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_full_search_input.placeholder_text = "Поиск по названию, описанию и синонимам…"
 	_full_search_input.text_changed.connect(filter_full_map)
-	layout.add_child(_full_search_input)
+	filter_row.add_child(_full_search_input)
+
+	_full_category_filter = OptionButton.new()
+	_full_category_filter.custom_minimum_size.x = 150
+	_full_category_filter.add_item("Все категории")
+	_full_category_filter.set_item_metadata(0, "")
+	_full_category_filter.item_selected.connect(_on_full_category_filter_selected)
+	filter_row.add_child(_full_category_filter)
+
+	_full_relation_filter = OptionButton.new()
+	_full_relation_filter.custom_minimum_size.x = 175
+	_full_relation_filter.add_item("Все типы связей")
+	_full_relation_filter.set_item_metadata(0, "")
+	for relation_type in RELATION_TYPE_IDS:
+		_full_relation_filter.add_item(_relation_caption(str(relation_type)))
+		_full_relation_filter.set_item_metadata(
+			_full_relation_filter.item_count - 1,
+			str(relation_type)
+		)
+	_full_relation_filter.item_selected.connect(_on_full_relation_filter_selected)
+	filter_row.add_child(_full_relation_filter)
 
 	_graph = GraphEdit.new()
 	_graph.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -158,6 +190,12 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 
 	_full_nodes_by_id.clear()
 	_full_search_text_by_id.clear()
+	_full_node_names_by_id.clear()
+	_full_category_by_id.clear()
+	_full_edges.clear()
+	_full_search_query = ""
+	_selected_full_category_id = ""
+	_selected_full_relation_type = ""
 	_focus_button_count = 0
 	var capability_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
 	var category_indices: Dictionary = {}
@@ -173,6 +211,8 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 		definitions_by_id[capability_id] = definition
 		if not category_indices.has(definition.category_id):
 			category_indices[definition.category_id] = category_indices.size()
+			_full_category_filter.add_item(definition.category_name)
+			_full_category_filter.set_item_metadata(_full_category_filter.item_count - 1, definition.category_id)
 		var category_index := int(category_indices[definition.category_id])
 		var category_item_index := int(category_counts.get(definition.category_id, 0))
 		category_counts[definition.category_id] = category_item_index + 1
@@ -182,6 +222,8 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 		var item_row := int(category_item_index / 2)
 		var node_name := "FullCapability_" + str(index)
 		node_names_by_id[capability_id] = node_name
+		_full_node_names_by_id[capability_id] = node_name
+		_full_category_by_id[capability_id] = definition.category_id
 		var readiness := "Готово" if definition.is_ready() else "В разработке"
 		var subtitle := definition.category_name + " · " + readiness
 		var graph_node := _create_full_graph_node(node_name, definition)
@@ -206,17 +248,16 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 			if not node_names_by_id.has(target_id):
 				continue
 			var relation_type := str(edge.get("type", "related"))
-			var relation_type_id := _get_relation_type_id(relation_type)
 			var pair_key := str(capability_id) + ">" + target_id + ":" + relation_type
 			if connected_pairs.has(pair_key):
 				continue
 			connected_pairs[pair_key] = true
-			_graph.connect_node(
-				str(node_names_by_id[capability_id]),
-				relation_type_id - 1,
-				str(node_names_by_id[target_id]),
-				relation_type_id - 1
-			)
+			_full_edges.append({
+				"source_id": str(capability_id),
+				"target_id": target_id,
+				"type": relation_type
+			})
+	_refresh_full_map()
 
 	if not focused_capability_id.is_empty() and _full_nodes_by_id.has(focused_capability_id):
 		var focused_node := _full_nodes_by_id[focused_capability_id] as GraphNode
@@ -225,11 +266,61 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 
 
 func filter_full_map(query: String) -> void:
-	var normalized_query := query.strip_edges().to_lower().replace("ё", "е")
+	_full_search_query = query.strip_edges().to_lower().replace("ё", "е")
+	_refresh_full_map()
+
+
+func set_full_category_filter(category_id: String) -> void:
+	_selected_full_category_id = category_id.strip_edges().to_lower()
+	_refresh_full_map()
+
+
+func set_full_relation_filter(relation_type: String) -> void:
+	_selected_full_relation_type = relation_type.strip_edges().to_lower()
+	_refresh_full_map()
+
+
+func _on_full_category_filter_selected(index: int) -> void:
+	_selected_full_category_id = str(_full_category_filter.get_item_metadata(index))
+	_refresh_full_map()
+
+
+func _on_full_relation_filter_selected(index: int) -> void:
+	_selected_full_relation_type = str(_full_relation_filter.get_item_metadata(index))
+	_refresh_full_map()
+
+
+func _refresh_full_map() -> void:
+	if _graph == null:
+		return
 	for capability_id in _full_nodes_by_id:
 		var graph_node := _full_nodes_by_id[capability_id] as GraphNode
 		var searchable := str(_full_search_text_by_id.get(capability_id, ""))
-		graph_node.visible = normalized_query.is_empty() or searchable.contains(normalized_query)
+		var matches_query := _full_search_query.is_empty() or searchable.contains(_full_search_query)
+		var matches_category := (
+			_selected_full_category_id.is_empty()
+			or str(_full_category_by_id.get(capability_id, "")) == _selected_full_category_id
+		)
+		graph_node.visible = matches_query and matches_category
+
+	_graph.clear_connections()
+	for edge in _full_edges:
+		var relation_type := str(edge.get("type", "related"))
+		if not _selected_full_relation_type.is_empty() and relation_type != _selected_full_relation_type:
+			continue
+		var source_id := str(edge.get("source_id", ""))
+		var target_id := str(edge.get("target_id", ""))
+		var source_node := _full_nodes_by_id.get(source_id) as GraphNode
+		var target_node := _full_nodes_by_id.get(target_id) as GraphNode
+		if source_node == null or target_node == null or not source_node.visible or not target_node.visible:
+			continue
+		var relation_type_id := _get_relation_type_id(relation_type)
+		_graph.connect_node(
+			str(_full_node_names_by_id[source_id]),
+			relation_type_id - 1,
+			str(_full_node_names_by_id[target_id]),
+			relation_type_id - 1
+		)
 
 
 func get_relation_type_count() -> int:
@@ -383,6 +474,14 @@ func _close_window() -> void:
 	_full_nodes_by_id.clear()
 	_full_search_text_by_id.clear()
 	_full_search_input = null
+	_full_category_filter = null
+	_full_relation_filter = null
+	_full_node_names_by_id.clear()
+	_full_category_by_id.clear()
+	_full_edges.clear()
+	_full_search_query = ""
+	_selected_full_category_id = ""
+	_selected_full_relation_type = ""
 
 
 func _relation_caption(relation_type: String) -> String:
