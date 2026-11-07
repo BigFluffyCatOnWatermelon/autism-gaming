@@ -12,6 +12,8 @@ var focus_events: Array[String] = []
 var selection_events: Array[String] = []
 var batch_add_count := 0
 var clear_selection_count := 0
+var preset_events: Array[String] = []
+var preset_select_all_count := 0
 
 
 func _initialize() -> void:
@@ -28,6 +30,7 @@ func _run() -> void:
 	view.call("build", categories)
 	_expect(not (view.get("_related_section") as PanelContainer).visible, "related suggestions stay hidden until a capability is focused")
 	_expect(not (view.get("_recommendation_section") as PanelContainer).visible, "contextual recommendations stay hidden until an object capability is active")
+	_expect(not (view.get("_preset_section") as PanelContainer).visible, "preset area stays hidden until the catalog provides its preset list")
 	view.connect("search_changed", Callable(self, "_on_search_changed"))
 	view.connect("category_changed", Callable(self, "_on_category_changed"))
 	view.connect("toggle_requested", Callable(self, "_on_toggle_requested"))
@@ -36,8 +39,10 @@ func _run() -> void:
 	view.connect("selection_toggled", Callable(self, "_on_selection_toggled"))
 	view.connect("batch_add_requested", Callable(self, "_on_batch_add_requested"))
 	view.connect("clear_selection_requested", Callable(self, "_on_clear_selection_requested"))
+	view.connect("preset_requested", Callable(self, "_on_preset_requested"))
+	view.connect("preset_select_all_requested", Callable(self, "_on_preset_select_all_requested"))
 
-	_expect(view.get_child_count() == 9, "capability view owns title, hint, search, filter, selection, relation and recommendation strips, entries and pagination")
+	_expect(view.get_child_count() == 10, "capability view owns title, hint, search, filter, selection, relation/recommendation/preset panels, entries and pagination")
 	_expect(str(view.call("get_selected_category")) == "", "capability filter starts with all categories")
 	var search_input := view.get("search_input") as LineEdit
 	search_input.text_changed.emit("tree")
@@ -257,6 +262,82 @@ func _run() -> void:
 	view.call("set_recommended_entries", [])
 	_expect(not recommendation_section.visible, "recommendation section hides when there are no compatible suggestions")
 
+	var preset_summaries: Array[Dictionary] = [{
+		"id": "breakable_resource",
+		"display_name": "Разрушаемый ресурс",
+		"description": "Прочность, разрушение и добыча.",
+		"ready_count": 3,
+		"total_count": 3,
+		"selected_count": 0
+	}]
+	view.call("set_preset_data", preset_summaries, {})
+	var preset_section := view.get("_preset_section") as PanelContainer
+	_expect(preset_section.visible, "catalog shows curated presets when they are available")
+	_expect(view.call("get_preset_button_count") == 1, "preset panel creates one card per preset definition")
+	var preset_container := view.get("_preset_container") as HFlowContainer
+	var preset_button := preset_container.get_child(0) as Button
+	_expect(preset_button.text.contains("Разрушаемый ресурс") and preset_button.text.contains("3/3"), "preset card shows its name and ready capability count")
+	preset_button.toggled.emit(true)
+	_expect(preset_events == ["breakable_resource"], "opening a preset requests its editable composition")
+
+	var preset_detail: Dictionary = {
+		"id": "breakable_resource",
+		"display_name": "Разрушаемый ресурс",
+		"description": "Прочность, разрушение и добыча.",
+		"available_count": 1,
+		"entries": [
+			{
+				"capability_id": "has_health",
+				"display_name": "Здоровье",
+				"description": "Запас прочности.",
+				"ready": true,
+				"installed": false,
+				"selected": false,
+				"can_select": true,
+				"automatic_dependencies": PackedStringArray()
+			},
+			{
+				"capability_id": "can_attack",
+				"display_name": "Атака",
+				"description": "Уже установлено.",
+				"ready": true,
+				"installed": true,
+				"selected": false,
+				"can_select": false,
+				"blocked_reason": "Уже установлена."
+			},
+			{
+				"capability_id": "can_be_harvested",
+				"display_name": "Можно добывать",
+				"description": "Будущая механика добычи.",
+				"ready": false,
+				"installed": false,
+				"selected": false,
+				"can_select": false,
+				"blocked_reason": "Возможность ещё разрабатывается."
+			}
+		]
+	}
+	view.call("set_preset_data", preset_summaries, preset_detail)
+	var preset_detail_panel := view.get("_preset_detail_panel") as PanelContainer
+	var preset_detail_items := view.get("_preset_detail_items") as VBoxContainer
+	_expect(preset_detail_panel.visible and preset_detail_items.get_child_count() == 3, "active preset exposes every capability for editing")
+	var available_preset_row := preset_detail_items.get_child(0) as VBoxContainer
+	var available_preset_check := available_preset_row.get_child(0) as CheckBox
+	_expect(not available_preset_check.disabled and not available_preset_check.button_pressed, "ready preset item can be individually selected")
+	available_preset_check.toggled.emit(true)
+	_expect(selection_events.back() == "true:has_health", "preset checkbox uses the shared catalog selection session")
+	var installed_preset_check := (preset_detail_items.get_child(1) as VBoxContainer).get_child(0) as CheckBox
+	_expect(installed_preset_check.button_pressed and installed_preset_check.disabled, "installed preset item is visible but cannot be added twice")
+	var planned_preset_check := (preset_detail_items.get_child(2) as VBoxContainer).get_child(0) as CheckBox
+	_expect(planned_preset_check.disabled and not planned_preset_check.button_pressed, "unfinished preset item is visible but cannot be selected")
+	var preset_select_all_button := view.get("_preset_select_all_button") as Button
+	_expect(preset_select_all_button.text == "Отметить все доступные (1)" and not preset_select_all_button.disabled, "preset footer reports the number of compatible additions")
+	preset_select_all_button.pressed.emit()
+	_expect(preset_select_all_count == 1, "preset bulk selection is separate from final batch application")
+	view.call("set_preset_data", [], {})
+	_expect(not preset_section.visible and not preset_detail_panel.visible, "preset cards and detail panel hide when the catalog has no presets")
+
 	var many_entries: Array[Dictionary] = []
 	for index in range(45):
 		many_entries.append({
@@ -328,6 +409,14 @@ func _on_batch_add_requested() -> void:
 
 func _on_clear_selection_requested() -> void:
 	clear_selection_count += 1
+
+
+func _on_preset_requested(preset_id: String) -> void:
+	preset_events.append(preset_id)
+
+
+func _on_preset_select_all_requested() -> void:
+	preset_select_all_count += 1
 
 
 func _expect(condition: bool, description: String) -> void:
