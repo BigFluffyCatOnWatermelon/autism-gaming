@@ -277,6 +277,7 @@ func _add_part_row(entry: Dictionary) -> void:
 
 	var content := HBoxContainer.new()
 	content.add_theme_constant_override("separation", 5)
+	content.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_child(content)
 
 	var drag_handle = VisualPartDragHandleScript.new()
