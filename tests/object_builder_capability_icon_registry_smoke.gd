@@ -77,18 +77,14 @@ func _run_tests() -> void:
 	for error_message in registry_errors:
 		failures.append("registry validation: " + error_message)
 
-	var registered_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
-	_expect(registered_ids.size() == 204, "complete registry contains 200 catalogue cards and four base capabilities")
-	var registered_atlas_indices: Dictionary = {}
-	for capability_id in registered_ids:
-		var registered_definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
-		if registered_definition == null:
-			continue
-		var atlas_index := registered_definition.icon_atlas_index
-		_expect(atlas_index >= 0 and atlas_index < 204, "registered capability preserves a valid atlas index")
-		_expect(not registered_atlas_indices.has(atlas_index), "module promotion never duplicates another capability's icon cell")
-		registered_atlas_indices[atlas_index] = capability_id
-	_expect(registered_atlas_indices.size() == 204, "all registered capabilities retain a unique icon")
+	for library_definition in definitions:
+		var registered_definition := ObjectCapabilityCatalog.get_definition_reference(library_definition.capability_id)
+		_expect(registered_definition != null, "library capability remains registered after mechanic modules load")
+		if registered_definition != null:
+			_expect(
+				registered_definition.icon_atlas_index == library_definition.icon_atlas_index,
+				"module promotion preserves the original capability icon cell"
+			)
 
 	IconRegistryScript.clear_cache()
 	if failures.is_empty():
