@@ -52,7 +52,6 @@ func _run() -> void:
 	var form: Dictionary = dialog_view.call("get_creation_form_values")
 	_expect(form.get("mode") == "template", "wizard selects the template creation path")
 	_expect(form.get("source_id") == "template_chest", "wizard resolves templates by stable object ID")
-	_expect(form.get("category") == "Nature", "wizard stores the category ID rather than the translated label")
 	_expect(form.get("display_name") == "Сундук — копия", "wizard suggests a copy name for a selected template")
 	_expect(form.get("category") == "Items", "wizard inherits a source category as a suggestion")
 	_expect(form.get("tags") == PackedStringArray(["wood", "chest"]), "wizard inherits source tags")
