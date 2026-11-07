@@ -202,13 +202,11 @@ func configure(
 		row.add_child(control)
 
 		var level := str(descriptor.get("level", "Basic"))
-		var searchable_text := " ".join([
-			label_text,
-			str(descriptor.get("description", "")),
-			group_name,
-			setting_key,
-			component_id
-		]).to_lower()
+		var searchable_text := (
+			label_text + " " +
+			str(descriptor.get("description", "")) + " " +
+			group_name + " " + setting_key + " " + component_id
+		).to_lower()
 		_setting_controls.append({
 			"component_id": component_id,
 			"setting_key": setting_key,
