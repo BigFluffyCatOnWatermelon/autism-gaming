@@ -133,6 +133,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder editor session tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_editor_session_smoke.gd 2>&1 | tee object-builder-editor-session-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-editor-session-test.log; then
+            echo "Object Builder editor session tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder property list view tests
         shell: bash
         run: |

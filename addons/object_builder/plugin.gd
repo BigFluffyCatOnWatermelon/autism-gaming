@@ -14,6 +14,7 @@ const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
 const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
 const ObjectBuilderLibraryControllerScript = preload("res://addons/object_builder/controllers/library_controller.gd")
+const ObjectBuilderEditorSessionScript = preload("res://addons/object_builder/controllers/object_editor_session.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const ROOT_TYPES := [
@@ -44,6 +45,7 @@ var _library_view: Control
 var _editor_view: TabContainer
 var _dialog_view: Node
 var _library_controller: RefCounted = ObjectBuilderLibraryControllerScript.new()
+var _editor_session: RefCounted = ObjectBuilderEditorSessionScript.new()
 var _name_edit: LineEdit
 var _id_edit: LineEdit
 var _category_edit: LineEdit
@@ -71,6 +73,7 @@ var _connected_scene_tree: SceneTree
 var _tree_refresh_queued := false
 var _syncing_tree_selection := false
 var _working_definition: ObjectDefinition
+var _is_loading_editor_form := false
 var _can_save_as_template := true
 
 
@@ -90,6 +93,9 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	_disconnect_editor_sync()
+	if _editor_session != null:
+		_editor_session.call("clear")
+	_working_definition = null
 	if _main_screen != null:
 		_main_screen.queue_free()
 		_main_screen = null
@@ -213,6 +219,7 @@ func _on_inspector_property_edited(_property_name: String) -> void:
 	if inspected_object is ObjectComponentDefinition and _working_definition != null:
 		for component_definition in _working_definition.components:
 			if component_definition == inspected_object:
+				_mark_editor_session_changed()
 				_set_status(
 					"Настройки компонента изменены. Нажми «Сохранить в библиотеку», чтобы записать их.",
 					false
@@ -228,7 +235,6 @@ func _on_inspector_property_edited(_property_name: String) -> void:
 		target_node = _get_editor_selected_scene_node(scene_root)
 	if target_node != null and (target_node == scene_root or scene_root.is_ancestor_of(target_node)):
 		_refresh_visual_editor(target_node)
-
 
 func _get_editor_selected_scene_node(scene_root: Node) -> Node:
 	if scene_root == null:
@@ -393,6 +399,7 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	_template_check.text = "Сохранить как шаблон"
 	_template_check.tooltip_text = "Сохранит новую заготовку отдельно от игровых объектов."
 	advanced_editor.add_child(_template_check)
+	_connect_editor_form_signals()
 	
 	_scene_tree_view = ObjectBuilderSceneTreeViewScript.new()
 	_scene_tree_view.name = "SceneTreeView"
@@ -427,6 +434,88 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	)
 	
 	_build_component_editor(advanced_editor)
+
+func _connect_editor_form_signals() -> void:
+	_name_edit.text_changed.connect(_on_editor_name_changed)
+	_description_edit.text_changed.connect(_on_editor_description_changed)
+	_category_edit.text_changed.connect(_on_editor_category_changed)
+	_tags_edit.text_changed.connect(_on_editor_tags_changed)
+	_root_type.item_selected.connect(_on_editor_root_type_selected)
+	_template_check.toggled.connect(_on_editor_template_toggled)
+
+
+func _on_editor_name_changed(value: String) -> void:
+	if _is_loading_editor_form or _working_definition == null:
+		return
+	var next_value := value.strip_edges()
+	if _working_definition.display_name == next_value:
+		return
+	_working_definition.display_name = next_value
+	_mark_editor_session_changed()
+
+
+func _on_editor_description_changed() -> void:
+	if _is_loading_editor_form or _working_definition == null:
+		return
+	if _working_definition.description == _description_edit.text:
+		return
+	_working_definition.description = _description_edit.text
+	_mark_editor_session_changed()
+
+
+func _on_editor_category_changed(value: String) -> void:
+	if _is_loading_editor_form or _working_definition == null:
+		return
+	var next_value := value.strip_edges()
+	if _working_definition.category == next_value:
+		return
+	_working_definition.category = next_value
+	_mark_editor_session_changed()
+
+
+func _on_editor_tags_changed(value: String) -> void:
+	if _is_loading_editor_form or _working_definition == null:
+		return
+	var next_tags := PackedStringArray()
+	for raw_tag in value.split(","):
+		var tag := raw_tag.strip_edges()
+		if not tag.is_empty() and not next_tags.has(tag):
+			next_tags.append(tag)
+	if _working_definition.tags == next_tags:
+		return
+	_working_definition.tags = next_tags
+	_mark_editor_session_changed()
+
+
+func _on_editor_root_type_selected(index: int) -> void:
+	if _is_loading_editor_form or _working_definition == null:
+		return
+	if index < 0 or index >= _root_type.item_count:
+		return
+	var next_type := _root_type.get_item_text(index)
+	if _working_definition.root_type == next_type:
+		return
+	_working_definition.root_type = next_type
+	_mark_editor_session_changed()
+
+
+func _on_editor_template_toggled(enabled: bool) -> void:
+	if _is_loading_editor_form or _working_definition == null:
+		return
+	if _working_definition.is_template == enabled:
+		return
+	_working_definition.is_template = enabled
+	_mark_editor_session_changed()
+
+
+func _mark_editor_session_changed() -> void:
+	if _is_loading_editor_form or _editor_session == null:
+		return
+	var was_dirty := bool(_editor_session.call("is_dirty"))
+	_editor_session.call("mark_changed")
+	if not was_dirty:
+		_set_status("Есть несохранённые изменения. Нажми «Сохранить объект».", false)
+
 
 func _build_dialogs() -> void:
 	_dialog_view = ObjectBuilderDialogViewScript.new()
@@ -644,9 +733,12 @@ func _commit_working_capabilities(
 func _apply_working_capabilities(values: Array[ObjectCapabilitySelection]) -> void:
 	if _working_definition == null:
 		return
-	_working_definition.capabilities = _duplicate_capability_selections(values)
+	var next_values := _duplicate_capability_selections(values)
+	if _working_definition.capabilities == next_values:
+		return
+	_working_definition.capabilities = next_values
+	_mark_editor_session_changed()
 	_rebuild_capability_list()
-
 
 func _on_capability_settings_pressed(capability_id: String) -> void:
 	if _working_definition == null:
@@ -795,9 +887,9 @@ func _on_component_add_requested(component_id: String) -> void:
 		_set_status("Компонент не найден в каталоге: " + component_id, true)
 		return
 	_working_definition.components.append(component_definition)
+	_mark_editor_session_changed()
 	_rebuild_component_list()
-	_set_status("Компонент «%s» добавлен. Нажми «Сохранить в библиотеку»." % component_definition.display_name, false)
-
+	_set_status("Компонент «%s» добавлен. Нажми «Сохранить в библиотеку». " % component_definition.display_name, false)
 
 func _rebuild_component_list() -> void:
 	if _component_view == null:
@@ -815,12 +907,12 @@ func _rebuild_component_list() -> void:
 
 
 func _on_component_enabled_toggled(enabled: bool, component_definition: ObjectComponentDefinition) -> void:
-	if component_definition == null:
+	if component_definition == null or component_definition.enabled == enabled:
 		return
 	component_definition.enabled = enabled
+	_mark_editor_session_changed()
 	var state_text := "включён" if enabled else "отключён"
-	_set_status("Компонент %s %s. Нажми «Сохранить в библиотеку»." % [component_definition.display_name, state_text], false)
-
+	_set_status("Компонент %s %s. Нажми «Сохранить в библиотеку». " % [component_definition.display_name, state_text], false)
 
 func _on_component_settings_pressed(component_definition: ObjectComponentDefinition) -> void:
 	if component_definition == null:
@@ -836,10 +928,12 @@ func _on_component_settings_pressed(component_definition: ObjectComponentDefinit
 func _on_component_remove_pressed(component_definition: ObjectComponentDefinition) -> void:
 	if _working_definition == null or component_definition == null:
 		return
+	if not _working_definition.components.has(component_definition):
+		return
 	_working_definition.components.erase(component_definition)
+	_mark_editor_session_changed()
 	_rebuild_component_list()
 	_set_status("Компонент удалён из определения. Нажми «Сохранить в библиотеку».", false)
-
 
 func _ensure_component_schemas() -> void:
 	if _working_definition == null:
@@ -907,14 +1001,9 @@ func _on_new_object_dialog_confirmed() -> void:
 				)
 
 	_can_save_as_template = true
-	_load_definition(definition)
-	if profile == null:
-		_set_status("Создан обычный объект без профиля. Теперь можно добавить любой набор возможностей.", false)
-	else:
-		_set_status(
-			"Создан объект «%s». Стартовые настройки можно свободно менять и дополнять." % profile.display_name,
-			false
-		)
+	_load_definition(definition, true)
+	_set_status("Создан обычный объект. Настрой его и сохрани в библиотеку." if profile == null else
+		"Создан объект «%s». Настрой его и сохрани в библиотеку." % profile.display_name, false)
 
 func _build_visual_editor(parent: VBoxContainer) -> void:
 	_visual_editor_view = ObjectBuilderVisualEditorViewScript.new()
@@ -1058,7 +1147,7 @@ func _on_template_dialog_confirmed() -> void:
 	definition.scene_path = ""
 	_clone_template_scene(template_definition, definition)
 	_can_save_as_template = true
-	_load_definition(definition)
+	_load_definition(definition, true)
 	_set_status("Создана копия шаблона. Измени параметры и сохрани объект.", false)
 
 func _clone_template_scene(template_definition: ObjectDefinition, target_definition: ObjectDefinition) -> void:
@@ -1102,8 +1191,13 @@ func _clone_template_scene(template_definition: ObjectDefinition, target_definit
 	target_definition.scene_path = target_path
 
 
-func _load_definition(definition: ObjectDefinition) -> void:
-	_working_definition = definition.duplicate(true) as ObjectDefinition
+func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> void:
+	_is_loading_editor_form = true
+	if is_new:
+		_editor_session.call("begin_new", definition)
+	else:
+		_editor_session.call("begin_edit", definition)
+	_working_definition = _editor_session.call("get_working_definition") as ObjectDefinition
 	_ensure_component_schemas()
 	_name_edit.text = _working_definition.display_name
 	_object_type_label.text = str(_library_controller.call("get_object_type_display_name", _working_definition.object_type))
@@ -1121,6 +1215,7 @@ func _load_definition(definition: ObjectDefinition) -> void:
 	_simple_preview.texture = _working_definition.preview_texture
 	_refresh_favorite_button()
 	_refresh_scene_tree()
+	_is_loading_editor_form = false
 
 func _select_root_type(type_name: String) -> void:
 	for index in range(_root_type.item_count):
@@ -1140,19 +1235,19 @@ func _rebuild_property_list() -> void:
 func _on_property_default_numeric_changed(value: float, property_definition: ObjectPropertyDefinition) -> void:
 	if property_definition == null:
 		return
-	if property_definition.value_type == "Integer":
-		property_definition.default_value = int(round(value))
-	else:
-		property_definition.default_value = value
+	var next_value: Variant = int(round(value)) if property_definition.value_type == "Integer" else value
+	if property_definition.default_value == next_value:
+		return
+	property_definition.default_value = next_value
+	_mark_editor_session_changed()
 	_set_status("Параметр изменён. Нажми «Сохранить в библиотеку», чтобы записать определение.", false)
-
 
 func _on_property_default_boolean_changed(value: bool, property_definition: ObjectPropertyDefinition) -> void:
-	if property_definition == null:
+	if property_definition == null or property_definition.default_value == value:
 		return
 	property_definition.default_value = value
+	_mark_editor_session_changed()
 	_set_status("Параметр изменён. Нажми «Сохранить в библиотеку», чтобы записать определение.", false)
-
 
 func _on_property_default_text_submitted(value: String, property_definition: ObjectPropertyDefinition) -> void:
 	_commit_property_default_text(value, property_definition)
@@ -1167,19 +1262,21 @@ func _on_property_default_text_focus_exited(text_edit: LineEdit, property_defini
 func _commit_property_default_text(value: String, property_definition: ObjectPropertyDefinition) -> void:
 	if property_definition == null:
 		return
+	var next_value: Variant = value
 	if property_definition.value_type == "Vector2":
 		var parts := value.split(",")
 		if parts.size() != 2 or not parts[0].strip_edges().is_valid_float() or not parts[1].strip_edges().is_valid_float():
 			_set_status("Vector2 нужно вводить в формате: X, Y.", true)
 			return
-		property_definition.default_value = Vector2(
+		next_value = Vector2(
 			float(parts[0].strip_edges()),
 			float(parts[1].strip_edges())
 		)
-	else:
-		property_definition.default_value = value
+	if property_definition.default_value == next_value:
+		return
+	property_definition.default_value = next_value
+	_mark_editor_session_changed()
 	_set_status("Параметр изменён. Нажми «Сохранить в библиотеку», чтобы записать определение.", false)
-
 
 func _on_add_property_pressed() -> void:
 	if _working_definition == null:
@@ -1273,6 +1370,7 @@ func _on_property_dialog_confirmed() -> void:
 	property_definition.maximum = maximum_value
 
 	_editing_property = null
+	_mark_editor_session_changed()
 	_rebuild_property_list()
 	_set_status("Свойство обновлено. Нажми «Сохранить в библиотеку».", false)
 
@@ -1284,31 +1382,50 @@ func _has_property_id(property_id: String) -> bool:
 
 
 func _on_remove_property_pressed(property_definition: ObjectPropertyDefinition) -> void:
-	if _working_definition == null:
+	if _working_definition == null or property_definition == null:
+		return
+	if not _working_definition.custom_properties.has(property_definition):
 		return
 	_working_definition.custom_properties.erase(property_definition)
+	_mark_editor_session_changed()
 	_rebuild_property_list()
-
 
 func _on_save_pressed() -> void:
 	if _working_definition == null:
 		_on_new_object_pressed()
 		return
-	_working_definition.display_name = _name_edit.text.strip_edges()
-	_working_definition.category = _category_edit.text.strip_edges()
-	_working_definition.description = _description_edit.text
-	_working_definition.root_type = _root_type.get_item_text(_root_type.selected)
-	_working_definition.is_template = _template_check.button_pressed
 
-	var tags := PackedStringArray()
+	var next_name := _name_edit.text.strip_edges()
+	var next_category := _category_edit.text.strip_edges()
+	var next_description := _description_edit.text
+	var next_root_type := _root_type.get_item_text(_root_type.selected)
+	var next_is_template := _template_check.button_pressed
+	var next_tags := PackedStringArray()
 	for raw_tag in _tags_edit.text.split(","):
 		var tag := raw_tag.strip_edges()
-		if not tag.is_empty():
-			tags.append(tag)
-	_working_definition.tags = tags
+		if not tag.is_empty() and not next_tags.has(tag):
+			next_tags.append(tag)
+	var form_changed := (
+		_working_definition.display_name != next_name
+		or _working_definition.category != next_category
+		or _working_definition.description != next_description
+		or _working_definition.root_type != next_root_type
+		or _working_definition.is_template != next_is_template
+		or _working_definition.tags != next_tags
+	)
+	_working_definition.display_name = next_name
+	_working_definition.category = next_category
+	_working_definition.description = next_description
+	_working_definition.root_type = next_root_type
+	_working_definition.is_template = next_is_template
+	_working_definition.tags = next_tags
+	if form_changed:
+		_mark_editor_session_changed()
 
 	if _simple_preview != null and _simple_preview.texture != null:
-		_working_definition.preview_texture = _simple_preview.texture
+		if _working_definition.preview_texture != _simple_preview.texture:
+			_working_definition.preview_texture = _simple_preview.texture
+			_mark_editor_session_changed()
 
 	var open_scene_root := _get_open_object_scene_root()
 	var scene_properties_synced := false
@@ -1345,6 +1462,7 @@ func _on_save_pressed() -> void:
 		_set_status("Не удалось сохранить объект. Код ошибки: %d" % save_error, true)
 		return
 
+	_editor_session.call("accept_saved_state", _working_definition)
 	_id_edit.text = _working_definition.object_id
 	_open_scene_button.disabled = false
 	_can_save_as_template = false
@@ -1357,7 +1475,6 @@ func _on_save_pressed() -> void:
 		_set_status("Объект и его сцена сохранены.", false)
 	_refresh_library()
 	_load_definition(_working_definition)
-
 
 func _create_scene_for_definition() -> bool:
 	ObjectLibraryService.ensure_directories()
@@ -1397,9 +1514,9 @@ func _create_scene_for_definition() -> bool:
 
 	_working_definition.scene = packed_scene
 	_working_definition.scene_path = scene_path
+	_mark_editor_session_changed()
 	EditorInterface.get_resource_filesystem().scan()
 	return true
-
 
 func _sync_scene_property_data(scene_root: Node) -> void:
 	if scene_root == null or _working_definition == null:
