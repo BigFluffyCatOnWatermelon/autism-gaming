@@ -225,7 +225,21 @@ func _collect_visual_parts(node: Node, scene_root: Node) -> void:
 			"texture": texture,
 			"visible": (node as CanvasItem).visible
 		})
-	for child in node.get_children():
+	var children := node.get_children()
+	children.sort_custom(func(a: Node, b: Node) -> bool:
+		var a_canvas := a as CanvasItem
+		var b_canvas := b as CanvasItem
+		if a_canvas != null and b_canvas != null:
+			if a_canvas.z_index == b_canvas.z_index:
+				return a.get_index() < b.get_index()
+			return a_canvas.z_index < b_canvas.z_index
+		if a_canvas != null:
+			return true
+		if b_canvas != null:
+			return false
+		return a.get_index() < b.get_index()
+	)
+	for child in children:
 		_collect_visual_parts(child, scene_root)
 
 
