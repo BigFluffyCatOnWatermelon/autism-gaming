@@ -34,6 +34,7 @@ var _related_container: HFlowContainer
 var _related_map_button: Button
 var _related_entries: Array[Dictionary] = []
 var _related_focused_definition: ObjectCapabilityDefinition
+var _active_relation_map: RefCounted
 var _recommendation_section: PanelContainer
 var _recommendation_title: Label
 var _recommendation_container: HFlowContainer
@@ -528,9 +529,9 @@ func get_related_button_count() -> int:
 func _on_relation_map_pressed() -> void:
 	if _related_focused_definition == null or _related_entries.is_empty():
 		return
-	var map_view = RelationMapViewScript.new()
-	map_view.focus_requested.connect(_on_focus_requested)
-	map_view.open(self, _related_focused_definition, _related_entries)
+	_active_relation_map = RelationMapViewScript.new()
+	_active_relation_map.focus_requested.connect(_on_focus_requested)
+	_active_relation_map.call("open", self, _related_focused_definition, _related_entries)
 
 
 func get_search_query() -> String:
