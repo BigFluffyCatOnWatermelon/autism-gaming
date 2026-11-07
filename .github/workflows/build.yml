@@ -123,6 +123,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder visual parts view tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_visual_parts_view_smoke.gd 2>&1 | tee object-builder-visual-parts-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-visual-parts-test.log; then
+            echo "Object Builder visual parts tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder canvas view tests
         shell: bash
         run: |

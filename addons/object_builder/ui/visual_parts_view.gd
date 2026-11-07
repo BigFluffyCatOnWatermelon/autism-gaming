@@ -75,6 +75,14 @@ func get_part_count() -> int:
 	return _parts.size()
 
 
+func get_visible_row_count() -> int:
+	return _row_buttons.size()
+
+
+func get_selected_path() -> NodePath:
+	return _selected_path
+
+
 func get_part_paths() -> Array[NodePath]:
 	var result: Array[NodePath] = []
 	for entry in _parts:
