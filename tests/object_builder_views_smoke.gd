@@ -98,14 +98,25 @@ func _run() -> void:
 	var editor = EditorViewScript.new()
 	root.add_child(editor)
 	editor.call("build")
-	_expect(editor.get_child_count() == 2, "editor view owns two mode tabs")
-	var simple_content := editor.get("simple_content") as VBoxContainer
+	_expect(editor.get_child_count() == 4, "editor view owns appearance, capabilities, settings and advanced tabs")
+	var appearance_content := editor.get("appearance_content") as VBoxContainer
+	var capabilities_content := editor.get("capabilities_content") as VBoxContainer
+	var settings_content := editor.get("settings_content") as VBoxContainer
 	var advanced_content := editor.get("advanced_content") as VBoxContainer
-	_expect(simple_content != null and advanced_content != null, "editor view exposes both content roots")
-	_expect(editor.get_tab_title(0) == "Простой режим", "simple mode has the expected title")
-	_expect(editor.get_tab_title(1) == "Расширенный режим", "advanced mode has the expected title")
-	_expect(simple_content.get_parent() is ScrollContainer, "simple mode uses a shared scroll container")
-	_expect(advanced_content.get_parent() is ScrollContainer, "advanced mode uses a shared scroll container")
+	_expect(
+		appearance_content != null and capabilities_content != null
+		and settings_content != null and advanced_content != null,
+		"editor view exposes all constructor content roots"
+	)
+	_expect(editor.get_tab_title(0) == "Внешний вид", "appearance has the first and default tab")
+	_expect(editor.get_tab_title(1) == "Возможности", "capabilities have a dedicated tab")
+	_expect(editor.get_tab_title(2) == "Настройки", "object settings have a dedicated tab")
+	_expect(editor.get_tab_title(3) == "Расширенный режим", "advanced tools remain available separately")
+	_expect(appearance_content.get_parent() is ScrollContainer, "appearance uses its own scroll container")
+	_expect(capabilities_content.get_parent() is ScrollContainer, "capabilities use their own scroll container")
+	_expect(settings_content.get_parent() is ScrollContainer, "settings use their own scroll container")
+	_expect(advanced_content.get_parent() is ScrollContainer, "advanced mode uses its own scroll container")
+	_expect(editor.current_tab == 0, "new objects open on the appearance workspace")
 
 	root.remove_child(library)
 	library.free()
