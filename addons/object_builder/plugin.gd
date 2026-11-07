@@ -375,6 +375,7 @@ func _build_scene_node_delete_dialog() -> void:
 func _build_workspace_toolbar(parent: HBoxContainer) -> void:
 	ObjectBuilderUIFactory.add_action_button(parent, "Создать объект", _on_new_object_pressed, "Начать создание нового игрового объекта")
 	ObjectBuilderUIFactory.add_action_button(parent, "Из шаблона", _on_create_from_template_pressed)
+	ObjectBuilderUIFactory.add_action_button(parent, "Сохранить", _on_save_pressed, "Сохранить текущий объект и его сцену")
 	ObjectBuilderUIFactory.add_action_button(parent, "Предпросмотр", _on_preview_pressed, "Показать текущий черновик без сохранения")
 	ObjectBuilderUIFactory.add_action_button(parent, "↻", _on_refresh_pressed, "Обновить библиотеку")
 
