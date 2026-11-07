@@ -10,6 +10,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Персонаж с запасом здоровья, скоростью передвижения, радиусом взаимодействия и фракцией.",
 		"category": "Characters",
 		"root_type": "CharacterBody2D",
+		"suggested_capabilities": ["has_health", "can_receive_damage", "can_attack", "can_interact", "has_armor", "has_damage_resistance", "regenerates_health"],
 		"properties": [
 			{"id": "health", "name": "Здоровье", "type": "Integer", "default": 100, "group": "Характеристики", "min": 0, "max": 9999},
 			{"id": "move_speed", "name": "Скорость передвижения", "type": "Float", "default": 80.0, "group": "Характеристики", "min": 0.0, "max": 1000.0},
@@ -22,6 +23,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Добываемый объект: прочность, нужный инструмент, предмет и время восстановления.",
 		"category": "Nature",
 		"root_type": "StaticBody2D",
+		"suggested_capabilities": ["has_health", "can_receive_damage", "breaks_when_health_empty", "drops_loot_on_destroy", "can_regrow", "can_be_repaired", "spawns_debris"],
 		"properties": [
 			{"id": "health", "name": "Прочность", "type": "Integer", "default": 20, "group": "Добыча", "min": 1, "max": 9999},
 			{"id": "required_tool", "name": "Нужный инструмент", "type": "String", "default": "axe", "group": "Добыча"},
@@ -34,6 +36,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Здание или размещаемая конструкция с прочностью, блокировкой движения и стоимостью строительства.",
 		"category": "Buildings",
 		"root_type": "StaticBody2D",
+		"suggested_capabilities": ["has_health", "can_receive_damage", "breaks_when_health_empty", "has_armor", "has_damage_resistance", "can_be_repaired", "drops_loot_on_destroy", "can_interact"],
 		"properties": [
 			{"id": "health", "name": "Прочность", "type": "Integer", "default": 200, "group": "Параметры", "min": 0, "max": 99999},
 			{"id": "blocks_movement", "name": "Блокирует движение", "type": "Boolean", "default": true, "group": "Коллизия"},
@@ -45,6 +48,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Подбираемый предмет с размером стопки, весом и стоимостью.",
 		"category": "Items",
 		"root_type": "Area2D",
+		"suggested_capabilities": ["is_pickup_item"],
 		"properties": [
 			{"id": "stack_size", "name": "Размер стопки", "type": "Integer", "default": 1, "group": "Инвентарь", "min": 1, "max": 999},
 			{"id": "weight", "name": "Вес", "type": "Float", "default": 0.0, "group": "Инвентарь", "min": 0.0, "max": 9999.0},
@@ -56,6 +60,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Боевой предмет с уроном, дистанцией атаки, перезарядкой и расходом выносливости.",
 		"category": "Equipment",
 		"root_type": "Area2D",
+		"suggested_capabilities": ["can_attack"],
 		"properties": [
 			{"id": "damage", "name": "Урон", "type": "Integer", "default": 10, "group": "Бой", "min": 0, "max": 9999},
 			{"id": "attack_range", "name": "Дистанция атаки", "type": "Float", "default": 48.0, "group": "Бой", "min": 0.0, "max": 1024.0},
@@ -68,6 +73,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Рабочий инструмент с силой воздействия, прочностью и интервалом использования.",
 		"category": "Equipment",
 		"root_type": "Area2D",
+		"suggested_capabilities": ["can_interact", "can_attack", "can_receive_damage"],
 		"properties": [
 			{"id": "damage", "name": "Сила воздействия", "type": "Integer", "default": 5, "group": "Работа", "min": 0, "max": 9999},
 			{"id": "durability", "name": "Прочность инструмента", "type": "Integer", "default": 100, "group": "Работа", "min": 0, "max": 99999},
@@ -79,6 +85,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Живое существо с запасом здоровья, скоростью и параметрами приручения.",
 		"category": "Animals",
 		"root_type": "CharacterBody2D",
+		"suggested_capabilities": ["has_health", "can_receive_damage", "can_attack", "can_interact", "can_regrow"],
 		"properties": [
 			{"id": "health", "name": "Здоровье", "type": "Integer", "default": 30, "group": "Характеристики", "min": 1, "max": 9999},
 			{"id": "move_speed", "name": "Скорость передвижения", "type": "Float", "default": 60.0, "group": "Характеристики", "min": 0.0, "max": 1000.0},
@@ -90,6 +97,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Объект, с которым игрок взаимодействует в радиусе действия.",
 		"category": "Interactive",
 		"root_type": "Area2D",
+		"suggested_capabilities": ["can_interact", "has_health", "can_receive_damage", "breaks_when_health_empty"],
 		"properties": [
 			{"id": "interaction_radius", "name": "Радиус взаимодействия", "type": "Float", "default": 48.0, "group": "Взаимодействие", "min": 0.0, "max": 1024.0},
 			{"id": "one_shot", "name": "Одноразовое взаимодействие", "type": "Boolean", "default": false, "group": "Взаимодействие"}
@@ -110,6 +118,7 @@ const BUILTIN_PROFILE_DATA := {
 		"description": "Транспортное средство с параметрами скорости и вместимости.",
 		"category": "Transport",
 		"root_type": "Node2D",
+		"suggested_capabilities": ["can_interact", "has_health", "can_receive_damage", "can_be_repaired"],
 		"properties": [
 			{"id": "move_speed", "name": "Скорость", "type": "Float", "default": 100.0, "group": "Транспорт", "min": 0.0, "max": 2000.0},
 			{"id": "capacity", "name": "Вместимость", "type": "Integer", "default": 1, "group": "Транспорт", "min": 1, "max": 999}
@@ -279,6 +288,7 @@ static func _make_builtin_definition(profile_id: String, data: Dictionary) -> Ob
 	definition.suggested_category = str(data.get("category", "Other"))
 	definition.suggested_root_type = str(data.get("root_type", "Node2D"))
 	definition.icon = _get_builtin_icon(profile_id)
+	definition.suggested_capability_ids = PackedStringArray(data.get("suggested_capabilities", []))
 
 	for property_data in data.get("properties", []):
 		if not property_data is Dictionary:
@@ -338,6 +348,22 @@ static func _validate_definition(definition: ObjectCreationProfileDefinition) ->
 		errors.append("У профиля должна быть стартовая категория.")
 	if not ClassDB.class_exists(definition.suggested_root_type):
 		errors.append("Неизвестный корневой класс профиля: " + definition.suggested_root_type)
+	var used_capability_ids: Dictionary = {}
+	for capability_id_value in definition.suggested_capability_ids:
+		var capability_id := _normalize_id(str(capability_id_value))
+		if not _is_valid_id(capability_id):
+			errors.append("У профиля '%s' некорректный ID рекомендуемой возможности: %s." % [
+				definition.profile_id,
+				str(capability_id_value)
+			])
+		elif used_capability_ids.has(capability_id):
+			errors.append("У профиля '%s' повторяется рекомендуемая возможность: %s." % [
+				definition.profile_id,
+				capability_id
+			])
+		else:
+			used_capability_ids[capability_id] = true
+
 	var used_property_ids: Dictionary = {}
 	for property_definition in definition.suggested_properties:
 		if property_definition == null:
