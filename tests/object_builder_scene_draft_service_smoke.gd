@@ -17,6 +17,9 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	ObjectLibraryService.ensure_directories()
+	for test_id in [CREATED_ID, CLONED_ID, IMPORTED_ID, IMPORT_SOURCE_ID]:
+		_cleanup_scene_file(ObjectLibraryService.get_scene_path(test_id))
 	var created_definition: ObjectDefinition = DefinitionScript.new()
 	created_definition.object_id = CREATED_ID
 	created_definition.display_name = "Scene service test"
