@@ -164,7 +164,10 @@ func build_related_entries() -> Array[Dictionary]:
 func build_recommended_entries(
 	current_selections: Array[ObjectCapabilitySelection],
 	query: String = "",
-	max_results: int = 8
+	max_results: int = 8,
+	profile_id: String = "",
+	object_category: String = "",
+	object_tags: PackedStringArray = PackedStringArray()
 ) -> Array[Dictionary]:
 	var context_ids: Dictionary = {}
 	var already_present: Dictionary = {}
@@ -192,9 +195,6 @@ func build_recommended_entries(
 
 	if not _focused_capability_id.is_empty():
 		context_ids[_focused_capability_id] = true
-
-	if context_ids.is_empty():
-		return []
 
 	var candidates: Dictionary = {}
 	for source_id in context_ids:
@@ -237,7 +237,25 @@ func build_recommended_entries(
 				already_present
 			)
 
+	var normalized_profile_id := profile_id.strip_edges().to_lower()
+	if not normalized_profile_id.is_empty():
+		var profile := ObjectCreationProfileRegistry.get_definition(normalized_profile_id)
+		if profile != null:
+			for suggested_id in profile.suggested_capability_ids:
+				_add_profile_recommendation_candidate(
+					candidates,
+					str(suggested_id),
+					profile,
+					already_present
+				)
+
 	var normalized_query := query.strip_edges().to_lower()
+	var normalized_category := object_category.strip_edges().to_lower()
+	var normalized_tags := PackedStringArray()
+	for tag in object_tags:
+		var clean_tag := tag.strip_edges().to_lower()
+		if not clean_tag.is_empty() and not normalized_tags.has(clean_tag):
+			normalized_tags.append(clean_tag)
 	var result: Array[Dictionary] = []
 	for candidate_id in candidates:
 		var candidate_definition := ObjectCapabilityCatalog.get_definition_reference(str(candidate_id))
@@ -252,8 +270,15 @@ func build_recommended_entries(
 			continue
 
 		var score := int(candidate_data.get("score", 0))
-		if _matches_query(candidate_definition, normalized_query):
-			score += 12
+		var matched_tags := PackedStringArray()
+		if not normalized_query.is_empty() and _matches_query(candidate_definition, normalized_query):
+			score += 18
+		for tag in normalized_tags:
+			if _matches_query(candidate_definition, tag):
+				score += 6
+				matched_tags.append(tag)
+		if not normalized_category.is_empty() and candidate_definition.category_id.to_lower() == normalized_category:
+			score += 4
 		var added_ids: PackedStringArray = plan.get("added_capability_ids", PackedStringArray())
 		var automatic_names := PackedStringArray()
 		for added_id in added_ids:
@@ -264,6 +289,10 @@ func build_recommended_entries(
 				automatic_names.append(dependency.display_name)
 
 		var explanation := str(candidate_data.get("explanation", ""))
+		if not normalized_query.is_empty() and _matches_query(candidate_definition, normalized_query):
+			explanation += " Подходит под твой поисковый запрос."
+		if not matched_tags.is_empty():
+			explanation += " Совпадают метки объекта: " + ", ".join(matched_tags) + "."
 		if not automatic_names.is_empty():
 			explanation += " Вместе потребуется: " + ", ".join(automatic_names) + "."
 		result.append({
@@ -349,8 +378,55 @@ func _add_recommendation_candidate(
 	candidates[normalized_id] = existing
 
 
+func _add_profile_recommendation_candidate(
+	candidates: Dictionary,
+	capability_id: String,
+	profile: ObjectCreationProfileDefinition,
+	already_present: Dictionary
+) -> void:
+	var normalized_id := capability_id.strip_edges().to_lower()
+	if normalized_id.is_empty() or already_present.has(normalized_id) or is_selected(normalized_id):
+		return
+	var definition := ObjectCapabilityCatalog.get_definition_reference(normalized_id)
+	if definition == null or not definition.is_ready():
+		return
+
+	var profile_score := 68
+	var explanation := "Подходит профилю «%s»: %s" % [
+		profile.display_name,
+		profile.description.strip_edges()
+	]
+	if explanation.ends_with(": "):
+		explanation = "Подходит профилю «%s»." % profile.display_name
+
+	if not candidates.has(normalized_id):
+		candidates[normalized_id] = {
+			"score": profile_score,
+			"relation_type": "profile",
+			"explanation": explanation,
+			"source_names": PackedStringArray([profile.display_name])
+		}
+		return
+
+	var existing: Dictionary = candidates[normalized_id]
+	var existing_score := int(existing.get("score", 0))
+	if profile_score > existing_score:
+		existing["score"] = profile_score
+		existing["relation_type"] = "profile"
+		existing["explanation"] = explanation
+	else:
+		existing["score"] = existing_score + 3
+	var source_names: PackedStringArray = existing.get("source_names", PackedStringArray())
+	if not source_names.has(profile.display_name):
+		source_names.append(profile.display_name)
+		existing["source_names"] = source_names
+	candidates[normalized_id] = existing
+
+
 func _recommendation_relation_score(relation_type: String) -> int:
 	match relation_type:
+		"profile":
+			return 68
 		"requires":
 			return 120
 		"recommends":
