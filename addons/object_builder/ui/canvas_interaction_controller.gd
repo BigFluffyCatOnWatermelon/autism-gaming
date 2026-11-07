@@ -532,7 +532,7 @@ func _finish_drag() -> void:
 				"old": _drag_old_rotation
 			})
 	_clear_drag()
-	if changes.size() == 1 and str(changes[0].get("property", "")) != "global_position":
+	if changes.size() == 1:
 		transform_committed.emit(
 			changes[0].get("path", NodePath("")),
 			str(changes[0].get("property", "")),
