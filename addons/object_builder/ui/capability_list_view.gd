@@ -171,34 +171,96 @@ func _build_recommendation_section() -> void:
 	content.add_child(_recommendation_container)
 
 
-func set_recommended_entries(entries: Array[Dictionary]) -> void:
+func set_recommended_entries(
+	entries: Array[Dictionary],
+	context_title: String = ""
+) -> void:
 	if _recommendation_container == null:
 		return
 	UIFactory.clear_children(_recommendation_container)
 	_recommendation_section.visible = not entries.is_empty()
 	if entries.is_empty():
 		return
-	_recommendation_title.text = "ПОДХОДИТ ЭТОМУ ОБЪЕКТУ"
+
+	_recommendation_title.text = (
+		"ПОДХОДИТ: " + context_title.to_upper()
+		if not context_title.is_empty()
+		else "ПОДХОДИТ ЭТОМУ ОБЪЕКТУ"
+	)
 	for entry in entries:
 		var capability := entry.get("definition") as ObjectCapabilityDefinition
 		if capability == null:
 			continue
-		var select_button := Button.new()
-		select_button.text = "+ " + capability.display_name
-		select_button.custom_minimum_size = Vector2(145, 30)
-		select_button.icon = CapabilityIconRegistryScript.get_icon(capability)
+
+		var card := PanelContainer.new()
+		card.custom_minimum_size = Vector2(224, 0)
+		_recommendation_container.add_child(card)
+
+		var content := VBoxContainer.new()
+		content.add_theme_constant_override("separation", 4)
+		card.add_child(content)
+
+		var header := HBoxContainer.new()
+		content.add_child(header)
+
+		var icon_texture := TextureRect.new()
+		icon_texture.custom_minimum_size = Vector2(32, 32)
+		icon_texture.custom_maximum_size = Vector2(32, 32)
+		icon_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_texture.texture = CapabilityIconRegistryScript.get_icon(capability)
+		header.add_child(icon_texture)
+
+		var name_label := Label.new()
+		name_label.text = capability.display_name
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		header.add_child(name_label)
+
 		var relation_type := str(entry.get("relation_type", "related"))
-		var explanation := str(entry.get("explanation", ""))
-		select_button.tooltip_text = _get_relation_caption(relation_type)
-		if not explanation.is_empty():
-			select_button.tooltip_text += "\n" + explanation
-		select_button.tooltip_text += "\nОтметит механику в общем наборе, но не добавит её в объект."
+		var type_label := Label.new()
+		type_label.text = _get_relation_caption(relation_type)
+		type_label.modulate = _get_relation_color(relation_type)
+		type_label.add_theme_font_size_override("font_size", 10)
+		content.add_child(type_label)
+
+		var explanation := str(entry.get("explanation", "")).strip_edges()
+		var explanation_label := Label.new()
+		explanation_label.text = explanation if not explanation.is_empty() else "Подходит к текущему набору возможностей."
+		explanation_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		explanation_label.custom_minimum_size = Vector2(0, 36)
+		explanation_label.add_theme_font_size_override("font_size", 11)
+		content.add_child(explanation_label)
+
+		var dependency_names: PackedStringArray = entry.get("automatic_dependencies", PackedStringArray())
+		if not dependency_names.is_empty():
+			var dependency_label := Label.new()
+			dependency_label.text = "Понадобится также: " + ", ".join(dependency_names)
+			dependency_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			dependency_label.add_theme_font_size_override("font_size", 10)
+			dependency_label.modulate = Color(0.8, 0.78, 0.66)
+			content.add_child(dependency_label)
+
+		var select_button := Button.new()
+		select_button.text = "Выбрать"
+		select_button.tooltip_text = explanation_label.text + "\nМеханика попадёт в общий список выбора, но не добавится в объект сразу."
 		select_button.pressed.connect(_on_selection_toggled.bind(true, capability.capability_id))
-		_recommendation_container.add_child(select_button)
+		content.add_child(select_button)
 
 
 func get_recommendation_button_count() -> int:
-	return _recommendation_container.get_child_count() if _recommendation_container != null else 0
+	if _recommendation_container == null:
+		return 0
+	var count := 0
+	for child in _recommendation_container.get_children():
+		if child is PanelContainer:
+			count += 1
+	return count
+
+
+func get_recommendation_card_count() -> int:
+	return get_recommendation_button_count()
 
 
 func set_related_entries(entries: Array[Dictionary], focused_name: String = "") -> void:
@@ -462,6 +524,8 @@ func _create_capability_card(
 
 func _get_relation_caption(relation_type: String) -> String:
 	match relation_type:
+		"profile":
+			return "Для этого профиля"
 		"requires":
 			return "Обязательная зависимость"
 		"recommends":
@@ -478,6 +542,8 @@ func _get_relation_caption(relation_type: String) -> String:
 
 func _get_relation_color(relation_type: String) -> Color:
 	match relation_type:
+		"profile":
+			return Color(0.78, 0.72, 0.5)
 		"requires":
 			return Color(0.55, 0.75, 1.0)
 		"recommends":
