@@ -355,6 +355,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_canvas_view.name = "ObjectCanvasView"
 	_canvas_view.call("build")
 	_canvas_view.connect("part_selected", Callable(self, "_on_canvas_part_selected"))
+	_canvas_view.connect("part_context_action_requested", Callable(self, "_on_canvas_part_context_action_requested"))
 	_canvas_view.connect("transform_committed", Callable(self, "_on_canvas_transform_committed"))
 	_canvas_view.connect("open_scene_requested", Callable(self, "_on_canvas_open_scene_requested"))
 	parent.add_child(_canvas_view)
@@ -2116,6 +2117,33 @@ func _on_canvas_part_selected(path: NodePath) -> void:
 	if _workspace_view != null:
 		_workspace_view.call("set_selection_info", node.name, str(node.get_path()))
 
+
+func _on_canvas_part_context_action_requested(action: String, path: NodePath) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null or path.is_empty():
+		return
+	var node := scene_root.get_node_or_null(path)
+	if node == null or node == scene_root:
+		return
+	match action:
+		"rename":
+			if not bool(_visual_parts_view.call("request_inline_rename", path)):
+				_set_status("Не удалось открыть поле переименования этой части.", true)
+		"duplicate":
+			_on_visual_part_duplicate_requested(path)
+		"toggle_visibility":
+			var canvas_item := node as CanvasItem
+			if canvas_item != null:
+				_on_visual_part_visibility_changed(path, not canvas_item.visible)
+		"toggle_lock":
+			var lock_key := _get_visual_part_lock_key(scene_root, path)
+			_on_visual_part_lock_changed(path, not _locked_visual_part_keys.has(lock_key))
+		"bring_forward":
+			_on_visual_part_draw_order_change_requested(path, 1)
+		"send_backward":
+			_on_visual_part_draw_order_change_requested(path, -1)
+		"delete":
+			_on_visual_part_remove_requested(path)
 
 func _on_canvas_transform_committed(
 	path: NodePath,
