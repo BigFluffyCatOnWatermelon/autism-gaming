@@ -195,7 +195,7 @@ func _collect_visual_bounds(node: Node, accumulated: Dictionary) -> void:
 	elif node is TextureRect:
 		var texture_rect := node as TextureRect
 		if texture_rect.texture != null:
-			_include_rect(texture_rect.global_transform, texture_rect.get_rect(), accumulated)
+			_include_rect(texture_rect.get_global_transform(), texture_rect.get_rect(), accumulated)
 
 	for child in node.get_children():
 		_collect_visual_bounds(child, accumulated)

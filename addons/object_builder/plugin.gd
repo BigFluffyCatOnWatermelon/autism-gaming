@@ -1394,8 +1394,6 @@ func _on_preview_pressed() -> void:
 
 	if should_open_window:
 		ObjectBuilderDialogService.popup_window_safely(_preview_view, Vector2i(820, 620), 0.86)
-	else:
-		_preview_view.grab_focus()
 	_set_status("Предпросмотр собран из актуального черновика. Тестовое состояние предыдущей копии сброшено.", false)
 
 
