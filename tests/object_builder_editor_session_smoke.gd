@@ -28,7 +28,8 @@ func _run() -> void:
 	var draft: ObjectDefinition = session.call("begin_edit", source)
 	_expect(draft != null and draft != source, "editing starts with an independent working copy")
 	_expect(not bool(session.call("is_dirty")), "an existing object starts clean")
-	_expect(session.call("get_original_definition").display_name == "Сундук", "the original snapshot is retained")
+	var original_snapshot: ObjectDefinition = session.call("get_original_definition")
+	_expect(original_snapshot != null and original_snapshot.display_name == "Сундук", "the original snapshot is retained")
 	_expect(draft.custom_properties[0] != source_property, "nested property resources are deeply duplicated")
 
 	draft.display_name = "Изменённый сундук"
@@ -51,7 +52,8 @@ func _run() -> void:
 	var new_draft: ObjectDefinition = session.call("begin_new", new_definition)
 	_expect(bool(session.call("is_new")), "new objects are marked as new drafts")
 	_expect(bool(session.call("is_dirty")), "new objects start with unsaved changes")
-	_expect(session.call("get_original_definition") == null, "new drafts have no saved snapshot")
+	var new_original_snapshot: ObjectDefinition = session.call("get_original_definition")
+	_expect(new_original_snapshot == null, "new drafts have no saved snapshot")
 
 	new_draft.description = "Готов к сохранению"
 	session.call("accept_saved_state", new_draft)
@@ -64,8 +66,6 @@ func _run() -> void:
 	_expect(session.call("get_working_definition") == null, "clearing the session releases the draft")
 	_expect(not bool(session.call("is_dirty")), "clearing the session resets its state")
 
-	source.free()
-	new_definition.free()
 	await process_frame
 	if failures.is_empty():
 		print("Object Builder editor session tests passed.")
