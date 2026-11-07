@@ -285,6 +285,7 @@ static func _ensure_initialized() -> void:
 static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> void:
 	if definition == null:
 		return
+	_apply_default_catalog_metadata(definition)
 
 	var explicit_by_key: Dictionary = {}
 	var invalid_schema_index := 0
@@ -345,6 +346,51 @@ static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> 
 		resolved_schema.append(unresolved)
 
 	definition.settings_schema = resolved_schema
+
+
+static func _apply_default_catalog_metadata(definition: ObjectCapabilityDefinition) -> void:
+	if definition == null:
+		return
+
+	var category_kinds := {
+		"general": "general",
+		"visual": "presentation",
+		"animation": "animation",
+		"movement": "movement",
+		"physics": "physics",
+		"interaction": "interaction",
+		"stats": "attributes",
+		"combat": "combat",
+		"defense": "defense",
+		"destruction": "lifecycle",
+		"harvesting": "resources",
+		"items": "items",
+		"inventory": "inventory",
+		"containers": "storage",
+		"construction": "construction",
+		"ai": "artificial_intelligence",
+		"animals": "creature",
+		"audio_effects": "audio_effects",
+		"world_time": "time_events",
+		"world_generation": "world_generation"
+	}
+	if definition.kind_id.strip_edges().is_empty():
+		definition.kind_id = str(category_kinds.get(definition.category_id, definition.category_id))
+
+	if definition.readiness_status.strip_edges().is_empty():
+		definition.readiness_status = "ready" if definition.runtime_status == "Implemented" else "planned"
+
+	if definition.execution_scope == "unclassified":
+		if not definition.component_ids.is_empty():
+			definition.execution_scope = "runtime"
+		elif definition.is_ready():
+			definition.execution_scope = "data_only"
+
+	if definition.implementation_type == "unclassified":
+		if not definition.component_ids.is_empty():
+			definition.implementation_type = "component"
+		elif definition.is_ready():
+			definition.implementation_type = "declarative_data"
 
 
 static func _normalize_setting_level(value: String, advanced: bool = false) -> String:
@@ -513,6 +559,47 @@ static func _validate_definition(
 			definition.capability_id,
 			definition.runtime_status
 		])
+	if definition.kind_id.strip_edges().is_empty():
+		errors.append("У возможности '%s' не указан kind_id." % definition.capability_id)
+	if definition.execution_scope not in ["unclassified", "editor_only", "runtime", "hybrid", "data_only"]:
+		errors.append("У возможности '%s' неизвестная область действия: %s." % [
+			definition.capability_id,
+			definition.execution_scope
+		])
+	if definition.implementation_type.strip_edges().is_empty():
+		errors.append("У возможности '%s' не указан способ реализации." % definition.capability_id)
+	if definition.readiness_status not in ["ready", "partial", "planned", "blocked", "error"]:
+		errors.append("У возможности '%s' неизвестный readiness_status: %s." % [
+			definition.capability_id,
+			definition.readiness_status
+		])
+
+	var relation_keys: Dictionary = {}
+	for relation in definition.relations:
+		var relation_type := str(relation.get("type", "")).strip_edges().to_lower()
+		var target_id := _normalize_id(str(relation.get("target_id", "")))
+		var relation_key := relation_type + "@" + target_id
+		if relation_type not in ["requires", "recommends", "extends", "alternative", "conflicts", "related"]:
+			errors.append("У возможности '%s' неизвестный тип связи: %s." % [
+				definition.capability_id,
+				relation_type
+			])
+		if target_id.is_empty() or not candidate.has(target_id):
+			errors.append("У возможности '%s' связь указывает на неизвестный ID: %s." % [
+				definition.capability_id,
+				target_id
+			])
+		if relation_keys.has(relation_key):
+			errors.append("У возможности '%s' повторяется связь '%s'." % [
+				definition.capability_id,
+				relation_key
+			])
+		relation_keys[relation_key] = true
+		if str(relation.get("explanation", "")).strip_edges().is_empty():
+			errors.append("У связи '%s' → '%s' отсутствует объяснение." % [
+				definition.capability_id,
+				target_id
+			])
 
 	var component_ids: Dictionary = {}
 	for component_id in definition.component_ids:
