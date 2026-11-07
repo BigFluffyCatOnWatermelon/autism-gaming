@@ -21,6 +21,7 @@ const ObjectBuilderSceneDraftService = preload("res://addons/object_builder/serv
 const ObjectBuilderPreviewService = preload("res://addons/object_builder/services/preview_service.gd")
 const ObjectBuilderPreviewViewScript = preload("res://addons/object_builder/ui/preview_view.gd")
 const ObjectBuilderCanvasViewScript = preload("res://addons/object_builder/ui/canvas_view.gd")
+const ObjectBuilderVisualPartsViewScript = preload("res://addons/object_builder/ui/visual_parts_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const ROOT_TYPES := [
@@ -76,6 +77,7 @@ var _editing_property: ObjectPropertyDefinition
 var _scene_tree_view: Control
 var _visual_editor_view: Control
 var _canvas_view: Control
+var _visual_parts_view: Control
 var _status_label: Label
 var _preview_view: Window
 var _open_scene_button: Button
@@ -282,6 +284,8 @@ func _sync_scene_tree_selection(node: Node) -> void:
 	_refresh_visual_editor(node)
 	if _canvas_view != null:
 		_canvas_view.call("set_selected_path", scene_root.get_path_to(node))
+	if _visual_parts_view != null:
+		_visual_parts_view.call("set_selected_path", scene_root.get_path_to(node))
 	if _workspace_view != null:
 		_workspace_view.call("set_selection_info", node.name, str(node.get_path()))
 func _build_ui() -> void:
@@ -321,6 +325,15 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_canvas_view.connect("transform_committed", Callable(self, "_on_canvas_transform_committed"))
 	_canvas_view.connect("open_scene_requested", Callable(self, "_on_canvas_open_scene_requested"))
 	parent.add_child(_canvas_view)
+
+	_visual_parts_view = ObjectBuilderVisualPartsViewScript.new()
+	_visual_parts_view.name = "VisualPartsView"
+	_visual_parts_view.call("build")
+	_visual_parts_view.connect("part_selected", Callable(self, "_on_canvas_part_selected"))
+	_visual_parts_view.connect("visibility_changed", Callable(self, "_on_visual_part_visibility_changed"))
+	_visual_parts_view.connect("duplicate_requested", Callable(self, "_on_visual_part_duplicate_requested"))
+	_visual_parts_view.connect("remove_requested", Callable(self, "_on_visual_part_remove_requested"))
+	parent.add_child(_visual_parts_view)
 
 
 func _build_preview_window() -> void:
@@ -1607,6 +1620,7 @@ func _refresh_scene_tree() -> void:
 	if scene_root == null:
 		_refresh_visual_editor(null)
 		_refresh_canvas()
+		_refresh_visual_parts()
 		return
 
 	var selected_node := _get_editor_selected_scene_node(scene_root)
@@ -1615,6 +1629,7 @@ func _refresh_scene_tree() -> void:
 	else:
 		_refresh_visual_editor(null)
 	_refresh_canvas()
+	_refresh_visual_parts()
 
 func _on_scene_tree_item_selected(_path: NodePath = NodePath()) -> void:
 	var scene_root := _get_open_object_scene_root()
@@ -1633,6 +1648,8 @@ func _on_scene_tree_item_selected(_path: NodePath = NodePath()) -> void:
 	_refresh_visual_editor(node)
 	if _canvas_view != null:
 		_canvas_view.call("set_selected_path", scene_root.get_path_to(node))
+	if _visual_parts_view != null:
+		_visual_parts_view.call("set_selected_path", scene_root.get_path_to(node))
 
 
 func _refresh_visual_editor(node: Node) -> void:
@@ -1661,6 +1678,7 @@ func _refresh_canvas() -> void:
 		return
 	if _working_definition == null:
 		_canvas_view.call("clear_canvas", "Создай или выбери объект, чтобы открыть холст.")
+		_refresh_visual_parts()
 		return
 	var scene_root := _get_open_object_scene_root()
 	var preview_result: Dictionary = ObjectBuilderPreviewService.create_preview_instance(
@@ -1669,6 +1687,7 @@ func _refresh_canvas() -> void:
 	)
 	if not bool(preview_result.get("ok", false)):
 		_canvas_view.call("clear_canvas", str(preview_result.get("message", "Не удалось собрать холст.")))
+		_refresh_visual_parts()
 		return
 	var can_open_scene := (
 		not _working_definition.scene_path.is_empty()
@@ -1686,6 +1705,19 @@ func _refresh_canvas() -> void:
 		can_open_scene,
 		selected_path
 	)
+	_refresh_visual_parts()
+
+
+func _refresh_visual_parts() -> void:
+	if _visual_parts_view == null:
+		return
+	var scene_root := _get_open_object_scene_root()
+	var selected_path := NodePath("")
+	if scene_root != null:
+		var selected_node := _get_editor_selected_scene_node(scene_root)
+		if selected_node != null:
+			selected_path = scene_root.get_path_to(selected_node)
+	_visual_parts_view.call("set_scene_root", scene_root, selected_path)
 
 
 func _on_canvas_part_selected(path: NodePath) -> void:
@@ -1694,6 +1726,8 @@ func _on_canvas_part_selected(path: NodePath) -> void:
 		return
 	if path.is_empty():
 		EditorInterface.get_selection().clear()
+		if _visual_parts_view != null:
+			_visual_parts_view.call("set_selected_path", NodePath(""))
 		if _workspace_view != null:
 			_workspace_view.call("set_selection_info", "", "")
 		return
@@ -1709,6 +1743,8 @@ func _on_canvas_part_selected(path: NodePath) -> void:
 	_syncing_tree_selection = false
 	EditorInterface.edit_node(node)
 	_refresh_visual_editor(node)
+	if _visual_parts_view != null:
+		_visual_parts_view.call("set_selected_path", path)
 	if _workspace_view != null:
 		_workspace_view.call("set_selection_info", node.name, str(node.get_path()))
 
@@ -1912,6 +1948,41 @@ func _on_visual_node_visibility_changed(value: bool) -> void:
 	_commit_visual_node_property(node, "visible", value, "изменить видимость части")
 
 
+func _on_visual_part_visibility_changed(path: NodePath, value: bool) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var node := scene_root.get_node_or_null(path) as CanvasItem
+	if node == null:
+		return
+	_commit_visual_node_property(node, "visible", value, "изменить видимость части")
+	_refresh_canvas()
+	_refresh_visual_parts()
+
+
+func _on_visual_part_duplicate_requested(path: NodePath) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var node := scene_root.get_node_or_null(path)
+	if node == null or node == scene_root:
+		return
+	_sync_scene_tree_selection(node)
+	EditorInterface.get_selection().clear()
+	EditorInterface.get_selection().add_node(node)
+	_on_duplicate_node_pressed()
+
+
+func _on_visual_part_remove_requested(path: NodePath) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var node := scene_root.get_node_or_null(path)
+	if node == null or node == scene_root:
+		return
+	_remove_scene_node(node)
+
+
 func _on_sprite_grid_value_changed(value: float, property_name: String) -> void:
 	var sprite := _get_selected_sprite_node()
 	if sprite == null:
@@ -2112,16 +2183,21 @@ func _on_scene_tree_node_rename_requested(path: NodePath, requested_name: String
 
 
 func _on_remove_node_pressed() -> void:
+	var selected_node := _get_selected_scene_tree_node()
+	if selected_node == null:
+		_set_status("Выбери дочернюю часть для удаления.", true)
+		return
+	_remove_scene_node(selected_node)
+
+
+func _remove_scene_node(selected_node: Node) -> void:
 	var scene_root := _get_open_object_scene_root()
 	if scene_root == null:
 		_set_status("Открой сцену выбранного объекта.", true)
 		return
-
-	var selected_node := _get_selected_scene_tree_node()
-	if selected_node == null or selected_node == scene_root:
+	if selected_node == scene_root:
 		_set_status("Нельзя удалить корневой узел объекта.", true)
 		return
-
 	var parent_node := selected_node.get_parent()
 	if parent_node == null:
 		return
@@ -2133,9 +2209,11 @@ func _on_remove_node_pressed() -> void:
 	undo_redo.add_undo_method(parent_node, "move_child", selected_node, original_index)
 	undo_redo.add_undo_reference(selected_node)
 	undo_redo.commit_action()
-
+	EditorInterface.get_selection().clear()
+	EditorInterface.edit_node(parent_node)
 	_refresh_scene_tree()
-	_set_status("Узел удалён. Ctrl+Z отменяет удаление.", false)
+	_sync_scene_tree_selection(parent_node)
+	_set_status("Часть удалена. Ctrl+Z отменяет удаление.", false)
 
 
 func _set_owner_recursive(node: Node, new_owner: Node) -> void:
