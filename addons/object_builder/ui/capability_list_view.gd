@@ -10,6 +10,8 @@ signal focus_requested(capability_id: String)
 signal selection_toggled(selected: bool, capability_id: String)
 signal batch_add_requested
 signal clear_selection_requested
+signal preset_requested(preset_id: String)
+signal preset_select_all_requested
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 const CapabilityIconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
@@ -30,6 +32,13 @@ var _related_container: HFlowContainer
 var _recommendation_section: PanelContainer
 var _recommendation_title: Label
 var _recommendation_container: HFlowContainer
+var _preset_section: PanelContainer
+var _preset_container: HFlowContainer
+var _preset_detail_panel: PanelContainer
+var _preset_detail_title: Label
+var _preset_detail_description: Label
+var _preset_detail_items: VBoxContainer
+var _preset_select_all_button: Button
 var _selection_summary: Label
 var _add_selected_button: Button
 var _clear_selection_button: Button
@@ -74,6 +83,7 @@ func build(categories: Array[Dictionary]) -> void:
 	_build_selection_bar()
 	_build_related_section()
 	_build_recommendation_section()
+	_build_preset_section()
 
 	_entries_scroll = ScrollContainer.new()
 	_entries_scroll.custom_minimum_size = Vector2(0, 420)
@@ -169,6 +179,150 @@ func _build_recommendation_section() -> void:
 	_recommendation_container.add_theme_constant_override("h_separation", 5)
 	_recommendation_container.add_theme_constant_override("v_separation", 4)
 	content.add_child(_recommendation_container)
+
+
+func _build_preset_section() -> void:
+	_preset_section = PanelContainer.new()
+	_preset_section.visible = false
+	add_child(_preset_section)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 5)
+	_preset_section.add_child(content)
+
+	var title := Label.new()
+	title.text = "ГОТОВЫЕ НАБОРЫ"
+	title.add_theme_font_size_override("font_size", 10)
+	content.add_child(title)
+
+	var hint := Label.new()
+	hint.text = "Набор — это редактируемый список механик. Он ничего не добавляет в объект сам по себе."
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.add_theme_font_size_override("font_size", 10)
+	content.add_child(hint)
+
+	_preset_container = HFlowContainer.new()
+	_preset_container.add_theme_constant_override("h_separation", 5)
+	_preset_container.add_theme_constant_override("v_separation", 4)
+	content.add_child(_preset_container)
+
+	_preset_detail_panel = PanelContainer.new()
+	_preset_detail_panel.visible = false
+	content.add_child(_preset_detail_panel)
+
+	var detail_content := VBoxContainer.new()
+	detail_content.add_theme_constant_override("separation", 4)
+	_preset_detail_panel.add_child(detail_content)
+
+	_preset_detail_title = Label.new()
+	_preset_detail_title.add_theme_font_size_override("font_size", 12)
+	detail_content.add_child(_preset_detail_title)
+
+	_preset_detail_description = Label.new()
+	_preset_detail_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_preset_detail_description.add_theme_font_size_override("font_size", 10)
+	detail_content.add_child(_preset_detail_description)
+
+	_preset_detail_items = VBoxContainer.new()
+	_preset_detail_items.add_theme_constant_override("separation", 3)
+	detail_content.add_child(_preset_detail_items)
+
+	_preset_select_all_button = Button.new()
+	_preset_select_all_button.text = "Отметить все доступные"
+	_preset_select_all_button.pressed.connect(_on_preset_select_all_pressed)
+	detail_content.add_child(_preset_select_all_button)
+
+
+func set_preset_data(
+	presets: Array[Dictionary],
+	active_preset: Dictionary = {}
+) -> void:
+	if _preset_container == null:
+		return
+	UIFactory.clear_children(_preset_container)
+	_preset_section.visible = not presets.is_empty()
+	var active_id := str(active_preset.get("id", ""))
+	for preset in presets:
+		var preset_id := str(preset.get("id", ""))
+		var display_name := str(preset.get("display_name", preset_id))
+		var ready_count := int(preset.get("ready_count", 0))
+		var total_count := int(preset.get("total_count", 0))
+		var selected_count := int(preset.get("selected_count", 0))
+		var preset_button := Button.new()
+		preset_button.text = "%s · %d/%d" % [display_name, ready_count, total_count]
+		if selected_count > 0:
+			preset_button.text += " · отмечено %d" % selected_count
+		preset_button.tooltip_text = str(preset.get("description", ""))
+		preset_button.toggle_mode = true
+		preset_button.button_pressed = preset_id == active_id
+		preset_button.pressed.connect(_on_preset_pressed.bind(preset_id))
+		_preset_container.add_child(preset_button)
+
+	_preset_detail_panel.visible = not active_preset.is_empty()
+	if active_preset.is_empty():
+		UIFactory.clear_children(_preset_detail_items)
+		_preset_select_all_button.disabled = true
+		return
+
+	_preset_detail_title.text = str(active_preset.get("display_name", "Набор"))
+	_preset_detail_description.text = str(active_preset.get("description", ""))
+	UIFactory.clear_children(_preset_detail_items)
+	var entries: Array = active_preset.get("entries", [])
+	for entry_value in entries:
+		if not entry_value is Dictionary:
+			continue
+		var entry: Dictionary = entry_value
+		var row := VBoxContainer.new()
+		row.add_theme_constant_override("separation", 1)
+		_preset_detail_items.add_child(row)
+
+		var choice := CheckBox.new()
+		choice.text = str(entry.get("display_name", entry.get("capability_id", "")))
+		choice.button_pressed = bool(entry.get("selected", false)) or bool(entry.get("installed", false))
+		choice.disabled = (
+			bool(entry.get("installed", false))
+			or not bool(entry.get("can_select", false))
+			and not bool(entry.get("selected", false))
+		)
+		var capability_id := str(entry.get("capability_id", ""))
+		choice.tooltip_text = str(entry.get("description", ""))
+		if not bool(entry.get("blocked_reason", "")).is_empty():
+			choice.tooltip_text = str(entry.get("blocked_reason", ""))
+		var dependencies: PackedStringArray = entry.get("automatic_dependencies", PackedStringArray())
+		if not dependencies.is_empty():
+			choice.tooltip_text += "\nПотребуется также: " + ", ".join(dependencies)
+		choice.toggled.connect(_on_selection_toggled.bind(capability_id))
+		row.add_child(choice)
+
+		var status_text := ""
+		if bool(entry.get("installed", false)):
+			status_text = "Уже установлено"
+		elif bool(entry.get("selected", false)):
+			status_text = "Выбрано в каталоге"
+		elif not bool(entry.get("ready", false)):
+			status_text = str(entry.get("blocked_reason", "Ещё в разработке"))
+		elif not bool(entry.get("can_select", false)):
+			status_text = str(entry.get("blocked_reason", "Недоступно в текущем сочетании"))
+		elif not dependencies.is_empty():
+			status_text = "Добавится вместе с: " + ", ".join(dependencies)
+		if not status_text.is_empty():
+			var status := Label.new()
+			status.text = status_text
+			status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			status.add_theme_font_size_override("font_size", 10)
+			status.modulate = Color(0.72, 0.76, 0.82)
+			row.add_child(status)
+
+	_preset_select_all_button.text = "Отметить все доступные (%d)" % int(active_preset.get("available_count", 0))
+	_preset_select_all_button.disabled = int(active_preset.get("available_count", 0)) <= 0
+
+
+func get_preset_button_count() -> int:
+	return _preset_container.get_child_count() if _preset_container != null else 0
+
+
+func get_preset_item_count() -> int:
+	return _preset_detail_items.get_child_count() if _preset_detail_items != null else 0
 
 
 func set_recommended_entries(
@@ -556,6 +710,15 @@ func _get_relation_color(relation_type: String) -> Color:
 			return Color(1.0, 0.54, 0.5)
 		_:
 			return Color(0.85, 0.78, 0.52)
+
+
+func _on_preset_pressed(preset_id: String) -> void:
+	preset_requested.emit(preset_id)
+
+
+func _on_preset_select_all_pressed() -> void:
+	if not _preset_select_all_button.disabled:
+		preset_select_all_requested.emit()
 
 
 func _on_search_changed(query: String) -> void:
