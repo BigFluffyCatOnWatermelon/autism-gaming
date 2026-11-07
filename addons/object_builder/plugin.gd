@@ -635,7 +635,6 @@ func _build_dialogs() -> void:
 	_dialog_view.call("set_creation_category_options", _library_controller.call("get_category_options"), "Other")
 	(_dialog_view.call("get_property_dialog") as AcceptDialog).confirmed.connect(_on_property_dialog_confirmed)
 	(_dialog_view.call("get_creation_dialog") as AcceptDialog).confirmed.connect(_on_new_object_dialog_confirmed)
-	(_dialog_view.call("get_template_dialog") as AcceptDialog).confirmed.connect(_on_template_dialog_confirmed)
 	(_dialog_view.call("get_node_dialog") as AcceptDialog).confirmed.connect(_on_node_dialog_confirmed)
 	_dialog_view.connect("creation_profile_selected", Callable(self, "_on_new_object_type_selected"))
 	_build_capability_settings_dialog()
@@ -1527,19 +1526,6 @@ func _on_create_from_template_pressed() -> void:
 		_set_status("Шаблоны не найдены. Создай или импортируй объект, а затем сохрани его как шаблон.", true)
 		return
 	_dialog_view.call("popup_creation_dialog")
-
-func _on_template_dialog_confirmed() -> void:
-	var selected_index := int(_dialog_view.call("get_selected_template_index"))
-	var template_definition := _library_controller.call("get_template", selected_index) as ObjectDefinition
-	if template_definition == null:
-		return
-	var definition := _create_definition_from_template(template_definition)
-	if definition == null:
-		return
-	_can_save_as_template = true
-	_load_definition(definition, true)
-	_set_status("Создана копия шаблона. Измени параметры и сохрани объект.", false)
-
 
 func _create_definition_from_template(template_definition: ObjectDefinition) -> ObjectDefinition:
 	if template_definition == null:
