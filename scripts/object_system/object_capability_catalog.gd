@@ -460,7 +460,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	health.category_id = "stats"
 	health.category_name = "Характеристики"
 	health.icon = "heart"
-	health.icon_atlas_index = 200
+	health.icon_atlas_index = 60
 	health.keywords = PackedStringArray(["здоровье", "прочность", "жизнь", "hp"])
 	health.component_ids = PackedStringArray(["health"])
 	health.display_order = 10
@@ -473,7 +473,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	damageable.category_id = "combat"
 	damageable.category_name = "Бой"
 	damageable.icon = "shield"
-	damageable.icon_atlas_index = 201
+	damageable.icon_atlas_index = 71
 	damageable.keywords = PackedStringArray(["урон", "повреждение", "атака", "здоровье"])
 	damageable.required_capability_ids = PackedStringArray(["has_health"])
 	damageable.component_ids = PackedStringArray(["damageable"])
@@ -487,7 +487,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	attack.category_id = "combat"
 	attack.category_name = "Бой"
 	attack.icon = "swords"
-	attack.icon_atlas_index = 202
+	attack.icon_atlas_index = 70
 	attack.keywords = PackedStringArray(["атака", "урон", "нападение"])
 	attack.component_ids = PackedStringArray(["attack"])
 	attack.display_order = 20
@@ -500,7 +500,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	destructible.category_id = "destruction"
 	destructible.category_name = "Разрушение"
 	destructible.icon = "hammer"
-	destructible.icon_atlas_index = 203
+	destructible.icon_atlas_index = 90
 	destructible.keywords = PackedStringArray(["разрушение", "сломать", "ломается", "прочность"])
 	destructible.required_capability_ids = PackedStringArray(["has_health"])
 	destructible.component_ids = PackedStringArray(["destructible"])
