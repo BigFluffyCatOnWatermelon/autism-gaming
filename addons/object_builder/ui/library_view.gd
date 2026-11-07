@@ -265,6 +265,8 @@ func set_entries(entries: Array[Dictionary], empty_message: String) -> void:
 				break
 	_render_card_entries()
 	_render_list_entries()
+	if _selected_index >= 0 and _selected_index < object_list.item_count:
+		object_list.select(_selected_index)
 	_update_entry_actions_state()
 
 
