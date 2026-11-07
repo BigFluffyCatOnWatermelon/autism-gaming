@@ -1230,32 +1230,40 @@ func _on_library_entry_action_requested(action: String, index: int) -> void:
 	var definition := _library_controller.call("get_visible_definition", index) as ObjectDefinition
 	if definition == null:
 		return
-	_pending_library_definition = definition
 	_refresh_library_details(definition)
 	if action == "open":
+		_pending_library_definition = null
 		_on_library_item_selected(index)
 		return
 
 	if _has_unsaved_changes_for_library_entry(definition):
+		_pending_library_definition = null
 		_set_status("Сначала сохрани изменения этого объекта. Действие библиотеки использует сохранённую версию.", true)
 		return
 
 	match action:
 		"duplicate":
+			_pending_library_definition = null
 			_perform_library_copy(definition, false)
 		"create_template":
 			if definition.is_template:
+				_pending_library_definition = null
 				_set_status("Выбранная запись уже является шаблоном.", true)
 				return
+			_pending_library_definition = null
 			_perform_library_copy(definition, true)
 		"rename":
+			_pending_library_definition = definition
 			_library_action_dialogs.call("popup_rename", definition.display_name)
 		"delete":
 			if _working_definition != null and _working_definition.object_id == definition.object_id:
+				_pending_library_definition = null
 				_set_status("Сначала открой другой объект. Нельзя удалять запись, которая сейчас открыта в редакторе.", true)
 				return
+			_pending_library_definition = definition
 			_library_action_dialogs.call("popup_delete", definition.display_name)
 		"export":
+			_pending_library_definition = definition
 			_library_action_dialogs.call("popup_export", definition.object_id)
 
 
