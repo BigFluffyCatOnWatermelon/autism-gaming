@@ -332,7 +332,7 @@ func _render_card_entries() -> void:
 		elif definition.is_template:
 			secondary.text = "Шаблон"
 		else:
-			secondary.text = definition.category if not definition.category.is_empty() else "Объект"
+			secondary.text = str(entry.get("category_label", definition.category)) if not definition.category.is_empty() else "Объект"
 		secondary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		secondary.add_theme_font_size_override("font_size", 10)
 		secondary.modulate = Color(0.75, 0.75, 0.75)
@@ -347,7 +347,7 @@ func _render_list_entries() -> void:
 		var preview: Texture2D = definition.preview_texture if definition != null else null
 		var title := str(entry.get("title", ""))
 		if definition != null and not definition.category.is_empty():
-			title += "\n" + ("Шаблон" if definition.is_template else definition.category)
+			title += "\n" + ("Шаблон" if definition.is_template else str(entry.get("category_label", definition.category)))
 		object_list.add_item(title, preview)
 		object_list.set_item_tooltip(object_list.item_count - 1, str(entry.get("tooltip", "")))
 	if _entries.is_empty():
