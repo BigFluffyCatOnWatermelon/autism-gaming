@@ -2270,7 +2270,11 @@ func _on_scene_tree_node_rename_requested(path: NodePath, requested_name: String
 	if was_locked:
 		_locked_visual_part_keys.erase(_get_visual_part_lock_key(scene_root, path))
 		var parent_path := scene_root.get_path_to(parent_node)
-		var next_path := NodePath(str(parent_path) + ("/" if str(parent_path) != "." else "") + next_name)
+		var next_path := (
+			NodePath(next_name)
+			if parent_path == NodePath(".")
+			else NodePath(str(parent_path) + "/" + next_name)
+		)
 		var next_lock_key := _get_visual_part_lock_key(scene_root, next_path)
 		if not _locked_visual_part_keys.has(next_lock_key):
 			_locked_visual_part_keys.append(next_lock_key)
