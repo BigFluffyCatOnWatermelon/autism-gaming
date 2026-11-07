@@ -46,9 +46,9 @@ func _run() -> void:
 	_expect(reordered_texture != null and reordered_texture.get_image().get_pixel(0, 0) == Color.RED, "frame reordering changes the actual SpriteFrames order")
 	_expect(bool(dialog.call("replace_selected_frame", first_texture)), "selected frame texture can be replaced")
 	dialog.call("_on_fps_changed", 12.0)
-	dialog.call("_on_loop_toggled", false)
+	dialog.call("_on_loop_mode_selected", 0)
 	_expect(is_equal_approx(working.get_animation_speed(&"walk"), 12.0), "animation FPS is editable")
-	_expect(not working.get_animation_loop(&"walk"), "loop mode is editable")
+	_expect(int(working.get_animation_loop_mode(&"walk")) == 0, "loop mode is editable")
 	_expect(bool(dialog.call("remove_selected_frame")), "selected frame can be removed")
 	_expect(int(dialog.call("get_frame_count")) == 1, "removing a frame updates the frame list")
 
