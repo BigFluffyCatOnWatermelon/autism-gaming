@@ -228,6 +228,10 @@ func filter_full_map(query: String) -> void:
 		graph_node.visible = normalized_query.is_empty() or searchable.contains(normalized_query)
 
 
+func get_relation_type_count() -> int:
+	return _graph.type_names.size() if _graph != null else 0
+
+
 func get_visible_node_count() -> int:
 	var count := 0
 	for graph_node_value in _full_nodes_by_id.values():
