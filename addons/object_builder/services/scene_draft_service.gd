@@ -67,6 +67,67 @@ static func clone_template_scene(
 	return _pack_and_save(scene_root, target_definition)
 
 
+static func import_scene(source_path: String, target_definition: ObjectDefinition) -> Dictionary:
+	var clean_source_path := source_path.strip_edges()
+	if clean_source_path.is_empty() or target_definition == null:
+		return _failure("Не выбран файл сцены или не подготовлено определение объекта.")
+	if clean_source_path.get_extension().to_lower() not in ["tscn", "scn"]:
+		return _failure("Поддерживаются только сцены .tscn и .scn: " + clean_source_path)
+	if not ResourceLoader.exists(clean_source_path):
+		return _failure("Файл сцены не найден или недоступен Godot: " + clean_source_path)
+
+	var loaded_resource := ResourceLoader.load(
+		clean_source_path,
+		"",
+		ResourceLoader.CACHE_MODE_REPLACE
+	)
+	if loaded_resource == null:
+		return _failure("Godot не смог загрузить сцену или один из её ресурсов: " + clean_source_path)
+	if not loaded_resource is PackedScene:
+		return _failure("Выбранный файл не является PackedScene: " + clean_source_path)
+
+	var source_scene := loaded_resource as PackedScene
+	var imported_root := source_scene.instantiate()
+	if imported_root == null:
+		return _failure("Не удалось создать временную копию сцены: " + clean_source_path)
+	if imported_root.name.is_empty():
+		imported_root.name = "Object"
+	target_definition.root_type = imported_root.get_class()
+	imported_root.set_meta("object_definition_id", target_definition.object_id)
+	imported_root.set_meta("object_category", target_definition.category)
+
+	var property_node := imported_root.find_child("ObjectProperties", true, false)
+	if property_node != null and not property_node is ObjectPropertyData:
+		imported_root.free()
+		return _failure(
+			"В импортируемой сцене уже есть узел ObjectProperties другого типа: "
+			+ clean_source_path
+		)
+	var property_data := property_node as ObjectPropertyData
+	if property_data == null:
+		property_data = ObjectPropertyData.new()
+		property_data.name = "ObjectProperties"
+		imported_root.add_child(property_data)
+	property_data.configure(target_definition.custom_properties, {}, true)
+	property_data.owner = imported_root
+
+	return _pack_and_save(imported_root, target_definition)
+
+
+static func clone_object_scene(
+	source_definition: ObjectDefinition,
+	target_definition: ObjectDefinition
+) -> Dictionary:
+	if source_definition == null or target_definition == null:
+		return _failure("Не выбран исходный или целевой объект.")
+	var has_scene := source_definition.scene != null or (
+		not source_definition.scene_path.is_empty()
+		and ResourceLoader.exists(source_definition.scene_path)
+	)
+	if has_scene:
+		return clone_template_scene(source_definition, target_definition)
+	return create_scene(target_definition)
+
 static func _pack_and_save(scene_root: Node, definition: ObjectDefinition) -> Dictionary:
 	if scene_root == null or definition == null:
 		if scene_root != null:
