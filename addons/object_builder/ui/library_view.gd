@@ -231,7 +231,27 @@ func set_collection_options(options: Array[Dictionary], selected_value: String =
 		mode_filter.add_item("Коллекция: " + str(collection.get("label", "Без названия")))
 		mode_filter.set_item_metadata(mode_filter.item_count - 1, "collection:" + str(collection.get("id", "")))
 	_select_option_metadata(mode_filter, previous_mode)
+	_update_collection_management_state()
 
+
+func _update_collection_management_state() -> void:
+	if _collection_management_button != null:
+		_collection_management_button.disabled = not get_selected_mode().begins_with("collection:")
+
+
+func _show_collection_management_menu() -> void:
+	if _collection_management_menu == null or _collection_management_button == null or _collection_management_button.disabled:
+		return
+	_collection_management_menu.position = DisplayServer.mouse_get_position()
+	_collection_management_menu.reset_size()
+	_collection_management_menu.popup()
+
+
+func _on_collection_management_item_selected(action_id: int) -> void:
+	if action_id == 0:
+		collection_management_requested.emit("rename")
+	elif action_id == 1:
+		collection_management_requested.emit("delete")
 
 func set_entries(entries: Array[Dictionary], empty_message: String) -> void:
 	var previous_id := _get_selected_entry_id()
@@ -373,6 +393,7 @@ func _on_search_changed(value: String) -> void:
 
 
 func _on_filter_changed(index: int) -> void:
+	_update_collection_management_state()
 	filter_changed.emit(index)
 
 
@@ -425,23 +446,24 @@ func _show_entry_actions_menu() -> void:
 
 func _rebuild_entry_actions_menu() -> void:
 	_entry_actions_menu.clear()
+	var selected_definition := _entries[_selected_index].get("definition") as ObjectDefinition
 	_entry_actions_menu.add_item("Открыть", 0)
 	_entry_actions_menu.add_item("Создать копию", 1)
 	_entry_actions_menu.add_item("Создать шаблон из объекта", 2)
+	_entry_actions_menu.set_item_disabled(_entry_actions_menu.get_item_index(2), selected_definition != null and selected_definition.is_template)
 	_entry_actions_menu.add_separator()
 	_entry_actions_menu.add_item("Переименовать", 3)
 	_entry_actions_menu.add_item("Удалить…", 4)
 	_entry_actions_menu.add_separator()
 	_entry_actions_menu.add_item("Экспортировать .tres…", 5)
-	if not _collection_options.is_empty():
+	if selected_definition != null and not selected_definition.is_template and not _collection_options.is_empty():
 		_entry_actions_menu.add_separator()
 		for index in range(_collection_options.size()):
 			var collection: Dictionary = _collection_options[index]
 			_entry_actions_menu.add_item("В коллекцию: " + str(collection.get("label", "Без названия")), 1000 + index)
-	if get_selected_mode().begins_with("collection:"):
+	if selected_definition != null and not selected_definition.is_template and get_selected_mode().begins_with("collection:"):
 		_entry_actions_menu.add_separator()
 		_entry_actions_menu.add_item("Убрать из этой коллекции", 6)
-
 
 func _on_card_gui_input(event: InputEvent, index: int) -> void:
 	if event is InputEventMouseButton:
