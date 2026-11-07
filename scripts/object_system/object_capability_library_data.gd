@@ -1,6 +1,8 @@
 extends RefCounted
 class_name ObjectCapabilityLibraryData
 
+const ICON_INDEX_DATA = preload("res://scripts/object_system/object_capability_icon_index_data.gd")
+
 ## Curated built-in list. Planned entries are visible and searchable, but cannot be enabled before runtime support exists.
 
 static func create_definitions() -> Array[ObjectCapabilityDefinition]:
@@ -319,7 +321,7 @@ static func _append_category(
 		definition.implementation_note = category_hint + " Runtime-поведение ещё не реализовано."
 		definition.available_in_simple_mode = true
 		definition.display_order = output.size() + 100
-		definition.icon_atlas_index = output.size()
+		definition.icon_atlas_index = ICON_INDEX_DATA.get_index(definition.capability_id)
 		output.append(definition)
 
 
