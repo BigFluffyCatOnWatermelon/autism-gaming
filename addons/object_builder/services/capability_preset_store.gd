@@ -39,7 +39,15 @@ func load_presets() -> Array[Dictionary]:
 		if not value is Dictionary:
 			continue
 		var preset: Dictionary = value
-		var errors := validate_preset(preset, result)
+		var normalized_id := str(preset.get("id", "")).strip_edges().to_lower()
+		var duplicate_id := false
+		for loaded in result:
+			if str(loaded.get("id", "")) == normalized_id:
+				duplicate_id = true
+				break
+		if duplicate_id:
+			continue
+		var errors := validate_preset(preset)
 		if errors.is_empty():
 			result.append(_normalize_preset(preset))
 	return result
@@ -111,12 +119,6 @@ func validate_preset(preset: Dictionary, existing: Array[Dictionary] = []) -> Pa
 		if str(builtin.get("id", "")) == preset_id:
 			errors.append("Нельзя перезаписать встроенный набор.")
 			break
-	for item in existing:
-		if str(item.get("id", "")) == preset_id:
-			continue
-		if str(item.get("id", "")) == preset_id:
-			errors.append("Набор с таким ID уже существует.")
-			break
 	var display_name := str(preset.get("display_name", "")).strip_edges()
 	if display_name.is_empty() or display_name.length() > MAX_NAME_LENGTH:
 		errors.append("Название должно содержать от 1 до %d символов." % MAX_NAME_LENGTH)
@@ -175,15 +177,23 @@ func _write_presets(presets: Array[Dictionary]) -> Dictionary:
 	}, "\t"))
 	file.flush()
 	file.close()
-	if FileAccess.file_exists(storage_path):
-		var remove_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(storage_path))
-		if remove_error != OK:
-			DirAccess.remove_absolute(ProjectSettings.globalize_path(temporary_path))
-			return {"ok": false, "errors": PackedStringArray(["Не удалось заменить файл пользовательских наборов."])}
-	var rename_error := DirAccess.rename_absolute(
-		ProjectSettings.globalize_path(temporary_path),
-		ProjectSettings.globalize_path(storage_path)
-	)
+	var absolute_target := ProjectSettings.globalize_path(storage_path)
+	var absolute_temporary := ProjectSettings.globalize_path(temporary_path)
+	var backup_path := storage_path + ".bak"
+	var absolute_backup := ProjectSettings.globalize_path(backup_path)
+	var had_previous_file := FileAccess.file_exists(storage_path)
+	if had_previous_file:
+		if FileAccess.file_exists(backup_path):
+			DirAccess.remove_absolute(absolute_backup)
+		var backup_error := DirAccess.rename_absolute(absolute_target, absolute_backup)
+		if backup_error != OK:
+			DirAccess.remove_absolute(absolute_temporary)
+			return {"ok": false, "errors": PackedStringArray(["Не удалось защитить предыдущий файл наборов перед заменой."])}
+	var rename_error := DirAccess.rename_absolute(absolute_temporary, absolute_target)
 	if rename_error != OK:
+		if had_previous_file:
+			DirAccess.rename_absolute(absolute_backup, absolute_target)
 		return {"ok": false, "errors": PackedStringArray(["Не удалось завершить сохранение пользовательских наборов."])}
+	if had_previous_file and FileAccess.file_exists(backup_path):
+		DirAccess.remove_absolute(absolute_backup)
 	return {"ok": true, "errors": PackedStringArray()}
