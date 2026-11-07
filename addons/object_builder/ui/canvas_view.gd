@@ -10,6 +10,7 @@ const CanvasInteractionControllerScript = preload("res://addons/object_builder/u
 
 signal part_selected(path: NodePath)
 signal transform_committed(path: NodePath, property_name: String, new_value: Variant, old_value: Variant)
+signal part_context_action_requested(action: String, path: NodePath)
 signal open_scene_requested
 
 const MIN_ZOOM := 0.08
@@ -28,6 +29,9 @@ var _grid: Node2D
 var _camera: Camera2D
 var _preview_instance: Node
 var _interaction_controller: RefCounted
+var _context_menu: PopupMenu
+var _selected_path := NodePath("")
+var _locked_paths: Dictionary = {}
 var _zoom := 1.0
 var _grid_enabled := true
 var _editing_enabled := false
@@ -97,9 +101,6 @@ func build() -> void:
 	_animation_button.toggled.connect(_on_animation_preview_toggled)
 	toolbar.add_child(_animation_button)
 
-	_open_scene_button = Button.new()
-	_open_scene_button.text = "Открыть сцену"
-	_open_scene_button.tooltip_text = "Открыть сцену в редакторе Godot, чтобы включить редактирование на холсте"
 	_open_scene_button.pressed.connect(_on_open_scene_pressed)
 	toolbar.add_child(_open_scene_button)
 
@@ -148,9 +149,11 @@ func build() -> void:
 	_interaction_controller = CanvasInteractionControllerScript.new()
 	_interaction_controller.call("configure", _viewport, _surface, _camera)
 	_interaction_controller.connect("part_selected", Callable(self, "_on_interaction_part_selected"))
+	_interaction_controller.connect("context_menu_requested", Callable(self, "_on_context_menu_requested"))
 	_interaction_controller.connect("transform_committed", Callable(self, "_on_interaction_transform_committed"))
 	_interaction_controller.connect("zoom_requested", Callable(self, "_on_interaction_zoom_requested"))
 	_surface.set("canvas_owner", _interaction_controller)
+	_build_context_menu()
 
 	_status_label = Label.new()
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -159,6 +162,58 @@ func build() -> void:
 	_set_zoom(1.0)
 	call_deferred("_on_surface_resized")
 
+
+func _build_context_menu() -> void:
+	_context_menu = PopupMenu.new()
+	_context_menu.id_pressed.connect(_on_context_menu_item_selected)
+	add_child(_context_menu)
+
+
+func _on_context_menu_requested(path: NodePath) -> void:
+	_selected_path = path
+	if not _editing_enabled or path.is_empty() or _preview_instance == null or not is_instance_valid(_preview_instance):
+		return
+	var selected_node := _preview_instance.get_node_or_null(path) as CanvasItem
+	if selected_node == null:
+		return
+	_context_menu.clear()
+	_context_menu.add_item("Переименовать", 0)
+	_context_menu.add_item("Дублировать", 1)
+	_context_menu.add_separator()
+	_context_menu.add_item("Скрыть часть" if selected_node.visible else "Показать часть", 2)
+	_context_menu.add_item(
+		"Снять фиксацию" if _locked_paths.has(path) else "Зафиксировать на холсте",
+		3
+	)
+	_context_menu.add_separator()
+	_context_menu.add_item("На передний план", 4)
+	_context_menu.add_item("На задний план", 5)
+	_context_menu.add_separator()
+	_context_menu.add_item("Удалить часть", 6)
+	var is_root := selected_node == _preview_instance
+	for action_id in [0, 1, 6]:
+		_context_menu.set_item_disabled(_context_menu.get_item_index(action_id), is_root)
+	_context_menu.set_item_disabled(_context_menu.get_item_index(4), is_root or selected_node.z_index >= 4096)
+	_context_menu.set_item_disabled(_context_menu.get_item_index(5), is_root or selected_node.z_index <= -4096)
+	_context_menu.position = DisplayServer.mouse_get_position()
+	_context_menu.reset_size()
+	_context_menu.popup()
+
+
+func _on_context_menu_item_selected(action_id: int) -> void:
+	if _selected_path.is_empty():
+		return
+	var actions := {
+		0: "rename",
+		1: "duplicate",
+		2: "toggle_visibility",
+		3: "toggle_lock",
+		4: "bring_forward",
+		5: "send_backward",
+		6: "delete"
+	}
+	if actions.has(action_id):
+		part_context_action_requested.emit(str(actions[action_id]), _selected_path)
 
 func _add_toolbar_button(
 	toolbar: HBoxContainer,
@@ -187,6 +242,7 @@ func set_preview_instance(
 		clear_canvas("Не удалось собрать предпросмотр сцены.")
 		return
 	_preview_instance = instance
+	_selected_path = selected_path
 	_disable_preview_processing(_preview_instance)
 	_stage.add_child(_preview_instance)
 	_has_preview_animations = _contains_animated_sprite(_preview_instance)
@@ -208,6 +264,7 @@ func set_preview_instance(
 
 func clear_canvas(message: String) -> void:
 	_clear_preview()
+	_selected_path = NodePath("")
 	_editing_enabled = false
 	_open_scene_button.disabled = true
 	_open_scene_button.visible = false
@@ -222,11 +279,15 @@ func clear_canvas(message: String) -> void:
 
 
 func set_selected_path(path: NodePath) -> void:
+	_selected_path = path
 	if _interaction_controller != null:
 		_interaction_controller.call("set_selected_path", path)
 
 
 func set_locked_paths(paths: Array[NodePath]) -> void:
+	_locked_paths.clear()
+	for path in paths:
+		_locked_paths[path] = true
 	if _interaction_controller != null:
 		_interaction_controller.call("set_locked_paths", paths)
 
@@ -368,6 +429,7 @@ func _fit_canvas() -> void:
 
 
 func _on_interaction_part_selected(path: NodePath) -> void:
+	_selected_path = path
 	part_selected.emit(path)
 
 
