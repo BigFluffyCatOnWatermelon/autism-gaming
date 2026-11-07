@@ -436,6 +436,16 @@ func _begin_selection(screen_position: Vector2) -> void:
 		var selected_node := _preview_instance.get_node_or_null(path) as Node2D
 		if selected_node == null:
 			continue
+		var has_selected_ancestor := false
+		for other_path in _selected_paths:
+			if other_path == path:
+				continue
+			var other_node := _preview_instance.get_node_or_null(other_path)
+			if other_node != null and other_node.is_ancestor_of(selected_node):
+				has_selected_ancestor = true
+				break
+		if has_selected_ancestor:
+			continue
 		_drag_group_nodes.append(selected_node)
 		_drag_group_paths.append(path)
 		_drag_group_old_positions.append(selected_node.global_position)
