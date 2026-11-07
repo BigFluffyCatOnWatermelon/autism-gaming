@@ -173,10 +173,12 @@ func _run_tests() -> void:
 		"",
 		8
 	)
+	var installed_data_was_recommended := false
+	for recommendation in filtered_recommendations:
+		if str(recommendation.get("capability_id", "")) == DATA_ID:
+			installed_data_was_recommended = true
 	_expect(
-		not filtered_recommendations.any(func(entry: Dictionary) -> bool:
-			return str(entry.get("capability_id", "")) == DATA_ID
-		),
+		not installed_data_was_recommended,
 		"already installed capabilities are not recommended again"
 	)
 
