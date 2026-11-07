@@ -91,19 +91,17 @@ func build_active_preset_details(
 		return {}
 
 	var simulated := _copy_plan_selections(current_selections)
-	var selections_by_id: Dictionary = {}
-	for selection in simulated:
-		if selection != null:
-			selections_by_id[selection.capability_id.strip_edges().to_lower()] = selection
+	var installed_ids: Dictionary = {}
+	for selection in current_selections:
+		if selection != null and selection.enabled:
+			installed_ids[selection.capability_id.strip_edges().to_lower()] = true
 
 	for selected_id in get_selected_ids():
-		if selected_id.is_empty() or selections_by_id.has(selected_id):
+		if selected_id.is_empty():
 			continue
 		var selected_plan := ObjectCapabilityService.plan_selection_change(simulated, selected_id, true)
 		if bool(selected_plan.get("ok", false)):
 			simulated = _copy_plan_selections(selected_plan.get("selections", []))
-			for selection in simulated:
-				selections_by_id[selection.capability_id.strip_edges().to_lower()] = selection
 
 	var entries: Array[Dictionary] = []
 	var available_count := 0
@@ -121,8 +119,7 @@ func build_active_preset_details(
 			})
 			continue
 
-		var selection := selections_by_id.get(capability_id) as ObjectCapabilitySelection
-		var is_enabled := selection != null and selection.enabled
+		var is_enabled := installed_ids.has(capability_id)
 		var is_selected_in_catalog := is_selected(capability_id)
 		var can_select := false
 		var blocked_reason := ""
@@ -133,6 +130,9 @@ func build_active_preset_details(
 		elif is_enabled:
 			installed_count += 1
 			blocked_reason = "Уже установлена."
+		elif is_selected_in_catalog:
+			can_select = true
+			selected_count += 1
 		else:
 			var plan := ObjectCapabilityService.plan_selection_change(simulated, capability_id, true)
 			if bool(plan.get("ok", false)):
@@ -146,11 +146,6 @@ func build_active_preset_details(
 					if dependency != null and not dependency_names.has(dependency.display_name):
 						dependency_names.append(dependency.display_name)
 				simulated = _copy_plan_selections(plan.get("selections", []))
-				selections_by_id.clear()
-				for updated_selection in simulated:
-					if updated_selection != null:
-						selections_by_id[updated_selection.capability_id.strip_edges().to_lower()] = updated_selection
-				selected_count += 1 if is_selected_in_catalog else 0
 			else:
 				var errors: PackedStringArray = plan.get("errors", PackedStringArray())
 				blocked_reason = "; ".join(errors)
