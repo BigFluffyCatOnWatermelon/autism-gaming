@@ -36,6 +36,7 @@
 
 ### Расширенный режим и runtime
 - Базовое дерево сцены и синхронизация со штатными Scene dock и Inspector.
+- Панель трансформаций для любого Node2D: позиция X/Y, поворот, масштаб X/Y, видимость, слой отрисовки и сброс через Undo/Redo.
 - Панели Sprite2D и AnimatedSprite2D/SpriteFrames.
 - Все десять пакетов механик загружаются через MechanicModuleLoader API v1 в редакторе и runtime.
 - Единый каталог Health, Damageable, Attack, Destructible, Pickup и Interactable.

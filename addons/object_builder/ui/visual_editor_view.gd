@@ -14,6 +14,9 @@ signal frames_file_selected(path: String)
 signal animation_selected(index: int)
 signal animation_frame_changed(value: float)
 signal animation_speed_changed(value: float)
+signal transform_value_changed(value: float, property_name: String)
+signal reset_transform_requested
+signal node_visibility_changed(value: bool)
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 const DialogService = preload("res://addons/object_builder/services/dialog_service.gd")
@@ -38,6 +41,14 @@ var _frames_dialog: FileDialog
 var _animation_option: OptionButton
 var _animated_frame: SpinBox
 var _animated_speed: SpinBox
+var _transform_controls: VBoxContainer
+var _position_x: SpinBox
+var _position_y: SpinBox
+var _rotation_degrees: SpinBox
+var _scale_x: SpinBox
+var _scale_y: SpinBox
+var _z_index: SpinBox
+var _node_visible: CheckBox
 
 
 func build() -> void:
@@ -65,9 +76,76 @@ func build() -> void:
 	_visual_preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_visual_panel.add_child(_visual_preview)
 
+	_build_node_transform_controls()
 	_build_static_sprite_controls()
 	_build_animated_sprite_controls()
 	_build_file_dialogs()
+
+
+func _build_node_transform_controls() -> void:
+	_transform_controls = VBoxContainer.new()
+	_transform_controls.visible = false
+	_transform_controls.add_theme_constant_override("separation", 4)
+	_visual_panel.add_child(_transform_controls)
+	UIFactory.create_section_title(_transform_controls, "ПОЛОЖЕНИЕ И СЛОЙ", 13)
+
+	var position_row := HBoxContainer.new()
+	_transform_controls.add_child(position_row)
+	_position_x = UIFactory.make_spin_box(-16384.0, 16384.0, 1.0)
+	_position_x.value_changed.connect(_on_transform_value_changed.bind("position_x"))
+	UIFactory.add_labeled_control(position_row, "X", _position_x, 72.0)
+	_position_y = UIFactory.make_spin_box(-16384.0, 16384.0, 1.0)
+	_position_y.value_changed.connect(_on_transform_value_changed.bind("position_y"))
+	UIFactory.add_labeled_control(position_row, "Y", _position_y, 72.0)
+
+	var rotation_scale_row := HBoxContainer.new()
+	_transform_controls.add_child(rotation_scale_row)
+	_rotation_degrees = UIFactory.make_spin_box(-3600.0, 3600.0, 1.0)
+	_rotation_degrees.suffix = "°"
+	_rotation_degrees.value_changed.connect(_on_transform_value_changed.bind("rotation_degrees"))
+	UIFactory.add_labeled_control(rotation_scale_row, "Поворот", _rotation_degrees, 96.0)
+
+	var scale_row := HBoxContainer.new()
+	_transform_controls.add_child(scale_row)
+	_scale_x = UIFactory.make_spin_box(-100.0, 100.0, 0.05)
+	_scale_x.value_changed.connect(_on_transform_value_changed.bind("scale_x"))
+	UIFactory.add_labeled_control(scale_row, "Размер X", _scale_x, 84.0)
+	_scale_y = UIFactory.make_spin_box(-100.0, 100.0, 0.05)
+	_scale_y.value_changed.connect(_on_transform_value_changed.bind("scale_y"))
+	UIFactory.add_labeled_control(scale_row, "Y", _scale_y, 72.0)
+
+	var layer_row := HBoxContainer.new()
+	_transform_controls.add_child(layer_row)
+	_node_visible = CheckBox.new()
+	_node_visible.text = "Видимый"
+	_node_visible.toggled.connect(_on_node_visibility_toggled)
+	layer_row.add_child(_node_visible)
+	_z_index = UIFactory.make_spin_box(-4096.0, 4096.0, 1.0)
+	_z_index.value_changed.connect(_on_transform_value_changed.bind("z_index"))
+	UIFactory.add_labeled_control(layer_row, "Слой отрисовки", _z_index, 110.0)
+	var reset_button := Button.new()
+	reset_button.text = "Сбросить"
+	reset_button.tooltip_text = "Вернуть позицию, поворот, размер и слой к исходным значениям."
+	reset_button.pressed.connect(_on_reset_transform_pressed)
+	layer_row.add_child(reset_button)
+
+
+func show_node_2d(node: Node2D) -> void:
+	if node == null or _visual_panel == null:
+		return
+	_visual_panel.visible = true
+	_transform_controls.visible = true
+	_sprite_visual_controls.visible = false
+	_animated_visual_controls.visible = false
+	_visual_type_label.text = "Выбрана часть: %s <%s>" % [node.name, node.get_class()]
+	_visual_preview.texture = null
+	_position_x.set_value_no_signal(node.position.x)
+	_position_y.set_value_no_signal(node.position.y)
+	_rotation_degrees.set_value_no_signal(node.rotation_degrees)
+	_scale_x.set_value_no_signal(node.scale.x)
+	_scale_y.set_value_no_signal(node.scale.y)
+	_z_index.set_value_no_signal(node.z_index)
+	_node_visible.set_pressed_no_signal(node.visible)
 
 
 func _build_static_sprite_controls() -> void:
@@ -197,7 +275,7 @@ func _build_file_dialogs() -> void:
 func show_sprite(sprite: Sprite2D) -> void:
 	if sprite == null or _visual_panel == null:
 		return
-	_visual_panel.visible = true
+	show_node_2d(sprite)
 	_sprite_visual_controls.visible = true
 	_animated_visual_controls.visible = false
 	_visual_type_label.text = "Выбрано изображение: %s" % sprite.name
@@ -217,7 +295,7 @@ func show_sprite(sprite: Sprite2D) -> void:
 func show_animated_sprite(sprite: AnimatedSprite2D) -> void:
 	if sprite == null or _visual_panel == null:
 		return
-	_visual_panel.visible = true
+	show_node_2d(sprite)
 	_sprite_visual_controls.visible = false
 	_animated_visual_controls.visible = true
 	_visual_type_label.text = "Выбрана анимация: %s" % sprite.name
@@ -349,3 +427,15 @@ func _on_animation_frame_changed(value: float) -> void:
 
 func _on_animation_speed_changed(value: float) -> void:
 	animation_speed_changed.emit(value)
+
+
+func _on_transform_value_changed(value: float, property_name: String) -> void:
+	transform_value_changed.emit(value, property_name)
+
+
+func _on_reset_transform_pressed() -> void:
+	reset_transform_requested.emit()
+
+
+func _on_node_visibility_toggled(value: bool) -> void:
+	node_visibility_changed.emit(value)

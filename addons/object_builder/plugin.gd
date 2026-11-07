@@ -1035,6 +1035,9 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	_visual_editor_view.connect("animation_selected", Callable(self, "_on_animated_animation_selected"))
 	_visual_editor_view.connect("animation_frame_changed", Callable(self, "_on_animated_frame_changed"))
 	_visual_editor_view.connect("animation_speed_changed", Callable(self, "_on_animated_speed_changed"))
+	_visual_editor_view.connect("transform_value_changed", Callable(self, "_on_visual_transform_value_changed"))
+	_visual_editor_view.connect("reset_transform_requested", Callable(self, "_on_reset_visual_transform_requested"))
+	_visual_editor_view.connect("node_visibility_changed", Callable(self, "_on_visual_node_visibility_changed"))
 	_visual_editor_view.call("build")
 	parent.add_child(_visual_editor_view)
 
@@ -1628,6 +1631,9 @@ func _refresh_visual_editor(node: Node) -> void:
 		if _simple_preview != null:
 			_simple_preview.texture = _visual_editor_view.call("get_preview_texture") as Texture2D
 		return
+	if node is Node2D:
+		_visual_editor_view.call("show_node_2d", node)
+		return
 	_visual_editor_view.call("hide_editor")
 
 func _get_selected_scene_tree_node() -> Node:
@@ -1746,6 +1752,68 @@ func _on_animated_speed_changed(value: float) -> void:
 	if sprite == null:
 		return
 	_commit_visual_node_property(sprite, "speed_scale", value, "изменить скорость анимации")
+
+
+func _on_visual_transform_value_changed(value: float, property_name: String) -> void:
+	var node := _get_selected_scene_tree_node() as Node2D
+	if node == null:
+		return
+	var next_position := node.position
+	var next_scale := node.scale
+	match property_name:
+		"position_x":
+			next_position.x = value
+			_commit_visual_node_property(node, "position", next_position, "изменить позицию")
+		"position_y":
+			next_position.y = value
+			_commit_visual_node_property(node, "position", next_position, "изменить позицию")
+		"rotation_degrees":
+			_commit_visual_node_property(node, "rotation_degrees", value, "изменить поворот")
+		"scale_x":
+			next_scale.x = value
+			_commit_visual_node_property(node, "scale", next_scale, "изменить размер")
+		"scale_y":
+			next_scale.y = value
+			_commit_visual_node_property(node, "scale", next_scale, "изменить размер")
+		"z_index":
+			_commit_visual_node_property(node, "z_index", int(round(value)), "изменить слой отрисовки")
+
+
+func _on_reset_visual_transform_requested() -> void:
+	var node := _get_selected_scene_tree_node() as Node2D
+	var scene_root := _get_open_object_scene_root()
+	if node == null or scene_root == null:
+		return
+	var reset_values := {
+		"position": Vector2.ZERO,
+		"rotation_degrees": 0.0,
+		"scale": Vector2.ONE,
+		"z_index": 0
+	}
+	var changes: Array[Dictionary] = []
+	for property_name in reset_values:
+		var old_value: Variant = node.get(property_name)
+		var new_value: Variant = reset_values[property_name]
+		if old_value != new_value:
+			changes.append({"property": property_name, "old": old_value, "new": new_value})
+	if changes.is_empty():
+		return
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: сбросить трансформацию части", 0, scene_root)
+	for change in changes:
+		var property_name := str(change.get("property", ""))
+		undo_redo.add_do_property(node, property_name, change.get("new"))
+		undo_redo.add_undo_property(node, property_name, change.get("old"))
+	undo_redo.commit_action()
+	_refresh_visual_editor(node)
+	_set_status("Позиция, поворот, размер и слой части сброшены. Отмена доступна через Undo.", false)
+
+
+func _on_visual_node_visibility_changed(value: bool) -> void:
+	var node := _get_selected_scene_tree_node() as CanvasItem
+	if node == null:
+		return
+	_commit_visual_node_property(node, "visible", value, "изменить видимость части")
 
 
 func _on_sprite_grid_value_changed(value: float, property_name: String) -> void:

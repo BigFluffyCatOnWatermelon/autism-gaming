@@ -13,6 +13,9 @@ var toggle_events: Array[Dictionary] = []
 var animation_events: Array[int] = []
 var frame_events: Array[float] = []
 var speed_events: Array[float] = []
+var transform_events: Array[Dictionary] = []
+var visibility_events: Array[bool] = []
+var reset_transform_count := 0
 var texture_browse_count := 0
 var frames_browse_count := 0
 
@@ -35,6 +38,9 @@ func _run() -> void:
 	view.connect("animation_selected", Callable(self, "_on_animation_selected"))
 	view.connect("animation_frame_changed", Callable(self, "_on_frame_changed"))
 	view.connect("animation_speed_changed", Callable(self, "_on_speed_changed"))
+	view.connect("transform_value_changed", Callable(self, "_on_transform_changed"))
+	view.connect("reset_transform_requested", Callable(self, "_on_reset_transform"))
+	view.connect("node_visibility_changed", Callable(self, "_on_visibility_changed"))
 	view.connect("texture_browse_requested", Callable(self, "_on_texture_browse"))
 	view.connect("frames_browse_requested", Callable(self, "_on_frames_browse"))
 
@@ -44,6 +50,31 @@ func _run() -> void:
 	var animated_controls := view.get("_animated_visual_controls") as VBoxContainer
 	_expect(panel != null and not panel.visible, "visual editor starts hidden")
 	_expect(static_controls != null and animated_controls != null, "static and animated controls are created")
+	var transform_controls := view.get("_transform_controls") as VBoxContainer
+	_expect(transform_controls != null and not transform_controls.visible, "transform controls are created and stay hidden before selection")
+
+	var generic_node := Node2D.new()
+	generic_node.name = "Body"
+	generic_node.position = Vector2(24.0, -12.0)
+	generic_node.rotation_degrees = 30.0
+	generic_node.scale = Vector2(1.5, 0.75)
+	generic_node.z_index = 4
+	generic_node.visible = false
+	view.call("show_node_2d", generic_node)
+	_expect(panel.visible and transform_controls.visible, "any Node2D part opens the shared transform editor")
+	_expect(is_equal_approx((view.get("_position_x") as SpinBox).value, 24.0), "position X is populated from the selected node")
+	_expect(is_equal_approx((view.get("_position_y") as SpinBox).value, -12.0), "position Y is populated from the selected node")
+	_expect(is_equal_approx((view.get("_rotation_degrees") as SpinBox).value, 30.0), "rotation is shown in degrees")
+	_expect(is_equal_approx((view.get("_scale_x") as SpinBox).value, 1.5), "scale X is populated from the selected node")
+	_expect(is_equal_approx((view.get("_scale_y") as SpinBox).value, 0.75), "scale Y is populated from the selected node")
+	_expect(is_equal_approx((view.get("_z_index") as SpinBox).value, 4.0), "draw order is populated from the selected node")
+	_expect(not (view.get("_node_visible") as CheckBox).button_pressed, "visibility checkbox follows the selected node")
+	(view.get("_position_x") as SpinBox).value_changed.emit(42.0)
+	(view.get("_node_visible") as CheckBox).toggled.emit(true)
+	view.call("_on_reset_transform_pressed")
+	_expect(transform_events.size() == 1 and transform_events[0].get("property_name") == "position_x", "transform edits emit the matching property key")
+	_expect(visibility_events == [true], "visibility changes are forwarded")
+	_expect(reset_transform_count == 1, "reset transform request is forwarded")
 
 	var sprite := Sprite2D.new()
 	sprite.name = "StaticSprite"
@@ -55,7 +86,7 @@ func _run() -> void:
 	sprite.flip_h = true
 	sprite.flip_v = false
 	view.call("show_sprite", sprite)
-	_expect(panel.visible and static_controls.visible and not animated_controls.visible, "Sprite2D displays only static controls")
+	_expect(panel.visible and transform_controls.visible and static_controls.visible and not animated_controls.visible, "Sprite2D displays transform and static controls")
 	_expect((view.get("_visual_type_label") as Label).text == "Выбрано изображение: StaticSprite", "static editor identifies the selected node")
 	_expect(is_equal_approx((view.get("_sprite_hframes") as SpinBox).value, 3.0), "horizontal frame count is populated")
 	_expect(is_equal_approx((view.get("_sprite_vframes") as SpinBox).value, 2.0), "vertical frame count is populated")
@@ -124,6 +155,7 @@ func _run() -> void:
 	view.free()
 	sprite.free()
 	animated_sprite.free()
+	generic_node.free()
 	await process_frame
 	if failures.is_empty():
 		print("Object Builder visual editor view tests passed.")
@@ -172,6 +204,18 @@ func _on_frame_changed(value: float) -> void:
 
 func _on_speed_changed(value: float) -> void:
 	speed_events.append(value)
+
+
+func _on_transform_changed(value: float, property_name: String) -> void:
+	transform_events.append({"value": value, "property_name": property_name})
+
+
+func _on_visibility_changed(value: bool) -> void:
+	visibility_events.append(value)
+
+
+func _on_reset_transform() -> void:
+	reset_transform_count += 1
 
 
 func _on_texture_browse() -> void:
