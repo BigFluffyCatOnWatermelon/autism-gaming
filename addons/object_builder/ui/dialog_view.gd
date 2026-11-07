@@ -480,6 +480,16 @@ func get_node_name() -> String:
 	return _node_name_edit.text if _node_name_edit != null else ""
 
 
+func _select_option_metadata(option: OptionButton, metadata_value: String) -> void:
+	if option == null or option.item_count == 0:
+		return
+	for index in range(option.item_count):
+		if str(option.get_item_metadata(index)) == metadata_value:
+			option.select(index)
+			return
+	option.select(0)
+
+
 func popup_property_dialog() -> void:
 	DialogService.popup_window_safely(_property_dialog, Vector2i(470, 430), 0.82)
 
