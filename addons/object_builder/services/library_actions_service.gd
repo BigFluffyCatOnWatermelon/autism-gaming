@@ -79,7 +79,7 @@ static func delete_definition(definition: ObjectDefinition) -> Dictionary:
 
 	var remove_definition_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(source_path))
 	if remove_definition_error != OK:
-		if managed_scene:
+		if managed_scene and not scene_shared:
 			DirAccess.copy_absolute(
 				ProjectSettings.globalize_path(backup_scene),
 				ProjectSettings.globalize_path(scene_path)
