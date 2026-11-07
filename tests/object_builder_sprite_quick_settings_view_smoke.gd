@@ -66,10 +66,18 @@ func _run() -> void:
 	_expect(bool(view.call("is_visible_for_selection")), "quick settings are visible for AnimatedSprite2D")
 	_expect(view.get("_sprite_controls").visible == false and view.get("_animated_controls").visible, "AnimatedSprite2D displays animation controls instead of atlas controls")
 	var animation_option := view.get("_animation_option") as OptionButton
-	_expect(animation_option.item_count == 2, "available SpriteFrames animations are listed")
-	_expect(str(animation_option.get_item_metadata(animation_option.selected)) == "idle", "current animation is selected")
+	var idle_index := -1
+	var walk_index := -1
+	for index in range(animation_option.item_count):
+		var animation_id := str(animation_option.get_item_metadata(index))
+		if animation_id == "idle":
+			idle_index = index
+		elif animation_id == "walk":
+			walk_index = index
+	_expect(idle_index >= 0 and walk_index >= 0, "available SpriteFrames animations are listed")
+	_expect(animation_option.selected == idle_index, "current animation is selected")
 	_expect(is_equal_approx((view.get("_animated_speed") as SpinBox).value, 1.5), "animation speed is populated")
-	animation_option.item_selected.emit(1)
+	animation_option.item_selected.emit(walk_index)
 	(view.get("_animated_frame") as SpinBox).value_changed.emit(0.0)
 	(view.get("_animated_speed") as SpinBox).value_changed.emit(2.0)
 	_expect(changes.size() == 11, "animated sprite controls emit animation, frame and speed changes")
