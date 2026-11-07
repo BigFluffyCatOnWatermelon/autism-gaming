@@ -500,10 +500,11 @@ static func validate_selections(
 		if capability == null:
 			errors.append("Неизвестная возможность: " + capability_id)
 			continue
-		if capability.runtime_status != "Implemented":
+		if not capability.is_ready():
+			var readiness := capability.get_effective_readiness_status()
 			errors.append(
-				"Механика «%s» пока находится в разработке и не может быть включена."
-				% capability.display_name
+				"Возможность «%s» пока недоступна для добавления (статус: %s)."
+				% [capability.display_name, readiness]
 			)
 			continue
 
