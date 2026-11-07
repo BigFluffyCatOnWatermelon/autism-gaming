@@ -87,6 +87,7 @@ func open(
 		var node_name := "Capability_" + str(index)
 		var relation_type_id := _get_relation_type_id(relation_type)
 		_graph.add_valid_connection_type(0, relation_type_id)
+		_graph.add_valid_connection_type(relation_type_id, 0)
 		var graph_node := _create_graph_node(
 			node_name,
 			definition.display_name,
@@ -99,7 +100,10 @@ func open(
 		var radius := 260.0 if count <= 8 else 320.0
 		graph_node.position_offset = Vector2(330, 250) + Vector2(cos(angle), sin(angle)) * radius
 		_graph.add_child(graph_node)
-		_graph.connect_node("FocusedCapability", 0, node_name, 0)
+		if bool(entry.get("is_reverse", false)):
+			_graph.connect_node(node_name, 0, "FocusedCapability", 0)
+		else:
+			_graph.connect_node("FocusedCapability", 0, node_name, 0)
 
 	_window.popup_centered()
 
@@ -250,6 +254,10 @@ func get_node_count() -> int:
 
 func get_connection_count() -> int:
 	return _graph.get_connection_list().size() if _graph != null else 0
+
+
+func has_connection(from_node: String, to_node: String) -> bool:
+	return _graph.is_node_connected(from_node, 0, to_node, 0) if _graph != null else false
 
 
 func get_focus_button_count() -> int:
