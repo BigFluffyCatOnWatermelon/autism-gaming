@@ -107,18 +107,31 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
+	print("[ObjectBuilder shutdown] _exit_tree entered")
 	_disconnect_editor_sync()
 	if _library_controller != null and _workspace_view != null:
 		_save_local_state()
 	if _editor_session != null:
 		_editor_session.call("clear")
 	_working_definition = null
+	if _main_screen != null and is_instance_valid(_main_screen):
+		print("[ObjectBuilder shutdown] main screen in tree=", _main_screen.is_inside_tree())
+		_debug_list_shutdown_controls(_main_screen)
 	if _preview_view != null and is_instance_valid(_preview_view):
+		print("[ObjectBuilder shutdown] preview window valid=", is_instance_valid(_preview_view))
 		_preview_view.free()
 		_preview_view = null
 	if _main_screen != null and is_instance_valid(_main_screen):
 		_main_screen.free()
+		print("[ObjectBuilder shutdown] main screen valid after free=", is_instance_valid(_main_screen))
 		_main_screen = null
+
+
+func _debug_list_shutdown_controls(node: Node) -> void:
+	if node is Button or node is TextureRect:
+		print("[ObjectBuilder shutdown] control ", node.get_class(), " id=", node.get_instance_id(), " name=", node.name)
+	for child in node.get_children():
+		_debug_list_shutdown_controls(child)
 
 
 func _has_main_screen() -> bool:
