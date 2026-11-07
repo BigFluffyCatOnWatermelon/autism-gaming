@@ -187,8 +187,8 @@ static func _pack_and_save(scene_root: Node, definition: ObjectDefinition) -> Di
 
 
 static func _build_import_report(scene_root: Node) -> Dictionary:
-	var visual_parts := PackedStringArray()
-	var advanced_nodes := PackedStringArray()
+	var visual_parts: Array[String] = []
+	var advanced_nodes: Array[String] = []
 	var total_nodes := _collect_import_report(scene_root, "", visual_parts, advanced_nodes)
 	return {
 		"visual_part_count": visual_parts.size(),
@@ -202,8 +202,8 @@ static func _build_import_report(scene_root: Node) -> Dictionary:
 static func _collect_import_report(
 	parent: Node,
 	parent_path: String,
-	visual_parts: PackedStringArray,
-	advanced_nodes: PackedStringArray
+	visual_parts: Array[String],
+	advanced_nodes: Array[String]
 ) -> int:
 	var total_nodes := 0
 	for child in parent.get_children():
