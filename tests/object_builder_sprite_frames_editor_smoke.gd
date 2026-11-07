@@ -55,18 +55,19 @@ func _run() -> void:
 	_expect(bool(dialog.call("remove_selected_frame")), "selected frame can be removed")
 	_expect(int(dialog.call("get_frame_count")) == 1, "removing a frame updates the frame list")
 
-	dialog.call("open_for_sprite_frames", null)
-	var new_resource := dialog.call("get_working_frames") as SpriteFrames
-	_expect(int(dialog.call("get_animation_count")) == 1 and new_resource.has_animation(&"default"), "new SpriteFrames resource starts with an editable default animation")
-	_expect(int(dialog.call("get_frame_count")) == 0, "new default animation starts empty")
-	dialog.call("_remove_current_animation")
-	_expect(int(dialog.call("get_animation_count")) == 1 and (dialog.call("get_working_frames") as SpriteFrames).has_animation(&"default"), "removing the last animation safely recreates an empty default")
 	dialog.call("_on_confirmed")
 	_expect(accepted_frames.size() == 1, "applying the editor emits a completed resource")
 	if not accepted_frames.is_empty():
 		_expect(accepted_frames[0] != source and accepted_frames[0] != working, "accepted resource is isolated from source and editing buffer")
 		_expect(accepted_frames[0].has_animation(&"walk"), "accepted resource contains edited animation metadata")
 		_expect(accepted_frames[0].get_frame_count(&"walk") == 1, "accepted resource contains the final frame list")
+
+	dialog.call("open_for_sprite_frames", null)
+	var new_resource := dialog.call("get_working_frames") as SpriteFrames
+	_expect(int(dialog.call("get_animation_count")) == 1 and new_resource.has_animation(&"default"), "new SpriteFrames resource starts with an editable default animation")
+	_expect(int(dialog.call("get_frame_count")) == 0, "new default animation starts empty")
+	dialog.call("_remove_current_animation")
+	_expect(int(dialog.call("get_animation_count")) == 1 and (dialog.call("get_working_frames") as SpriteFrames).has_animation(&"default"), "removing the last animation safely recreates an empty default")
 
 	dialog.queue_free()
 	await process_frame
