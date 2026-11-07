@@ -47,6 +47,11 @@ func _run() -> void:
 
 	var definition := DefinitionScript.new() as ObjectDefinition
 	target.set_meta("object_builder_node_id", "generated_visual")
+	var generated_parent := NodeDefinitionScript.new() as ObjectNodeDefinition
+	generated_parent.node_id = "generated_visual"
+	generated_parent.node_type = "Sprite2D"
+	generated_parent.node_name = "Target"
+	definition.node_definitions.append(generated_parent)
 	var generated_child := NodeDefinitionScript.new() as ObjectNodeDefinition
 	generated_child.node_id = "generated_child"
 	generated_child.parent_node_id = "generated_visual"
@@ -64,9 +69,10 @@ func _run() -> void:
 	_expect(_has_kind(references, "Внешний сигнал на удаляемую часть"), "signal connections targeting the part are detected")
 	_expect(_has_kind(references, "Сигнал удаляемой части"), "signals emitted by the part and connected externally are detected")
 	_expect(_has_kind(references, "AnimationPlayer с треком на удаляемую часть"), "animation tracks targeting the part are detected")
+	_expect(_has_kind(references, "Декларативный узел"), "generated node definitions attached to the deleted part are detected")
 	_expect(_has_kind(references, "Декларативная структура"), "generated child definitions referencing the part are detected")
 	_expect(_has_kind(references, "Декларативный сигнал"), "generated signal definitions referencing the part are detected")
-	_expect(references.size() >= 6, "dependency report contains separate entries for all discovered reference groups")
+	_expect(references.size() >= 7, "dependency report contains separate entries for all discovered reference groups")
 
 	var internal_parent := Node2D.new()
 	internal_parent.name = "InternalParent"
