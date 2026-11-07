@@ -1140,7 +1140,7 @@ func _on_new_object_dialog_confirmed() -> void:
 		var advanced_count := int(import_report.get("advanced_node_count", 0))
 		status_message += "\nРаспознано визуальных частей: %d. Дополнительных узлов сохранено для расширенного режима: %d." % [visual_count, advanced_count]
 		var advanced_paths: Variant = import_report.get("advanced_node_paths", PackedStringArray())
-		if advanced_paths is PackedStringArray and not advanced_paths.is_empty():
+		if advanced_paths is Array and not advanced_paths.is_empty():
 			var examples := PackedStringArray()
 			for index in range(mini(3, advanced_paths.size())):
 				examples.append(str(advanced_paths[index]))
