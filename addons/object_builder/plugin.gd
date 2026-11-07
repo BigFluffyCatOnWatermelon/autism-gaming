@@ -411,10 +411,6 @@ func _build_simple_editor(parent: VBoxContainer) -> void:
 	ObjectBuilderUIFactory.create_section_title(simple_editor, "ВНЕШНИЙ ВИД", 16)
 	_build_canvas_editor(simple_editor)
 
-	# Kept as a lightweight texture cache for resource selection and status updates.
-	_simple_preview = TextureRect.new()
-	_simple_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	
 	ObjectBuilderUIFactory.add_action_button(
 		simple_editor,
 		"+ Добавить изображение",
@@ -1519,10 +1515,6 @@ func _on_save_pressed() -> void:
 	if form_changed:
 		_mark_editor_session_changed()
 
-	if _simple_preview != null and _simple_preview.texture != null:
-		if _working_definition.preview_texture != _simple_preview.texture:
-			_working_definition.preview_texture = _simple_preview.texture
-			_mark_editor_session_changed()
 
 	var open_scene_root := _get_open_object_scene_root()
 	var scene_properties_synced := false
@@ -1701,14 +1693,10 @@ func _refresh_visual_editor(node: Node) -> void:
 	if node is Sprite2D:
 		var sprite := node as Sprite2D
 		_visual_editor_view.call("show_sprite", sprite)
-		if _simple_preview != null:
-			_simple_preview.texture = sprite.texture
 		return
 	if node is AnimatedSprite2D:
 		var animated_sprite := node as AnimatedSprite2D
 		_visual_editor_view.call("show_animated_sprite", animated_sprite)
-		if _simple_preview != null:
-			_simple_preview.texture = _visual_editor_view.call("get_preview_texture") as Texture2D
 		return
 	if node is Node2D:
 		_visual_editor_view.call("show_node_2d", node)
