@@ -56,6 +56,7 @@ func build_entries(
 		selections_by_id[selection.capability_id.strip_edges().to_lower()] = selection
 
 	var relationship_highlights := _build_relationship_highlights()
+	var related_capability_ids := _build_related_capability_id_set()
 	var result: Array[Dictionary] = []
 	for capability_id in capability_ids:
 		var definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
@@ -75,9 +76,27 @@ func build_entries(
 			"automatically_added": selection != null and selection.automatically_added,
 			"can_toggle": is_ready and not (selection != null and selection.automatically_added),
 			"can_configure": is_enabled and is_ready,
+			"has_relations": related_capability_ids.has(capability_id),
 			"relation_highlight": relationship_highlights.get(capability_id, {})
 		})
 	return result
+
+
+func _build_related_capability_id_set() -> Dictionary:
+	var related_ids: Dictionary = {}
+	for capability_id in ObjectCapabilityCatalog.get_capability_ids("", false):
+		var definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
+		if definition == null:
+			continue
+		var relations := _get_declared_relations(definition)
+		if relations.is_empty():
+			continue
+		related_ids[capability_id] = true
+		for relation in relations:
+			var target_id := str(relation.get("target_id", ""))
+			if not target_id.is_empty():
+				related_ids[target_id] = true
+	return related_ids
 
 
 func build_related_entries() -> Array[Dictionary]:
