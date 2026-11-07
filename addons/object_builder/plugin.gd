@@ -686,13 +686,13 @@ func _rebuild_capability_list() -> void:
 	var all_capability_ids := ObjectCapabilityCatalog.get_capability_ids("", false)
 	var ready_count := 0
 	for catalog_id in all_capability_ids:
-		var catalog_definition := ObjectCapabilityCatalog.get_definition(catalog_id)
+		var catalog_definition := ObjectCapabilityCatalog.get_definition_reference(catalog_id)
 		if catalog_definition != null and catalog_definition.runtime_status == "Implemented":
 			ready_count += 1
 
 	var entries: Array[Dictionary] = []
 	for capability_id in capability_ids:
-		var capability := ObjectCapabilityCatalog.get_definition(capability_id)
+		var capability := ObjectCapabilityCatalog.get_definition_reference(capability_id)
 		if capability == null:
 			continue
 		var searchable := (

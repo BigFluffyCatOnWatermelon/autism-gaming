@@ -8,10 +8,19 @@ signal toggle_requested(enabled: bool, capability_id: String)
 signal settings_requested(capability_id: String)
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
+const PAGE_SIZE := 20
 
 var search_input: LineEdit
 var category_option: OptionButton
 var entries_container: VBoxContainer
+var _pagination_row: HBoxContainer
+var _previous_page_button: Button
+var _next_page_button: Button
+var _page_label: Label
+var _entries: Array[Dictionary] = []
+var _page_index := 0
+var _total_count := 0
+var _ready_count := 0
 
 
 func build(categories: Array[Dictionary]) -> void:
@@ -59,6 +68,9 @@ func get_selected_category() -> String:
 
 
 func show_empty_state(message: String) -> void:
+	_entries.clear()
+	_page_index = 0
+	_pagination_row.visible = false
 	UIFactory.clear_children(entries_container)
 	UIFactory.add_empty_state(entries_container, message)
 
@@ -68,23 +80,62 @@ func set_entries(
 	total_count: int,
 	ready_count: int
 ) -> void:
+	_entries = entries.duplicate()
+	_total_count = total_count
+	_ready_count = ready_count
+	_page_index = 0
+	_render_current_page()
+
+
+func _render_current_page() -> void:
 	UIFactory.clear_children(entries_container)
 	var summary := Label.new()
-	summary.text = "Механик в библиотеке: %d · доступно сейчас: %d" % [total_count, ready_count]
+	summary.text = "Механик в библиотеке: %d · доступно сейчас: %d" % [_total_count, _ready_count]
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	entries_container.add_child(summary)
 
-	for entry in entries:
+	if _entries.is_empty():
+		UIFactory.add_empty_state(
+			entries_container,
+			"Ничего не найдено. Измени запрос или выбери другую категорию."
+		)
+		_pagination_row.visible = false
+		return
+
+	var page_count := maxi(1, ceili(float(_entries.size()) / float(PAGE_SIZE)))
+	_page_index = clampi(_page_index, 0, page_count - 1)
+	var start_index := _page_index * PAGE_SIZE
+	var end_index := mini(start_index + PAGE_SIZE, _entries.size())
+	for index in range(start_index, end_index):
+		var entry := _entries[index]
 		var capability := entry.get("definition") as ObjectCapabilityDefinition
 		if capability == null:
 			continue
 		entries_container.add_child(_create_capability_card(capability, entry))
 
-	if entries.is_empty():
-		UIFactory.add_empty_state(
-			entries_container,
-			"Ничего не найдено. Измени запрос или выбери другую категорию."
-		)
+	_pagination_row.visible = page_count > 1
+	_previous_page_button.disabled = _page_index <= 0
+	_next_page_button.disabled = _page_index >= page_count - 1
+	_page_label.text = "Страница %d из %d · %d возможностей" % [
+		_page_index + 1,
+		page_count,
+		_entries.size()
+	]
+
+
+func _on_previous_page_pressed() -> void:
+	if _page_index <= 0:
+		return
+	_page_index -= 1
+	_render_current_page()
+
+
+func _on_next_page_pressed() -> void:
+	var page_count := maxi(1, ceili(float(_entries.size()) / float(PAGE_SIZE)))
+	if _page_index >= page_count - 1:
+		return
+	_page_index += 1
+	_render_current_page()
 
 
 func _create_capability_card(

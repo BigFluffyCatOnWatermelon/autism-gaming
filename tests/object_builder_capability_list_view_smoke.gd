@@ -27,7 +27,7 @@ func _run() -> void:
 	view.connect("toggle_requested", Callable(self, "_on_toggle_requested"))
 	view.connect("settings_requested", Callable(self, "_on_settings_requested"))
 
-	_expect(view.get_child_count() == 5, "capability view owns title, hint, search, filter and cards")
+	_expect(view.get_child_count() == 6, "capability view owns title, hint, search, filter, entries and pagination")
 	_expect(str(view.call("get_selected_category")) == "", "capability filter starts with all categories")
 	var search_input := view.get("search_input") as LineEdit
 	search_input.text_changed.emit("tree")
@@ -90,6 +90,28 @@ func _run() -> void:
 	var planned_settings := planned_header.get_child(2) as Button
 	_expect(planned_check.disabled and planned_state.text == "В разработке", "planned capabilities remain clearly unavailable")
 	_expect(planned_settings.disabled, "planned capabilities cannot be configured")
+
+	var many_entries: Array[Dictionary] = []
+	for index in range(45):
+		many_entries.append({
+			"definition": implemented,
+			"enabled": false,
+			"automatically_added": false,
+			"can_toggle": true,
+			"can_configure": false
+		})
+	view.call("set_entries", many_entries, 200, 42)
+	_expect(entries_container.get_child_count() == 21, "only one page of 20 capability cards is created at a time")
+	var previous_page := view.get("_previous_page_button") as Button
+	var next_page := view.get("_next_page_button") as Button
+	var page_label := view.get("_page_label") as Label
+	_expect(not previous_page.disabled and not next_page.disabled, "pagination enables both directions on the middle page")
+	_expect(page_label.text == "Страница 1 из 3 · 45 возможностей", "pagination displays the current page and total")
+	next_page.pressed.emit()
+	_expect(entries_container.get_child_count() == 21, "next page still creates no more than 20 capability cards")
+	_expect(page_label.text == "Страница 2 из 3 · 45 возможностей", "next page advances the page label")
+	previous_page.pressed.emit()
+	_expect(page_label.text == "Страница 1 из 3 · 45 возможностей", "previous page returns to the first page")
 
 	var empty_entries: Array[Dictionary] = []
 	view.call("set_entries", empty_entries, 200, 42)

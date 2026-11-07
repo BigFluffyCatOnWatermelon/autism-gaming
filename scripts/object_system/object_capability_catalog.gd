@@ -231,9 +231,15 @@ static func get_capability_ids(
 	return packed
 
 
-static func get_definition(capability_id: String) -> ObjectCapabilityDefinition:
+## Returns the registered resource for read-only, high-frequency UI rendering.
+## Callers must not mutate the returned definition; use get_definition() for an editable copy.
+static func get_definition_reference(capability_id: String) -> ObjectCapabilityDefinition:
 	_ensure_initialized()
-	var definition := _definitions.get(_normalize_id(capability_id)) as ObjectCapabilityDefinition
+	return _definitions.get(_normalize_id(capability_id)) as ObjectCapabilityDefinition
+
+
+static func get_definition(capability_id: String) -> ObjectCapabilityDefinition:
+	var definition := get_definition_reference(capability_id)
 	if definition == null:
 		return null
 	return definition.duplicate(true) as ObjectCapabilityDefinition
