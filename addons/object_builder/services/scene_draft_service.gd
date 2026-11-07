@@ -90,6 +90,13 @@ static func import_scene(source_path: String, target_definition: ObjectDefinitio
 	var imported_root := source_scene.instantiate()
 	if imported_root == null:
 		return _failure("Не удалось создать временную копию сцены: " + clean_source_path)
+	if not imported_root is Node2D:
+		var unsupported_root_type := imported_root.get_class()
+		imported_root.free()
+		return _failure(
+			"Для игрового 2D-объекта нужен корень Node2D или его наследник. "
+			+ "В выбранной сцене корень %s: %s" % [unsupported_root_type, clean_source_path]
+		)
 	if imported_root.name.is_empty():
 		imported_root.name = "Object"
 	target_definition.root_type = imported_root.get_class()
