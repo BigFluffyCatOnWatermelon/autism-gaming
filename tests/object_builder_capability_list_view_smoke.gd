@@ -8,6 +8,9 @@ var search_events: Array[String] = []
 var category_events: Array[String] = []
 var toggle_events: Array[String] = []
 var settings_events: Array[String] = []
+var selection_events: Array[String] = []
+var batch_add_count := 0
+var clear_selection_count := 0
 
 
 func _initialize() -> void:
@@ -26,8 +29,11 @@ func _run() -> void:
 	view.connect("category_changed", Callable(self, "_on_category_changed"))
 	view.connect("toggle_requested", Callable(self, "_on_toggle_requested"))
 	view.connect("settings_requested", Callable(self, "_on_settings_requested"))
+	view.connect("selection_toggled", Callable(self, "_on_selection_toggled"))
+	view.connect("batch_add_requested", Callable(self, "_on_batch_add_requested"))
+	view.connect("clear_selection_requested", Callable(self, "_on_clear_selection_requested"))
 
-	_expect(view.get_child_count() == 6, "capability view owns title, hint, search, filter, entries and pagination")
+	_expect(view.get_child_count() == 7, "capability view owns title, hint, search, filter, entries, pagination and selection bar")
 	_expect(str(view.call("get_selected_category")) == "", "capability filter starts with all categories")
 	var search_input := view.get("search_input") as LineEdit
 	search_input.text_changed.emit("tree")
@@ -43,6 +49,11 @@ func _run() -> void:
 	implemented.description = "Позволяет атаковать."
 	implemented.runtime_status = "Implemented"
 	implemented.implementation_note = "Готовая возможность."
+	var selectable = DefinitionScript.new()
+	selectable.capability_id = "can_dig"
+	selectable.display_name = "Можно копать"
+	selectable.description = "Позволяет копать землю."
+	selectable.runtime_status = "Implemented"
 	var planned = DefinitionScript.new()
 	planned.capability_id = "can_fly"
 	planned.display_name = "Полёт"
@@ -52,13 +63,24 @@ func _run() -> void:
 	var entries: Array[Dictionary] = [
 		{
 			"definition": implemented,
+			"installed": true,
 			"enabled": true,
 			"automatically_added": false,
 			"can_toggle": true,
 			"can_configure": true
 		},
 		{
+			"definition": selectable,
+			"installed": false,
+			"enabled": false,
+			"selected_in_catalog": false,
+			"automatically_added": false,
+			"can_toggle": true,
+			"can_configure": false
+		},
+		{
 			"definition": planned,
+			"installed": false,
 			"enabled": false,
 			"automatically_added": false,
 			"can_toggle": false,
@@ -67,7 +89,7 @@ func _run() -> void:
 	]
 	view.call("set_entries", entries, 200, 42)
 	var entries_container := view.get("entries_container") as VBoxContainer
-	_expect(entries_container.get_child_count() == 3, "summary and two capability cards are displayed")
+	_expect(entries_container.get_child_count() == 4, "summary and three capability cards are displayed")
 	_expect((entries_container.get_child(0) as Label).text == "Механик в библиотеке: 200 · доступно сейчас: 42", "summary counts are supplied by the controller")
 
 	var implemented_card := entries_container.get_child(1) as PanelContainer
@@ -82,7 +104,26 @@ func _run() -> void:
 	_expect(toggle_events == ["false:can_attack"], "toggle action forwards state and capability ID")
 	_expect(settings_events == ["can_attack"], "settings action forwards capability ID")
 
-	var planned_card := entries_container.get_child(2) as PanelContainer
+	var selectable_card := entries_container.get_child(2) as PanelContainer
+	var selectable_content := selectable_card.get_child(0) as VBoxContainer
+	var selectable_header := selectable_content.get_child(0) as HBoxContainer
+	var selectable_check := selectable_header.get_child(0) as CheckBox
+	_expect(not selectable_check.disabled and not selectable_check.button_pressed, "ready uninstalled capabilities can be selected without being applied immediately")
+	selectable_check.toggled.emit(true)
+	_expect(selection_events == ["true:can_dig"], "uninstalled capability checkbox adds the ID to the catalog selection")
+	view.call("set_selected_count", 2)
+	var selection_bar := view.get("_selection_bar") as PanelContainer
+	var selection_summary := view.get("_selection_summary") as Label
+	var add_selected_button := view.get("_add_selected_button") as Button
+	var clear_selection_button := view.get("_clear_selection_button") as Button
+	_expect(selection_bar.visible and selection_summary.text == "Выбрано в разных разделах: 2", "selection panel shows the global selection count")
+	_expect(add_selected_button.text == "Добавить выбранные (2)" and not add_selected_button.disabled, "batch action displays the exact selection count")
+	add_selected_button.pressed.emit()
+	clear_selection_button.pressed.emit()
+	_expect(batch_add_count == 1 and clear_selection_count == 1, "selection bar forwards batch and clear actions")
+	view.call("set_selected_count", 0)
+
+	var planned_card := entries_container.get_child(3) as PanelContainer
 	var planned_content := planned_card.get_child(0) as VBoxContainer
 	var planned_header := planned_content.get_child(0) as HBoxContainer
 	var planned_check := planned_header.get_child(0) as CheckBox
@@ -146,6 +187,18 @@ func _on_toggle_requested(enabled: bool, capability_id: String) -> void:
 
 func _on_settings_requested(capability_id: String) -> void:
 	settings_events.append(capability_id)
+
+
+func _on_selection_toggled(selected: bool, capability_id: String) -> void:
+	selection_events.append("%s:%s" % [str(selected).to_lower(), capability_id])
+
+
+func _on_batch_add_requested() -> void:
+	batch_add_count += 1
+
+
+func _on_clear_selection_requested() -> void:
+	clear_selection_count += 1
 
 
 func _expect(condition: bool, description: String) -> void:
