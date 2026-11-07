@@ -20,6 +20,7 @@ var _full_search_query := ""
 var _selected_full_category_id := ""
 var _selected_full_relation_type := ""
 
+const RELATION_TYPE_ORDER := ["requires", "conflicts", "recommends", "extends", "alternative", "related"]
 const RELATION_TYPE_IDS := {
 	"requires": 1,
 	"conflicts": 2,
@@ -159,7 +160,7 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 	_full_relation_filter.custom_minimum_size.x = 175
 	_full_relation_filter.add_item("Все типы связей")
 	_full_relation_filter.set_item_metadata(0, "")
-	for relation_type in RELATION_TYPE_IDS:
+	for relation_type in RELATION_TYPE_ORDER:
 		_full_relation_filter.add_item(_relation_caption(str(relation_type)))
 		_full_relation_filter.set_item_metadata(
 			_full_relation_filter.item_count - 1,
@@ -403,7 +404,7 @@ func _create_full_graph_node(node_name: String, definition: ObjectCapabilityDefi
 	graph_node.title = definition.display_name
 	graph_node.custom_minimum_size = Vector2(215, 190)
 	graph_node.resizable = false
-	for relation_type in RELATION_TYPE_IDS:
+	for relation_type in RELATION_TYPE_ORDER:
 		var row := HBoxContainer.new()
 		var relation_label := Label.new()
 		relation_label.text = _relation_caption(str(relation_type))
