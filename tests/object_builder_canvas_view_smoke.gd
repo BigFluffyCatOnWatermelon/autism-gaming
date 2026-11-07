@@ -151,10 +151,34 @@ func _run() -> void:
 		_expect(preview_sprite.has_meta("object_builder_pivot"), "pivot mode stores an independent local pivot on the preview node")
 		_expect(pivot_events.size() == 1 and pivot_events[0].get("path") == NodePath("Sprite"), "pivot edit emits a stable scene path for Undo/Redo persistence")
 		interaction.call("set_pivot_edit_mode", false)
+		sprite.set_meta("object_builder_pivot", Vector2(4.0, 6.0))
+		sprite.owner = scene_root
+		second_sprite.owner = scene_root
+		var packed_pivot_scene := PackedScene.new()
+		var pack_error := packed_pivot_scene.pack(scene_root)
+		_expect(pack_error == OK, "scene can be packed with custom pivot metadata")
+		if pack_error == OK:
+			var restored_pivot_scene := packed_pivot_scene.instantiate() as Node2D
+			var restored_pivot_sprite := restored_pivot_scene.get_node("Sprite") as Sprite2D
+			_expect(restored_pivot_sprite.has_meta("object_builder_pivot"), "custom pivot metadata survives PackedScene serialization")
+			_expect(restored_pivot_sprite.get_meta("object_builder_pivot") == Vector2(4.0, 6.0), "serialized pivot retains its local coordinates")
+			restored_pivot_scene.free()
 
 		canvas.call("set_guides", [12.0], [24.0])
 		var guide_state: Dictionary = canvas.call("get_guides")
 		_expect(guide_state.get("vertical", []).size() == 1 and guide_state.get("horizontal", []).size() == 1, "canvas stores vertical and horizontal guides")
+		var guide_screen := (viewport.get_canvas_transform() * Vector2(12.0, 0.0)) * surface.size / Vector2(viewport.size)
+		var guide_hit: Dictionary = interaction.call("_get_guide_at_screen_position", guide_screen)
+		_expect(guide_hit.get("axis", "") == "vertical", "guide hit testing detects a vertical guide")
+		interaction.call("_begin_selection", guide_screen)
+		var moved_guide_screen := (viewport.get_canvas_transform() * Vector2(40.0, 0.0)) * surface.size / Vector2(viewport.size)
+		interaction.call("_update_guide_drag", moved_guide_screen)
+		var guide_release := InputEventMouseButton.new()
+		guide_release.button_index = MOUSE_BUTTON_LEFT
+		guide_release.pressed = false
+		interaction.call("handle_input", guide_release)
+		guide_state = canvas.call("get_guides")
+		_expect(is_equal_approx(float(guide_state.get("vertical", [])[0]), 40.0), "guides can be dragged to a new world coordinate")
 		canvas.call("_on_add_vertical_guide_pressed")
 		_expect(guide_events.size() >= 1, "adding a guide emits project-layout state")
 		canvas.call("_on_clear_guides_pressed")
