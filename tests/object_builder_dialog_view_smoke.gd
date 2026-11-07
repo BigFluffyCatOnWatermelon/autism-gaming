@@ -22,10 +22,9 @@ func _run() -> void:
 	view.call("build", property_types, profiles, node_types)
 	view.connect("creation_profile_selected", Callable(self, "_on_profile_selected"))
 
-	_expect(view.get_child_count() == 4, "dialog view owns the four editor dialogs")
+	_expect(view.get_child_count() == 4, "dialog view owns the editor dialogs and import file picker")
 	_expect(view.call("get_property_dialog") is AcceptDialog, "property dialog is available to the controller")
 	_expect(view.call("get_creation_dialog") is AcceptDialog, "creation dialog is available to the controller")
-	_expect(view.call("get_template_dialog") is AcceptDialog, "template dialog is available to the controller")
 	_expect(view.call("get_node_dialog") is AcceptDialog, "node dialog is available to the controller")
 
 	view.call("configure_property_form", {
@@ -66,13 +65,16 @@ func _run() -> void:
 	view.call("reset_creation_profile")
 	_expect(view.call("get_selected_creation_profile_id") == "", "creation dialog can reset to the generic object option")
 
-	view.call("set_template_options", ["Дерево", "Камень"])
-	_expect(view.call("get_selected_template_index") == 0, "first available template is selected")
-	var template_option := view.get("_template_option") as OptionButton
-	template_option.select(1)
-	_expect(view.call("get_selected_template_index") == 1, "template selection index is exposed to the controller")
-	view.call("set_template_options", [])
-	_expect(view.call("get_selected_template_index") == -1, "empty template list has no stale selection")
+	var category_options: Array[Dictionary] = [{"id": "Other", "label": "Другое"}, {"id": "Nature", "label": "Природа"}]
+	var template_options: Array[Dictionary] = [{"id": "template_tree", "label": "Дерево"}, {"id": "template_stone", "label": "Камень"}]
+	view.call("set_creation_category_options", category_options, "Nature")
+	view.call("set_creation_sources", template_options, [])
+	view.call("reset_creation_wizard", "template")
+	var creation_values: Dictionary = view.call("get_creation_form_values")
+	_expect(creation_values.get("mode") == "template", "creation dialog exposes the template mode")
+	_expect(creation_values.get("source_id") == "template_tree", "creation wizard resolves the selected template by ID")
+	_expect(creation_values.get("display_name") == "Дерево — копия", "creation wizard suggests a copy title")
+	_expect(creation_values.get("category") == "Nature", "creation wizard keeps category IDs independent of labels")
 
 	view.call("reset_node_dialog", "Sprite2D")
 	_expect(view.call("get_selected_node_type") == "Sprite2D", "node dialog selects a requested default type")
