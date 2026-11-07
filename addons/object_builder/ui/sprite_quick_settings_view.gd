@@ -212,6 +212,16 @@ func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 	)
 
 
+func _on_animation_fps_changed(value: float) -> void:
+	if not _selected_path.is_empty():
+		property_changed.emit(_selected_path, "animation_speed", clampf(value, 0.1, 120.0))
+
+
+func _on_animation_loop_toggled(enabled: bool) -> void:
+	if not _selected_path.is_empty():
+		property_changed.emit(_selected_path, "animation_loop", enabled)
+
+
 func is_visible_for_selection() -> bool:
 	return _panel != null and _panel.visible
 
