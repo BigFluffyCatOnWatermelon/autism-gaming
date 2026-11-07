@@ -59,6 +59,7 @@ var _library_view: Control
 var _library_details_view: Control
 var _library_action_dialogs: Node
 var _pending_library_definition: ObjectDefinition
+var _pending_collection_id := ""
 var _editor_view: TabContainer
 var _dialog_view: Node
 var _library_controller: RefCounted = ObjectBuilderLibraryControllerScript.new()
@@ -394,6 +395,7 @@ func _build_library_panel(parent: VBoxContainer) -> void:
 	_library_view.connect("object_selected", Callable(self, "_on_library_item_selected"))
 	_library_view.connect("entry_action_requested", Callable(self, "_on_library_entry_action_requested"))
 	_library_view.connect("collection_create_requested", Callable(self, "_on_collection_create_requested"))
+	_library_view.connect("collection_management_requested", Callable(self, "_on_collection_management_requested"))
 
 func _build_library_details(parent: VBoxContainer) -> void:
 	_library_details_view = ObjectBuilderLibraryDetailsViewScript.new()
@@ -1335,6 +1337,23 @@ func _perform_library_copy(source: ObjectDefinition, as_template: bool) -> void:
 	)
 
 
+func _on_collection_management_requested(action: String) -> void:
+	var selected_mode := str(_library_view.call("get_selected_mode"))
+	if not selected_mode.begins_with("collection:"):
+		return
+	var collection_id := selected_mode.trim_prefix("collection:")
+	var display_name := collection_id
+	for option in _library_controller.call("get_collection_options"):
+		if str(option.get("id", "")) == collection_id:
+			display_name = str(option.get("label", collection_id))
+			break
+	_pending_collection_id = collection_id
+	_pending_library_definition = null
+	if action == "rename":
+		_library_action_dialogs.call("popup_rename_collection", display_name)
+	elif action == "delete":
+		_library_action_dialogs.call("popup_delete_collection", display_name)
+
 func _on_collection_create_requested() -> void:
 	_library_action_dialogs.call("popup_create_collection")
 
@@ -1351,6 +1370,17 @@ func _on_collection_create_confirmed(display_name: String) -> void:
 
 
 func _on_library_rename_confirmed(new_name: String) -> void:
+	if not _pending_collection_id.is_empty():
+		var collection_id := _pending_collection_id
+		_pending_collection_id = ""
+		if not _library_controller.call("rename_collection", collection_id, new_name):
+			_set_status("Не удалось переименовать коллекцию. Проверь название.", true)
+			return
+		_save_local_state()
+		_rebuild_collection_filter("collection:" + collection_id)
+		_refresh_library_list()
+		_set_status("Коллекция переименована.", false)
+		return
 	if _pending_library_definition == null:
 		return
 	if new_name.strip_edges().is_empty():
@@ -1372,6 +1402,17 @@ func _on_library_rename_confirmed(new_name: String) -> void:
 
 
 func _on_library_delete_confirmed() -> void:
+	if not _pending_collection_id.is_empty():
+		var collection_id := _pending_collection_id
+		_pending_collection_id = ""
+		if not _library_controller.call("delete_collection", collection_id):
+			_set_status("Коллекция уже удалена или не найдена.", true)
+			return
+		_save_local_state()
+		_rebuild_collection_filter("all")
+		_refresh_library_list()
+		_set_status("Коллекция удалена. Объекты остались в библиотеке.", false)
+		return
 	if _pending_library_definition == null:
 		return
 	var definition := _pending_library_definition
