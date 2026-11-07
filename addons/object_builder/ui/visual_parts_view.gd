@@ -359,7 +359,7 @@ func _add_part_row(entry: Dictionary) -> void:
 	drag_handle.mouse_filter = Control.MOUSE_FILTER_STOP
 
 
-func _set_child_mouse_filter_recursive(control: Control, filter: Control.MouseFilter) -> void:
+func _set_child_mouse_filter_recursive(control: Control, filter: int) -> void:
 	for child in control.get_children():
 		if child is Control:
 			(child as Control).mouse_filter = filter
