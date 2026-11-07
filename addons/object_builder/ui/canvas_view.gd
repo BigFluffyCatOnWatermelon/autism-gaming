@@ -16,6 +16,7 @@ const SNAP_STEP := 8.0
 class CanvasGrid:
 	extends Node2D
 
+	const GRID_STEP := 32.0
 	var grid_enabled := true
 
 	func _draw() -> void:
@@ -64,6 +65,7 @@ var _drag_path := NodePath("")
 var _drag_old_position := Vector2.ZERO
 var _drag_start_parent_position := Vector2.ZERO
 var _pan_active := false
+var _left_pan_active := false
 var _last_mouse_position := Vector2.ZERO
 var _status_label: Label
 var _zoom_label: Label
@@ -485,14 +487,19 @@ func _on_canvas_gui_input(event: InputEvent) -> void:
 			_last_mouse_position = button.position
 			return
 		if button.button_index == MOUSE_BUTTON_LEFT:
-			if button.pressed and (Input.is_key_pressed(KEY_SPACE) or _pan_active):
+			if button.pressed and Input.is_key_pressed(KEY_SPACE):
 				_pan_active = true
+				_left_pan_active = true
 				_last_mouse_position = button.position
 				return
 			if button.pressed:
 				_begin_canvas_selection(button.position)
 			else:
-				_finish_canvas_drag()
+				if _left_pan_active:
+					_pan_active = false
+					_left_pan_active = false
+				else:
+					_finish_canvas_drag()
 	elif event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
 		if _pan_active:
