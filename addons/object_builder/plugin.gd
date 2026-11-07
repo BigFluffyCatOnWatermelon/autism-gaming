@@ -2131,7 +2131,7 @@ func _commit_sprite_frames_animation_setting(
 	else:
 		return
 	undo_redo.commit_action()
-	_refresh_visual_editor(sprite)
+	_refresh_canvas()
 
 
 func _on_visual_part_resource_edit_requested(path: NodePath) -> void:
