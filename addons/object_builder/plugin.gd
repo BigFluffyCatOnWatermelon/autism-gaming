@@ -1585,11 +1585,16 @@ func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> voi
 	if _workspace_view != null:
 		_workspace_view.call("set_selection_info", "", "")
 func _select_root_type(type_name: String) -> void:
+	var clean_type := type_name.strip_edges()
 	for index in range(_root_type.item_count):
-		if _root_type.get_item_text(index) == type_name:
+		if _root_type.get_item_text(index) == clean_type:
 			_root_type.select(index)
 			return
-	_root_type.select(0)
+	if clean_type.is_empty():
+		_root_type.select(0)
+		return
+	_root_type.add_item(clean_type)
+	_root_type.select(_root_type.item_count - 1)
 
 
 func _rebuild_property_list() -> void:
