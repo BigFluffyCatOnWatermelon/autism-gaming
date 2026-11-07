@@ -29,6 +29,7 @@ var _status_label: Label
 var _resource_button: Button
 var _frames_editor_button: Button
 var _selected_path := NodePath("")
+var _selected_paths: Array[NodePath] = []
 var _row_buttons: Array[Button] = []
 var _row_paths: Array[NodePath] = []
 var _row_lock_checkboxes: Array[CheckBox] = []
@@ -103,6 +104,7 @@ func build() -> void:
 func set_scene_root(scene_root: Node, selected_path: NodePath = NodePath("")) -> void:
 	_scene_root = scene_root
 	_selected_path = selected_path
+	_selected_paths = [selected_path] if not selected_path.is_empty() else []
 	_parts.clear()
 	if scene_root != null and is_instance_valid(scene_root):
 		for child in scene_root.get_children():
@@ -113,8 +115,19 @@ func set_scene_root(scene_root: Node, selected_path: NodePath = NodePath("")) ->
 
 func set_selected_path(path: NodePath) -> void:
 	_selected_path = path
+	_selected_paths = [path] if not path.is_empty() else []
 	_update_row_selection()
 	_update_resource_button()
+
+
+func set_selected_paths(paths: Array[NodePath]) -> void:
+	_selected_paths = paths.duplicate()
+	_selected_path = _selected_paths.back() if not _selected_paths.is_empty() else NodePath("")
+	_update_row_selection()
+
+
+func get_selected_paths() -> Array[NodePath]:
+	return _selected_paths.duplicate()
 
 
 func request_inline_rename(path: NodePath) -> bool:
@@ -400,7 +413,7 @@ func _update_row_selection() -> void:
 			continue
 		if row_index < _row_buttons.size():
 			var button := _row_buttons[row_index]
-			button.set_pressed_no_signal(entry.get("path", NodePath("")) == _selected_path)
+			button.set_pressed_no_signal(_selected_paths.has(entry.get("path", NodePath(""))))
 		row_index += 1
 
 
@@ -410,6 +423,7 @@ func _on_search_changed(_value: String) -> void:
 
 func _on_part_selected(path: NodePath) -> void:
 	_selected_path = path
+	_selected_paths = [path] if not path.is_empty() else []
 	_update_row_selection()
 	part_selected.emit(path)
 
