@@ -42,7 +42,7 @@ func open(
 	_graph.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_graph.show_grid = true
 	_graph.show_zoom_buttons = true
-	_graph.show_minimap = true
+	_graph.minimap_enabled = true
 	_graph.minimap_size = Vector2(150, 100)
 	_graph.add_valid_connection_type(0, 0)
 	layout.add_child(_graph)
