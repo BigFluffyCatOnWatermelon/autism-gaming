@@ -378,20 +378,26 @@ func _commit_inline_rename(path: NodePath) -> void:
 		return
 	var clean_name := _renaming_edit.text.strip_edges()
 	var previous_name := _renaming_button.text
-	_renaming_button.show()
-	_renaming_edit.hide()
+	var name_button := _renaming_button
+	var name_edit := _renaming_edit
 	_finish_inline_rename()
+	if is_instance_valid(name_button):
+		name_button.show()
+	if is_instance_valid(name_edit):
+		name_edit.hide()
 	if clean_name.is_empty() or clean_name == previous_name:
 		return
 	rename_requested.emit(path, clean_name)
 
 
 func _cancel_inline_rename() -> void:
-	if _renaming_button != null and is_instance_valid(_renaming_button):
-		_renaming_button.show()
-	if _renaming_edit != null and is_instance_valid(_renaming_edit):
-		_renaming_edit.hide()
+	var name_button := _renaming_button
+	var name_edit := _renaming_edit
 	_finish_inline_rename()
+	if name_button != null and is_instance_valid(name_button):
+		name_button.show()
+	if name_edit != null and is_instance_valid(name_edit):
+		name_edit.hide()
 
 
 func _finish_inline_rename() -> void:
