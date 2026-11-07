@@ -19,6 +19,7 @@ func _run_tests() -> void:
 	_test_recommendations_for_empty_object()
 	_test_installed_and_selected_filtering()
 	_test_query_and_tag_ranking()
+	_test_category_profile_fallback()
 	_test_unknown_profile()
 
 	if failures.is_empty():
@@ -196,6 +197,34 @@ func _test_query_and_tag_ranking() -> void:
 		_expect(
 			str(contextual_health.get("explanation", "")).contains("метки объекта"),
 			"recommendation explains matching object tags"
+		)
+
+
+func _test_category_profile_fallback() -> void:
+	var controller = ControllerScript.new()
+	var no_selections: Array[ObjectCapabilitySelection] = []
+	var recommendations: Array[Dictionary] = controller.call(
+		"build_recommended_entries",
+		no_selections,
+		"",
+		8,
+		"other",
+		"Nature",
+		PackedStringArray(["tree"])
+	)
+	_expect(
+		not recommendations.is_empty(),
+		"objects without a specialized profile can receive suggestions from their library category"
+	)
+	var health_entry := _find_recommendation(recommendations, "has_health")
+	_expect(
+		not health_entry.is_empty(),
+		"Nature category falls back to the resource profile's Health suggestion"
+	)
+	if not health_entry.is_empty():
+		_expect(
+			str(health_entry.get("explanation", "")).contains("Ресурс"),
+			"category-based recommendation explains which matching profile supplied it"
 		)
 
 
