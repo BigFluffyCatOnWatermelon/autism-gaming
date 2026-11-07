@@ -8,6 +8,7 @@ signal duplicate_requested(path: NodePath)
 signal remove_requested(path: NodePath)
 signal visibility_batch_requested(visible: bool)
 signal part_lock_changed(path: NodePath, locked: bool)
+signal draw_order_change_requested(path: NodePath, delta: int)
 
 const ROW_HEIGHT := 44.0
 const THUMB_SIZE := Vector2(34.0, 34.0)
@@ -232,6 +233,17 @@ func _add_part_row(entry: Dictionary) -> void:
 	visibility.toggled.connect(_on_visibility_toggled.bind(path))
 	content.add_child(visibility)
 
+	var raise_button := Button.new()
+	raise_button.text = "↑"
+	raise_button.tooltip_text = "Переместить часть выше в порядке отрисовки"
+	raise_button.pressed.connect(_on_draw_order_change_requested.bind(path, 1))
+	content.add_child(raise_button)
+	var lower_button := Button.new()
+	lower_button.text = "↓"
+	lower_button.tooltip_text = "Переместить часть ниже в порядке отрисовки"
+	lower_button.pressed.connect(_on_draw_order_change_requested.bind(path, -1))
+	content.add_child(lower_button)
+
 	var duplicate_button := Button.new()
 	duplicate_button.text = "⧉"
 	duplicate_button.tooltip_text = "Дублировать часть со всеми дочерними узлами"
@@ -303,6 +315,12 @@ func _on_duplicate_requested(path: NodePath) -> void:
 
 func _on_remove_requested(path: NodePath) -> void:
 	remove_requested.emit(path)
+
+
+func _on_draw_order_change_requested(path: NodePath, delta: int) -> void:
+	if delta == 0:
+		return
+	draw_order_change_requested.emit(path, clampi(delta, -1, 1))
 
 
 func _on_lock_toggled(locked: bool, path: NodePath) -> void:
