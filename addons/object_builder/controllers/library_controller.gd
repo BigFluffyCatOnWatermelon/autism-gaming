@@ -187,7 +187,10 @@ func get_creation_source_options(templates_only: bool) -> Array[Dictionary]:
 	for definition in source_definitions:
 		options.append({
 			"id": definition.object_id,
-			"label": definition.display_name
+			"label": definition.display_name,
+			"category": definition.category,
+			"description": definition.description,
+			"tags": definition.tags.duplicate()
 		})
 	return options
 
