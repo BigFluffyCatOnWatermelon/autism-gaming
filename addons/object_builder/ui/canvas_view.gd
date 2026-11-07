@@ -1,6 +1,10 @@
 @tool
 extends VBoxContainer
 ## Interactive 2D canvas for the current Object Builder scene.
+
+const CanvasGridScript = preload("res://addons/object_builder/ui/canvas_grid.gd")
+const CanvasOverlayScript = preload("res://addons/object_builder/ui/canvas_overlay.gd")
+const CanvasGeometry = preload("res://addons/object_builder/ui/canvas_geometry.gd")
 ## The canvas edits an isolated preview copy; committed values are applied to the real scene by the plugin.
 
 signal part_selected(path: NodePath)
@@ -13,46 +17,13 @@ const ZOOM_FACTOR := 1.2
 const GRID_STEP := 32.0
 const SNAP_STEP := 8.0
 
-class CanvasGrid:
-	extends Node2D
-
-	const GRID_STEP := 32.0
-	var grid_enabled := true
-
-	func _draw() -> void:
-		if not grid_enabled:
-			return
-		var extent := 4096.0
-		var line_color := Color(0.28, 0.31, 0.35, 0.55)
-		var axis_color := Color(0.42, 0.47, 0.53, 0.8)
-		for coordinate in range(-128, 129):
-			var offset := float(coordinate) * GRID_STEP
-			var color := axis_color if coordinate == 0 else line_color
-			var thickness := 1.5 if coordinate == 0 else 1.0
-			draw_line(Vector2(offset, -extent), Vector2(offset, extent), color, thickness)
-			draw_line(Vector2(-extent, offset), Vector2(extent, offset), color, thickness)
-
-
-class CanvasOverlay:
-	extends Control
-
-	var canvas_owner: Node
-
-	func _gui_input(event: InputEvent) -> void:
-		if canvas_owner != null and is_instance_valid(canvas_owner):
-			canvas_owner.call("_on_canvas_gui_input", event)
-			accept_event()
-
-	func _draw() -> void:
-		if canvas_owner != null and is_instance_valid(canvas_owner):
-			canvas_owner.call("_draw_selection", self)
 
 
 var _viewport: SubViewport
 var _viewport_container: SubViewportContainer
 var _surface: Control
 var _stage: Node2D
-var _grid: CanvasGrid
+var _grid: Node2D
 var _camera: Camera2D
 var _preview_instance: Node
 var _selected_path := NodePath("")
@@ -149,7 +120,7 @@ func build() -> void:
 
 	_stage = Node2D.new()
 	_viewport.add_child(_stage)
-	_grid = CanvasGrid.new()
+	_grid = CanvasGridScript.new()
 	_grid.z_index = -4096
 	_grid.z_as_relative = false
 	_stage.add_child(_grid)
@@ -159,11 +130,11 @@ func build() -> void:
 	_stage.add_child(_camera)
 	_camera.call_deferred("make_current")
 
-	_surface = CanvasOverlay.new()
+	_surface = CanvasOverlayScript.new()
 	_surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_surface.mouse_filter = Control.MOUSE_FILTER_STOP
 	_surface.focus_mode = Control.FOCUS_ALL
-	_surface.canvas_owner = self
+	_surface.set("canvas_owner", self)
 	_surface.resized.connect(_on_surface_resized)
 	surface_host.add_child(_surface)
 
@@ -269,7 +240,7 @@ func _on_surface_resized() -> void:
 func _on_grid_toggled(enabled: bool) -> void:
 	_grid_enabled = enabled
 	if _grid != null:
-		_grid.grid_enabled = enabled
+		_grid.set("grid_enabled", enabled)
 		_grid.queue_redraw()
 
 
@@ -307,8 +278,7 @@ func _fit_canvas() -> void:
 		_center_canvas()
 		_set_zoom(1.0)
 		return
-	var bounds: Dictionary = {}
-	_collect_visual_bounds(_preview_instance, bounds)
+	var bounds: Dictionary = CanvasGeometry.collect_visual_bounds(_preview_instance)
 	if not bounds.has("rect"):
 		_center_canvas()
 		_set_zoom(1.0)
@@ -321,42 +291,6 @@ func _fit_canvas() -> void:
 	_set_zoom(clampf(fit_zoom, MIN_ZOOM, MAX_ZOOM))
 
 
-func _collect_visual_bounds(node: Node, result: Dictionary) -> void:
-	if node is Sprite2D:
-		var sprite := node as Sprite2D
-		if sprite.texture != null:
-			_include_rect(sprite.global_transform, sprite.get_rect(), result)
-	elif node is AnimatedSprite2D:
-		var sprite := node as AnimatedSprite2D
-		if sprite.sprite_frames != null and sprite.sprite_frames.get_frame_count(sprite.animation) > 0:
-			_include_rect(sprite.global_transform, sprite.get_rect(), result)
-	elif node is Polygon2D:
-		var polygon := node as Polygon2D
-		for point in polygon.polygon:
-			_include_point(polygon.global_transform * point, result)
-	elif node is Line2D:
-		var line := node as Line2D
-		for point in line.points:
-			_include_point(line.global_transform * point, result)
-	for child in node.get_children():
-		_collect_visual_bounds(child, result)
-
-
-func _include_rect(transform: Transform2D, rect: Rect2, result: Dictionary) -> void:
-	if rect.size == Vector2.ZERO:
-		return
-	_include_point(transform * rect.position, result)
-	_include_point(transform * Vector2(rect.end.x, rect.position.y), result)
-	_include_point(transform * rect.end, result)
-	_include_point(transform * Vector2(rect.position.x, rect.end.y), result)
-
-
-func _include_point(point: Vector2, result: Dictionary) -> void:
-	if not result.has("rect"):
-		result["rect"] = Rect2(point, Vector2.ZERO)
-	else:
-		var current: Rect2 = result["rect"]
-		result["rect"] = current.expand(point)
 
 
 func _screen_to_world(screen_position: Vector2) -> Vector2:
@@ -365,41 +299,6 @@ func _screen_to_world(screen_position: Vector2) -> Vector2:
 	return _viewport.get_canvas_transform().affine_inverse() * viewport_position
 
 
-func _find_visual_at(node: Node, world_position: Vector2) -> Node2D:
-	if node == null or not is_instance_valid(node):
-		return null
-	if node is CanvasItem and not (node as CanvasItem).is_visible_in_tree():
-		return null
-	var children := node.get_children()
-	for index in range(children.size() - 1, -1, -1):
-		var found := _find_visual_at(children[index], world_position)
-		if found != null:
-			return found
-	if node is Sprite2D:
-		var sprite := node as Sprite2D
-		if sprite.texture != null and sprite.get_rect().has_point(sprite.to_local(world_position)):
-			return sprite
-	elif node is AnimatedSprite2D:
-		var animated := node as AnimatedSprite2D
-		if animated.sprite_frames != null and animated.sprite_frames.get_frame_count(animated.animation) > 0:
-			if animated.get_rect().has_point(animated.to_local(world_position)):
-				return animated
-	elif node is Polygon2D:
-		var polygon := node as Polygon2D
-		if polygon.polygon.size() >= 3 and Geometry2D.is_point_in_polygon(polygon.to_local(world_position), polygon.polygon):
-			return polygon
-	elif node is Line2D:
-		var line := node as Line2D
-		var local_point := line.to_local(world_position)
-		for index in range(line.points.size() - 1):
-			var closest := Geometry2D.get_closest_point_to_segment(
-				local_point,
-				line.points[index],
-				line.points[index + 1]
-			)
-			if local_point.distance_to(closest) <= maxf(line.width * 0.5, 4.0):
-				return line
-	return null
 
 
 func _get_selected_node() -> Node:
@@ -412,78 +311,13 @@ func _get_selected_node() -> Node:
 	return _preview_instance.get_node_or_null(_selected_path)
 
 
-func _selected_screen_corners() -> PackedVector2Array:
-	var result := PackedVector2Array()
-	var selected := _get_selected_node()
-	if not selected is Node2D:
-		return result
-	var points: Array[Vector2] = []
-	_collect_node_points(selected, points)
-	if points.is_empty():
-		var center := _viewport.get_canvas_transform() * (selected as Node2D).global_position
-		return PackedVector2Array([center + Vector2(-6, -6), center + Vector2(6, -6), center + Vector2(6, 6), center + Vector2(-6, 6), center + Vector2(-6, -6)])
-	var bounds := Rect2(points[0], Vector2.ZERO)
-	for point in points:
-		bounds = bounds.expand(point)
-	var canvas_transform := _viewport.get_canvas_transform()
-	var top_left := canvas_transform * bounds.position
-	var bottom_right := canvas_transform * bounds.end
-	return PackedVector2Array([
-		top_left,
-		Vector2(bottom_right.x, top_left.y),
-		bottom_right,
-		Vector2(top_left.x, bottom_right.y),
-		top_left
-	])
-
-
-func _collect_node_points(node: Node, points: Array[Vector2]) -> void:
-	if node is Sprite2D:
-		var sprite := node as Sprite2D
-		if sprite.texture != null:
-			_append_rect_points(sprite.global_transform, sprite.get_rect(), points)
-	elif node is AnimatedSprite2D:
-		var animated := node as AnimatedSprite2D
-		if animated.sprite_frames != null and animated.sprite_frames.get_frame_count(animated.animation) > 0:
-			_append_rect_points(animated.global_transform, animated.get_rect(), points)
-	elif node is Polygon2D:
-		var polygon := node as Polygon2D
-		for point in polygon.polygon:
-			points.append(polygon.global_transform * point)
-	elif node is Line2D:
-		var line := node as Line2D
-		for point in line.points:
-			points.append(line.global_transform * point)
-	for child in node.get_children():
-		_collect_node_points(child, points)
-
-
-func _append_rect_points(transform: Transform2D, rect: Rect2, points: Array[Vector2]) -> void:
-	if rect.size == Vector2.ZERO:
-		return
-	points.append(transform * rect.position)
-	points.append(transform * Vector2(rect.end.x, rect.position.y))
-	points.append(transform * rect.end)
-	points.append(transform * Vector2(rect.position.x, rect.end.y))
-
-
 func _get_transform_handle_positions() -> Dictionary:
-	var corners := _selected_screen_corners()
-	if corners.size() < 4:
-		return {}
-	var scale_to_surface := Vector2(
-		_surface.size.x / maxf(_viewport.size.x, 1.0),
-		_surface.size.y / maxf(_viewport.size.y, 1.0)
-	)
-	var top_middle := (corners[0] + corners[1]) * 0.5
-	return {
-		"scale": corners[2] * scale_to_surface,
-		"rotate": top_middle * scale_to_surface + Vector2(0.0, -20.0)
-	}
+	var corners: PackedVector2Array = CanvasGeometry.selected_screen_corners(_preview_instance, _selected_path, _viewport)
+	return CanvasGeometry.get_transform_handle_positions(corners, _surface.size, Vector2(_viewport.size))
 
 
 func _draw_selection(target: Control) -> void:
-	var corners := _selected_screen_corners()
+	var corners: PackedVector2Array = CanvasGeometry.selected_screen_corners(_preview_instance, _selected_path, _viewport)
 	if corners.size() < 2:
 		return
 	var scale_to_surface := Vector2(
@@ -556,7 +390,7 @@ func _begin_canvas_selection(screen_position: Vector2) -> void:
 		_begin_transform_drag("rotate", selected, screen_position)
 		return
 	var world_position := _screen_to_world(screen_position)
-	var hit := _find_visual_at(_preview_instance, world_position)
+	var hit := CanvasGeometry.find_visual_at(_preview_instance, world_position)
 	if hit == null:
 		_selected_path = NodePath("")
 		_surface.queue_redraw()
