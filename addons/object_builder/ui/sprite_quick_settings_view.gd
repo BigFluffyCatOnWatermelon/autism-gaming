@@ -190,10 +190,19 @@ func set_selected_node(node: Node, path: NodePath) -> void:
 func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 	_animation_option.clear()
 	var frames := sprite.sprite_frames
+	var frame_count := 0
+	_preview_frames = frames
+	_preview_animation = sprite.animation
+	_preview_speed_scale = sprite.speed_scale
 	if frames == null:
 		_animation_option.disabled = true
 		_animated_frame.editable = false
 		_animation_hint.text = "Назначь SpriteFrames через кнопку «Кадры…» в списке частей."
+		_preview_frames = null
+		_preview_animation = StringName("")
+		_animation_fps.set_value_no_signal(8.0)
+		_animation_loop.set_pressed_no_signal(true)
+		_animation_preview.texture = null
 	else:
 		var names := frames.get_animation_names()
 		for animation_name in names:
@@ -207,46 +216,45 @@ func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 		if selected_index >= 0:
 			_animation_option.select(selected_index)
 		_animation_option.disabled = names.is_empty()
-		var frame_count := frames.get_frame_count(sprite.animation) if frames.has_animation(sprite.animation) else 0
+		if frames.has_animation(sprite.animation):
+			frame_count = frames.get_frame_count(sprite.animation)
 		_animated_frame.editable = frame_count > 0
 		_animated_frame.max_value = maxf(0.0, float(frame_count - 1))
-		_animated_frame.set_value_no_signal(float(clampi(sprite.frame, 0, maxi(0, frame_count - 1))))
-		_animation_hint.text = "Назначь SpriteFrames через кнопку «Кадры…» в списке частей."
-		_preview_frames = null
-		_preview_animation = StringName("")
-		_animation_fps.set_value_no_signal(8.0)
-		_animation_loop.set_pressed_no_signal(true)
-		_animation_preview.texture = null
-	else:
-		_preview_frames = frames
-		_preview_animation = sprite.animation
 		_preview_frame = clampi(sprite.frame, 0, maxi(0, frame_count - 1))
-		_preview_speed_scale = sprite.speed_scale
+		_animated_frame.set_value_no_signal(float(_preview_frame))
 		if frame_count > 0:
 			_animation_fps.set_value_no_signal(maxf(0.1, frames.get_animation_speed(sprite.animation)))
 			_animation_loop.set_pressed_no_signal(frames.get_animation_loop(sprite.animation))
 			_update_animation_preview_texture()
+			_animation_hint.text = "Предпросмотр работает здесь и не запускает игровую логику сцены."
 		else:
 			_animation_fps.set_value_no_signal(8.0)
 			_animation_loop.set_pressed_no_signal(true)
 			_animation_preview.texture = null
-	_animation_play_button.disabled = frames == null or not frames.has_animation(sprite.animation) or frames.get_frame_count(sprite.animation) <= 0 if frames != null else true
+			_animation_hint.text = "В выбранной анимации пока нет кадров."
+	_animation_play_button.disabled = frame_count <= 0
 	_animation_play_button.text = "▶"
 	_animated_speed.set_value_no_signal(sprite.speed_scale)
-	set_process(false)
+	_stop_animation_preview()
 
 
 func _process(delta: float) -> void:
-	if not _preview_playing or _preview_frames == null or not _preview_frames.has_animation(_preview_animation):
+	if not _preview_playing or _preview_frames == null:
+		return
+	if not _preview_frames.has_animation(_preview_animation):
+		_stop_animation_preview()
 		return
 	var frame_count := _preview_frames.get_frame_count(_preview_animation)
 	if frame_count <= 0:
 		_stop_animation_preview()
 		return
-	var fps := maxf(0.1, _preview_frames.get_animation_speed(_preview_animation) * absf(_preview_speed_scale))
-	var duration := _preview_frames.get_frame_duration(_preview_animation, _preview_frame) / fps
+	var fps := maxf(
+		0.1,
+		_preview_frames.get_animation_speed(_preview_animation) * absf(_preview_speed_scale)
+	)
+	var frame_duration := _preview_frames.get_frame_duration(_preview_animation, _preview_frame)
 	_preview_elapsed += delta
-	if _preview_elapsed < duration:
+	if _preview_elapsed < frame_duration / fps:
 		return
 	_preview_elapsed = 0.0
 	if _preview_frame + 1 >= frame_count:
@@ -255,7 +263,7 @@ func _process(delta: float) -> void:
 		else:
 			_preview_frame = frame_count - 1
 			_stop_animation_preview()
-		else:
+	else:
 		_preview_frame += 1
 	_update_animation_preview_texture()
 
