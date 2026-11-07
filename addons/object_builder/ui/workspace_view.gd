@@ -11,6 +11,7 @@ const DEFAULT_INSPECTOR_SPLIT := -250
 var _toolbar_actions: HBoxContainer
 var _library_host: VBoxContainer
 var _editor_host: VBoxContainer
+var _inspector_host: VBoxContainer
 var _library_panel: PanelContainer
 var _inspector_panel: PanelContainer
 var _diagnostics_panel: PanelContainer
@@ -109,7 +110,8 @@ func _build_workspace_panels() -> void:
 	_editor_host = editor_parts.get("host") as VBoxContainer
 	var inspector_parts := _create_panel(_content_split, "СВОЙСТВА", 190.0)
 	_inspector_panel = inspector_parts.get("panel") as PanelContainer
-	_build_inspector(inspector_parts.get("host") as VBoxContainer)
+	_inspector_host = inspector_parts.get("host") as VBoxContainer
+	_build_inspector(_inspector_host)
 
 
 func _create_panel(parent: Container, title_text: String, minimum_width: float) -> Dictionary:
@@ -292,6 +294,10 @@ func get_library_host() -> VBoxContainer:
 
 func get_editor_host() -> VBoxContainer:
 	return _editor_host
+
+
+func get_inspector_host() -> VBoxContainer:
+	return _inspector_host
 
 
 func get_diagnostics_message() -> String:
