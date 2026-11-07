@@ -161,6 +161,213 @@ func build_related_entries() -> Array[Dictionary]:
 	return result
 
 
+func build_recommended_entries(
+	current_selections: Array[ObjectCapabilitySelection],
+	query: String = "",
+	max_results: int = 8
+) -> Array[Dictionary]:
+	var context_ids: Dictionary = {}
+	var already_present: Dictionary = {}
+	var simulated: Array[ObjectCapabilitySelection] = []
+	for selection in current_selections:
+		if selection == null:
+			continue
+		var copy := selection.duplicate(true) as ObjectCapabilitySelection
+		simulated.append(copy)
+		var capability_id := copy.capability_id.strip_edges().to_lower()
+		if copy.enabled:
+			context_ids[capability_id] = true
+			already_present[capability_id] = true
+
+	for capability_id in get_selected_ids():
+		var normalized_id := capability_id.strip_edges().to_lower()
+		if normalized_id.is_empty():
+			continue
+		context_ids[normalized_id] = true
+		already_present[normalized_id] = true
+		var step_plan := ObjectCapabilityService.plan_selection_change(simulated, normalized_id, true)
+		if not bool(step_plan.get("ok", false)):
+			continue
+		simulated = _copy_plan_selections(step_plan.get("selections", []))
+
+	if not _focused_capability_id.is_empty():
+		context_ids[_focused_capability_id] = true
+
+	if context_ids.is_empty():
+		return []
+
+	var candidates: Dictionary = {}
+	for source_id in context_ids:
+		var source_definition := ObjectCapabilityCatalog.get_definition_reference(str(source_id))
+		if source_definition == null:
+			continue
+		for relation in _get_declared_relations(source_definition):
+			var target_id := str(relation.get("target_id", "")).strip_edges().to_lower()
+			var relation_type := str(relation.get("type", "related")).strip_edges().to_lower()
+			_add_recommendation_candidate(
+				candidates,
+				target_id,
+				source_definition,
+				relation_type,
+				str(relation.get("explanation", "")),
+				false,
+				already_present
+			)
+
+	for candidate_id in ObjectCapabilityCatalog.get_capability_ids("", false):
+		if context_ids.has(candidate_id) or already_present.has(candidate_id):
+			continue
+		var candidate_definition := ObjectCapabilityCatalog.get_definition_reference(candidate_id)
+		if candidate_definition == null:
+			continue
+		for relation in _get_declared_relations(candidate_definition):
+			var target_id := str(relation.get("target_id", "")).strip_edges().to_lower()
+			if not context_ids.has(target_id):
+				continue
+			var target_definition := ObjectCapabilityCatalog.get_definition_reference(target_id)
+			if target_definition == null:
+				continue
+			_add_recommendation_candidate(
+				candidates,
+				candidate_id,
+				target_definition,
+				str(relation.get("type", "related")),
+				str(relation.get("explanation", "")),
+				true,
+				already_present
+			)
+
+	var normalized_query := query.strip_edges().to_lower()
+	var result: Array[Dictionary] = []
+	for candidate_id in candidates:
+		var candidate_definition := ObjectCapabilityCatalog.get_definition_reference(str(candidate_id))
+		if candidate_definition == null or not candidate_definition.is_ready():
+			continue
+		if already_present.has(candidate_id) or is_selected(str(candidate_id)):
+			continue
+
+		var candidate_data: Dictionary = candidates[candidate_id]
+		var plan := ObjectCapabilityService.plan_selection_change(simulated, str(candidate_id), true)
+		if not bool(plan.get("ok", false)):
+			continue
+
+		var score := int(candidate_data.get("score", 0))
+		if _matches_query(candidate_definition, normalized_query):
+			score += 12
+		var added_ids: PackedStringArray = plan.get("added_capability_ids", PackedStringArray())
+		var automatic_names := PackedStringArray()
+		for added_id in added_ids:
+			if added_id == candidate_id:
+				continue
+			var dependency := ObjectCapabilityCatalog.get_definition_reference(added_id)
+			if dependency != null:
+				automatic_names.append(dependency.display_name)
+
+		var explanation := str(candidate_data.get("explanation", ""))
+		if not automatic_names.is_empty():
+			explanation += " Вместе потребуется: " + ", ".join(automatic_names) + "."
+		result.append({
+			"capability_id": str(candidate_id),
+			"definition": candidate_definition,
+			"score": score,
+			"relation_type": str(candidate_data.get("relation_type", "related")),
+			"explanation": explanation,
+			"source_names": candidate_data.get("source_names", PackedStringArray()),
+			"automatic_dependencies": automatic_names,
+			"ready": true
+		})
+
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var score_a := int(a.get("score", 0))
+		var score_b := int(b.get("score", 0))
+		if score_a == score_b:
+			var definition_a := a.get("definition") as ObjectCapabilityDefinition
+			var definition_b := b.get("definition") as ObjectCapabilityDefinition
+			if definition_a == null or definition_b == null:
+				return str(a.get("capability_id", "")) < str(b.get("capability_id", ""))
+			return definition_a.display_name.naturalnocasecmp_to(definition_b.display_name) < 0
+		return score_a > score_b
+	)
+	if result.size() > maxi(1, max_results):
+		result.resize(maxi(1, max_results))
+	return result
+
+
+func _add_recommendation_candidate(
+	candidates: Dictionary,
+	candidate_id: String,
+	source_definition: ObjectCapabilityDefinition,
+	relation_type: String,
+	explanation: String,
+	is_reverse: bool,
+	already_present: Dictionary
+) -> void:
+	var normalized_id := candidate_id.strip_edges().to_lower()
+	if normalized_id.is_empty() or already_present.has(normalized_id):
+		return
+	if relation_type == "conflicts":
+		return
+	var candidate_definition := ObjectCapabilityCatalog.get_definition_reference(normalized_id)
+	if candidate_definition == null or not candidate_definition.is_ready():
+		return
+	var relation_score := _recommendation_relation_score(relation_type)
+	if relation_score <= 0:
+		return
+
+	var source_name := source_definition.display_name
+	var reason := explanation.strip_edges()
+	if reason.is_empty():
+		reason = "Подходит в сочетании с возможностью «%s»." % source_name
+	else:
+		reason = "Вместе с «%s»: %s" % [source_name, reason]
+	if is_reverse:
+		reason = "«%s» дополняет выбранное поведение: %s" % [candidate_definition.display_name, reason]
+
+	if not candidates.has(normalized_id):
+		candidates[normalized_id] = {
+			"score": relation_score,
+			"relation_type": relation_type,
+			"explanation": reason,
+			"source_names": PackedStringArray([source_name])
+		}
+		return
+
+	var existing: Dictionary = candidates[normalized_id]
+	existing["score"] = maxi(int(existing.get("score", 0)), relation_score) + 4
+	var source_names: PackedStringArray = existing.get("source_names", PackedStringArray())
+	if not source_names.has(source_name):
+		source_names.append(source_name)
+		existing["source_names"] = source_names
+		existing["explanation"] = str(existing.get("explanation", "")) + " Также связано с «%s»." % source_name
+	candidates[normalized_id] = existing
+
+
+func _recommendation_relation_score(relation_type: String) -> int:
+	match relation_type:
+		"requires":
+			return 120
+		"recommends":
+			return 90
+		"extends":
+			return 72
+		"alternative":
+			return 35
+		"related":
+			return 24
+		_:
+			return 0
+
+
+func _copy_plan_selections(values: Variant) -> Array[ObjectCapabilitySelection]:
+	var result: Array[ObjectCapabilitySelection] = []
+	if not values is Array:
+		return result
+	for value in values:
+		if value is ObjectCapabilitySelection:
+			result.append((value as ObjectCapabilitySelection).duplicate(true) as ObjectCapabilitySelection)
+	return result
+
+
 func _append_related_entry(
 	result_by_id: Dictionary,
 	capability_id: String,
