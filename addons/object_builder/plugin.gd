@@ -13,23 +13,9 @@ const ObjectBuilderCapabilitySettingsViewScript = preload("res://addons/object_b
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
 const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
+const ObjectBuilderLibraryControllerScript = preload("res://addons/object_builder/controllers/library_controller.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
-const RECENT_LIMIT := 20
-const CATEGORY_LABELS := {
-	"Nature": "Природа",
-	"Buildings": "Здания",
-	"Items": "Предметы",
-	"Equipment": "Экипировка",
-	"Furniture": "Мебель",
-	"Characters": "Персонажи",
-	"Animals": "Животные",
-	"Interactive": "Интерактивные",
-	"Effects": "Эффекты",
-	"Transport": "Транспорт",
-	"Decorations": "Декорации",
-	"Other": "Другое"
-}
 const ROOT_TYPES := [
 	"Node2D",
 	"StaticBody2D",
@@ -57,6 +43,7 @@ var _main_screen: MarginContainer
 var _library_view: Control
 var _editor_view: TabContainer
 var _dialog_view: Node
+var _library_controller: RefCounted = ObjectBuilderLibraryControllerScript.new()
 var _name_edit: LineEdit
 var _id_edit: LineEdit
 var _category_edit: LineEdit
@@ -83,11 +70,6 @@ var _open_scene_button: Button
 var _connected_scene_tree: SceneTree
 var _tree_refresh_queued := false
 var _syncing_tree_selection := false
-var _definitions: Array[ObjectDefinition] = []
-var _visible_definitions: Array[ObjectDefinition] = []
-var _templates: Array[ObjectDefinition] = []
-var _favorites := PackedStringArray()
-var _recent_ids := PackedStringArray()
 var _working_definition: ObjectDefinition
 var _can_save_as_template := true
 
@@ -964,38 +946,22 @@ func _load_local_state() -> void:
 		"recent",
 		PackedStringArray()
 	)
-	_favorites = _to_packed_string_array(stored_favorites)
-	_recent_ids = _to_packed_string_array(stored_recent)
-
-
-func _to_packed_string_array(value: Variant) -> PackedStringArray:
-	var result := PackedStringArray()
-	if value is PackedStringArray:
-		return value
-	if value is Array:
-		for entry in value:
-			if entry is String and not entry.is_empty() and not result.has(entry):
-				result.append(entry)
-	return result
-
+	_library_controller.call("set_local_state", stored_favorites, stored_recent)
 
 func _save_local_state() -> void:
 	var settings := EditorInterface.get_editor_settings()
-	settings.set_project_metadata(METADATA_SECTION, "favorites", _favorites)
-	settings.set_project_metadata(METADATA_SECTION, "recent", _recent_ids)
-
+	settings.set_project_metadata(METADATA_SECTION, "favorites", _library_controller.call("get_favorites"))
+	settings.set_project_metadata(METADATA_SECTION, "recent", _library_controller.call("get_recent_ids"))
 
 func _refresh_library() -> void:
-	_definitions = ObjectLibraryService.load_definitions()
-	_templates = ObjectLibraryService.load_templates()
+	_library_controller.call("load_library")
 	_rebuild_category_filter()
 	_rebuild_tag_filter()
 	_refresh_library_list()
 	_refresh_favorite_button()
 	_refresh_scene_tree()
-	if _definitions.is_empty():
+	if int(_library_controller.call("get_definition_count")) == 0:
 		_set_status("Библиотека пока пуста. Создай объект или начни с шаблона.", false)
-
 
 func _on_refresh_pressed() -> void:
 	_refresh_library()
@@ -1004,99 +970,25 @@ func _on_refresh_pressed() -> void:
 
 func _rebuild_category_filter() -> void:
 	var previous_category := str(_library_view.call("get_selected_category"))
-	var categories: Array[String] = []
-	for category_key in CATEGORY_LABELS.keys():
-		categories.append(str(category_key))
-	for definition in _definitions:
-		if definition != null and not definition.category.is_empty() and not categories.has(definition.category):
-			categories.append(definition.category)
-	categories.sort()
-	var options: Array[Dictionary] = []
-	for category_name in categories:
-		options.append({"id": category_name, "label": str(CATEGORY_LABELS.get(category_name, category_name))})
+	var options: Array[Dictionary] = _library_controller.call("get_category_options", previous_category)
 	_library_view.call("set_category_options", options, previous_category)
 
 func _rebuild_tag_filter() -> void:
 	var previous_tag := str(_library_view.call("get_selected_tag"))
-	var tags := PackedStringArray()
-	for definition in _definitions:
-		if definition == null:
-			continue
-		for tag in definition.tags:
-			if not tag.is_empty() and not tags.has(tag):
-				tags.append(tag)
-	tags.sort()
-	var options: Array[Dictionary] = []
-	for tag in tags:
-		options.append({"id": tag, "label": "#" + tag})
+	var options: Array[Dictionary] = _library_controller.call("get_tag_options", previous_tag)
 	_library_view.call("set_tag_options", options, previous_tag)
 
 func _refresh_library_list() -> void:
-	if _library_view == null:
+	if _library_view == null or _library_controller == null:
 		return
-	_visible_definitions.clear()
-	var query := str(_library_view.call("get_search_query")).strip_edges().to_lower()
-	var selected_category := str(_library_view.call("get_selected_category"))
-	var selected_tag := str(_library_view.call("get_selected_tag"))
-	var selected_mode := str(_library_view.call("get_selected_mode"))
-	var candidates: Array[ObjectDefinition] = []
-	if selected_mode == "recent":
-		for object_id in _recent_ids:
-			var recent_definition := _find_definition(object_id)
-			if recent_definition != null:
-				candidates.append(recent_definition)
-	else:
-		for definition in _definitions:
-			if definition == null:
-				continue
-			if selected_mode == "favorites" and not _favorites.has(definition.object_id):
-				continue
-			candidates.append(definition)
-	var entries: Array[Dictionary] = []
-	for definition in candidates:
-		if not selected_category.is_empty() and definition.category != selected_category:
-			continue
-		if not selected_tag.is_empty() and not definition.tags.has(selected_tag):
-			continue
-		var searchable_text := (
-			definition.display_name + " " + definition.object_id + " "
-			+ definition.description + " " + _join_tags(definition.tags)
-		).to_lower()
-		if not query.is_empty() and not searchable_text.contains(query):
-			continue
-		_visible_definitions.append(definition)
-		var title_prefix := "★ " if _favorites.has(definition.object_id) else ""
-		entries.append({
-			"title": title_prefix + definition.display_name,
-			"tooltip": "%s\nТип: %s\nID: %s\nТеги: %s" % [
-				definition.description,
-				_object_type_display_name(definition.object_type),
-				definition.object_id,
-				_join_tags(definition.tags)
-			]
-		})
+	var entries: Array[Dictionary] = _library_controller.call(
+		"build_visible_entries",
+		str(_library_view.call("get_search_query")).strip_edges().to_lower(),
+		str(_library_view.call("get_selected_category")),
+		str(_library_view.call("get_selected_tag")),
+		str(_library_view.call("get_selected_mode"))
+	)
 	_library_view.call("set_entries", entries, "Объекты не найдены")
-
-func _object_type_display_name(type_id: String) -> String:
-	var profile_name := ObjectCreationProfileRegistry.get_display_name(type_id)
-	if not profile_name.is_empty():
-		return profile_name
-	return "Другой объект" if type_id.strip_edges().is_empty() or type_id == "other" else type_id.capitalize()
-
-
-func _find_definition(object_id: String) -> ObjectDefinition:
-	for definition in _definitions:
-		if definition != null and definition.object_id == object_id:
-			return definition
-	return null
-
-
-func _join_tags(tags: PackedStringArray) -> String:
-	var values := PackedStringArray()
-	for tag in tags:
-		values.append(tag)
-	return " ".join(values)
-
 
 func _on_search_changed(_value: String) -> void:
 	_refresh_library_list()
@@ -1107,49 +999,36 @@ func _on_filter_changed(_index: int) -> void:
 
 
 func _on_library_item_selected(index: int) -> void:
-	if index < 0 or index >= _visible_definitions.size():
+	var definition := _library_controller.call("get_visible_definition", index) as ObjectDefinition
+	if definition == null:
 		return
 	_can_save_as_template = false
-	var definition := _visible_definitions[index]
 	_record_recent(definition.object_id)
 	_load_definition(definition)
 
-
 func _record_recent(object_id: String) -> void:
-	if object_id.is_empty():
-		return
-	_recent_ids.erase(object_id)
-	_recent_ids.insert(0, object_id)
-	while _recent_ids.size() > RECENT_LIMIT:
-		_recent_ids.remove_at(_recent_ids.size() - 1)
+	_library_controller.call("record_recent", object_id)
 	_save_local_state()
 	if _library_view != null and str(_library_view.call("get_selected_mode")) == "recent":
 		_refresh_library_list()
 
-
 func _on_toggle_favorite_pressed() -> void:
 	if _working_definition == null or _working_definition.object_id.is_empty():
 		return
-	var object_id := _working_definition.object_id
-	if _favorites.has(object_id):
-		_favorites.erase(object_id)
-	else:
-		_favorites.append(object_id)
+	_library_controller.call("toggle_favorite", _working_definition.object_id)
 	_save_local_state()
 	_refresh_favorite_button()
 	_refresh_library_list()
-
 
 func _refresh_favorite_button() -> void:
 	if _favorite_button == null:
 		return
 	var can_toggle := _working_definition != null and not _working_definition.object_id.is_empty()
 	_favorite_button.disabled = not can_toggle
-	if can_toggle and _favorites.has(_working_definition.object_id):
+	if can_toggle and bool(_library_controller.call("is_favorite", _working_definition.object_id)):
 		_favorite_button.text = "★ В избранном"
 	else:
 		_favorite_button.text = "☆ В избранное"
-
 
 func _on_new_object_pressed() -> void:
 	_dialog_view.call("reset_creation_profile")
@@ -1157,22 +1036,19 @@ func _on_new_object_pressed() -> void:
 	_dialog_view.call("popup_creation_dialog")
 
 func _on_create_from_template_pressed() -> void:
-	_templates = ObjectLibraryService.load_templates()
-	if _templates.is_empty():
+	_library_controller.call("load_templates")
+	if int(_library_controller.call("get_template_count")) == 0:
 		_set_status("Шаблоны не найдены.", true)
 		return
-	var template_names: Array[String] = []
-	for template_definition in _templates:
-		if template_definition != null:
-			template_names.append(template_definition.display_name)
+	var template_names: Array[String] = _library_controller.call("get_template_names")
 	_dialog_view.call("set_template_options", template_names)
 	_dialog_view.call("popup_template_dialog")
 
 func _on_template_dialog_confirmed() -> void:
 	var selected_index := int(_dialog_view.call("get_selected_template_index"))
-	if selected_index < 0 or selected_index >= _templates.size():
+	var template_definition := _library_controller.call("get_template", selected_index) as ObjectDefinition
+	if template_definition == null:
 		return
-	var template_definition := _templates[selected_index]
 	var definition := template_definition.duplicate(true) as ObjectDefinition
 	definition.object_id = "object_%d_%d" % [int(Time.get_unix_time_from_system()), Time.get_ticks_msec()]
 	definition.display_name = template_definition.display_name + " — копия"
@@ -1230,10 +1106,10 @@ func _load_definition(definition: ObjectDefinition) -> void:
 	_working_definition = definition.duplicate(true) as ObjectDefinition
 	_ensure_component_schemas()
 	_name_edit.text = _working_definition.display_name
-	_object_type_label.text = _object_type_display_name(_working_definition.object_type)
+	_object_type_label.text = str(_library_controller.call("get_object_type_display_name", _working_definition.object_type))
 	_id_edit.text = _working_definition.object_id
 	_category_edit.text = _working_definition.category
-	_tags_edit.text = _join_tags(_working_definition.tags)
+	_tags_edit.text = str(_library_controller.call("join_tags", _working_definition.tags))
 	_description_edit.text = _working_definition.description
 	_template_check.button_pressed = _working_definition.is_template
 	_template_check.disabled = not _can_save_as_template
@@ -1245,7 +1121,6 @@ func _load_definition(definition: ObjectDefinition) -> void:
 	_simple_preview.texture = _working_definition.preview_texture
 	_refresh_favorite_button()
 	_refresh_scene_tree()
-
 
 func _select_root_type(type_name: String) -> void:
 	for index in range(_root_type.item_count):

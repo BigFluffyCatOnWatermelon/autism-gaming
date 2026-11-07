@@ -123,6 +123,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder library controller tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_library_controller_smoke.gd 2>&1 | tee object-builder-library-controller-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-library-controller-test.log; then
+            echo "Object Builder library controller tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder property list view tests
         shell: bash
         run: |
