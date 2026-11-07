@@ -143,6 +143,30 @@ func _run() -> void:
 		_expect(second_preview.global_position == before_second + Vector2(16.0, 8.0), "group drag moves every selected part")
 		_expect(batch_transform_events.size() == 1 and batch_transform_events[0].get("changes", []).size() == 2, "group movement emits one batch containing both part transforms")
 
+		# The same shared handles scale and rotate the complete multi-selection.
+		var group_handles: Dictionary = interaction.call("_get_transform_handle_positions")
+		_expect(group_handles.has("scale") and group_handles.has("rotate") and group_handles.has("pivot"), "multi-selection exposes shared scale, rotate and pivot handles")
+		var group_pivot_world: Vector2 = interaction.call("_screen_to_world", group_handles["pivot"])
+		var scale_handle_world: Vector2 = interaction.call("_screen_to_world", group_handles["scale"])
+		var scale_end_world := group_pivot_world + (scale_handle_world - group_pivot_world) * 1.5
+		var scale_end_screen := (viewport.get_canvas_transform() * scale_end_world) * surface.size / Vector2(viewport.size)
+		interaction.call("_begin_selection", group_handles["scale"])
+		interaction.call("_update_drag", scale_end_screen)
+		interaction.call("_finish_drag")
+		_expect(is_equal_approx(preview_sprite.scale.x, 1.5) and is_equal_approx(second_preview.scale.x, 1.5), "group scale applies one uniform factor to every selected part")
+		_expect(batch_transform_events.size() == 2 and batch_transform_events[1].get("changes", []).size() >= 4, "group scale commits positions and scales in one batch")
+
+		group_handles = interaction.call("_get_transform_handle_positions")
+		group_pivot_world = interaction.call("_screen_to_world", group_handles["pivot"])
+		var rotate_handle_world: Vector2 = interaction.call("_screen_to_world", group_handles["rotate"])
+		var rotate_end_world := group_pivot_world + (rotate_handle_world - group_pivot_world).rotated(PI / 2.0)
+		var rotate_end_screen := (viewport.get_canvas_transform() * rotate_end_world) * surface.size / Vector2(viewport.size)
+		interaction.call("_begin_selection", group_handles["rotate"])
+		interaction.call("_update_drag", rotate_end_screen)
+		interaction.call("_finish_drag")
+		_expect(is_equal_approx(preview_sprite.rotation_degrees, 90.0) and is_equal_approx(second_preview.rotation_degrees, 90.0), "group rotation applies the same angle to every selected part")
+		_expect(batch_transform_events.size() == 3 and batch_transform_events[2].get("changes", []).size() >= 4, "group rotation commits as one batch")
+
 		# Independent pivot metadata is editable and emits a scene commit request.
 		canvas.call("set_selected_path", NodePath("Sprite"))
 		interaction.call("set_pivot_edit_mode", true)
