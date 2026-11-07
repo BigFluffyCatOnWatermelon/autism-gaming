@@ -14,6 +14,7 @@ const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
 const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
 const ObjectBuilderDialogService = preload("res://addons/object_builder/services/dialog_service.gd")
+const ObjectBuilderEditorSceneTreeFilterScript = preload("res://addons/object_builder/services/editor_scene_tree_filter.gd")
 const ObjectBuilderWorkspaceViewScript = preload("res://addons/object_builder/ui/workspace_view.gd")
 const ObjectBuilderLibraryControllerScript = preload("res://addons/object_builder/controllers/library_controller.gd")
 const ObjectBuilderEditorSessionScript = preload("res://addons/object_builder/controllers/object_editor_session.gd")
@@ -83,6 +84,7 @@ var _status_label: Label
 var _preview_view: Window
 var _open_scene_button: Button
 var _connected_scene_tree: SceneTree
+var _connected_scene_root: Node
 var _tree_refresh_queued := false
 var _syncing_tree_selection := false
 var _working_definition: ObjectDefinition
@@ -172,23 +174,37 @@ func _disconnect_editor_sync() -> void:
 		scene_closed.disconnect(_on_editor_scene_closed)
 
 	if is_instance_valid(_connected_scene_tree):
-		if _connected_scene_tree.tree_changed.is_connected(_on_editor_tree_changed):
-			_connected_scene_tree.tree_changed.disconnect(_on_editor_tree_changed)
+		if _connected_scene_tree.node_added.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_added.disconnect(_on_editor_scene_node_changed)
+		if _connected_scene_tree.node_removed.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_removed.disconnect(_on_editor_scene_node_changed)
+		if _connected_scene_tree.node_renamed.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_renamed.disconnect(_on_editor_scene_node_changed)
 	_connected_scene_tree = null
+	_connected_scene_root = null
 
 
 func _update_scene_tree_connection() -> void:
 	var edited_root := EditorInterface.get_edited_scene_root()
 	var next_tree: SceneTree = edited_root.get_tree() if edited_root != null else null
-	if next_tree == _connected_scene_tree:
+	if next_tree == _connected_scene_tree and edited_root == _connected_scene_root:
 		return
 	if is_instance_valid(_connected_scene_tree):
-		if _connected_scene_tree.tree_changed.is_connected(_on_editor_tree_changed):
-			_connected_scene_tree.tree_changed.disconnect(_on_editor_tree_changed)
+		if _connected_scene_tree.node_added.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_added.disconnect(_on_editor_scene_node_changed)
+		if _connected_scene_tree.node_removed.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_removed.disconnect(_on_editor_scene_node_changed)
+		if _connected_scene_tree.node_renamed.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_renamed.disconnect(_on_editor_scene_node_changed)
 	_connected_scene_tree = next_tree
+	_connected_scene_root = edited_root
 	if is_instance_valid(_connected_scene_tree):
-		if not _connected_scene_tree.tree_changed.is_connected(_on_editor_tree_changed):
-			_connected_scene_tree.tree_changed.connect(_on_editor_tree_changed)
+		if not _connected_scene_tree.node_added.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_added.connect(_on_editor_scene_node_changed)
+		if not _connected_scene_tree.node_removed.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_removed.connect(_on_editor_scene_node_changed)
+		if not _connected_scene_tree.node_renamed.is_connected(_on_editor_scene_node_changed):
+			_connected_scene_tree.node_renamed.connect(_on_editor_scene_node_changed)
 
 
 func _on_editor_scene_changed(_scene_root: Node) -> void:
@@ -202,7 +218,11 @@ func _on_editor_scene_closed(_path: String) -> void:
 	call_deferred("_refresh_scene_tree")
 
 
-func _on_editor_tree_changed() -> void:
+func _on_editor_scene_node_changed(changed_node: Node) -> void:
+	# The editor SceneTree also contains Object Builder UI and its isolated Canvas preview.
+	# Only changes inside the currently edited scene may trigger a scene-tree refresh.
+	if not ObjectBuilderEditorSceneTreeFilterScript.belongs_to_scene(_connected_scene_root, changed_node):
+		return
 	if _tree_refresh_queued:
 		return
 	_tree_refresh_queued = true
