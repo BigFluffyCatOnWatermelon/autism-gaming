@@ -15,6 +15,7 @@ const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder
 const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
 const ObjectBuilderLibraryControllerScript = preload("res://addons/object_builder/controllers/library_controller.gd")
 const ObjectBuilderEditorSessionScript = preload("res://addons/object_builder/controllers/object_editor_session.gd")
+const ObjectBuilderSceneDraftService = preload("res://addons/object_builder/services/scene_draft_service.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const ROOT_TYPES := [
@@ -1151,45 +1152,12 @@ func _on_template_dialog_confirmed() -> void:
 	_set_status("Создана копия шаблона. Измени параметры и сохрани объект.", false)
 
 func _clone_template_scene(template_definition: ObjectDefinition, target_definition: ObjectDefinition) -> void:
-	var source_scene: PackedScene = template_definition.scene
-	if not template_definition.scene_path.is_empty() and FileAccess.file_exists(template_definition.scene_path):
-		var loaded_scene := ResourceLoader.load(
-			template_definition.scene_path,
-			"",
-			ResourceLoader.CACHE_MODE_REPLACE
-		)
-		if loaded_scene is PackedScene:
-			source_scene = loaded_scene as PackedScene
-	if source_scene == null:
-		return
-
-	var scene_root := source_scene.instantiate()
-	scene_root.set_meta("object_definition_id", target_definition.object_id)
-	scene_root.set_meta("object_category", target_definition.category)
-	var property_data := scene_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
-	if property_data == null:
-		property_data = ObjectPropertyData.new()
-		property_data.name = "ObjectProperties"
-		scene_root.add_child(property_data)
-	property_data.configure(target_definition.custom_properties, {}, true)
-	property_data.owner = scene_root
-	var copied_scene := PackedScene.new()
-	_set_owner_recursive(scene_root, scene_root)
-	var pack_error := copied_scene.pack(scene_root)
-	scene_root.free()
-	if pack_error != OK:
-		push_warning("Object Builder: не удалось скопировать сцену шаблона.")
-		return
-
-	ObjectLibraryService.ensure_directories()
-	var target_path := ObjectLibraryService.get_scene_path(target_definition.object_id)
-	var save_error := ResourceSaver.save(copied_scene, target_path)
-	if save_error != OK:
-		push_warning("Object Builder: не удалось сохранить копию сцены шаблона.")
-		return
-	target_definition.scene = copied_scene
-	target_definition.scene_path = target_path
-
+	var result: Dictionary = ObjectBuilderSceneDraftService.clone_template_scene(
+		template_definition,
+		target_definition
+	)
+	if not bool(result.get("ok", false)):
+		push_warning("Object Builder: " + str(result.get("message", "Не удалось скопировать сцену шаблона.")))
 
 func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> void:
 	_is_loading_editor_form = true
@@ -1477,43 +1445,10 @@ func _on_save_pressed() -> void:
 	_load_definition(_working_definition)
 
 func _create_scene_for_definition() -> bool:
-	ObjectLibraryService.ensure_directories()
-	var created_object: Object = ClassDB.instantiate(_working_definition.root_type)
-	if not created_object is Node:
-		_set_status("Не удалось создать корневой узел типа " + _working_definition.root_type, true)
+	var result: Dictionary = ObjectBuilderSceneDraftService.create_scene(_working_definition)
+	if not bool(result.get("ok", false)):
+		_set_status(str(result.get("message", "Не удалось создать сцену объекта.")), true)
 		return false
-
-	var scene_root := created_object as Node
-	scene_root.name = "Object"
-	scene_root.set_meta("object_definition_id", _working_definition.object_id)
-	scene_root.set_meta("object_category", _working_definition.category)
-
-	var visuals := Node2D.new()
-	visuals.name = "Visuals"
-	scene_root.add_child(visuals)
-	visuals.owner = scene_root
-
-	var property_data := ObjectPropertyData.new()
-	property_data.name = "ObjectProperties"
-	scene_root.add_child(property_data)
-	property_data.owner = scene_root
-	property_data.configure(_working_definition.custom_properties)
-
-	var packed_scene := PackedScene.new()
-	var pack_error := packed_scene.pack(scene_root)
-	scene_root.free()
-	if pack_error != OK:
-		_set_status("Не удалось собрать PackedScene. Код ошибки: %d" % pack_error, true)
-		return false
-
-	var scene_path := ObjectLibraryService.get_scene_path(_working_definition.object_id)
-	var save_error := ResourceSaver.save(packed_scene, scene_path)
-	if save_error != OK:
-		_set_status("Не удалось сохранить сцену. Код ошибки: %d" % save_error, true)
-		return false
-
-	_working_definition.scene = packed_scene
-	_working_definition.scene_path = scene_path
 	_mark_editor_session_changed()
 	EditorInterface.get_resource_filesystem().scan()
 	return true

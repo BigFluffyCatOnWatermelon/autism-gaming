@@ -143,6 +143,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder scene draft service tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_scene_draft_service_smoke.gd 2>&1 | tee object-builder-scene-draft-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-scene-draft-test.log; then
+            echo "Object Builder scene draft service tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder property list view tests
         shell: bash
         run: |
