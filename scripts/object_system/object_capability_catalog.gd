@@ -93,6 +93,9 @@ static func register_definitions(
 
 		var copy := definition.duplicate(true) as ObjectCapabilityDefinition
 		copy.capability_id = capability_id
+		if promotes_catalog_placeholder:
+			var library_definition := _library_definitions.get(capability_id) as ObjectCapabilityDefinition
+			_inherit_library_presentation_metadata(copy, library_definition)
 		_prepare_settings_schema(copy)
 		incoming[capability_id] = copy
 
@@ -346,6 +349,45 @@ static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> 
 		resolved_schema.append(unresolved)
 
 	definition.settings_schema = resolved_schema
+
+
+static func _inherit_library_presentation_metadata(
+	target: ObjectCapabilityDefinition,
+	library_definition: ObjectCapabilityDefinition
+) -> void:
+	if target == null or library_definition == null:
+		return
+	if target.icon_atlas_index < 0:
+		target.icon_atlas_index = library_definition.icon_atlas_index
+	if target.icon_resource_path.strip_edges().is_empty():
+		target.icon_resource_path = library_definition.icon_resource_path
+	if target.illustration_resource_path.strip_edges().is_empty():
+		target.illustration_resource_path = library_definition.illustration_resource_path
+	if target.kind_id.strip_edges().is_empty():
+		target.kind_id = library_definition.kind_id
+	if target.execution_scope == "unclassified":
+		target.execution_scope = library_definition.execution_scope
+	if target.implementation_type == "unclassified":
+		target.implementation_type = library_definition.implementation_type
+
+	for synonym in library_definition.synonyms:
+		if not target.synonyms.has(synonym):
+			target.synonyms.append(synonym)
+	for example_query in library_definition.example_queries:
+		if not target.example_queries.has(example_query):
+			target.example_queries.append(example_query)
+
+	for library_relation in library_definition.relations:
+		var duplicate := false
+		for existing_relation in target.relations:
+			if (
+				str(existing_relation.get("type", "")) == str(library_relation.get("type", ""))
+				and str(existing_relation.get("target_id", "")) == str(library_relation.get("target_id", ""))
+			):
+				duplicate = true
+				break
+		if not duplicate:
+			target.relations.append(library_relation.duplicate(true))
 
 
 static func _apply_default_catalog_metadata(definition: ObjectCapabilityDefinition) -> void:
