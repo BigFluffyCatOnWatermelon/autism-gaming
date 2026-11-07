@@ -219,7 +219,8 @@ func _run() -> void:
 		"is_reverse": true,
 		"ready": false
 	}]
-	view.call("set_related_entries", related_entries, "Атака")
+	view.call("set_related_entries", related_entries, "Атака", implemented)
+	_expect((view.get("_related_map_button") as Button).visible, "focused relationships expose the interactive graph map")
 	_expect((view.get("_related_section") as PanelContainer).visible, "related capabilities appear in a dedicated compact strip")
 	_expect(view.call("get_related_button_count") == 1, "related strip contains one button per connected capability")
 	var related_container := view.get("_related_container") as HFlowContainer
@@ -228,6 +229,7 @@ func _run() -> void:
 	related_button.pressed.emit()
 	_expect(focus_events == ["can_attack", "can_fly", "can_fly"], "following a related suggestion moves focus without enabling it")
 	view.call("set_related_entries", [])
+	_expect(not (view.get("_related_map_button") as Button).visible, "relation map action hides when there is no focused relationship")
 	_expect(not (view.get("_related_section") as PanelContainer).visible, "related strip hides when the focused capability has no links")
 
 	var profile_recommendation_entries: Array[Dictionary] = [{
