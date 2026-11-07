@@ -32,6 +32,11 @@ func _run_tests() -> void:
 	visual.implementation_type = "scene_resource"
 	visual.synonyms = PackedStringArray(["покрасить", "изменить цвет"])
 	visual.example_queries = PackedStringArray(["сделать объект красным", "ломать дерево топором"])
+	visual.relations.append({
+		"type": "related",
+		"target_id": DATA_ID,
+		"explanation": "Дополнительные пользовательские данные дополняют оформление объекта."
+	})
 
 	var data := DefinitionScript.new()
 	data.capability_id = DATA_ID
@@ -73,6 +78,12 @@ func _run_tests() -> void:
 		bool(visual_entries[0].get("selected_in_catalog", false)),
 		"selection is preserved when the result set is filtered"
 	)
+	var visual_highlight: Dictionary = visual_entries[0].get("relation_highlight", {})
+	_expect(
+		str(visual_highlight.get("type", "")) == "related"
+		and bool(visual_highlight.get("is_reverse", false)),
+		"catalog highlights reverse relationships when the target capability is focused"
+	)
 	var visual_definition := visual_entries[0].get("definition") as ObjectCapabilityDefinition
 	_expect(
 		visual_definition != null and visual_definition.execution_scope == "editor_only",
@@ -90,6 +101,12 @@ func _run_tests() -> void:
 	_expect(
 		bool(data_entries[0].get("selected_in_catalog", false)),
 		"selection remains after changing the result category"
+	)
+	var data_highlight: Dictionary = data_entries[0].get("relation_highlight", {})
+	_expect(
+		str(data_highlight.get("type", "")) == "related"
+		and not bool(data_highlight.get("is_reverse", true)),
+		"focused capability highlights its outgoing relationships"
 	)
 
 	var phrase_entries: Array[Dictionary] = controller.call(
