@@ -37,6 +37,9 @@ var _zoom_label: Label
 var _grid_button: Button
 var _snap_button: CheckBox
 var _open_scene_button: Button
+var _animation_button: Button
+var _has_preview_animations := false
+var _animation_preview_playing := false
 
 
 
@@ -78,6 +81,17 @@ func build() -> void:
 	_snap_button.tooltip_text = "Перемещать части шагом 8 пикселей"
 	_snap_button.toggled.connect(_on_snap_toggled)
 	toolbar.add_child(_snap_button)
+
+	_open_scene_button = Button.new()
+	_open_scene_button.text = "Открыть сцену"
+	_open_scene_button.tooltip_text = "Открыть сцену в редакторе Godot, чтобы включить редактирование на холсте"
+	_animation_button = Button.new()
+	_animation_button.text = "▶ Анимация"
+	_animation_button.tooltip_text = "Воспроизвести только AnimatedSprite2D на изолированном холсте"
+	_animation_button.toggle_mode = true
+	_animation_button.disabled = true
+	_animation_button.toggled.connect(_on_animation_preview_toggled)
+	toolbar.add_child(_animation_button)
 
 	_open_scene_button = Button.new()
 	_open_scene_button.text = "Открыть сцену"
@@ -171,6 +185,11 @@ func set_preview_instance(
 	_preview_instance = instance
 	_disable_preview_processing(_preview_instance)
 	_stage.add_child(_preview_instance)
+	_has_preview_animations = _contains_animated_sprite(_preview_instance)
+	_animation_preview_playing = false
+	_animation_button.button_pressed = false
+	_animation_button.text = "▶ Анимация"
+	_animation_button.disabled = not _has_preview_animations
 	_editing_enabled = editing_enabled
 	_interaction_controller.call("set_scene", _preview_instance, editing_enabled, selected_path)
 	_open_scene_button.disabled = not can_open_scene
@@ -189,6 +208,11 @@ func clear_canvas(message: String) -> void:
 	_open_scene_button.disabled = true
 	_open_scene_button.visible = false
 	_status_label.text = message
+	_animation_button.button_pressed = false
+	_animation_button.disabled = true
+	_animation_button.text = "▶ Анимация"
+	_animation_preview_playing = false
+	_has_preview_animations = false
 	if _surface != null:
 		_surface.queue_redraw()
 
@@ -212,6 +236,10 @@ func _disable_preview_processing(node: Node) -> void:
 
 
 func _clear_preview() -> void:
+	if _preview_instance != null and is_instance_valid(_preview_instance):
+		_set_preview_animation_processing(_preview_instance, false)
+	_animation_preview_playing = false
+	_has_preview_animations = false
 	if _interaction_controller != null:
 		_interaction_controller.call("set_scene", null, false, NodePath(""))
 	if _preview_instance != null and is_instance_valid(_preview_instance):
@@ -220,6 +248,50 @@ func _clear_preview() -> void:
 			parent.remove_child(_preview_instance)
 		_preview_instance.free()
 	_preview_instance = null
+
+
+func _contains_animated_sprite(node: Node) -> bool:
+	if node is AnimatedSprite2D:
+		var animated := node as AnimatedSprite2D
+		if animated.sprite_frames != null and animated.sprite_frames.has_animation(animated.animation):
+			if animated.sprite_frames.get_frame_count(animated.animation) > 0:
+				return true
+	for child in node.get_children():
+		if _contains_animated_sprite(child):
+			return true
+	return false
+
+
+func _set_preview_animation_processing(node: Node, enabled: bool) -> void:
+	if node is AnimatedSprite2D:
+		var animated := node as AnimatedSprite2D
+		var has_frames := (
+			animated.sprite_frames != null
+			and animated.sprite_frames.has_animation(animated.animation)
+			and animated.sprite_frames.get_frame_count(animated.animation) > 0
+		)
+		if enabled and has_frames:
+			animated.process_mode = Node.PROCESS_MODE_ALWAYS
+			animated.play()
+		else:
+			animated.pause()
+			animated.process_mode = Node.PROCESS_MODE_DISABLED
+	for child in node.get_children():
+		_set_preview_animation_processing(child, enabled)
+
+
+func _on_animation_preview_toggled(enabled: bool) -> void:
+	if _preview_instance == null or not is_instance_valid(_preview_instance) or not _has_preview_animations:
+		_animation_button.set_pressed_no_signal(false)
+		return
+	_animation_preview_playing = enabled
+	_set_preview_animation_processing(_preview_instance, enabled)
+	_animation_button.text = "⏸ Пауза" if enabled else "▶ Анимация"
+	_status_label.text = (
+		"Анимации проигрываются на изолированном холсте. Игровые скрипты объекта отключены."
+		if enabled
+		else "Анимации приостановлены. Выбор и трансформации частей доступны."
+	)
 
 
 func _on_surface_resized() -> void:

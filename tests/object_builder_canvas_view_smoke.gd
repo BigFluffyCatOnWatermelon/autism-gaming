@@ -128,6 +128,40 @@ func _run() -> void:
 	_expect(not bool(canvas.get("_editing_enabled")), "read-only preview disables transform editing")
 	_expect((canvas.get("_open_scene_button") as Button).visible, "read-only preview exposes the open-scene action")
 
+	var animated_scene := Node2D.new()
+	var frames := SpriteFrames.new()
+	frames.clear_all()
+	frames.add_animation(&"idle")
+	var animation_image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+	animation_image.fill(Color.WHITE)
+	var animation_texture := ImageTexture.create_from_image(animation_image)
+	frames.add_frame(&"idle", animation_texture)
+	var animated_sprite := AnimatedSprite2D.new()
+	animated_sprite.name = "Animated"
+	animated_sprite.sprite_frames = frames
+	animated_sprite.animation = &"idle"
+	animated_scene.add_child(animated_sprite)
+	var logic_node := Node.new()
+	logic_node.name = "GameLogic"
+	logic_node.set_process(true)
+	animated_scene.add_child(logic_node)
+
+	canvas.call("set_preview_instance", animated_scene.duplicate(), false, true)
+	var animation_button := canvas.get("_animation_button") as Button
+	_expect(not animation_button.disabled, "canvas enables animation preview when AnimatedSprite2D exists")
+	animation_button.toggled.emit(true)
+	var animated_preview := (canvas.get("_preview_instance") as Node).get_node("Animated") as AnimatedSprite2D
+	var disabled_logic := (canvas.get("_preview_instance") as Node).get_node("GameLogic") as Node
+	_expect(animated_preview.is_playing(), "play starts AnimatedSprite2D inside the isolated canvas")
+	_expect(animated_preview.process_mode == Node.PROCESS_MODE_ALWAYS, "only animated sprites opt into processing")
+	_expect(disabled_logic.process_mode == Node.PROCESS_MODE_DISABLED, "game logic stays disabled while animation preview plays")
+	animation_button.toggled.emit(false)
+	_expect(not animated_preview.is_playing(), "pause stops the isolated animation")
+	_expect(animated_preview.process_mode == Node.PROCESS_MODE_DISABLED, "pause disables animated sprite processing again")
+	canvas.call("clear_canvas", "No scene")
+	_expect((canvas.get("_animation_button") as Button).disabled, "clearing canvas disables animation preview controls")
+	animated_scene.free()
+
 	canvas.call("clear_canvas", "No scene")
 	_expect(canvas.get("_preview_instance") == null, "clearing canvas releases the preview instance")
 	_expect((canvas.get("_status_label") as Label).text == "No scene", "clearing canvas displays its diagnostic message")
