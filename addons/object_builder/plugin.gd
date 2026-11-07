@@ -114,6 +114,18 @@ func _exit_tree() -> void:
 	if _editor_session != null:
 		_editor_session.call("clear")
 	_working_definition = null
+	var leaked_candidate: Object = instance_from_id(1645324869295)
+	if leaked_candidate != null:
+		print("[ObjectBuilder shutdown] orphan candidate class=", leaked_candidate.get_class())
+		if leaked_candidate is Node:
+			var candidate_node := leaked_candidate as Node
+			var candidate_parent := candidate_node.get_parent()
+			print(
+				"[ObjectBuilder shutdown] orphan candidate name=", candidate_node.name,
+				" inside_tree=", candidate_node.is_inside_tree(),
+				" parent=", candidate_parent.get_class() if candidate_parent != null else "<none>",
+				"/", candidate_parent.name if candidate_parent != null else "<none>"
+			)
 	print("[ObjectBuilder shutdown] plugin descendants:")
 	_debug_list_shutdown_controls(self)
 	if _main_screen != null and is_instance_valid(_main_screen):
