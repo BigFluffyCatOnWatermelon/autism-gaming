@@ -305,6 +305,9 @@ func _disable_preview_processing(node: Node) -> void:
 
 
 func _clear_preview() -> void:
+	if _context_menu != null:
+		_context_menu.hide()
+	_selected_path = NodePath("")
 	if _preview_instance != null and is_instance_valid(_preview_instance):
 		_set_preview_animation_processing(_preview_instance, false)
 	_animation_preview_playing = false
