@@ -6,6 +6,8 @@ const PropertyScript = preload("res://scripts/object_system/object_property_defi
 
 const CREATED_ID := "object_builder_scene_service_smoke_created"
 const CLONED_ID := "object_builder_scene_service_smoke_cloned"
+const IMPORT_SOURCE_ID := "object_builder_scene_service_smoke_import_source"
+const IMPORTED_ID := "object_builder_scene_service_smoke_imported"
 
 var failures: Array[String] = []
 
@@ -71,13 +73,63 @@ func _run() -> void:
 				_expect(cloned_data.get_custom_property("mana", -1) == 33, "cloned scene receives target property defaults")
 			cloned_root.free()
 
+	var import_source_path := ObjectLibraryService.get_scene_path(IMPORT_SOURCE_ID)
+	ObjectLibraryService.ensure_directories()
+	var source_scene := _make_import_source_scene()
+	var source_save_error := ResourceSaver.save(source_scene, import_source_path)
+	_expect(source_save_error == OK, "source PackedScene is saved for the import test")
+
+	var imported_definition: ObjectDefinition = DefinitionScript.new()
+	imported_definition.object_id = IMPORTED_ID
+	imported_definition.display_name = "Imported prototype"
+	imported_definition.category = "Tests"
+	imported_definition.object_type = "other"
+	imported_definition.custom_properties.append(_make_test_property("speed", "Скорость", 42))
+	var import_result: Dictionary = SceneDraftService.import_scene(import_source_path, imported_definition)
+	_expect(bool(import_result.get("ok", false)), "existing PackedScene can be imported as a separate object")
+	_expect(imported_definition.scene_path != import_source_path, "imported scene is stored at a new path")
+	_expect(imported_definition.root_type == "Node2D", "imported root type is detected from the source scene")
+	_expect(FileAccess.file_exists(import_source_path), "import keeps the original scene file on disk")
+	if imported_definition.scene is PackedScene:
+		var imported_root := imported_definition.scene.instantiate()
+		_expect(imported_root != null, "imported scene can be instantiated")
+		if imported_root != null:
+			_expect(imported_root.name == "ImportedPrototype", "import preserves the source root name")
+			_expect(imported_root.get_node_or_null("UnknownRootChild/NestedUnknown") is Marker2D, "import preserves unknown nested nodes")
+			_expect(imported_root.get_node_or_null("UnknownCollision/CollisionShape2D") is CollisionShape2D, "import preserves collision nodes")
+			_expect(imported_root.get_meta("object_definition_id", "") == IMPORTED_ID, "import assigns the new definition ID to the copy")
+			_expect(imported_root.get_meta("object_category", "") == "Tests", "import assigns the selected category to the copy")
+			var imported_data := imported_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
+			_expect(imported_data != null, "import adds ObjectPropertyData without replacing other nodes")
+			if imported_data != null:
+				_expect(imported_data.get_custom_property("speed", -1) == 42, "imported object receives its custom property defaults")
+			imported_root.free()
+
+	var reloaded_source := ResourceLoader.load(import_source_path, "", ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
+	_expect(reloaded_source != null, "original source scene remains readable after import")
+	if reloaded_source != null:
+		var source_root := reloaded_source.instantiate()
+		_expect(source_root != null, "original source scene remains instantiable after import")
+		if source_root != null:
+			_expect(source_root.name == "ImportedPrototype", "original root name remains unchanged")
+			_expect(source_root.get_meta("source_marker", "") == "original", "original metadata remains unchanged")
+			_expect(not source_root.has_meta("object_definition_id"), "import metadata never leaks back into the source scene")
+			_expect(source_root.get_node_or_null("UnknownRootChild/NestedUnknown") is Marker2D, "original nested nodes remain unchanged")
+			source_root.free()
+
+	var unsupported_result: Dictionary = SceneDraftService.import_scene(import_source_path.get_basename() + ".txt", imported_definition)
+	_expect(not bool(unsupported_result.get("ok", true)), "unsupported import extensions return a handled failure")
+
 	var missing_source: ObjectDefinition = DefinitionScript.new()
 	missing_source.object_id = "object_builder_scene_service_smoke_missing"
 	var missing_result: Dictionary = SceneDraftService.clone_template_scene(missing_source, target_definition)
 	_expect(not bool(missing_result.get("ok", true)), "missing template scene returns a handled failure")
+	_expect(not bool(SceneDraftService.import_scene("res://missing_import_scene.tscn", imported_definition).get("ok", true)), "missing import path returns a handled failure")
 
 	_cleanup_scene_file(created_definition.scene_path)
 	_cleanup_scene_file(target_definition.scene_path)
+	_cleanup_scene_file(imported_definition.scene_path)
+	_cleanup_scene_file(import_source_path)
 	await process_frame
 	if failures.is_empty():
 		print("Object Builder scene draft service tests passed.")
@@ -95,6 +147,36 @@ func _make_test_property(property_id: String, display_name: String, default_valu
 	definition.value_type = "Integer"
 	definition.default_value = default_value
 	return definition
+
+
+func _make_import_source_scene() -> PackedScene:
+	var root := Node2D.new()
+	root.name = "ImportedPrototype"
+	root.set_meta("source_marker", "original")
+
+	var unknown_parent := Node2D.new()
+	unknown_parent.name = "UnknownRootChild"
+	root.add_child(unknown_parent)
+	unknown_parent.owner = root
+	var unknown_marker := Marker2D.new()
+	unknown_marker.name = "NestedUnknown"
+	unknown_parent.add_child(unknown_marker)
+	unknown_marker.owner = root
+
+	var unknown_body := StaticBody2D.new()
+	unknown_body.name = "UnknownCollision"
+	root.add_child(unknown_body)
+	unknown_body.owner = root
+	var collision := CollisionShape2D.new()
+	collision.name = "CollisionShape2D"
+	collision.shape = CircleShape2D.new()
+	unknown_body.add_child(collision)
+	collision.owner = root
+
+	var packed := PackedScene.new()
+	packed.pack(root)
+	root.free()
+	return packed
 
 
 func _make_template_scene() -> PackedScene:
