@@ -32,6 +32,7 @@ var _creation_import_path_label: Label
 var _creation_import_path := ""
 var _creation_file_dialog: FileDialog
 var _creation_name_edit: LineEdit
+var _creation_suggested_name := ""
 var _creation_category_option: OptionButton
 var _creation_tags_edit: LineEdit
 var _creation_description_edit: TextEdit
@@ -244,6 +245,7 @@ func _build_creation_dialog(profiles: Array) -> void:
 	form.add_child(_creation_source_host)
 	_creation_source_option = OptionButton.new()
 	_creation_source_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_creation_source_option.item_selected.connect(_on_creation_source_selected)
 	UIFactory.add_labeled_control(_creation_source_host, "На основе", _creation_source_option)
 	var source_hint := Label.new()
 	source_hint.text = "Будет создана независимая копия. Исходная запись и сцена не изменятся."
@@ -271,6 +273,7 @@ func _build_creation_dialog(profiles: Array) -> void:
 
 	_creation_name_edit = LineEdit.new()
 	_creation_name_edit.placeholder_text = "Например, Дуб или Каменный сундук"
+	_creation_name_edit.text_changed.connect(_on_creation_name_changed)
 	UIFactory.add_labeled_control(form, "Название", _creation_name_edit)
 
 	_creation_category_option = OptionButton.new()
@@ -329,6 +332,7 @@ func _populate_creation_source_options() -> void:
 		_creation_source_option.set_item_metadata(_creation_source_option.item_count - 1, str(source.get("id", "")))
 	if _creation_source_option.item_count > 0:
 		_creation_source_option.select(0)
+		_suggest_creation_name_from_source()
 	else:
 		_creation_source_option.add_item("Список пока пуст")
 		_creation_source_option.set_item_disabled(0, true)
@@ -365,6 +369,7 @@ func get_creation_form_values() -> Dictionary:
 func reset_creation_wizard(mode: String = "new") -> void:
 	if _creation_name_edit == null:
 		return
+	_creation_suggested_name = ""
 	_creation_name_edit.text = ""
 	_creation_tags_edit.text = ""
 	_creation_description_edit.text = ""
@@ -384,6 +389,25 @@ func _on_creation_mode_selected(_index: int) -> void:
 	_populate_creation_source_options()
 
 
+func _on_creation_source_selected(_index: int) -> void:
+	_suggest_creation_name_from_source()
+
+
+func _suggest_creation_name_from_source() -> void:
+	if _creation_name_edit == null or _creation_source_option == null:
+		return
+	if _creation_source_option.selected < 0 or _creation_source_option.item_count == 0:
+		return
+	if not _creation_name_edit.text.is_empty() and _creation_name_edit.text != _creation_suggested_name:
+		return
+	_creation_suggested_name = _creation_source_option.get_item_text(_creation_source_option.selected) + " — копия"
+	_creation_name_edit.text = _creation_suggested_name
+
+
+func _on_creation_name_changed(next_name: String) -> void:
+	if next_name != _creation_suggested_name:
+		_creation_suggested_name = ""
+
 func _on_creation_import_browse_pressed() -> void:
 	DialogService.popup_window_safely(_creation_file_dialog, Vector2i(780, 540), 0.82)
 
@@ -392,6 +416,9 @@ func _on_creation_import_file_selected(path: String) -> void:
 	_creation_import_path = path
 	_creation_import_path_label.text = path.get_file()
 	_creation_import_path_label.tooltip_text = path
+	if _creation_name_edit.text.is_empty() or _creation_name_edit.text == _creation_suggested_name:
+		_creation_suggested_name = path.get_file().get_basename()
+		_creation_name_edit.text = _creation_suggested_name
 
 
 func _on_creation_profile_selected(_index: int) -> void:
