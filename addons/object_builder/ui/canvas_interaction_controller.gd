@@ -4,6 +4,7 @@ extends RefCounted
 
 signal part_selected(path: NodePath)
 signal context_menu_requested(path: NodePath)
+signal pointer_position_changed(world_position: Vector2)
 signal transform_committed(path: NodePath, property_name: String, new_value: Variant, old_value: Variant)
 signal zoom_requested(factor: float)
 
@@ -115,6 +116,7 @@ func handle_input(event: InputEvent) -> void:
 			_surface.queue_redraw()
 		elif _drag_node != null and is_instance_valid(_drag_node):
 			_update_drag(motion.position)
+		pointer_position_changed.emit(_screen_to_world(motion.position))
 
 
 func _begin_context_selection(screen_position: Vector2) -> void:
