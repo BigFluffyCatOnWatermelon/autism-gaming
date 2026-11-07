@@ -179,8 +179,8 @@ func _run() -> void:
 	_expect((view.get("_recommendation_section") as PanelContainer).visible, "context-aware suggestions appear in a dedicated panel")
 	_expect(view.call("get_recommendation_card_count") == 1, "recommendation panel shows each ranked suggestion as a card")
 	var recommendation_container := view.get("_recommendation_container") as HFlowContainer
-	var profile_recommendation_card := profile_recommendation_container.get_child(0) as PanelContainer
-	var profile_recommendation_content := profile_recommendation_card.get_child(0) as VBoxContainer
+	var recommendation_card := recommendation_container.get_child(0) as PanelContainer
+	var recommendation_content := recommendation_card.get_child(0) as VBoxContainer
 	_expect(recommendation_content.get_child_count() == 4, "recommendation card contains title, type, explanation and action")
 	var recommendation_header := recommendation_content.get_child(0) as HBoxContainer
 	var recommendation_name := recommendation_header.get_child(1) as Label
@@ -235,8 +235,8 @@ func _run() -> void:
 	var profile_recommendation_container := view.get("_recommendation_container") as HFlowContainer
 	_expect(recommendation_section.visible, "contextual recommendations appear when the controller provides compatible candidates")
 	_expect(view.call("get_recommendation_card_count") == 1, "each recommendation has its own explanatory card")
-	var recommendation_card := recommendation_container.get_child(0) as PanelContainer
-	var recommendation_content := recommendation_card.get_child(0) as VBoxContainer
+	var profile_recommendation_card := profile_recommendation_container.get_child(0) as PanelContainer
+	var profile_recommendation_content := profile_recommendation_card.get_child(0) as VBoxContainer
 	_expect(profile_recommendation_content.get_child_count() == 5, "profile recommendation card contains title, type, explanation, dependency and action")
 	var profile_recommendation_header := profile_recommendation_content.get_child(0) as HBoxContainer
 	var profile_recommendation_name := profile_recommendation_header.get_child(1) as Label
