@@ -710,14 +710,15 @@ static func _validate_dependency_graph(candidate: Dictionary) -> PackedStringArr
 			var definition := candidate[capability_id] as ObjectCapabilityDefinition
 			if definition == null:
 				continue
-			for incompatible_id in definition.incompatible_capability_ids:
-				var other := candidate.get(_normalize_id(str(incompatible_id))) as ObjectCapabilityDefinition
+			for incompatible_id in _get_conflicting_capability_ids(definition):
+				var normalized_incompatible_id := _normalize_id(str(incompatible_id))
+				var other := candidate.get(normalized_incompatible_id) as ObjectCapabilityDefinition
 				if other == null:
 					continue
-				if other.incompatible_capability_ids.is_empty() or not other.incompatible_capability_ids.has(str(capability_id)):
+				if not _get_conflicting_capability_ids(other).has(str(capability_id)):
 					errors.append(
 						"Конфликт между '%s' и '%s' должен быть указан с обеих сторон."
-						% [str(capability_id), str(incompatible_id)]
+						% [str(capability_id), normalized_incompatible_id]
 					)
 	return errors
 
@@ -738,11 +739,41 @@ static func _visit_capability(
 		errors.append("Неизвестная возможность в графе зависимостей: " + capability_id)
 		return false
 	states[capability_id] = 1
-	for dependency_id in definition.required_capability_ids:
+	for dependency_id in _get_required_capability_ids(definition):
 		if not _visit_capability(_normalize_id(str(dependency_id)), candidate, states, errors):
 			return false
 	states[capability_id] = 2
 	return true
+
+
+static func _get_required_capability_ids(definition: ObjectCapabilityDefinition) -> PackedStringArray:
+	var result := PackedStringArray()
+	for dependency_id_value in definition.required_capability_ids:
+		var dependency_id := _normalize_id(str(dependency_id_value))
+		if not dependency_id.is_empty() and not result.has(dependency_id):
+			result.append(dependency_id)
+	for relation in definition.relations:
+		if str(relation.get("type", "")).strip_edges().to_lower() != "requires":
+			continue
+		var dependency_id := _normalize_id(str(relation.get("target_id", "")))
+		if not dependency_id.is_empty() and not result.has(dependency_id):
+			result.append(dependency_id)
+	return result
+
+
+static func _get_conflicting_capability_ids(definition: ObjectCapabilityDefinition) -> PackedStringArray:
+	var result := PackedStringArray()
+	for conflict_id_value in definition.incompatible_capability_ids:
+		var conflict_id := _normalize_id(str(conflict_id_value))
+		if not conflict_id.is_empty() and not result.has(conflict_id):
+			result.append(conflict_id)
+	for relation in definition.relations:
+		if str(relation.get("type", "")).strip_edges().to_lower() != "conflicts":
+			continue
+		var conflict_id := _normalize_id(str(relation.get("target_id", "")))
+		if not conflict_id.is_empty() and not result.has(conflict_id):
+			result.append(conflict_id)
+	return result
 
 
 static func _is_builtin_id(capability_id: String) -> bool:
