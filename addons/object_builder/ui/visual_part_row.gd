@@ -2,7 +2,7 @@
 extends PanelContainer
 ## Drag source/target row for reordering visual siblings.
 
-signal reorder_requested(source_path: NodePath, target_path: NodePath)
+signal reorder_requested(source_path: NodePath, target_path: NodePath, insert_after: bool)
 
 var part_path := NodePath("")
 var parent_path := NodePath("")
@@ -31,6 +31,10 @@ func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
 	)
 
 
-func _drop_data(_at_position: Vector2, data: Variant) -> void:
-	if _can_drop_data(Vector2.ZERO, data):
-		reorder_requested.emit(NodePath(str(data.get("part_path", ""))), part_path)
+func _drop_data(at_position: Vector2, data: Variant) -> void:
+	if _can_drop_data(at_position, data):
+		reorder_requested.emit(
+			NodePath(str(data.get("part_path", ""))),
+			part_path,
+			at_position.y >= size.y * 0.5
+		)
