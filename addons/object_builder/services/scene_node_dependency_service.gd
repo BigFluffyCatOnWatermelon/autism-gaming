@@ -179,6 +179,12 @@ static func _collect_definition_references(
 	for node_definition in definition.node_definitions:
 		if node_definition == null:
 			continue
+		if subtree_ids.has(node_definition.node_id):
+			_add_reference(
+				references, seen, "Декларативный узел",
+				"ObjectDefinition",
+				"Описание узла %s будет удалено вместе с частью." % node_definition.node_id
+			)
 		var parent_is_removed := false
 		if not node_definition.parent_node_path.is_empty():
 			var parent_node := scene_root.get_node_or_null(node_definition.parent_node_path) as Node
