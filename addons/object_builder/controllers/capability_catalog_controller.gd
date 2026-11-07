@@ -80,6 +80,93 @@ func build_entries(
 	return result
 
 
+func build_related_entries() -> Array[Dictionary]:
+	var result_by_id: Dictionary = {}
+	if _focused_capability_id.is_empty():
+		return []
+	var focused_definition := ObjectCapabilityCatalog.get_definition_reference(_focused_capability_id)
+	if focused_definition == null:
+		return []
+
+	for relation in _get_declared_relations(focused_definition):
+		_append_related_entry(
+			result_by_id,
+			str(relation.get("target_id", "")),
+			str(relation.get("type", "related")),
+			str(relation.get("explanation", "")),
+			false
+		)
+
+	for other_id in ObjectCapabilityCatalog.get_capability_ids("", false):
+		if other_id == _focused_capability_id:
+			continue
+		var other_definition := ObjectCapabilityCatalog.get_definition_reference(other_id)
+		if other_definition == null:
+			continue
+		for relation in _get_declared_relations(other_definition):
+			if str(relation.get("target_id", "")) != _focused_capability_id:
+				continue
+			var explanation := str(relation.get("explanation", ""))
+			if explanation.is_empty():
+				explanation = "Эта возможность связана с выбранной механикой."
+			_append_related_entry(
+				result_by_id,
+				other_id,
+				str(relation.get("type", "related")),
+				explanation,
+				true
+			)
+
+	var result: Array[Dictionary] = []
+	for entry in result_by_id.values():
+		result.append(entry)
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var order := {
+			"requires": 0,
+			"conflicts": 1,
+			"recommends": 2,
+			"extends": 3,
+			"alternative": 4,
+			"related": 5
+		}
+		var order_a := int(order.get(str(a.get("relation_type", "related")), 5))
+		var order_b := int(order.get(str(b.get("relation_type", "related")), 5))
+		if order_a == order_b:
+			var def_a := a.get("definition") as ObjectCapabilityDefinition
+			var def_b := b.get("definition") as ObjectCapabilityDefinition
+			if def_a == null or def_b == null:
+				return str(a.get("capability_id", "")) < str(b.get("capability_id", ""))
+			return def_a.display_name.naturalnocasecmp_to(def_b.display_name) < 0
+		return order_a < order_b
+	)
+	return result
+
+
+func _append_related_entry(
+	result_by_id: Dictionary,
+	capability_id: String,
+	relation_type: String,
+	explanation: String,
+	is_reverse: bool
+) -> void:
+	var normalized_id := capability_id.strip_edges().to_lower()
+	if normalized_id.is_empty() or normalized_id == _focused_capability_id:
+		return
+	var definition := ObjectCapabilityCatalog.get_definition_reference(normalized_id)
+	if definition == null:
+		return
+	if result_by_id.has(normalized_id):
+		return
+	result_by_id[normalized_id] = {
+		"capability_id": normalized_id,
+		"definition": definition,
+		"relation_type": relation_type,
+		"explanation": explanation,
+		"is_reverse": is_reverse,
+		"ready": definition.is_ready()
+	}
+
+
 func count_ready(capability_ids: PackedStringArray) -> int:
 	var count := 0
 	for capability_id in capability_ids:
