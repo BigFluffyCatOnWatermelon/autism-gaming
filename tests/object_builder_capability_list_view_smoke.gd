@@ -138,7 +138,10 @@ func _run() -> void:
 		"related card exposes a typed relationship and its explanation"
 	)
 	selectable_check.toggled.emit(true)
-	_expect(selection_events == ["true:can_dig"], "uninstalled capability checkbox adds the ID to the catalog selection")
+	_expect(
+		selection_events == ["true:can_swim", "true:can_dig"],
+		"both recommendation and card checkboxes add IDs to the shared catalog selection"
+	)
 	view.call("set_selected_count", 2)
 	var selection_bar := view.get("_selection_bar") as PanelContainer
 	var selection_summary := view.get("_selection_summary") as Label
