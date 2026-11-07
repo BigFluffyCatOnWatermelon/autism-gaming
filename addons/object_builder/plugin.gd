@@ -3001,7 +3001,11 @@ func _on_sprite_frames_editor_requested(path: NodePath) -> void:
 		return
 	_pending_sprite_frames_editor_path = path
 	_sprite_frames_editor_dialog.call("open_for_sprite_frames", sprite.sprite_frames)
-	_sprite_frames_editor_dialog.popup_centered()
+	ObjectBuilderDialogService.popup_window_safely(
+		_sprite_frames_editor_dialog,
+		Vector2i(760, 600),
+		0.88
+	)
 
 
 func _on_sprite_frames_editor_accepted(frames: SpriteFrames) -> void:
