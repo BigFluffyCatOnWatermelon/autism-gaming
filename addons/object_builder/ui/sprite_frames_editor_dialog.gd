@@ -4,6 +4,8 @@ extends ConfirmationDialog
 
 signal frames_accepted(frames: SpriteFrames)
 
+const DialogService = preload("res://addons/object_builder/services/dialog_service.gd")
+
 var _working_frames: SpriteFrames
 var _animation_option: OptionButton
 var _animation_name: LineEdit
