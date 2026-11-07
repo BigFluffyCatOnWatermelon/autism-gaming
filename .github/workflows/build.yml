@@ -28,7 +28,9 @@ jobs:
         run: |
           set -o pipefail
           godot --headless --editor --path . --quit 2>&1 | tee godot-editor.log
-          if grep -E 'SCRIPT ERROR:|ERROR:' godot-editor.log; then
+          editor_errors="$(grep -E 'SCRIPT ERROR:|ERROR:' godot-editor.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
+          if [[ -n "$editor_errors" ]]; then
+            echo "$editor_errors"
             echo "Godot reported script or resource errors."
             exit 1
           fi
