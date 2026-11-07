@@ -69,6 +69,36 @@ func _run() -> void:
 			_expect(committed_transforms[0].get("new") == Vector2(72.0, 32.0), "canvas emits the snapped final position")
 		_expect(sprite.position == Vector2(64.0, 32.0), "dragging the isolated preview leaves the original scene unchanged")
 
+		var handles: Dictionary = canvas.call("_get_transform_handle_positions")
+		_expect(handles.has("scale") and handles.has("rotate"), "selected parts expose scale and rotation handles")
+		if handles.has("scale"):
+			var scale_handle: Vector2 = handles["scale"]
+			canvas.call("_begin_canvas_selection", scale_handle)
+			_expect(str(canvas.get("_drag_mode")) == "scale", "scale handle starts a scale drag")
+			var scale_start_world: Vector2 = canvas.call("_screen_to_world", scale_handle)
+			var scale_end_world := preview_sprite.global_position + (scale_start_world - preview_sprite.global_position) * 1.5
+			var scale_end_viewport := viewport.get_canvas_transform() * scale_end_world
+			var scale_end_screen := scale_end_viewport * surface.size / Vector2(viewport.size)
+			canvas.call("_update_canvas_drag", scale_end_screen)
+			canvas.call("_finish_canvas_drag")
+			_expect(is_equal_approx(preview_sprite.scale.x, 1.5) and is_equal_approx(preview_sprite.scale.y, 1.5), "scale handle changes both sprite axes uniformly")
+			_expect(committed_transforms.size() == 2 and committed_transforms[1].get("property") == "scale", "scale drag commits one undoable scale change")
+
+		handles = canvas.call("_get_transform_handle_positions")
+		if handles.has("rotate"):
+			var rotate_handle: Vector2 = handles["rotate"]
+			canvas.call("_begin_canvas_selection", rotate_handle)
+			_expect(str(canvas.get("_drag_mode")) == "rotate", "rotation handle starts a rotation drag")
+			var rotate_start_world: Vector2 = canvas.call("_screen_to_world", rotate_handle)
+			var rotate_vector := rotate_start_world - preview_sprite.global_position
+			var rotate_end_world := preview_sprite.global_position + rotate_vector.rotated(PI / 4.0)
+			var rotate_end_viewport := viewport.get_canvas_transform() * rotate_end_world
+			var rotate_end_screen := rotate_end_viewport * surface.size / Vector2(viewport.size)
+			canvas.call("_update_canvas_drag", rotate_end_screen)
+			canvas.call("_finish_canvas_drag")
+			_expect(is_equal_approx(preview_sprite.rotation_degrees, 45.0), "rotation handle rotates the selected part around its origin")
+			_expect(committed_transforms.size() == 3 and committed_transforms[2].get("property") == "rotation_degrees", "rotation drag commits one undoable rotation change")
+
 	var initial_zoom := float(canvas.get("_zoom"))
 	canvas.call("_on_zoom_in_pressed")
 	_expect(float(canvas.get("_zoom")) > initial_zoom, "toolbar zoom increases the canvas scale")
