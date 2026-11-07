@@ -14,10 +14,11 @@ func _run() -> void:
 	root.add_child(workspace)
 
 	_expect(workspace.call("get_toolbar_actions") is HBoxContainer, "workspace exposes a toolbar action host")
+	_expect(workspace.call("get_toolbar_scroll") is ScrollContainer, "toolbar remains horizontally accessible in narrow layouts")
 	_expect(workspace.call("get_library_host") is VBoxContainer, "workspace exposes a library host")
 	_expect(workspace.call("get_editor_host") is VBoxContainer, "workspace exposes an editor host")
 	_expect(workspace.call("get_inspector_host") is VBoxContainer, "workspace exposes a contextual inspector host")
-	_expect(float(workspace.call("get_inspector_minimum_width")) >= 300.0, "inspector has enough minimum width for readable details")
+	_expect(float(workspace.call("get_inspector_minimum_width")) >= 220.0, "inspector has enough minimum width for readable details")
 	_expect(workspace.call("is_library_visible"), "library panel is visible by default")
 	_expect(workspace.call("is_inspector_visible"), "inspector panel is visible by default")
 	_expect(not workspace.call("is_diagnostics_visible"), "diagnostics panel starts collapsed")

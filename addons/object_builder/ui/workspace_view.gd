@@ -7,9 +7,10 @@ signal layout_changed
 
 const DEFAULT_LIBRARY_SPLIT := -260
 const DEFAULT_INSPECTOR_SPLIT := -340
-const MIN_INSPECTOR_WIDTH := 300
+const MIN_INSPECTOR_WIDTH := 220
 
 var _toolbar_actions: HBoxContainer
+var _toolbar_scroll: ScrollContainer
 var _library_host: VBoxContainer
 var _editor_host: VBoxContainer
 var _inspector_host: VBoxContainer
@@ -45,9 +46,18 @@ func build() -> void:
 
 
 func _build_toolbar() -> void:
+	_toolbar_scroll = ScrollContainer.new()
+	_toolbar_scroll.name = "ToolbarScroll"
+	_toolbar_scroll.custom_minimum_size = Vector2(0, 36)
+	_toolbar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_toolbar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_toolbar_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(_toolbar_scroll)
+
 	var toolbar := HBoxContainer.new()
-	toolbar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_child(toolbar)
+	toolbar.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	toolbar.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_toolbar_scroll.add_child(toolbar)
 
 	var brand := Label.new()
 	brand.text = "Object Builder"
@@ -96,7 +106,7 @@ func _build_workspace_panels() -> void:
 	_library_split.dragged.connect(_on_split_dragged)
 	add_child(_library_split)
 
-	var library_parts := _create_panel(_library_split, "ОБЪЕКТЫ", 210.0)
+	var library_parts := _create_panel(_library_split, "ОБЪЕКТЫ", 170.0)
 	_library_panel = library_parts.get("panel") as PanelContainer
 	_library_host = library_parts.get("host") as VBoxContainer
 
@@ -107,7 +117,7 @@ func _build_workspace_panels() -> void:
 	_content_split.dragged.connect(_on_split_dragged)
 	_library_split.add_child(_content_split)
 
-	var editor_parts := _create_panel(_content_split, "РЕДАКТОР", 180.0)
+	var editor_parts := _create_panel(_content_split, "РЕДАКТОР", 150.0)
 	_editor_host = editor_parts.get("host") as VBoxContainer
 	var inspector_parts := _create_panel(_content_split, "СВОЙСТВА", MIN_INSPECTOR_WIDTH)
 	_inspector_panel = inspector_parts.get("panel") as PanelContainer
@@ -257,6 +267,10 @@ func apply_layout_state(state: Dictionary) -> void:
 
 func get_toolbar_actions() -> HBoxContainer:
 	return _toolbar_actions
+
+
+func get_toolbar_scroll() -> ScrollContainer:
+	return _toolbar_scroll
 
 
 func get_library_host() -> VBoxContainer:
