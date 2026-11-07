@@ -95,7 +95,14 @@ func _run() -> void:
 		if imported_root != null:
 			_expect(imported_root.name == "ImportedPrototype", "import preserves the source root name")
 			_expect(imported_root.get_node_or_null("UnknownRootChild/NestedUnknown") is Marker2D, "import preserves unknown nested nodes")
-			_expect(imported_root.get_node_or_null("UnknownCollision/CollisionShape2D") is CollisionShape2D, "import preserves collision nodes")
+			var imported_collision := imported_root.get_node_or_null("UnknownCollision/CollisionShape2D") as CollisionShape2D
+			_expect(imported_collision != null, "import preserves collision nodes")
+			if imported_collision != null:
+				_expect(imported_collision.shape is CircleShape2D, "import preserves embedded collision shape resources")
+			var imported_marker := imported_root.get_node_or_null("UnknownRootChild/NestedUnknown") as Marker2D
+			_expect(imported_marker != null and imported_marker.get_script() != null, "import preserves scripts attached to unknown nodes")
+			if imported_marker != null and imported_marker.get_script() != null:
+				_expect(int(imported_marker.get("preserved_marker_value")) == 73, "import preserves custom script properties")
 			_expect(imported_root.get_meta("object_definition_id", "") == IMPORTED_ID, "import assigns the new definition ID to the copy")
 			_expect(imported_root.get_meta("object_category", "") == "Tests", "import assigns the selected category to the copy")
 			var imported_data := imported_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
@@ -161,6 +168,12 @@ func _make_import_source_scene() -> PackedScene:
 	unknown_parent.owner = root
 	var unknown_marker := Marker2D.new()
 	unknown_marker.name = "NestedUnknown"
+	var unknown_script := GDScript.new()
+	unknown_script.source_code = "extends Marker2D\nvar preserved_marker_value: int = 73\n"
+	var script_error := unknown_script.reload()
+	_expect(script_error == OK, "unknown node fixture script compiles")
+	if script_error == OK:
+		unknown_marker.set_script(unknown_script)
 	unknown_parent.add_child(unknown_marker)
 	unknown_marker.owner = root
 
