@@ -141,5 +141,54 @@ func _matches_query(definition: ObjectCapabilityDefinition, query: String) -> bo
 		+ " ".join(definition.synonyms) + " "
 		+ " ".join(definition.example_queries) + " "
 		+ definition.category_name + " " + definition.kind_id
-	).to_lower()
-	return searchable.contains(query)
+	).to_lower().replace("ё", "е")
+	if searchable.contains(query):
+		return true
+
+	# Match all meaningful words independently, allowing common Russian endings
+	# to differ between the user's phrase and indexed examples.
+	var query_tokens := _tokenize(query)
+	var searchable_tokens := _tokenize(searchable)
+	if query_tokens.is_empty():
+		return true
+	for query_token in query_tokens:
+		var found := false
+		for searchable_token in searchable_tokens:
+			if _tokens_share_stem(query_token, searchable_token):
+				found = true
+				break
+		if not found:
+			return false
+	return true
+
+
+func _tokenize(value: String) -> PackedStringArray:
+	var normalized := value.to_lower().replace("ё", "е")
+	for punctuation in [",", ".", "!", "?", ":", ";", "(", ")", "[", "]", "-", "_", "\n", "\t"]:
+		normalized = normalized.replace(punctuation, " ")
+	var tokens := PackedStringArray()
+	for raw_token in normalized.split(" ", false):
+		var token := raw_token.strip_edges()
+		if token.length() < 2 or _is_search_stop_word(token):
+			continue
+		if not tokens.has(token):
+			tokens.append(token)
+	return tokens
+
+
+func _tokens_share_stem(first: String, second: String) -> bool:
+	if first == second:
+		return true
+	var shared_length := mini(5, mini(first.length(), second.length()))
+	if shared_length < 4:
+		return false
+	return first.left(shared_length) == second.left(shared_length)
+
+
+func _is_search_stop_word(token: String) -> bool:
+	return token in [
+		"чтобы", "что", "как", "для", "при", "после", "перед", "если",
+		"это", "этот", "эта", "эти", "объект", "объекта", "мог", "могла",
+		"могло", "можно", "должен", "должна", "должно", "иметь", "имеет",
+		"сделать", "сделай", "надо", "нужно", "от", "из", "в", "на", "с", "и"
+	]
