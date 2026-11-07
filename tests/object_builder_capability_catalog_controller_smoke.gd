@@ -61,10 +61,11 @@ func _run_tests() -> void:
 	_expect(int(controller.call("get_selected_count")) == 2, "controller tracks selections across categories")
 
 	var visual_ids := PackedStringArray([VISUAL_ID])
+	var no_current_selections: Array[ObjectCapabilitySelection] = []
 	var visual_entries: Array[Dictionary] = controller.call(
 		"build_entries",
 		visual_ids,
-		[],
+		no_current_selections,
 		"сделать объект красным"
 	)
 	_expect(visual_entries.size() == 1, "natural-language example query finds the visual capability")
@@ -72,8 +73,9 @@ func _run_tests() -> void:
 		bool(visual_entries[0].get("selected_in_catalog", false)),
 		"selection is preserved when the result set is filtered"
 	)
+	var visual_definition := visual_entries[0].get("definition") as ObjectCapabilityDefinition
 	_expect(
-		str(visual_entries[0].get("definition").execution_scope) == "editor_only",
+		visual_definition != null and visual_definition.execution_scope == "editor_only",
 		"visual card retains its non-runtime execution scope"
 	)
 
@@ -81,7 +83,7 @@ func _run_tests() -> void:
 	var data_entries: Array[Dictionary] = controller.call(
 		"build_entries",
 		data_ids,
-		[],
+		no_current_selections,
 		"свойства"
 	)
 	_expect(data_entries.size() == 1, "synonym search finds data-only capabilities")
