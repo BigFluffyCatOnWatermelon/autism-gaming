@@ -353,8 +353,8 @@ func _begin_inline_rename(path: NodePath, name_button: Button, name_edit: LineEd
 	_renaming_button.hide()
 	_renaming_edit.show()
 	_renaming_edit.text = _renaming_button.text
-	_renaming_edit.call_deferred("grab_focus")
-	_renaming_edit.call_deferred("select_all")
+	_renaming_edit.grab_focus()
+	_renaming_edit.select_all()
 
 
 func _on_inline_rename_submitted(_value: String, path: NodePath) -> void:
