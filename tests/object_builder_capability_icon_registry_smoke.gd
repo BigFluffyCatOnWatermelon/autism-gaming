@@ -23,6 +23,8 @@ func _run_tests() -> void:
 
 	var seen_library_indices: Dictionary = {}
 	for definition in definitions:
+		_expect(not definition.synonyms.is_empty(), "every library capability has searchable synonyms")
+		_expect(not definition.example_queries.is_empty(), "every library capability has example search phrases")
 		var atlas_index := definition.icon_atlas_index
 		_expect(atlas_index >= 0 and atlas_index < 200, "library capability has a stable atlas index")
 		_expect(
@@ -87,7 +89,7 @@ func _run_tests() -> void:
 			var target_id := str(relation.get("target_id", ""))
 			_expect(known_ids.has(target_id), "curated relationship target resolves to a catalogue capability")
 			_expect(not str(relation.get("explanation", "")).strip_edges().is_empty(), "curated relationship has a user-facing explanation")
-	_expect(total_relation_count >= 20, "catalogue begins with a useful curated set of semantic relationships")
+	_expect(total_relation_count >= 60, "catalogue has a broad curated network of semantic relationships")
 
 	var registry_errors := ObjectCapabilityCatalog.validate_registry()
 	for error_message in registry_errors:
