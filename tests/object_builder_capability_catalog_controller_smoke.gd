@@ -91,6 +91,7 @@ func _run_tests() -> void:
 	)
 
 	var data_ids := PackedStringArray([DATA_ID])
+	controller.call("set_focused_capability", VISUAL_ID)
 	var data_entries: Array[Dictionary] = controller.call(
 		"build_entries",
 		data_ids,
