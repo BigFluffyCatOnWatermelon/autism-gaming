@@ -71,6 +71,7 @@ func _run() -> void:
 	_expect(controller.call("get_visible_definition", 0) == stone and controller.call("get_visible_definition", 1) == oak, "visible item index resolves to its definition")
 	_expect(str(entries[0].get("title")).begins_with("Гранит"), "library entry titles preserve the display name")
 	_expect(str(entries[0].get("tooltip")).contains("Твёрдый камень"), "library entry tooltip includes description")
+	_expect(entries[0].get("category_label") == "Природа", "library entries expose localized category labels")
 
 	entries = controller.call("build_visible_entries", "дерево", "", "", "all")
 	_expect(entries.size() == 2, "search uses cached case-normalized text")
@@ -81,6 +82,7 @@ func _run() -> void:
 	entries = controller.call("build_visible_entries", "можно повредить", "", "", "all")
 	_expect(entries.size() == 1 and entries[0].get("definition") == oak, "search includes enabled capability names and descriptions")
 	var detail_data: Dictionary = controller.call("build_detail_data", oak)
+	_expect(detail_data.get("category") == "Природа", "details translate known category IDs to user-facing labels")
 	_expect(str(detail_data.get("capabilities_text", "")).contains("Можно повредить"), "details include enabled capability display names")
 	_expect(str(detail_data.get("dependencies_text", "")).contains("Есть здоровье"), "details explain required capability dependencies")
 
