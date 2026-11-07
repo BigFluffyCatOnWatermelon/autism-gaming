@@ -107,6 +107,18 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder custom preset store smoke tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_capability_preset_store_smoke.gd 2>&1 | tee object-builder-custom-preset-store-test.log
+          errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-custom-preset-store-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
+          if [[ -n "$errors" ]]; then
+            echo "$errors"
+            echo "Object Builder custom preset store tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder capability preset smoke tests
         shell: bash
         run: |
