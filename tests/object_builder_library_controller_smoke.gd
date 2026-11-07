@@ -117,6 +117,9 @@ func _run() -> void:
 	_expect(controller.call("rename_collection", collection_id, "Лес"), "custom collection can be renamed")
 	controller.call("set_local_state", [], [], controller.call("get_collections_state"))
 	_expect(controller.call("get_collection_options")[0].get("label") == "Лес", "custom collections survive local-state serialization")
+	_expect(controller.call("add_to_collection", collection_id, "tree_oak"), "collection can be repopulated before deleting a library entry")
+	controller.call("remove_local_entry", "tree_oak")
+	_expect(controller.call("get_collection_object_ids", collection_id).is_empty(), "deleting a library entry removes it from every custom collection")
 	_expect(controller.call("delete_collection", collection_id), "custom collection can be deleted")
 	_expect(controller.call("get_collection_options").is_empty(), "deleted collection is removed from navigation")
 
