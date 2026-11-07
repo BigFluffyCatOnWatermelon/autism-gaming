@@ -271,10 +271,18 @@ static func _scan_directory(
 			continue
 		var resource_path := directory_path.path_join(file_name)
 		var resource := ResourceLoader.load(resource_path, "", ResourceLoader.CACHE_MODE_REPLACE)
-		if resource is ObjectDefinition:
-			var definition := resource as ObjectDefinition
-			if definition.is_template == templates_only:
-				output.append(definition)
+		if resource == null:
+			push_warning("Object Builder: не удалось загрузить запись библиотеки: " + resource_path)
+			continue
+		if not resource is ObjectDefinition:
+			push_warning("Object Builder: файл библиотеки не является ObjectDefinition: " + resource_path)
+			continue
+
+		# The folder is the source of truth. Older or manually edited resources may
+		# contain a stale is_template flag; it must never make a saved object vanish.
+		var definition := resource as ObjectDefinition
+		definition.is_template = templates_only
+		output.append(definition)
 	for child_directory in directory.get_directories():
 		_scan_directory(directory_path.path_join(child_directory), output, templates_only)
 
