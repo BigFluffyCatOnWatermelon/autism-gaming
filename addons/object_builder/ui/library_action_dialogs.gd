@@ -94,7 +94,8 @@ func _on_rename_confirmed() -> void:
 
 
 func _on_rename_submitted(_value: String) -> void:
-	_rename_dialog.confirm()
+	_rename_dialog.hide()
+	_on_rename_confirmed()
 
 
 func _on_export_path_selected(path: String) -> void:
