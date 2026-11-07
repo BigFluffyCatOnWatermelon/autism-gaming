@@ -114,6 +114,8 @@ func _exit_tree() -> void:
 	if _editor_session != null:
 		_editor_session.call("clear")
 	_working_definition = null
+	print("[ObjectBuilder shutdown] plugin descendants:")
+	_debug_list_shutdown_controls(self)
 	if _main_screen != null and is_instance_valid(_main_screen):
 		print("[ObjectBuilder shutdown] main screen in tree=", _main_screen.is_inside_tree())
 		_debug_list_shutdown_controls(_main_screen)
@@ -130,7 +132,7 @@ func _exit_tree() -> void:
 func _debug_list_shutdown_controls(node: Node) -> void:
 	if node is Button or node is TextureRect:
 		print("[ObjectBuilder shutdown] control ", node.get_class(), " id=", node.get_instance_id(), " name=", node.name)
-	for child in node.get_children():
+	for child in node.get_children(true):
 		_debug_list_shutdown_controls(child)
 
 
