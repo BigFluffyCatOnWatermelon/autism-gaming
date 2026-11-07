@@ -173,6 +173,16 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder preview service checks
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_preview_service_smoke.gd 2>&1 | tee object-builder-preview-test.log
+          if grep -E 'SCRIPT ERROR:|ERROR:' object-builder-preview-test.log; then
+            echo "Object Builder preview service checks reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder property list view tests
         shell: bash
         run: |

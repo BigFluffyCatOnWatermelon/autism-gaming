@@ -18,6 +18,8 @@ const ObjectBuilderWorkspaceViewScript = preload("res://addons/object_builder/ui
 const ObjectBuilderLibraryControllerScript = preload("res://addons/object_builder/controllers/library_controller.gd")
 const ObjectBuilderEditorSessionScript = preload("res://addons/object_builder/controllers/object_editor_session.gd")
 const ObjectBuilderSceneDraftService = preload("res://addons/object_builder/services/scene_draft_service.gd")
+const ObjectBuilderPreviewService = preload("res://addons/object_builder/services/preview_service.gd")
+const ObjectBuilderPreviewViewScript = preload("res://addons/object_builder/ui/preview_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const ROOT_TYPES := [
@@ -73,6 +75,7 @@ var _editing_property: ObjectPropertyDefinition
 var _scene_tree_view: Control
 var _visual_editor_view: Control
 var _status_label: Label
+var _preview_view: Window
 var _open_scene_button: Button
 var _connected_scene_tree: SceneTree
 var _tree_refresh_queued := false
@@ -103,6 +106,9 @@ func _exit_tree() -> void:
 	if _editor_session != null:
 		_editor_session.call("clear")
 	_working_definition = null
+	if _preview_view != null and is_instance_valid(_preview_view):
+		_preview_view.queue_free()
+		_preview_view = null
 	if _main_screen != null:
 		_main_screen.queue_free()
 		_main_screen = null
@@ -294,10 +300,20 @@ func _build_ui() -> void:
 	_build_workspace_toolbar(_workspace_view.call("get_toolbar_actions") as HBoxContainer)
 	_build_library_panel(_workspace_view.call("get_library_host") as VBoxContainer)
 	_build_editor_tabs(_workspace_view.call("get_editor_host") as VBoxContainer)
+	_build_preview_window()
 func _build_workspace_toolbar(parent: HBoxContainer) -> void:
 	ObjectBuilderUIFactory.add_action_button(parent, "Создать объект", _on_new_object_pressed, "Начать создание нового игрового объекта")
 	ObjectBuilderUIFactory.add_action_button(parent, "Из шаблона", _on_create_from_template_pressed)
+	ObjectBuilderUIFactory.add_action_button(parent, "Предпросмотр", _on_preview_pressed, "Показать текущий черновик без сохранения")
 	ObjectBuilderUIFactory.add_action_button(parent, "↻", _on_refresh_pressed, "Обновить библиотеку")
+
+
+func _build_preview_window() -> void:
+	_preview_view = ObjectBuilderPreviewViewScript.new()
+	_preview_view.name = "ObjectBuilderPreview"
+	_preview_view.call("build")
+	_preview_view.connect("refresh_requested", Callable(self, "_on_preview_pressed"))
+	add_child(_preview_view)
 func _build_library_panel(parent: VBoxContainer) -> void:
 	_library_view = ObjectBuilderLibraryViewScript.new()
 	_library_view.name = "LibraryView"
@@ -1338,6 +1354,33 @@ func _on_remove_property_pressed(property_definition: ObjectPropertyDefinition) 
 	_working_definition.custom_properties.erase(property_definition)
 	_mark_editor_session_changed()
 	_rebuild_property_list()
+
+func _on_preview_pressed() -> void:
+	if _working_definition == null:
+		_set_status("Сначала создай объект или выбери его в библиотеке.", true)
+		return
+	if _preview_view == null or not is_instance_valid(_preview_view):
+		_set_status("Окно предпросмотра ещё не готово.", true)
+		return
+
+	var result: Dictionary = ObjectBuilderPreviewService.create_preview_instance(
+		_working_definition,
+		_get_open_object_scene_root()
+	)
+	if not bool(result.get("ok", false)):
+		_set_status("Не удалось собрать предпросмотр: " + str(result.get("message", "неизвестная ошибка")), true)
+		return
+
+	var preview_instance := result.get("instance") as Node
+	if preview_instance == null or not bool(_preview_view.call("show_preview", preview_instance, _working_definition.display_name)):
+		if preview_instance != null:
+			preview_instance.free()
+		_set_status("Не удалось открыть предпросмотр объекта.", true)
+		return
+
+	ObjectBuilderDialogService.popup_window_safely(_preview_view, Vector2i(820, 620), 0.86)
+	_set_status("Предпросмотр построен из текущего черновика. Исходная сцена и файлы не изменены.", false)
+
 
 func _on_save_pressed() -> void:
 	if _working_definition == null:
