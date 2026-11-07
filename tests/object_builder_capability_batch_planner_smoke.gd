@@ -68,13 +68,17 @@ func _test_editor_only_capability() -> void:
 	visual.kind_id = "presentation"
 	visual.execution_scope = "editor_only"
 	visual.implementation_type = "scene_resource"
-	visual.icon_resource_path = "res://addons/object_builder/assets/capabilities/visual.svg"
 	visual.synonyms = PackedStringArray(["внешний вид", "картинка"])
 	visual.example_queries = PackedStringArray(["изменить внешний вид объекта"])
 	visual.relations.append({
 		"type": "related",
 		"target_id": DATA_ID,
 		"explanation": "Обе возможности настраивают данные объекта."
+	})
+	visual.relations.append({
+		"type": "conflicts",
+		"target_id": DATA_ID,
+		"explanation": "Взаимоисключающая тестовая конфигурация."
 	})
 
 	var data := DefinitionScript.new()
@@ -126,7 +130,7 @@ func _test_editor_only_capability() -> void:
 		"editor-only execution scope is preserved"
 	)
 	_expect(
-		registered_visual != null and registered_visual.relations.size() == 1,
+		registered_visual != null and registered_visual.relations.size() == 2,
 		"typed relationship metadata survives registration"
 	)
 
