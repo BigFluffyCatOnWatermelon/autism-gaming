@@ -5,8 +5,8 @@ extends VBoxContainer
 
 signal layout_changed
 
-const DEFAULT_LIBRARY_SPLIT := -130
-const DEFAULT_INSPECTOR_SPLIT := 55
+const DEFAULT_LIBRARY_SPLIT := -260
+const DEFAULT_INSPECTOR_SPLIT := -250
 
 var _toolbar_actions: HBoxContainer
 var _library_host: VBoxContainer

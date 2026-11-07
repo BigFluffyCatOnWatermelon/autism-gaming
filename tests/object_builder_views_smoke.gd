@@ -2,6 +2,7 @@ extends SceneTree
 
 const LibraryViewScript = preload("res://addons/object_builder/ui/library_view.gd")
 const EditorViewScript = preload("res://addons/object_builder/ui/object_editor_view.gd")
+const DefinitionScript = preload("res://scripts/object_system/object_definition.gd")
 
 var failures: Array[String] = []
 var search_events: Array[String] = []
@@ -17,7 +18,7 @@ func _run() -> void:
 	var library = LibraryViewScript.new()
 	root.add_child(library)
 	library.call("build")
-	_expect(library.get_child_count() == 5, "library view owns search, three filters and result list")
+	_expect(library.get_child_count() == 7, "library view owns search, three filters, mode controls and both result views")
 	_expect(is_equal_approx(library.custom_minimum_size.x, 210.0), "library view preserves its minimum workspace width")
 	_expect(str(library.call("get_selected_mode")) == "all", "library view starts in the all-objects filter")
 	library.connect("search_changed", Callable(self, "_on_search_changed"))
@@ -42,19 +43,36 @@ func _run() -> void:
 	library.call("set_tag_options", tag_options, "tree")
 	_expect(str(library.call("get_selected_tag")) == "tree", "tag filter preserves a selected ID")
 
+	var oak := DefinitionScript.new()
+	oak.object_id = "tree_oak"
+	oak.display_name = "Oak"
+	oak.category = "Nature"
+	var pine := DefinitionScript.new()
+	pine.object_id = "tree_pine"
+	pine.display_name = "Pine"
+	pine.category = "Nature"
 	var entries: Array[Dictionary] = [
-		{"title": "Oak", "tooltip": "Tree object"},
-		{"title": "Pine", "tooltip": "Another tree"}
+		{"title": "Oak", "tooltip": "Tree object", "definition": oak},
+		{"title": "Pine", "tooltip": "Another tree", "definition": pine}
 	]
 	library.call("set_entries", entries, "Nothing found")
 	var object_list := library.get("object_list") as ItemList
-	_expect(object_list.item_count == 2, "library view renders object entries")
-	_expect(object_list.get_item_tooltip(0) == "Tree object", "library view retains object tooltips")
+	_expect(str(library.call("get_display_mode")) == "cards", "library starts in card mode")
+	_expect(int(library.call("get_card_count")) == 2, "library renders one card per object")
+	library.call("_on_card_pressed", 0)
+	_expect(selection_events.size() == 1 and selection_events[0] == 0, "card selection emits the matching object index")
+	library.call("set_display_mode", "list")
+	_expect(not (library.get("_cards_scroll") as ScrollContainer).visible and object_list.visible, "list mode swaps the visible result view")
+	_expect(object_list.item_count == 2, "compact list renders the same entries")
+	_expect(object_list.get_item_tooltip(0) == "Tree object", "compact list retains object tooltips")
 	object_list.item_selected.emit(1)
-	_expect(selection_events.size() == 1 and selection_events[0] == 1, "object selection emits its index")
+	_expect(selection_events.size() == 2 and selection_events[1] == 1, "list selection emits its index")
+	library.call("set_display_mode", "cards")
+	_expect((library.get("_cards_scroll") as ScrollContainer).visible and not object_list.visible, "card mode restores the thumbnail grid")
 	var empty_entries: Array[Dictionary] = []
 	library.call("set_entries", empty_entries, "No objects")
-	_expect(object_list.item_count == 1 and object_list.is_item_disabled(0), "empty library uses a disabled empty-state row")
+	_expect(object_list.item_count == 1 and object_list.is_item_disabled(0), "empty compact list uses a disabled empty-state row")
+	_expect(int(library.call("get_card_count")) == 0, "empty card view has no selectable object cards")
 
 	var editor = EditorViewScript.new()
 	root.add_child(editor)

@@ -2,6 +2,8 @@
 extends VBoxContainer
 ## Owns object-library controls. Filtering and definition selection remain in the plugin.
 
+const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
+
 signal search_changed(query: String)
 signal filter_changed(index: int)
 signal object_selected(index: int)
@@ -11,6 +13,14 @@ var mode_filter: OptionButton
 var category_filter: OptionButton
 var tag_filter: OptionButton
 var object_list: ItemList
+var _cards_scroll: ScrollContainer
+var _cards_flow: HFlowContainer
+var _card_mode_button: Button
+var _list_mode_button: Button
+var _display_mode := "cards"
+var _entries: Array[Dictionary] = []
+var _selected_index := -1
+var _empty_message := "Объекты не найдены"
 
 
 func build() -> void:
@@ -40,13 +50,58 @@ func build() -> void:
 	tag_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tag_filter.item_selected.connect(_on_filter_changed)
 	add_child(tag_filter)
+	_build_view_mode_controls()
+	_build_card_view()
+	_build_list_view()
+	set_display_mode("cards")
+	set_category_options([], "")
+	set_tag_options([], "")
+
+
+func _build_view_mode_controls() -> void:
+	var view_mode_row := HBoxContainer.new()
+	view_mode_row.add_theme_constant_override("separation", 4)
+	add_child(view_mode_row)
+	_card_mode_button = Button.new()
+	_card_mode_button.text = "Карточки"
+	_card_mode_button.tooltip_text = "Показывать объекты с миниатюрами"
+	_card_mode_button.toggle_mode = true
+	_card_mode_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_card_mode_button.pressed.connect(_on_card_mode_pressed)
+	view_mode_row.add_child(_card_mode_button)
+	_list_mode_button = Button.new()
+	_list_mode_button.text = "Список"
+	_list_mode_button.tooltip_text = "Показывать компактный список объектов"
+	_list_mode_button.toggle_mode = true
+	_list_mode_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_list_mode_button.pressed.connect(_on_list_mode_pressed)
+	view_mode_row.add_child(_list_mode_button)
+
+
+func _build_card_view() -> void:
+	_cards_scroll = ScrollContainer.new()
+	_cards_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cards_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_cards_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(_cards_scroll)
+	_cards_flow = HFlowContainer.new()
+	_cards_flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cards_flow.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_cards_flow.add_theme_constant_override("h_separation", 6)
+	_cards_flow.add_theme_constant_override("v_separation", 6)
+	_cards_scroll.add_child(_cards_flow)
+
+
+func _build_list_view() -> void:
 	object_list = ItemList.new()
 	object_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	object_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	object_list.icon_mode = ItemList.ICON_MODE_LEFT
+	object_list.fixed_icon_size = Vector2i(32, 32)
+	object_list.max_text_lines = 2
+	object_list.max_columns = 1
 	object_list.item_selected.connect(_on_object_selected)
 	add_child(object_list)
-	set_category_options([], "")
-	set_tag_options([], "")
 
 
 func get_search_query() -> String:
@@ -65,6 +120,34 @@ func get_selected_tag() -> String:
 	return _get_selected_metadata(tag_filter, "")
 
 
+func get_display_mode() -> String:
+	return _display_mode
+
+
+func get_card_count() -> int:
+	return _entries.size()
+
+
+func get_card_button(index: int) -> Button:
+	if _cards_flow == null or index < 0 or index >= _cards_flow.get_child_count():
+		return null
+	return _cards_flow.get_child(index) as Button
+
+
+func set_display_mode(mode: String) -> void:
+	if mode not in ["cards", "list"]:
+		return
+	_display_mode = mode
+	if _cards_scroll != null:
+		_cards_scroll.visible = mode == "cards"
+	if object_list != null:
+		object_list.visible = mode == "list"
+	if _card_mode_button != null:
+		_card_mode_button.set_pressed_no_signal(mode == "cards")
+	if _list_mode_button != null:
+		_list_mode_button.set_pressed_no_signal(mode == "list")
+
+
 func set_category_options(options: Array[Dictionary], selected_value: String) -> void:
 	_set_filter_options(category_filter, "Все категории", options, selected_value)
 
@@ -74,13 +157,104 @@ func set_tag_options(options: Array[Dictionary], selected_value: String) -> void
 
 
 func set_entries(entries: Array[Dictionary], empty_message: String) -> void:
+	_entries = entries.duplicate()
+	_empty_message = empty_message
+	_selected_index = -1
+	_render_card_entries()
+	_render_list_entries()
+
+
+func _render_card_entries() -> void:
+	ObjectBuilderUIFactory.clear_children(_cards_flow)
+	if _entries.is_empty():
+		ObjectBuilderUIFactory.add_empty_state(_cards_flow, _empty_message)
+		return
+	for index in range(_entries.size()):
+		var entry := _entries[index]
+		var definition := entry.get("definition") as ObjectDefinition
+		var card := Button.new()
+		card.custom_minimum_size = Vector2(142, 156)
+		card.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		card.toggle_mode = true
+		card.tooltip_text = str(entry.get("tooltip", ""))
+		card.pressed.connect(_on_card_pressed.bind(index))
+		_cards_flow.add_child(card)
+		var margin := MarginContainer.new()
+		margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for margin_name in ["left", "top", "right", "bottom"]:
+			margin.add_theme_constant_override("margin_" + margin_name, 6)
+		card.add_child(margin)
+		var content := VBoxContainer.new()
+		content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		content.add_theme_constant_override("separation", 4)
+		margin.add_child(content)
+		var image_host := CenterContainer.new()
+		image_host.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		image_host.custom_minimum_size = Vector2(0, 86)
+		image_host.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		content.add_child(image_host)
+		var preview: Texture2D = definition.preview_texture if definition != null else null
+		if preview != null:
+			var image := TextureRect.new()
+			image.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			image.texture = preview
+			image.custom_minimum_size = Vector2(76, 76)
+			image.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			image.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+			image.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+			image_host.add_child(image)
+		else:
+			var placeholder := Label.new()
+			placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			placeholder.text = "Нет изображения"
+			placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			placeholder.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			image_host.add_child(placeholder)
+		var title := Label.new()
+		title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		title.text = str(entry.get("title", ""))
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content.add_child(title)
+		var secondary := Label.new()
+		secondary.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if definition == null:
+			secondary.text = ""
+		elif definition.is_template:
+			secondary.text = "Шаблон"
+		else:
+			secondary.text = definition.category if not definition.category.is_empty() else "Объект"
+		secondary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		secondary.add_theme_font_size_override("font_size", 10)
+		secondary.modulate = Color(0.75, 0.75, 0.75)
+		content.add_child(secondary)
+	_update_card_selection()
+
+
+func _render_list_entries() -> void:
 	object_list.clear()
-	for entry in entries:
-		object_list.add_item(str(entry.get("title", "")))
+	for entry in _entries:
+		var definition := entry.get("definition") as ObjectDefinition
+		var preview: Texture2D = definition.preview_texture if definition != null else null
+		var title := str(entry.get("title", ""))
+		if definition != null and not definition.category.is_empty():
+			title += "\n" + ("Шаблон" if definition.is_template else definition.category)
+		object_list.add_item(title, preview)
 		object_list.set_item_tooltip(object_list.item_count - 1, str(entry.get("tooltip", "")))
-	if entries.is_empty():
-		object_list.add_item(empty_message)
+	if _entries.is_empty():
+		object_list.add_item(_empty_message)
 		object_list.set_item_disabled(0, true)
+
+
+func _update_card_selection() -> void:
+	if _cards_flow == null:
+		return
+	for index in range(_cards_flow.get_child_count()):
+		var card := _cards_flow.get_child(index) as Button
+		if card != null:
+			card.set_pressed_no_signal(index == _selected_index)
 
 
 func _set_filter_options(option: OptionButton, placeholder: String, options: Array[Dictionary], selected_value: String) -> void:
@@ -118,4 +292,22 @@ func _on_filter_changed(index: int) -> void:
 
 
 func _on_object_selected(index: int) -> void:
+	_selected_index = index
+	_update_card_selection()
 	object_selected.emit(index)
+
+
+func _on_card_pressed(index: int) -> void:
+	_selected_index = index
+	_update_card_selection()
+	if index >= 0 and index < object_list.item_count:
+		object_list.select(index)
+	object_selected.emit(index)
+
+
+func _on_card_mode_pressed() -> void:
+	set_display_mode("cards")
+
+
+func _on_list_mode_pressed() -> void:
+	set_display_mode("list")
