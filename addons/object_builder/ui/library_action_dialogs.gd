@@ -39,8 +39,8 @@ func popup_rename(current_name: String) -> void:
 func popup_rename_collection(current_name: String) -> void:
 	if _rename_dialog == null:
 		return
-	_rename_dialog.title = "Переименовать коллекцию"
 	popup_rename(current_name)
+	_rename_dialog.title = "Переименовать коллекцию"
 
 
 func popup_delete_collection(display_name: String) -> void:
@@ -53,6 +53,7 @@ func popup_delete_collection(display_name: String) -> void:
 func popup_delete(display_name: String) -> void:
 	if _delete_dialog == null:
 		return
+	_delete_dialog.title = "Удалить запись?"
 	_delete_dialog.dialog_text = (
 		"Удалить «%s» из библиотеки?\n\n"
 		+ "Определение и принадлежащая ему сцена будут перемещены в резервную копию "
@@ -124,6 +125,7 @@ func _build_collection_dialog() -> void:
 	_collection_input = LineEdit.new()
 	_collection_input.placeholder_text = "Например, Лесные ресурсы"
 	_collection_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_collection_input.text_submitted.connect(_on_collection_name_submitted)
 	content.add_child(_collection_input)
 
 
@@ -144,6 +146,11 @@ func _on_rename_confirmed() -> void:
 func _on_rename_submitted(_value: String) -> void:
 	_rename_dialog.hide()
 	_on_rename_confirmed()
+
+
+func _on_collection_name_submitted(_value: String) -> void:
+	_collection_dialog.hide()
+	collection_create_confirmed.emit(_collection_input.text.strip_edges())
 
 
 func _on_export_path_selected(path: String) -> void:
