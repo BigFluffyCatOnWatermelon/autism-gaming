@@ -160,6 +160,13 @@ func _run() -> void:
 	canvas.call("set_preview_instance", scene_root.duplicate(), false, true)
 	_expect(not bool(canvas.get("_editing_enabled")), "read-only preview disables transform editing")
 	_expect((canvas.get("_open_scene_button") as Button).visible, "read-only preview exposes the open-scene action")
+	var readonly_context_click := InputEventMouseButton.new()
+	readonly_context_click.button_index = MOUSE_BUTTON_RIGHT
+	readonly_context_click.pressed = true
+	readonly_context_click.position = screen_position
+	interaction.call("handle_input", readonly_context_click)
+	_expect(context_action_events.size() == 1, "read-only preview ignores right-click context actions")
+	_expect(not (canvas.get("_context_menu") as PopupMenu).visible, "read-only preview never opens the part context menu")
 
 	var animated_scene := Node2D.new()
 	var frames := SpriteFrames.new()
