@@ -7,6 +7,7 @@ var failures: Array[String] = []
 var selected_paths: Array[NodePath] = []
 var committed_transforms: Array[Dictionary] = []
 var open_scene_requests := 0
+var context_action_events: Array[String] = []
 
 
 func _initialize() -> void:
@@ -21,6 +22,7 @@ func _run() -> void:
 	canvas.connect("part_selected", Callable(self, "_on_part_selected"))
 	canvas.connect("transform_committed", Callable(self, "_on_transform_committed"))
 	canvas.connect("open_scene_requested", Callable(self, "_on_open_scene_requested"))
+	canvas.connect("part_context_action_requested", Callable(self, "_on_part_context_action_requested"))
 
 	var scene_root := Node2D.new()
 	scene_root.name = "ObjectRoot"
@@ -56,6 +58,29 @@ func _run() -> void:
 
 		var viewport_point := viewport.get_canvas_transform() * preview_sprite.global_position
 		var screen_position := viewport_point * surface.size / Vector2(viewport.size)
+		var context_click := InputEventMouseButton.new()
+		context_click.button_index = MOUSE_BUTTON_RIGHT
+		context_click.pressed = true
+		context_click.position = screen_position
+		interaction.call("handle_input", context_click)
+		_expect(not selected_paths.is_empty() and selected_paths[-1] == NodePath("Sprite"), "right-click selects the visual part under the pointer")
+		var context_menu := canvas.get("_context_menu") as PopupMenu
+		_expect(context_menu != null, "canvas creates a dedicated part context menu")
+		if context_menu != null:
+			_expect(context_menu.get_item_index(0) >= 0, "context menu exposes inline rename")
+			_expect(context_menu.get_item_index(1) >= 0, "context menu exposes duplicate")
+			_expect(context_menu.get_item_index(2) >= 0, "context menu exposes visibility toggle")
+			_expect(context_menu.get_item_index(3) >= 0, "context menu exposes canvas lock toggle")
+			_expect(context_menu.get_item_index(4) >= 0 and context_menu.get_item_index(5) >= 0, "context menu exposes draw order actions")
+			_expect(context_menu.get_item_index(6) >= 0, "context menu exposes delete")
+		canvas.call("_on_context_menu_item_selected", 1)
+		_expect(context_action_events == ["duplicate:Sprite"], "context menu forwards a stable duplicate action and selected path")
+		canvas.call("set_locked_paths", [NodePath("Sprite")])
+		canvas.call("_on_context_menu_requested", NodePath("Sprite"))
+		if context_menu != null:
+			var lock_item_index := context_menu.get_item_index(3)
+			_expect(context_menu.get_item_text(lock_item_index) == "Снять фиксацию", "context menu reflects the current locked state")
+		canvas.call("set_locked_paths", [])
 		interaction.call("_begin_selection", screen_position)
 		_expect(not selected_paths.is_empty() and selected_paths[-1] == NodePath("Sprite"), "clicking the sprite emits its scene-relative path")
 		var world_delta := Vector2(10.0, 0.0)
@@ -194,6 +219,10 @@ func _on_transform_committed(path: NodePath, property_name: String, new_value: V
 
 func _on_open_scene_requested() -> void:
 	open_scene_requests += 1
+
+
+func _on_part_context_action_requested(action: String, path: NodePath) -> void:
+	context_action_events.append(action + ":" + str(path))
 
 
 func _expect(condition: bool, description: String) -> void:
