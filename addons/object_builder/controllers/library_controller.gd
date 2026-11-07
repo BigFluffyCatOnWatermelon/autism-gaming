@@ -174,6 +174,24 @@ func get_template(index: int) -> ObjectDefinition:
 	return templates[index]
 
 
+func find_template(template_id: String) -> ObjectDefinition:
+	for template_definition in templates:
+		if template_definition.object_id == template_id:
+			return template_definition
+	return null
+
+
+func get_creation_source_options(templates_only: bool) -> Array[Dictionary]:
+	var source_definitions := templates if templates_only else definitions
+	var options: Array[Dictionary] = []
+	for definition in source_definitions:
+		options.append({
+			"id": definition.object_id,
+			"label": definition.display_name
+		})
+	return options
+
+
 func get_template_names() -> Array[String]:
 	var result: Array[String] = []
 	for definition in templates:
