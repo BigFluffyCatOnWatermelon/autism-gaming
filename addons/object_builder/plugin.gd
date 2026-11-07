@@ -20,6 +20,7 @@ const ObjectBuilderEditorSessionScript = preload("res://addons/object_builder/co
 const ObjectBuilderSceneDraftService = preload("res://addons/object_builder/services/scene_draft_service.gd")
 const ObjectBuilderPreviewService = preload("res://addons/object_builder/services/preview_service.gd")
 const ObjectBuilderPreviewViewScript = preload("res://addons/object_builder/ui/preview_view.gd")
+const ObjectBuilderCanvasViewScript = preload("res://addons/object_builder/ui/canvas_view.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const ROOT_TYPES := [
@@ -74,6 +75,7 @@ var _simple_preview: TextureRect
 var _editing_property: ObjectPropertyDefinition
 var _scene_tree_view: Control
 var _visual_editor_view: Control
+var _canvas_view: Control
 var _status_label: Label
 var _preview_view: Window
 var _open_scene_button: Button
@@ -250,6 +252,7 @@ func _on_inspector_property_edited(_property_name: String) -> void:
 		target_node = _get_editor_selected_scene_node(scene_root)
 	if target_node != null and (target_node == scene_root or scene_root.is_ancestor_of(target_node)):
 		_refresh_visual_editor(target_node)
+		_refresh_canvas()
 
 func _get_editor_selected_scene_node(scene_root: Node) -> Node:
 	if scene_root == null:
@@ -277,6 +280,8 @@ func _sync_scene_tree_selection(node: Node) -> void:
 	_scene_tree_view.call("select_node", scene_root, node)
 	_syncing_tree_selection = false
 	_refresh_visual_editor(node)
+	if _canvas_view != null:
+		_canvas_view.call("set_selected_path", scene_root.get_path_to(node))
 	if _workspace_view != null:
 		_workspace_view.call("set_selection_info", node.name, str(node.get_path()))
 func _build_ui() -> void:
@@ -306,6 +311,16 @@ func _build_workspace_toolbar(parent: HBoxContainer) -> void:
 	ObjectBuilderUIFactory.add_action_button(parent, "Из шаблона", _on_create_from_template_pressed)
 	ObjectBuilderUIFactory.add_action_button(parent, "Предпросмотр", _on_preview_pressed, "Показать текущий черновик без сохранения")
 	ObjectBuilderUIFactory.add_action_button(parent, "↻", _on_refresh_pressed, "Обновить библиотеку")
+
+
+func _build_canvas_editor(parent: VBoxContainer) -> void:
+	_canvas_view = ObjectBuilderCanvasViewScript.new()
+	_canvas_view.name = "ObjectCanvasView"
+	_canvas_view.call("build")
+	_canvas_view.connect("part_selected", Callable(self, "_on_canvas_part_selected"))
+	_canvas_view.connect("transform_committed", Callable(self, "_on_canvas_transform_committed"))
+	_canvas_view.connect("open_scene_requested", Callable(self, "_on_canvas_open_scene_requested"))
+	parent.add_child(_canvas_view)
 
 
 func _build_preview_window() -> void:
@@ -354,14 +369,11 @@ func _build_simple_editor(parent: VBoxContainer) -> void:
 	favorite_row.add_child(_favorite_button)
 	
 	ObjectBuilderUIFactory.create_section_title(simple_editor, "ВНЕШНИЙ ВИД", 16)
-	
+	_build_canvas_editor(simple_editor)
+
+	# Kept as a lightweight texture cache for resource selection and status updates.
 	_simple_preview = TextureRect.new()
-	_simple_preview.custom_minimum_size = Vector2(0, 150)
-	_simple_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_simple_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_simple_preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_simple_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	simple_editor.add_child(_simple_preview)
 	
 	ObjectBuilderUIFactory.add_action_button(
 		simple_editor,
@@ -1594,6 +1606,7 @@ func _refresh_scene_tree() -> void:
 	_scene_tree_view.call("set_scene_root", scene_root)
 	if scene_root == null:
 		_refresh_visual_editor(null)
+		_refresh_canvas()
 		return
 
 	var selected_node := _get_editor_selected_scene_node(scene_root)
@@ -1601,6 +1614,7 @@ func _refresh_scene_tree() -> void:
 		_sync_scene_tree_selection(selected_node)
 	else:
 		_refresh_visual_editor(null)
+	_refresh_canvas()
 
 func _on_scene_tree_item_selected(_path: NodePath = NodePath()) -> void:
 	var node := _get_selected_scene_tree_node()
@@ -1616,6 +1630,8 @@ func _on_scene_tree_item_selected(_path: NodePath = NodePath()) -> void:
 	_syncing_tree_selection = false
 	EditorInterface.edit_node(node)
 	_refresh_visual_editor(node)
+	if _canvas_view != null:
+		_canvas_view.call("set_selected_path", scene_root.get_path_to(node))
 
 
 func _refresh_visual_editor(node: Node) -> void:
@@ -1637,6 +1653,83 @@ func _refresh_visual_editor(node: Node) -> void:
 		_visual_editor_view.call("show_node_2d", node)
 		return
 	_visual_editor_view.call("hide_editor")
+
+
+func _refresh_canvas() -> void:
+	if _canvas_view == null:
+		return
+	if _working_definition == null:
+		_canvas_view.call("clear_canvas", "Создай или выбери объект, чтобы открыть холст.")
+		return
+	var scene_root := _get_open_object_scene_root()
+	var preview_result: Dictionary = ObjectBuilderPreviewService.create_preview_instance(
+		_working_definition,
+		scene_root
+	)
+	if not bool(preview_result.get("ok", false)):
+		_canvas_view.call("clear_canvas", str(preview_result.get("message", "Не удалось собрать холст.")))
+		return
+	var can_open_scene := (
+		not _working_definition.scene_path.is_empty()
+		and FileAccess.file_exists(_working_definition.scene_path)
+	)
+	var selected_path := NodePath("")
+	if scene_root != null:
+		var selected_node := _get_editor_selected_scene_node(scene_root)
+		if selected_node != null:
+			selected_path = scene_root.get_path_to(selected_node)
+	_canvas_view.call(
+		"set_preview_instance",
+		preview_result.get("instance") as Node,
+		scene_root != null,
+		can_open_scene,
+		selected_path
+	)
+
+
+func _on_canvas_part_selected(path: NodePath) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	if path.is_empty():
+		EditorInterface.get_selection().clear()
+		if _workspace_view != null:
+			_workspace_view.call("set_selection_info", "", "")
+		return
+	var node := scene_root if path == NodePath(".") else scene_root.get_node_or_null(path)
+	if node == null:
+		return
+	var editor_selection := EditorInterface.get_selection()
+	_syncing_tree_selection = true
+	editor_selection.clear()
+	if node != scene_root:
+		editor_selection.add_node(node)
+	_scene_tree_view.call("select_node", scene_root, node)
+	_syncing_tree_selection = false
+	EditorInterface.edit_node(node)
+	_refresh_visual_editor(node)
+	if _workspace_view != null:
+		_workspace_view.call("set_selection_info", node.name, str(node.get_path()))
+
+
+func _on_canvas_transform_committed(
+	path: NodePath,
+	property_name: String,
+	new_value: Variant,
+	_old_value: Variant
+) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var node := scene_root.get_node_or_null(path) as Node2D
+	if node == null:
+		return
+	_commit_visual_node_property(node, property_name, new_value, "переместить часть на холсте")
+	_refresh_canvas()
+
+
+func _on_canvas_open_scene_requested() -> void:
+	_on_open_scene_pressed()
 
 func _get_selected_scene_tree_node() -> Node:
 	if _scene_tree_view == null:
@@ -1879,6 +1972,7 @@ func _commit_visual_node_property(
 	undo_redo.add_undo_property(node, property_name, old_value)
 	undo_redo.commit_action()
 	_refresh_visual_editor(node)
+	_refresh_canvas()
 
 
 func _on_add_node_pressed() -> void:
