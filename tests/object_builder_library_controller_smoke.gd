@@ -45,7 +45,8 @@ func _run() -> void:
 	weapon.object_type = "equipment"
 
 	var definitions: Array[ObjectDefinition] = [stone, weapon, pine, oak]
-	controller.call("set_library_data", definitions, [])
+	var no_templates: Array[ObjectDefinition] = []
+	controller.call("set_library_data", definitions, no_templates)
 	_expect(int(controller.call("get_definition_count")) == 4, "library data is loaded")
 	_expect((controller.get("definitions") as Array).size() == 4, "definitions are owned by the controller")
 	_expect(controller.call("find_definition", "tree_oak") == oak, "object ID index resolves a definition")
