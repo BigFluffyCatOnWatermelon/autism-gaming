@@ -9,6 +9,7 @@ const CanvasInteractionControllerScript = preload("res://addons/object_builder/u
 ## The canvas edits an isolated preview copy; committed values are applied to the real scene by the plugin.
 
 signal part_selected(path: NodePath)
+signal parts_selected(paths: Array[NodePath])
 signal transform_committed(path: NodePath, property_name: String, new_value: Variant, old_value: Variant)
 signal batch_transform_committed(changes: Array[Dictionary])
 signal pivot_committed(path: NodePath, new_value: Vector2, old_value: Variant)
@@ -163,6 +164,7 @@ func build() -> void:
 	_interaction_controller = CanvasInteractionControllerScript.new()
 	_interaction_controller.call("configure", _viewport, _surface, _camera)
 	_interaction_controller.connect("part_selected", Callable(self, "_on_interaction_part_selected"))
+	_interaction_controller.connect("parts_selected", Callable(self, "_on_interaction_parts_selected"))
 	_interaction_controller.connect("context_menu_requested", Callable(self, "_on_context_menu_requested"))
 	_interaction_controller.connect("pointer_position_changed", Callable(self, "_on_pointer_position_changed"))
 	_interaction_controller.connect("transform_committed", Callable(self, "_on_interaction_transform_committed"))
@@ -485,6 +487,12 @@ func _on_pointer_position_changed(world_position: Vector2) -> void:
 func _on_interaction_part_selected(path: NodePath) -> void:
 	_selected_path = path
 	part_selected.emit(path)
+
+
+func _on_interaction_parts_selected(paths: Array[NodePath]) -> void:
+	parts_selected.emit(paths)
+	if _status_label != null and paths.size() > 1:
+		_status_label.text = "Выделено частей: %d. Перетаскивание перемещает всю группу." % paths.size()
 
 
 func _on_interaction_transform_committed(
