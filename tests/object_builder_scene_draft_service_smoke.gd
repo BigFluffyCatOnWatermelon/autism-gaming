@@ -172,7 +172,7 @@ func _make_import_source_scene() -> PackedScene:
 	var unknown_marker := Marker2D.new()
 	unknown_marker.name = "NestedUnknown"
 	var unknown_script := GDScript.new()
-	unknown_script.source_code = "extends Marker2D\nvar preserved_marker_value: int = 73\n"
+	unknown_script.source_code = "extends Marker2D\n@export var preserved_marker_value: int = 73\n"
 	var script_error := unknown_script.reload()
 	_expect(script_error == OK, "unknown node fixture script compiles")
 	if script_error == OK:
