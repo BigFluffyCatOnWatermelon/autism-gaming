@@ -9,10 +9,14 @@ var _title_label: Label
 var _subtitle_label: Label
 var _scroll: ScrollContainer
 var _form: VBoxContainer
-var _advanced_check: CheckBox
+var _search_input: LineEdit
+var _level_filter: OptionButton
+var _empty_state: Label
 var _apply_button: Button
 var _setting_controls: Array[Dictionary] = []
 var _capability_id := ""
+var _show_all_levels := false
+var _search_query := ""
 
 
 func build() -> void:
@@ -23,7 +27,6 @@ func build() -> void:
 	add_theme_constant_override("separation", 6)
 
 	var header := HBoxContainer.new()
-
 	var title_column := VBoxContainer.new()
 	title_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title_column)
@@ -46,6 +49,24 @@ func build() -> void:
 	header.add_child(close_button)
 	add_child(header)
 	add_child(HSeparator.new())
+
+	var toolbar := HBoxContainer.new()
+	toolbar.add_theme_constant_override("separation", 5)
+	add_child(toolbar)
+
+	_search_input = LineEdit.new()
+	_search_input.placeholder_text = "Найти параметр…"
+	_search_input.clear_button_enabled = true
+	_search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_search_input.text_changed.connect(_on_search_changed)
+	toolbar.add_child(_search_input)
+
+	_level_filter = OptionButton.new()
+	_level_filter.add_item("Основные", 0)
+	_level_filter.add_item("Все доступные", 1)
+	_level_filter.tooltip_text = "Показывать только основные или все параметры возможности."
+	_level_filter.item_selected.connect(_on_level_filter_selected)
+	toolbar.add_child(_level_filter)
 
 	_scroll = ScrollContainer.new()
 	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -91,18 +112,15 @@ func configure(
 	_capability_id = capability.capability_id
 	_title_label.text = capability.display_name
 	_subtitle_label.text = "Настройки · основные параметры показаны сразу"
-	UIFactory_clear_form()
+	_search_input.text = ""
+	_search_query = ""
+	_show_all_levels = false
+	_level_filter.select(0)
+	_clear_form()
 	_setting_controls.clear()
-
-	_advanced_check = CheckBox.new()
-	_advanced_check.text = "Дополнительные настройки"
-	_advanced_check.tooltip_text = "Показывает расширенные и экспертные параметры."
-	_advanced_check.toggled.connect(_on_advanced_toggled)
-	_form.add_child(_advanced_check)
 
 	var previous_group := ""
 	var current_group_header: Label
-	var has_advanced_settings := false
 	var supported_count := 0
 	for descriptor in descriptors:
 		var component_id := str(descriptor.get("component_id", "")).strip_edges().to_lower()
@@ -131,6 +149,20 @@ func configure(
 			descriptor.get("default_value")
 		)
 		var label_text := str(descriptor.get("display_name", setting_key))
+		var unit := str(descriptor.get("unit", "")).strip_edges()
+		if not unit.is_empty():
+			label_text += " · " + unit
+
+		var label_row := HBoxContainer.new()
+		row.add_child(label_row)
+		if value_type != "Boolean":
+			var setting_label := Label.new()
+			setting_label.text = label_text
+			setting_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			setting_label.tooltip_text = str(descriptor.get("description", ""))
+			setting_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			label_row.add_child(setting_label)
+
 		var control: Control
 		match value_type:
 			"Integer", "Float":
@@ -143,11 +175,10 @@ func configure(
 				control = spin
 			"Boolean":
 				var check := CheckBox.new()
-				check.text = label_text
+				check.text = str(descriptor.get("display_name", setting_key))
 				check.button_pressed = bool(current_value)
 				check.tooltip_text = str(descriptor.get("description", ""))
 				control = check
-				label_text = ""
 			"String":
 				var line := LineEdit.new()
 				line.text = str(current_value)
@@ -161,18 +192,23 @@ func configure(
 				unsupported.modulate = Color(0.72, 0.76, 0.82)
 				control = unsupported
 
-		if not label_text.is_empty():
-			var setting_label := Label.new()
-			setting_label.text = label_text
-			setting_label.tooltip_text = str(descriptor.get("description", ""))
-			setting_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			row.add_child(setting_label)
+		var reset_button := Button.new()
+		reset_button.text = "↺"
+		reset_button.tooltip_text = "Вернуть значение по умолчанию: %s" % str(descriptor.get("default_value", "—"))
+		reset_button.custom_minimum_size.x = 28
+		reset_button.disabled = value_type not in ["Integer", "Float", "Boolean", "String"]
+		reset_button.pressed.connect(_reset_setting.bind(_setting_controls.size()))
+		label_row.add_child(reset_button)
 		row.add_child(control)
 
 		var level := str(descriptor.get("level", "Basic"))
-		var is_basic := level == "Basic"
-		has_advanced_settings = has_advanced_settings or not is_basic
-		row.visible = is_basic
+		var searchable_text := " ".join([
+			label_text,
+			str(descriptor.get("description", "")),
+			group_name,
+			setting_key,
+			component_id
+		]).to_lower()
 		_setting_controls.append({
 			"component_id": component_id,
 			"setting_key": setting_key,
@@ -180,25 +216,25 @@ func configure(
 			"level": level,
 			"control": control,
 			"row": row,
-			"group_header": current_group_header
+			"group_header": current_group_header,
+			"reset_button": reset_button,
+			"default_value": descriptor.get("default_value"),
+			"searchable_text": searchable_text
 		})
 		supported_count += 1 if value_type in ["Integer", "Float", "Boolean", "String"] else 0
 
-	if _setting_controls.is_empty():
-		var empty_label := Label.new()
-		empty_label.text = "У этой возможности пока нет настроек. Её поведение определяется автоматически."
-		empty_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		empty_label.modulate = Color(0.72, 0.76, 0.82)
-		_form.add_child(empty_label)
-	elif supported_count == 0:
-		var unsupported_hint := Label.new()
-		unsupported_hint.text = "Подробные параметры доступны в расширенном режиме."
-		unsupported_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_form.add_child(unsupported_hint)
+	_empty_state = Label.new()
+	_empty_state.text = "Параметры не найдены. Измени запрос или фильтр."
+	_empty_state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_empty_state.modulate = Color(0.72, 0.76, 0.82)
+	_empty_state.visible = false
+	_form.add_child(_empty_state)
 
-	_advanced_check.visible = has_advanced_settings
+	if _setting_controls.is_empty():
+		_empty_state.text = "У этой возможности пока нет настроек. Её поведение определяется автоматически."
+		_empty_state.visible = true
 	_apply_button.disabled = supported_count == 0
-	_update_advanced_visibility(false)
+	_update_filters()
 	_scroll.scroll_vertical = 0
 
 
@@ -208,9 +244,19 @@ func clear() -> void:
 	_capability_id = ""
 	_title_label.text = "Выбери возможность"
 	_subtitle_label.text = "Контекстные настройки"
-	UIFactory_clear_form()
+	_search_input.text = ""
+	_search_query = ""
+	_show_all_levels = false
+	_level_filter.select(0)
+	_clear_form()
 	_setting_controls.clear()
 	_apply_button.disabled = true
+
+
+func _clear_form() -> void:
+	for child in _form.get_children():
+		_form.remove_child(child)
+		child.queue_free()
 
 
 func get_capability_id() -> String:
@@ -247,7 +293,30 @@ func get_setting_control_count() -> int:
 	return _setting_controls.size()
 
 
-func _update_advanced_visibility(show_advanced: bool) -> void:
+func get_setting_entry(component_id: String, setting_key: String) -> Dictionary:
+	for entry in _setting_controls:
+		if str(entry.get("component_id", "")) == component_id and str(entry.get("setting_key", "")) == setting_key:
+			return entry
+	return {}
+
+
+func get_setting_control(component_id: String, setting_key: String) -> Control:
+	return get_setting_entry(component_id, setting_key).get("control") as Control
+
+
+func get_visible_setting_keys() -> PackedStringArray:
+	var result := PackedStringArray()
+	for entry in _setting_controls:
+		var row := entry.get("row") as Control
+		if row != null and row.visible:
+			result.append(str(entry.get("setting_key", "")))
+	return result
+
+
+func _update_filters() -> void:
+	if _form == null:
+		return
+	var visible_count := 0
 	var group_headers: Array[Label] = []
 	for entry in _setting_controls:
 		var group_header := entry.get("group_header") as Label
@@ -257,20 +326,50 @@ func _update_advanced_visibility(show_advanced: bool) -> void:
 		var row := entry.get("row") as Control
 		if row == null:
 			continue
-		var is_visible := str(entry.get("level", "Basic")) == "Basic" or show_advanced
+		var level_matches := _show_all_levels or str(entry.get("level", "Basic")) == "Basic"
+		var query_matches := _search_query.is_empty() or str(entry.get("searchable_text", "")).contains(_search_query)
+		var is_visible := level_matches and query_matches
 		row.visible = is_visible
-		if is_visible and group_header != null:
-			group_header.visible = true
+		if is_visible:
+			visible_count += 1
+			if group_header != null:
+				group_header.visible = true
+	if _empty_state != null:
+		_empty_state.visible = visible_count == 0
+		if _setting_controls.is_empty():
+			_empty_state.text = "У этой возможности пока нет настроек. Её поведение определяется автоматически."
+		else:
+			_empty_state.text = "Параметры не найдены. Измени запрос или фильтр."
 
 
-func UIFactory_clear_form() -> void:
-	for child in _form.get_children():
-		_form.remove_child(child)
-		child.queue_free()
+func _reset_setting(index: int) -> void:
+	if index < 0 or index >= _setting_controls.size():
+		return
+	var entry: Dictionary = _setting_controls[index]
+	var control := entry.get("control") as Control
+	if control == null:
+		return
+	_set_control_value(control, str(entry.get("value_type", "")), entry.get("default_value"))
 
 
-func _on_advanced_toggled(show_advanced: bool) -> void:
-	_update_advanced_visibility(show_advanced)
+func _set_control_value(control: Control, value_type: String, value: Variant) -> void:
+	match value_type:
+		"Integer", "Float":
+			(control as SpinBox).value = float(value)
+		"Boolean":
+			(control as CheckBox).button_pressed = bool(value)
+		"String":
+			(control as LineEdit).text = str(value)
+
+
+func _on_search_changed(value: String) -> void:
+	_search_query = value.strip_edges().to_lower()
+	_update_filters()
+
+
+func _on_level_filter_selected(index: int) -> void:
+	_show_all_levels = index == 1
+	_update_filters()
 
 
 func _on_apply_pressed() -> void:

@@ -21,10 +21,11 @@ func _run() -> void:
 	view.connect("close_requested", Callable(self, "_on_close_requested"))
 
 	_expect(view.visible, "inline settings panel can be displayed by its parent")
-	_expect(view.get_child_count() == 5, "panel has one header, a scroll area, separators and a fixed footer")
+	_expect(view.get_child_count() == 6, "panel has header, search/filter toolbar, scroll area and fixed footer")
 	_expect(view.get_child(0) is HBoxContainer, "capability name and close action share the header row")
-	_expect(view.get_child(2) is ScrollContainer, "capability settings use an independently scrollable area")
-	_expect(view.get_child(4) is HBoxContainer, "apply and cancel actions remain fixed below the scroll area")
+	_expect(view.get_child(2) is HBoxContainer, "search and level filter share one compact toolbar")
+	_expect(view.get_child(3) is ScrollContainer, "capability settings use an independently scrollable area")
+	_expect(view.get_child(5) is HBoxContainer, "apply and cancel actions remain fixed below the scroll area")
 
 	var capability = CapabilityScript.new()
 	capability.capability_id = "has_health"
@@ -41,10 +42,12 @@ func _run() -> void:
 			"component_id": "health",
 			"setting_key": "max_health",
 			"display_name": "Максимальное здоровье",
+			"description": "Количество единиц здоровья.",
 			"value_type": "Float",
 			"default_value": 100.0,
 			"level": "Basic",
 			"group_name": "Здоровье",
+			"unit": "ед.",
 			"minimum": 1.0,
 			"maximum": 1000.0,
 			"step": 1.0
@@ -53,6 +56,7 @@ func _run() -> void:
 			"component_id": "health",
 			"setting_key": "invulnerable",
 			"display_name": "Неуязвимость",
+			"description": "Запрещает получать урон.",
 			"value_type": "Boolean",
 			"default_value": false,
 			"level": "Advanced",
@@ -73,28 +77,34 @@ func _run() -> void:
 	_expect(view.call("get_capability_id") == "has_health", "panel stores the active capability ID")
 	var title_label := view.get("_title_label") as Label
 	_expect(title_label.text == "Здоровье", "panel title uses the capability display name")
-
 	var form := view.get("_form") as VBoxContainer
-	_expect(form.get_child_count() == 6, "panel renders advanced toggle, groups and three setting rows")
-	var health_row := form.get_child(2) as VBoxContainer
-	var health_spin := health_row.get_child(1) as SpinBox
-	_expect(is_equal_approx(health_spin.value, 50.0), "panel loads the selected object's current setting")
-	_expect(health_row.visible, "basic setting is visible by default")
+	_expect(view.call("get_setting_control_count") == 3, "panel builds every setting descriptor")
+	_expect((view.call("get_visible_setting_keys") as PackedStringArray) == PackedStringArray(["max_health"]), "basic filter shows only basic settings by default")
+	var health_spin := view.call("get_setting_control", "health", "max_health") as SpinBox
+	_expect(health_spin != null and is_equal_approx(health_spin.value, 50.0), "panel loads the selected object's current setting")
+	var health_entry: Dictionary = view.call("get_setting_entry", "health", "max_health")
+	var health_label_row := (health_entry.get("row") as VBoxContainer).get_child(0) as HBoxContainer
+	var health_label := health_label_row.get_child(0) as Label
+	_expect(health_label.text == "Максимальное здоровье · ед.", "parameter unit is displayed beside its label")
+	var reset_button := health_entry.get("reset_button") as Button
+	reset_button.pressed.emit()
+	_expect(is_equal_approx(health_spin.value, 100.0), "per-setting reset restores its declared default value")
 
-	var defense_header := form.get_child(3) as Label
-	var invulnerable_row := form.get_child(4) as VBoxContainer
-	_expect(not invulnerable_row.visible, "advanced setting is hidden by default")
-	var advanced_check := form.get_child(0) as CheckBox
-	advanced_check.toggled.emit(true)
-	_expect(invulnerable_row.visible and defense_header.visible, "advanced toggle reveals extended settings and their group")
+	view.call("_on_level_filter_selected", 1)
+	_expect((view.call("get_visible_setting_keys") as PackedStringArray).size() == 3, "all-level filter reveals advanced and expert settings")
+	view.call("_on_search_changed", "неуязвимость")
+	_expect((view.call("get_visible_setting_keys") as PackedStringArray) == PackedStringArray(["invulnerable"]), "search matches localized setting labels")
+	view.call("_on_search_changed", "количество")
+	_expect((view.call("get_visible_setting_keys") as PackedStringArray) == PackedStringArray(["max_health"]), "search also matches setting descriptions")
+	view.call("_on_search_changed", "no-such-setting")
+	_expect((view.get("_empty_state") as Label).visible, "empty search results show a helpful empty state")
+	view.call("_on_search_changed", "")
+	view.call("_on_level_filter_selected", 0)
 
-	health_spin.value = 75.0
 	var setting_values: Array[Dictionary] = view.call("get_values")
-	_expect(setting_values.size() == 3, "panel returns all supported setting values")
-	_expect(setting_values[0].get("component_id") == "health", "setting value includes its component ID")
-	_expect(setting_values[0].get("setting_key") == "max_health", "setting value includes its stable key")
-	_expect(is_equal_approx(float(setting_values[0].get("value", 0.0)), 75.0), "numeric value is read from the inline control")
-	_expect(typeof(setting_values[1].get("value")) == TYPE_BOOL, "boolean value preserves its type")
+	_expect(setting_values.size() == 3, "filtering never drops values from the pending apply payload")
+	_expect(is_equal_approx(float(setting_values[0].get("value", 0.0)), 100.0), "reset value is included in the pending apply payload")
+	_expect(setting_values[1].get("value") == false, "boolean value preserves its type")
 	_expect(setting_values[2].get("value") == "Обычный", "string value is read from the inline control")
 
 	var footer := view.get_child(view.get_child_count() - 1) as HBoxContainer
@@ -105,13 +115,12 @@ func _run() -> void:
 	_expect(apply_count == 1, "apply button emits a single apply request")
 	_expect(close_count == 1, "cancel button emits a close request")
 
-	var empty_descriptors: Array[Dictionary] = []
-	view.call("configure", capability, selection, empty_descriptors)
+	view.call("configure", capability, selection, [])
 	_expect(view.call("get_capability_id") == "has_health", "empty settings state retains the capability context")
 	_expect(view.call("get_setting_control_count") == 0, "empty schema clears the previous settings controls")
 	_expect((view.get("_apply_button") as Button).disabled, "apply is disabled when there are no editable settings")
-	var empty_values: Array[Dictionary] = view.call("get_values")
-	_expect(empty_values.is_empty(), "empty schema returns no values")
+	_expect((view.get("_empty_state") as Label).visible, "empty schemas show a descriptive empty state")
+	_expect((view.call("get_values") as Array).is_empty(), "empty schema returns no values")
 
 	view.call("clear")
 	_expect(view.call("get_capability_id").is_empty(), "closing clears the active capability context")
