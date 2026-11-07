@@ -59,6 +59,18 @@ jobs:
             exit 1
           fi
 
+      - name: Run Object Builder capability batch planner smoke tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path . --script res://tests/object_builder_capability_batch_planner_smoke.gd 2>&1 | tee object-builder-capability-batch-test.log
+          errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-capability-batch-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
+          if [[ -n "$errors" ]]; then
+            echo "$errors"
+            echo "Object Builder capability batch planner tests reported an error."
+            exit 1
+          fi
+
       - name: Run Object Builder dialog service tests
         shell: bash
         run: |
