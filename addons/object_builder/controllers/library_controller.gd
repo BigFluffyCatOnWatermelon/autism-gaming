@@ -151,7 +151,8 @@ func build_visible_entries(
 		if not selected_tag.is_empty() and not definition.tags.has(selected_tag):
 			continue
 		var searchable_text := str(_search_text_by_instance_id.get(definition.get_instance_id(), ""))
-		if not query.is_empty() and not searchable_text.contains(query):
+		var normalized_query := query.strip_edges().to_lower()
+		if not normalized_query.is_empty() and not searchable_text.contains(normalized_query):
 			continue
 		_visible_definitions.append(definition)
 		var title_prefix := "★ " if is_favorite(definition.object_id) else ""
@@ -186,6 +187,51 @@ func toggle_favorite(object_id: String) -> bool:
 	return true
 
 
+func remove_local_entry(object_id: String) -> void:
+	if object_id.is_empty():
+		return
+	favorites.erase(object_id)
+	recent_ids.erase(object_id)
+
+
+func build_detail_data(definition: ObjectDefinition) -> Dictionary:
+	if definition == null:
+		return {}
+	var capability_names := PackedStringArray()
+	var dependency_names := PackedStringArray()
+	for selection in definition.capabilities:
+		if selection == null or not selection.enabled:
+			continue
+		var capability_id := selection.capability_id.strip_edges().to_lower()
+		if capability_id.is_empty():
+			continue
+		var capability := ObjectCapabilityCatalog.get_definition_reference(capability_id)
+		var capability_name := capability.display_name if capability != null else capability_id
+		if not capability_names.has(capability_name):
+			capability_names.append(capability_name)
+		if capability == null:
+			continue
+		for dependency_id in capability.required_capability_ids:
+			var dependency := ObjectCapabilityCatalog.get_definition_reference(str(dependency_id))
+			var dependency_name := dependency.display_name if dependency != null else str(dependency_id)
+			var dependency_line := "%s → %s" % [capability_name, dependency_name]
+			if not dependency_names.has(dependency_line):
+				dependency_names.append(dependency_line)
+	capability_names.sort()
+	dependency_names.sort()
+	return {
+		"display_name": definition.display_name,
+		"object_id": definition.object_id,
+		"category": definition.category,
+		"description": definition.description,
+		"is_template": definition.is_template,
+		"preview_texture": definition.preview_texture,
+		"tags_text": join_tags(definition.tags) if not definition.tags.is_empty() else "Нет тегов.",
+		"capabilities_text": "\n".join(capability_names) if not capability_names.is_empty() else "Пока не выбраны.",
+		"dependencies_text": "\n".join(dependency_names) if not dependency_names.is_empty() else "Нет обязательных зависимостей."
+	}
+
+
 func record_recent(object_id: String) -> void:
 	if object_id.is_empty():
 		return
@@ -212,10 +258,40 @@ func _rebuild_indexes() -> void:
 	for definition in definitions + templates:
 		if not definition.is_template:
 			_definitions_by_id[definition.object_id] = definition
-		_search_text_by_instance_id[definition.get_instance_id()] = (
-			definition.display_name + " " + definition.object_id + " "
-			+ definition.description + " " + join_tags(definition.tags)
-		).to_lower()
+
+		var searchable_parts := PackedStringArray([
+			definition.display_name,
+			definition.object_id,
+			definition.description,
+			definition.category,
+			definition.object_type,
+			join_tags(definition.tags)
+		])
+		for selection in definition.capabilities:
+			if selection == null or not selection.enabled:
+				continue
+			var capability_id := selection.capability_id.strip_edges().to_lower()
+			if capability_id.is_empty():
+				continue
+			searchable_parts.append(capability_id)
+			var capability := ObjectCapabilityCatalog.get_definition_reference(capability_id)
+			if capability == null:
+				continue
+			searchable_parts.append(capability.display_name)
+			searchable_parts.append(capability.description)
+			searchable_parts.append(" ".join(capability.keywords))
+			for dependency_id in capability.required_capability_ids:
+				var dependency := ObjectCapabilityCatalog.get_definition_reference(str(dependency_id))
+				searchable_parts.append(str(dependency_id))
+				if dependency != null:
+					searchable_parts.append(dependency.display_name)
+		for property_definition in definition.custom_properties:
+			if property_definition == null:
+				continue
+			searchable_parts.append(property_definition.property_id)
+			searchable_parts.append(property_definition.display_name)
+			searchable_parts.append(property_definition.description)
+		_search_text_by_instance_id[definition.get_instance_id()] = " ".join(searchable_parts).to_lower()
 
 
 func _to_packed_string_array(value: Variant) -> PackedStringArray:
