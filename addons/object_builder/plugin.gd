@@ -119,6 +119,7 @@ func _exit_tree() -> void:
 	_disconnect_editor_sync()
 	if _library_controller != null and _workspace_view != null:
 		_save_local_state()
+	_cleanup_abandoned_new_draft(null)
 	if _editor_session != null:
 		_editor_session.call("clear")
 	_working_definition = null
@@ -1555,7 +1556,24 @@ func _create_definition_from_template(template_definition: ObjectDefinition) -> 
 		return null
 	return result.get("definition") as ObjectDefinition
 
+func _cleanup_abandoned_new_draft(next_definition: ObjectDefinition) -> void:
+	if _editor_session == null or not bool(_editor_session.call("is_new")):
+		return
+	var abandoned := _editor_session.call("get_working_definition") as ObjectDefinition
+	if abandoned == null or abandoned.scene_path.is_empty():
+		return
+	if next_definition != null and next_definition.object_id == abandoned.object_id:
+		return
+	var managed_prefix := ObjectLibraryService.SCENES_PATH + "/"
+	if not abandoned.scene_path.begins_with(managed_prefix):
+		return
+	if FileAccess.file_exists(abandoned.scene_path):
+		var remove_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(abandoned.scene_path))
+		if remove_error != OK:
+			push_warning("Object Builder: не удалось убрать сцену несохранённого черновика: " + abandoned.scene_path)
+
 func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> void:
+	_cleanup_abandoned_new_draft(definition)
 	_is_loading_editor_form = true
 	if is_new:
 		_editor_session.call("begin_new", definition)
