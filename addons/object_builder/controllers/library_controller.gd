@@ -22,6 +22,7 @@ var definitions: Array[ObjectDefinition] = []
 var templates: Array[ObjectDefinition] = []
 var favorites := PackedStringArray()
 var recent_ids := PackedStringArray()
+var collections: Dictionary = {}
 var _visible_definitions: Array[ObjectDefinition] = []
 var _definitions_by_id: Dictionary = {}
 var _search_text_by_instance_id: Dictionary = {}
@@ -56,9 +57,99 @@ func set_library_data(
 	_rebuild_indexes()
 
 
-func set_local_state(favorites_value: Variant, recent_value: Variant) -> void:
+func set_local_state(
+	favorites_value: Variant,
+	recent_value: Variant,
+	collections_value: Variant = {}
+) -> void:
 	favorites = _to_packed_string_array(favorites_value)
 	recent_ids = _to_packed_string_array(recent_value)
+	collections = _normalize_collections(collections_value)
+
+
+func get_collections_state() -> Dictionary:
+	return collections.duplicate(true)
+
+
+func get_collection_options() -> Array[Dictionary]:
+	var options: Array[Dictionary] = []
+	for collection_id in collections:
+		var collection: Dictionary = collections[collection_id]
+		options.append({
+			"id": str(collection_id),
+			"label": str(collection.get("name", collection_id))
+		})
+	options.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return str(a.get("label", "")).naturalnocasecmp_to(str(b.get("label", ""))) < 0
+	)
+	return options
+
+
+func create_collection(display_name: String) -> String:
+	var clean_name := display_name.strip_edges()
+	if clean_name.is_empty():
+		return ""
+	var slug := clean_name.to_lower().validate_filename().replace(" ", "_")
+	if slug.is_empty():
+		slug = "collection"
+	var base_id := "collection_" + slug
+	var collection_id := base_id
+	var suffix := 2
+	while collections.has(collection_id):
+		collection_id = base_id + "_" + str(suffix)
+		suffix += 1
+	collections[collection_id] = {
+		"name": clean_name,
+		"object_ids": PackedStringArray()
+	}
+	return collection_id
+
+
+func rename_collection(collection_id: String, display_name: String) -> bool:
+	var clean_name := display_name.strip_edges()
+	if not collections.has(collection_id) or clean_name.is_empty():
+		return false
+	var collection: Dictionary = collections[collection_id]
+	collection["name"] = clean_name
+	collections[collection_id] = collection
+	return true
+
+
+func delete_collection(collection_id: String) -> bool:
+	return collections.erase(collection_id)
+
+
+func add_to_collection(collection_id: String, object_id: String) -> bool:
+	if not collections.has(collection_id) or object_id.is_empty() or find_definition(object_id) == null:
+		return false
+	var collection: Dictionary = collections[collection_id]
+	var object_ids := _to_packed_string_array(collection.get("object_ids", PackedStringArray()))
+	if object_ids.has(object_id):
+		return false
+	object_ids.append(object_id)
+	collection["object_ids"] = object_ids
+	collections[collection_id] = collection
+	return true
+
+
+func remove_from_collection(collection_id: String, object_id: String) -> bool:
+	if not collections.has(collection_id) or object_id.is_empty():
+		return false
+	var collection: Dictionary = collections[collection_id]
+	var object_ids := _to_packed_string_array(collection.get("object_ids", PackedStringArray()))
+	if not object_ids.has(object_id):
+		return false
+	object_ids.erase(object_id)
+	collection["object_ids"] = object_ids
+	collections[collection_id] = collection
+	return true
+
+
+func get_collection_object_ids(collection_id: String) -> PackedStringArray:
+	if not collections.has(collection_id):
+		return PackedStringArray()
+	var collection: Dictionary = collections[collection_id]
+	return _to_packed_string_array(collection.get("object_ids", PackedStringArray()))
 
 
 func get_favorites() -> PackedStringArray:
@@ -136,6 +227,12 @@ func build_visible_entries(
 			var recent_definition := find_definition(object_id)
 			if recent_definition != null:
 				candidates.append(recent_definition)
+	elif selected_mode.begins_with("collection:"):
+		var collection_id := selected_mode.trim_prefix("collection:")
+		for object_id in get_collection_object_ids(collection_id):
+			var collection_definition := find_definition(object_id)
+			if collection_definition != null:
+				candidates.append(collection_definition)
 	elif selected_mode == "templates":
 		candidates.assign(templates)
 	else:
@@ -292,6 +389,25 @@ func _rebuild_indexes() -> void:
 			searchable_parts.append(property_definition.display_name)
 			searchable_parts.append(property_definition.description)
 		_search_text_by_instance_id[definition.get_instance_id()] = " ".join(searchable_parts).to_lower()
+
+
+func _normalize_collections(value: Variant) -> Dictionary:
+	var result: Dictionary = {}
+	if not value is Dictionary:
+		return result
+	for raw_id in value:
+		var collection_id := str(raw_id).strip_edges().to_lower()
+		if collection_id.is_empty() or not value[raw_id] is Dictionary:
+			continue
+		var source: Dictionary = value[raw_id]
+		var collection_name := str(source.get("name", collection_id)).strip_edges()
+		if collection_name.is_empty():
+			collection_name = collection_id
+		result[collection_id] = {
+			"name": collection_name,
+			"object_ids": _to_packed_string_array(source.get("object_ids", PackedStringArray()))
+		}
+	return result
 
 
 func _to_packed_string_array(value: Variant) -> PackedStringArray:
