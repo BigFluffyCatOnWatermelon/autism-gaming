@@ -82,7 +82,11 @@ static func import_scene(source_path: String, target_definition: ObjectDefinitio
 		ResourceLoader.CACHE_MODE_REPLACE
 	)
 	if loaded_resource == null:
-		return _failure("Godot не смог загрузить сцену или один из её ресурсов: " + clean_source_path)
+		var failure_message := "Godot не смог загрузить сцену или один из её ресурсов: " + clean_source_path
+		var missing_dependencies := _get_missing_dependency_paths(clean_source_path)
+		if not missing_dependencies.is_empty():
+			failure_message += "\nНе найдены ресурсы: " + ", ".join(missing_dependencies)
+		return _failure(failure_message)
 	if not loaded_resource is PackedScene:
 		return _failure("Выбранный файл не является PackedScene: " + clean_source_path)
 
@@ -172,6 +176,16 @@ static func _pack_and_save(scene_root: Node, definition: ObjectDefinition) -> Di
 		"message": ""
 	}
 
+
+static func _get_missing_dependency_paths(scene_path: String) -> PackedStringArray:
+	var missing := PackedStringArray()
+	for dependency in ResourceLoader.get_dependencies(scene_path):
+		var dependency_path := str(dependency).get_slice("::", 0)
+		if dependency_path.is_empty() or ResourceLoader.exists(dependency_path):
+			continue
+		if not missing.has(dependency_path):
+			missing.append(dependency_path)
+	return missing
 
 static func _set_owner_recursive(node: Node, new_owner: Node) -> void:
 	for child in node.get_children():
