@@ -759,7 +759,10 @@ func _rebuild_capability_list() -> void:
 		"build_recommended_entries",
 		_working_definition.capabilities,
 		query,
-		8
+		8,
+		_working_definition.object_type,
+		_working_definition.category,
+		_working_definition.tags
 	)
 	_capability_view.call("set_recommended_entries", recommended_entries)
 
