@@ -73,7 +73,6 @@ var _editing_capability_selection: ObjectCapabilitySelection
 var _capability_change_dialog: AcceptDialog
 var _pending_capability_values: Array[ObjectCapabilitySelection] = []
 var _pending_capability_summary := PackedStringArray()
-var _simple_preview: TextureRect
 var _editing_property: ObjectPropertyDefinition
 var _scene_tree_view: Control
 var _visual_editor_view: Control
@@ -107,55 +106,18 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
-	print("[ObjectBuilder shutdown] _exit_tree entered")
 	_disconnect_editor_sync()
 	if _library_controller != null and _workspace_view != null:
 		_save_local_state()
 	if _editor_session != null:
 		_editor_session.call("clear")
 	_working_definition = null
-	var leaked_candidate: Object = instance_from_id(1645324869295)
-	if leaked_candidate != null:
-		print("[ObjectBuilder shutdown] orphan candidate class=", leaked_candidate.get_class())
-		if leaked_candidate is Node:
-			var candidate_node := leaked_candidate as Node
-			var candidate_parent := candidate_node.get_parent()
-			print(
-				"[ObjectBuilder shutdown] orphan candidate name=", candidate_node.name,
-				" inside_tree=", candidate_node.is_inside_tree(),
-				" parent=", candidate_parent.get_class() if candidate_parent != null else "<none>",
-				"/", candidate_parent.name if candidate_parent != null else "<none>"
-			)
-	print("[ObjectBuilder shutdown] plugin descendants:")
-	_debug_list_shutdown_controls(self)
-	if _main_screen != null and is_instance_valid(_main_screen):
-		print("[ObjectBuilder shutdown] main screen in tree=", _main_screen.is_inside_tree())
-		_debug_list_shutdown_controls(_main_screen)
 	if _preview_view != null and is_instance_valid(_preview_view):
-		print("[ObjectBuilder shutdown] preview window valid=", is_instance_valid(_preview_view))
-		_preview_view.free()
+		_preview_view.queue_free()
 		_preview_view = null
-	if _main_screen != null and is_instance_valid(_main_screen):
-		_main_screen.free()
-		print("[ObjectBuilder shutdown] main screen valid after free=", is_instance_valid(_main_screen))
+	if _main_screen != null:
+		_main_screen.queue_free()
 		_main_screen = null
-
-
-func _debug_list_shutdown_controls(node: Node) -> void:
-	if node is Button or node is TextureRect:
-		var parent_name := str(node.get_parent().name) if node.get_parent() != null else "<none>"
-		var parent_class := node.get_parent().get_class() if node.get_parent() != null else "<none>"
-		var node_path := str(node.get_path()) if node.is_inside_tree() else "<detached>"
-		print(
-			"[ObjectBuilder shutdown] control ",
-			node.get_class(),
-			" id=", node.get_instance_id(),
-			" name=", node.name,
-			" path=", node_path,
-			" parent=", parent_class, "/", parent_name
-		)
-	for child in node.get_children(true):
-		_debug_list_shutdown_controls(child)
 
 
 func _has_main_screen() -> bool:
@@ -1298,7 +1260,6 @@ func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> voi
 	_rebuild_property_list()
 	_rebuild_component_list()
 	_rebuild_capability_list()
-	_simple_preview.texture = _working_definition.preview_texture
 	_refresh_favorite_button()
 	_refresh_scene_tree()
 	_is_loading_editor_form = false
