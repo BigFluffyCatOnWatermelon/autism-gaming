@@ -155,6 +155,7 @@ func _collect_visual_parts(node: Node, scene_root: Node) -> void:
 func _render_rows() -> void:
 	if _rows_host == null:
 		return
+	_cancel_inline_rename()
 	for child in _rows_host.get_children():
 		_rows_host.remove_child(child)
 		child.queue_free()
@@ -163,7 +164,6 @@ func _render_rows() -> void:
 	_row_lock_checkboxes.clear()
 	_row_name_buttons.clear()
 	_row_name_edits.clear()
-	_cancel_inline_rename()
 
 	if _scene_root == null or not is_instance_valid(_scene_root):
 		_status_label.text = "Открой сцену объекта, чтобы управлять её частями."

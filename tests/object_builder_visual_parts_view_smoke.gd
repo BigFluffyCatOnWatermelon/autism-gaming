@@ -104,6 +104,11 @@ func _run() -> void:
 	name_edits[0].text_submitted.emit("LeafNew")
 	_expect(rename_events == [{"path": NodePath("Visuals/Leaf"), "name": "LeafNew"}], "inline rename forwards the relative path and new name")
 	_expect(not name_edits[0].visible and name_buttons[0].visible, "confirmed rename restores the normal row display")
+	view.call("_begin_inline_rename", NodePath("Visuals/Glow"), name_buttons[1], name_edits[1])
+	name_edits[1].text = "ShouldNotApply"
+	view.call("_cancel_inline_rename")
+	_expect(not name_edits[1].visible and name_buttons[1].visible, "cancelled rename restores the normal row display")
+	_expect(rename_events.size() == 1, "cancelled rename does not emit a scene change")
 
 	var search_input := view.get("_search_input") as LineEdit
 	search_input.text = "glow"
