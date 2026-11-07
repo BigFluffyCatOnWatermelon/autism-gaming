@@ -3016,10 +3016,23 @@ func _on_sprite_frames_editor_accepted(frames: SpriteFrames) -> void:
 	if sprite == null:
 		return
 	_commit_visual_node_property(sprite, "sprite_frames", frames, "изменить анимации и кадры")
+	var animation_names := frames.get_animation_names()
+	if not animation_names.is_empty() and not frames.has_animation(sprite.animation):
+		_commit_visual_node_property(
+			sprite,
+			"animation",
+			StringName(str(animation_names[0])),
+			"выбрать существующую анимацию"
+		)
+	if frames.has_animation(sprite.animation):
+		var frame_count := frames.get_frame_count(sprite.animation)
+		var safe_frame := clampi(sprite.frame, 0, maxi(0, frame_count - 1))
+		if safe_frame != sprite.frame:
+			_commit_visual_node_property(sprite, "frame", safe_frame, "выбрать доступный кадр")
 	_pending_sprite_frames_editor_path = NodePath("")
 	_refresh_canvas()
 	_refresh_visual_parts()
-	_set_status("Анимации и кадры обновлены. Изменения можно отменить через Undo.", false)
+	_set_status("Анимации и кадры обновлены. Если прежняя анимация была удалена, выбрана первая доступная.", false)
 
 
 func _on_visual_part_draw_order_change_requested(path: NodePath, delta: int) -> void:
