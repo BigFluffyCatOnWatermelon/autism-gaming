@@ -1061,6 +1061,7 @@ func _update_new_object_type_hint() -> void:
 		return
 	var profile_id := str(_dialog_view.call("get_selected_creation_profile_id"))
 	if profile_id.is_empty():
+		_dialog_view.call("clear_creation_category_suggestion")
 		_dialog_view.call(
 			"set_creation_profile_hint",
 			"Обычный объект без стартового набора параметров. После создания можно добавить любые возможности."
@@ -1068,12 +1069,14 @@ func _update_new_object_type_hint() -> void:
 		return
 	var profile := ObjectCreationProfileRegistry.get_definition(profile_id)
 	if profile == null:
+		_dialog_view.call("clear_creation_category_suggestion")
 		_dialog_view.call(
 			"set_creation_profile_hint",
 			"Этот профиль больше недоступен. Можно выбрать другой или начать без профиля."
 		)
 		return
 	_dialog_view.call("set_creation_category", profile.suggested_category)
+	_dialog_view.call("suggest_creation_category", profile.suggested_category)
 	_dialog_view.call(
 		"set_creation_profile_hint",
 		"%s\nПрофиль предлагает настройки, но не ограничивает возможности объекта." % profile.description
