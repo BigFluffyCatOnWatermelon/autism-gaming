@@ -105,7 +105,7 @@ static func export_definition(definition: ObjectDefinition, target_path: String)
 
 static func create_unique_id(prefix: String, source_id: String, is_template: bool = false) -> String:
 	var clean_prefix := prefix.strip_edges().to_lower()
-	var clean_source := source_id.strip_edges().validate_filename().to_lower()
+	var clean_source := source_id.strip_edges().validate_filename().to_lower().replace(" ", "_")
 	if clean_prefix.is_empty():
 		clean_prefix = "object"
 	if clean_source.is_empty():
