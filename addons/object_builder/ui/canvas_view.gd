@@ -133,7 +133,7 @@ func build() -> void:
 	_viewport_container = SubViewportContainer.new()
 	_viewport_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_viewport_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_viewport_container.stretch = true
+	_viewport_container.stretch = false
 	surface_host.add_child(_viewport_container)
 
 	_viewport = SubViewport.new()
@@ -152,7 +152,7 @@ func build() -> void:
 	_camera = Camera2D.new()
 	_camera.position = Vector2.ZERO
 	_stage.add_child(_camera)
-	_camera.make_current()
+	_camera.call_deferred("make_current")
 
 	_surface = CanvasOverlay.new()
 	_surface.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

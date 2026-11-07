@@ -80,7 +80,7 @@ func build() -> void:
 	_viewport_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_viewport_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_viewport_container.custom_minimum_size = Vector2(0, 360)
-	_viewport_container.stretch = true
+	_viewport_container.stretch = false
 	_viewport_container.resized.connect(_on_viewport_container_resized)
 	viewport_panel.add_child(_viewport_container)
 
