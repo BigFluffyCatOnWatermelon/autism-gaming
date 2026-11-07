@@ -267,7 +267,7 @@ func _build_creation_dialog(profiles: Array) -> void:
 	_creation_import_path_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	import_row.add_child(_creation_import_path_label)
 	var import_hint := Label.new()
-	import_hint.text = "Поддерживаются .tscn и .scn. Исходный файл останется без изменений; неизвестные узлы и ресурсы сохраняются."
+	import_hint.text = "Поддерживаются .tscn и .scn с корнем Node2D. Исходный файл останется без изменений; неизвестные узлы и ресурсы сохраняются."
 	import_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_creation_import_host.add_child(import_hint)
 
