@@ -19,6 +19,7 @@ const ObjectBuilderCapabilitySettingsPanelScript = preload("res://addons/object_
 const ObjectBuilderCapabilityCatalogControllerScript = preload("res://addons/object_builder/controllers/capability_catalog_controller.gd")
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
+const ObjectBuilderSpriteFramesEditorDialogScript = preload("res://addons/object_builder/ui/sprite_frames_editor_dialog.gd")
 const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
 const ObjectBuilderDialogService = preload("res://addons/object_builder/services/dialog_service.gd")
 const ObjectBuilderEditorSceneTreeFilterScript = preload("res://addons/object_builder/services/editor_scene_tree_filter.gd")
@@ -105,6 +106,8 @@ var _visual_editor_view: Control
 var _canvas_view: Control
 var _visual_parts_view: Control
 var _sprite_quick_settings_view: Control
+var _sprite_frames_editor_dialog: ConfirmationDialog
+var _pending_sprite_frames_editor_path := NodePath("")
 var _status_label: Label
 var _preview_view: Window
 var _open_scene_button: Button
@@ -454,6 +457,7 @@ func _build_canvas_editor(parent: VBoxContainer) -> void:
 	_visual_parts_view.connect("draw_order_reorder_requested", Callable(self, "_on_visual_part_draw_order_reorder_requested"))
 	_visual_parts_view.connect("rename_requested", Callable(self, "_on_scene_tree_node_rename_requested"))
 	_visual_parts_view.connect("resource_edit_requested", Callable(self, "_on_visual_part_resource_edit_requested"))
+	_visual_parts_view.connect("sprite_frames_editor_requested", Callable(self, "_on_sprite_frames_editor_requested"))
 	parent.add_child(_visual_parts_view)
 
 	_sprite_quick_settings_view = ObjectBuilderSpriteQuickSettingsViewScript.new()
@@ -1543,6 +1547,11 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 	_visual_editor_view.connect("node_visibility_changed", Callable(self, "_on_visual_node_visibility_changed"))
 	_visual_editor_view.call("build")
 	parent.add_child(_visual_editor_view)
+
+	_sprite_frames_editor_dialog = ObjectBuilderSpriteFramesEditorDialogScript.new()
+	_sprite_frames_editor_dialog.name = "SpriteFramesEditorDialog"
+	_sprite_frames_editor_dialog.connect("frames_accepted", Callable(self, "_on_sprite_frames_editor_accepted"))
+	add_child(_sprite_frames_editor_dialog)
 
 func _load_local_state() -> void:
 	var settings := EditorInterface.get_editor_settings()
@@ -2969,6 +2978,33 @@ func _on_visual_part_resource_edit_requested(path: NodePath) -> void:
 		_visual_editor_view.call("popup_texture_dialog")
 	elif node is AnimatedSprite2D:
 		_visual_editor_view.call("popup_sprite_frames_dialog")
+
+
+func _on_sprite_frames_editor_requested(path: NodePath) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null or _sprite_frames_editor_dialog == null:
+		return
+	var sprite := scene_root.get_node_or_null(path) as AnimatedSprite2D
+	if sprite == null:
+		_set_status("Редактор кадров доступен только для AnimatedSprite2D.", true)
+		return
+	_pending_sprite_frames_editor_path = path
+	_sprite_frames_editor_dialog.call("open_for_sprite_frames", sprite.sprite_frames)
+	_sprite_frames_editor_dialog.popup_centered()
+
+
+func _on_sprite_frames_editor_accepted(frames: SpriteFrames) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null or frames == null or _pending_sprite_frames_editor_path.is_empty():
+		return
+	var sprite := scene_root.get_node_or_null(_pending_sprite_frames_editor_path) as AnimatedSprite2D
+	if sprite == null:
+		return
+	_commit_visual_node_property(sprite, "sprite_frames", frames, "изменить анимации и кадры")
+	_pending_sprite_frames_editor_path = NodePath("")
+	_refresh_canvas()
+	_refresh_visual_parts()
+	_set_status("Анимации и кадры обновлены. Изменения можно отменить через Undo.", false)
 
 
 func _on_visual_part_draw_order_change_requested(path: NodePath, delta: int) -> void:
