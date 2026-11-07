@@ -539,6 +539,11 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 			var active_definition := active_by_id[capability_id] as ObjectCapabilityDefinition
 			active_definition.display_order = library_copy.display_order
 			active_definition.icon_atlas_index = library_copy.icon_atlas_index
+			active_definition.relations = library_copy.relations.duplicate(true)
+			active_definition.synonyms = library_copy.synonyms.duplicate()
+			active_definition.example_queries = library_copy.example_queries.duplicate()
+			active_definition.icon_resource_path = library_copy.icon_resource_path
+			active_definition.illustration_resource_path = library_copy.illustration_resource_path
 			result.append(active_definition)
 		else:
 			result.append(library_copy.duplicate(true) as ObjectCapabilityDefinition)
