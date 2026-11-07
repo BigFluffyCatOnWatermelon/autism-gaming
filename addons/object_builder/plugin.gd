@@ -750,6 +750,11 @@ func _rebuild_capability_list() -> void:
 		"set_selected_count",
 		_capability_catalog_controller.call("get_selected_count")
 	)
+	var related_entries: Array[Dictionary] = _capability_catalog_controller.call("build_related_entries")
+	var focused_id := str(_capability_catalog_controller.call("get_focused_capability_id"))
+	var focused_definition := ObjectCapabilityCatalog.get_definition_reference(focused_id)
+	var focused_name := focused_definition.display_name if focused_definition != null else ""
+	_capability_view.call("set_related_entries", related_entries, focused_name)
 
 func _on_capability_focus_requested(capability_id: String) -> void:
 	if _working_definition == null:
