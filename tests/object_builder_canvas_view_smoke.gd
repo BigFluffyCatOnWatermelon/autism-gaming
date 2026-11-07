@@ -65,6 +65,7 @@ func _run() -> void:
 	_expect(preview_sprite != null, "canvas owns an isolated copy of the scene tree")
 	if preview_sprite != null:
 		_expect(preview_sprite != sprite, "canvas never edits the original scene node directly")
+		_expect(preview_sprite.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "pixel-art canvas preview uses nearest texture filtering")
 		_expect(CanvasGeometry.find_visual_at(preview_root, preview_sprite.global_position) == preview_sprite, "canvas hit testing finds a sprite by its transformed bounds")
 
 		var viewport_point := viewport.get_canvas_transform() * preview_sprite.global_position
