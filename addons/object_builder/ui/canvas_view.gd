@@ -37,6 +37,7 @@ var _grid_enabled := true
 var _editing_enabled := false
 var _snap_enabled := true
 var _status_label: Label
+var _coordinates_label: Label
 var _zoom_label: Label
 var _grid_button: Button
 var _snap_button: CheckBox
@@ -150,15 +151,26 @@ func build() -> void:
 	_interaction_controller.call("configure", _viewport, _surface, _camera)
 	_interaction_controller.connect("part_selected", Callable(self, "_on_interaction_part_selected"))
 	_interaction_controller.connect("context_menu_requested", Callable(self, "_on_context_menu_requested"))
+	_interaction_controller.connect("pointer_position_changed", Callable(self, "_on_pointer_position_changed"))
 	_interaction_controller.connect("transform_committed", Callable(self, "_on_interaction_transform_committed"))
 	_interaction_controller.connect("zoom_requested", Callable(self, "_on_interaction_zoom_requested"))
 	_surface.set("canvas_owner", _interaction_controller)
 	_build_context_menu()
 
+	var footer := HBoxContainer.new()
+	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	add_child(footer)
 	_status_label = Label.new()
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status_label.text = "Выбери объект в библиотеке, чтобы показать его части."
-	add_child(_status_label)
+	footer.add_child(_status_label)
+	_coordinates_label = Label.new()
+	_coordinates_label.text = "X: — · Y: —"
+	_coordinates_label.tooltip_text = "Мировые координаты курсора на холсте, в пикселях"
+	_coordinates_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_coordinates_label.custom_minimum_size = Vector2(112, 0)
+	footer.add_child(_coordinates_label)
 	_set_zoom(1.0)
 	call_deferred("_on_surface_resized")
 
@@ -273,6 +285,8 @@ func clear_canvas(message: String) -> void:
 	_open_scene_button.disabled = true
 	_open_scene_button.visible = false
 	_status_label.text = message
+	if _coordinates_label != null:
+		_coordinates_label.text = "X: — · Y: —"
 	_animation_button.button_pressed = false
 	_animation_button.disabled = true
 	_animation_button.text = "▶ Анимация"
@@ -434,6 +448,11 @@ func _fit_canvas() -> void:
 	_camera.position = rect.get_center()
 	_set_zoom(clampf(fit_zoom, MIN_ZOOM, MAX_ZOOM))
 
+
+func _on_pointer_position_changed(world_position: Vector2) -> void:
+	if _coordinates_label == null:
+		return
+	_coordinates_label.text = "X: %d · Y: %d" % [roundi(world_position.x), roundi(world_position.y)]
 
 func _on_interaction_part_selected(path: NodePath) -> void:
 	_selected_path = path
