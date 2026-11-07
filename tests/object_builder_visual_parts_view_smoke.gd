@@ -77,8 +77,10 @@ func _run() -> void:
 
 	var search_input := view.get("_search_input") as LineEdit
 	search_input.text = "glow"
+	view.call("_on_search_changed", "glow")
 	_expect(int(view.call("get_visible_row_count")) == 1, "search filters the visible rows by part name")
 	search_input.clear()
+	view.call("_on_search_changed", "")
 	_expect(int(view.call("get_visible_row_count")) == 3, "clearing search restores all part rows")
 
 	view.call("set_scene_root", null)
