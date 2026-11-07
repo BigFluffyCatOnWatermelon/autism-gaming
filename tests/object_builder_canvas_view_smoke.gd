@@ -152,6 +152,12 @@ func _run() -> void:
 		_expect(preview_sprite.has_meta("object_builder_pivot"), "pivot mode stores an independent local pivot on the preview node")
 		_expect(pivot_events.size() == 1 and pivot_events[0].get("path") == NodePath("Sprite"), "pivot edit emits a stable scene path for Undo/Redo persistence")
 		interaction.call("set_pivot_edit_mode", false)
+		second_preview.visible = false
+		interaction.set("_marquee_start", first_corner * surface.size / Vector2(viewport.size))
+		interaction.set("_marquee_end", second_corner * surface.size / Vector2(viewport.size))
+		interaction.call("_finish_marquee")
+		_expect(interaction.call("get_selected_paths") == [NodePath("Sprite")], "marquee ignores hidden visual parts")
+		second_preview.visible = true
 		sprite.set_meta("object_builder_pivot", Vector2(4.0, 6.0))
 		sprite.owner = scene_root
 		second_sprite.owner = scene_root
