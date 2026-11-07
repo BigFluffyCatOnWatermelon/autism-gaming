@@ -71,10 +71,15 @@ func build() -> void:
 	_fps.suffix = " FPS"
 	_fps.value_changed.connect(_on_fps_changed)
 	settings_row.add_child(_fps)
-	_loop = CheckBox.new()
-	_loop.text = "Зациклить"
-	_loop.toggled.connect(_on_loop_toggled)
-	settings_row.add_child(_loop)
+	_loop_mode = OptionButton.new()
+	_loop_mode.add_item("Без цикла")
+	_loop_mode.set_item_metadata(0, 0)
+	_loop_mode.add_item("Цикл")
+	_loop_mode.set_item_metadata(1, 1)
+	_loop_mode.add_item("Пинг-понг")
+	_loop_mode.set_item_metadata(2, 2)
+	_loop_mode.item_selected.connect(_on_loop_mode_selected)
+	settings_row.add_child(_loop_mode)
 
 	_frame_list = ItemList.new()
 	_frame_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
