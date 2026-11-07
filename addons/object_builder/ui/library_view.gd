@@ -458,6 +458,10 @@ func _rebuild_entry_actions_menu() -> void:
 	_entry_actions_menu.add_item("Удалить…", 4)
 	_entry_actions_menu.add_separator()
 	_entry_actions_menu.add_item("Экспортировать .tres…", 5)
+	_entry_actions_menu.add_item(
+		"Убрать из избранного" if str(_entries[_selected_index].get("title", "")).begins_with("★ ") else "В избранное",
+		7
+	)
 	if selected_definition != null and not selected_definition.is_template and not _collection_options.is_empty():
 		_entry_actions_menu.add_separator()
 		for index in range(_collection_options.size()):
@@ -491,7 +495,8 @@ func _on_entry_action_selected(action_id: int) -> void:
 		3: "rename",
 		4: "delete",
 		5: "export",
-		6: "remove_from_collection"
+		6: "remove_from_collection",
+		7: "toggle_favorite"
 	}
 	if action_id >= 1000:
 		var collection_index := action_id - 1000
