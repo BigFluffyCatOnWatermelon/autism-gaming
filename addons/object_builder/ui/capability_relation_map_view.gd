@@ -11,11 +11,11 @@ var _focus_button_count := 0
 
 
 func open(
-	owner: Control,
+	host_control: Control,
 	focused_definition: ObjectCapabilityDefinition,
 	entries: Array[Dictionary]
 ) -> void:
-	if owner == null or focused_definition == null:
+	if host_control == null or focused_definition == null:
 		return
 	_close_window()
 	_window = Window.new()
@@ -25,7 +25,7 @@ func open(
 	_window.transient = true
 	_window.exclusive = false
 	_window.close_requested.connect(_close_window)
-	owner.add_child(_window)
+	host_control.add_child(_window)
 
 	var layout := VBoxContainer.new()
 	layout.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
