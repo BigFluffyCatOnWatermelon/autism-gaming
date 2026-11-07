@@ -70,7 +70,8 @@ func _run() -> void:
 			"enabled": true,
 			"automatically_added": false,
 			"can_toggle": true,
-			"can_configure": true
+			"can_configure": true,
+			"has_relations": true
 		},
 		{
 			"definition": selectable,
@@ -80,6 +81,7 @@ func _run() -> void:
 			"automatically_added": false,
 			"can_toggle": true,
 			"can_configure": false,
+			"has_relations": true,
 			"relation_highlight": {
 				"type": "requires",
 				"explanation": "Для этой механики требуется основная способность.",
@@ -92,7 +94,8 @@ func _run() -> void:
 			"enabled": false,
 			"automatically_added": false,
 			"can_toggle": false,
-			"can_configure": false
+			"can_configure": false,
+			"has_relations": true
 		}
 	]
 	view.call("set_entries", entries, 200, 42)
@@ -110,6 +113,7 @@ func _run() -> void:
 	_expect(icon_slot != null and icon_slot.get_child_count() == 1, "every capability card owns a dedicated icon slot")
 	_expect(enabled_check.button_pressed and not enabled_check.disabled, "implemented capabilities can be toggled")
 	_expect(not settings_button.disabled, "enabled implemented capability can open settings")
+	_expect(not relations_button.disabled, "capability with a relationship can open its relation view")
 	enabled_check.toggled.emit(false)
 	settings_button.pressed.emit()
 	relations_button.pressed.emit()
