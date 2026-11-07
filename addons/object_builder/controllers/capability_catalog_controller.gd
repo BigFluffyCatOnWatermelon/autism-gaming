@@ -5,9 +5,11 @@ class_name CapabilityCatalogController
 
 const SelectionSessionScript = preload("res://addons/object_builder/controllers/capability_selection_session.gd")
 const BatchPlannerScript = preload("res://addons/object_builder/services/capability_batch_planner.gd")
+const PresetRegistryScript = preload("res://addons/object_builder/services/capability_preset_registry.gd")
 
 var _selection_session: RefCounted = SelectionSessionScript.new()
 var _focused_capability_id := ""
+var _active_preset_id := ""
 
 
 func set_selected(capability_id: String, selected: bool) -> void:
@@ -41,6 +43,153 @@ func get_selected_ids() -> PackedStringArray:
 
 func get_selected_count() -> int:
 	return int(_selection_session.call("get_count"))
+
+
+func set_active_preset(preset_id: String) -> void:
+	var normalized_id := preset_id.strip_edges().to_lower()
+	var preset := PresetRegistryScript.get_preset(normalized_id)
+	_active_preset_id = normalized_id if not preset.is_empty() else ""
+
+
+func get_active_preset_id() -> String:
+	return _active_preset_id
+
+
+func build_preset_summaries() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for preset in PresetRegistryScript.get_presets():
+		var capability_ids: Array = preset.get("capability_ids", [])
+		var ready_count := 0
+		var installed_count := 0
+		var selected_count := 0
+		for capability_id_value in capability_ids:
+			var capability_id := str(capability_id_value)
+			var definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
+			if definition != null and definition.is_ready():
+				ready_count += 1
+			if is_selected(capability_id):
+				selected_count += 1
+		result.append({
+			"id": str(preset.get("id", "")),
+			"display_name": str(preset.get("display_name", "")),
+			"description": str(preset.get("description", "")),
+			"icon": str(preset.get("icon", "shapes")),
+			"total_count": capability_ids.size(),
+			"ready_count": ready_count,
+			"selected_count": selected_count
+		})
+	return result
+
+
+func build_active_preset_details(
+	current_selections: Array[ObjectCapabilitySelection]
+) -> Dictionary:
+	if _active_preset_id.is_empty():
+		return {}
+	var preset := PresetRegistryScript.get_preset(_active_preset_id)
+	if preset.is_empty():
+		return {}
+
+	var simulated := _copy_plan_selections(current_selections)
+	var selections_by_id: Dictionary = {}
+	for selection in simulated:
+		if selection != null:
+			selections_by_id[selection.capability_id.strip_edges().to_lower()] = selection
+
+	for selected_id in get_selected_ids():
+		if selected_id.is_empty() or selections_by_id.has(selected_id):
+			continue
+		var selected_plan := ObjectCapabilityService.plan_selection_change(simulated, selected_id, true)
+		if bool(selected_plan.get("ok", false)):
+			simulated = _copy_plan_selections(selected_plan.get("selections", []))
+			for selection in simulated:
+				selections_by_id[selection.capability_id.strip_edges().to_lower()] = selection
+
+	var entries: Array[Dictionary] = []
+	var available_count := 0
+	var selected_count := 0
+	var installed_count := 0
+	for capability_id_value in preset.get("capability_ids", []):
+		var capability_id := str(capability_id_value).strip_edges().to_lower()
+		var definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
+		if definition == null:
+			entries.append({
+				"capability_id": capability_id,
+				"display_name": capability_id,
+				"available": false,
+				"blocked_reason": "Возможность отсутствует в каталоге."
+			})
+			continue
+
+		var selection := selections_by_id.get(capability_id) as ObjectCapabilitySelection
+		var is_enabled := selection != null and selection.enabled
+		var is_selected_in_catalog := is_selected(capability_id)
+		var can_select := false
+		var blocked_reason := ""
+		var dependency_names := PackedStringArray()
+
+		if not definition.is_ready():
+			blocked_reason = "Возможность ещё разрабатывается."
+		elif is_enabled:
+			installed_count += 1
+			blocked_reason = "Уже установлена."
+		else:
+			var plan := ObjectCapabilityService.plan_selection_change(simulated, capability_id, true)
+			if bool(plan.get("ok", false)):
+				can_select = true
+				available_count += 1
+				var added_ids: PackedStringArray = plan.get("added_capability_ids", PackedStringArray())
+				for added_id in added_ids:
+					if added_id == capability_id:
+						continue
+					var dependency := ObjectCapabilityCatalog.get_definition_reference(added_id)
+					if dependency != null and not dependency_names.has(dependency.display_name):
+						dependency_names.append(dependency.display_name)
+				simulated = _copy_plan_selections(plan.get("selections", []))
+				selections_by_id.clear()
+				for updated_selection in simulated:
+					if updated_selection != null:
+						selections_by_id[updated_selection.capability_id.strip_edges().to_lower()] = updated_selection
+				selected_count += 1 if is_selected_in_catalog else 0
+			else:
+				var errors: PackedStringArray = plan.get("errors", PackedStringArray())
+				blocked_reason = "; ".join(errors)
+
+		entries.append({
+			"capability_id": capability_id,
+			"definition": definition,
+			"display_name": definition.display_name,
+			"description": definition.description,
+			"ready": definition.is_ready(),
+			"installed": is_enabled,
+			"selected": is_selected_in_catalog,
+			"can_select": can_select,
+			"blocked_reason": blocked_reason,
+			"automatic_dependencies": dependency_names
+		})
+
+	return {
+		"id": _active_preset_id,
+		"display_name": str(preset.get("display_name", "")),
+		"description": str(preset.get("description", "")),
+		"entries": entries,
+		"available_count": available_count,
+		"installed_count": installed_count,
+		"selected_count": selected_count
+	}
+
+
+func select_all_available_from_active_preset(
+	current_selections: Array[ObjectCapabilitySelection]
+) -> int:
+	var details := build_active_preset_details(current_selections)
+	var added_count := 0
+	for entry in details.get("entries", []):
+		if not bool(entry.get("can_select", false)):
+			continue
+		if _selection_session.call("select", str(entry.get("capability_id", ""))):
+			added_count += 1
+	return added_count
 
 
 func build_entries(
