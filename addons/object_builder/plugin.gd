@@ -61,6 +61,7 @@ var _workspace_view: Control
 var _workspace_layout_state: Dictionary = {}
 var _library_view: Control
 var _library_details_view: Control
+var _inspector_details_split: VSplitContainer
 var _library_action_dialogs: Node
 var _pending_library_definition: ObjectDefinition
 var _pending_collection_id := ""
@@ -430,10 +431,23 @@ func _build_library_panel(parent: VBoxContainer) -> void:
 	_library_view.connect("collection_management_requested", Callable(self, "_on_collection_management_requested"))
 
 func _build_library_details(parent: VBoxContainer) -> void:
+	_inspector_details_split = VSplitContainer.new()
+	_inspector_details_split.name = "InspectorDetailsSplit"
+	_inspector_details_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_inspector_details_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_inspector_details_split.custom_minimum_size = Vector2(0, 220)
+	_inspector_details_split.split_offset = 170
+	_inspector_details_split.dragged.connect(_on_inspector_details_split_dragged)
+	parent.add_child(_inspector_details_split)
+
 	_library_details_view = ObjectBuilderLibraryDetailsViewScript.new()
 	_library_details_view.name = "LibraryDetailsView"
-	parent.add_child(_library_details_view)
+	_inspector_details_split.add_child(_library_details_view)
 	_library_details_view.call("build")
+
+func _on_inspector_details_split_dragged(_offset: int) -> void:
+	_save_local_state()
+
 
 func _build_library_action_dialogs() -> void:
 	_library_action_dialogs = ObjectBuilderLibraryActionDialogsScript.new()
@@ -724,7 +738,12 @@ func _build_capability_settings_panel(parent: VBoxContainer) -> void:
 	_capability_settings_panel.call("build")
 	_capability_settings_panel.connect("apply_requested", Callable(self, "_on_capability_settings_panel_apply"))
 	_capability_settings_panel.connect("close_requested", Callable(self, "_on_capability_settings_panel_close"))
-	parent.add_child(_capability_settings_panel)
+	if _inspector_details_split != null:
+		_inspector_details_split.add_child(_capability_settings_panel)
+	else:
+		parent.add_child(_capability_settings_panel)
+	_capability_settings_panel.custom_minimum_size = Vector2(0, 120)
+	_capability_settings_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_capability_settings_panel.visible = false
 
 
