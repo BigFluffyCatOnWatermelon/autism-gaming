@@ -84,7 +84,6 @@ func _run() -> void:
 	imported_definition.display_name = "Imported prototype"
 	imported_definition.category = "Tests"
 	imported_definition.object_type = "other"
-	imported_definition.custom_properties.append(_make_test_property("speed", "Скорость", 42))
 	var import_result: Dictionary = SceneDraftService.import_scene(import_source_path, imported_definition)
 	_expect(bool(import_result.get("ok", false)), "existing PackedScene can be imported as a separate object")
 	_expect(imported_definition.scene_path != import_source_path, "imported scene is stored at a new path")
@@ -100,9 +99,11 @@ func _run() -> void:
 			_expect(imported_root.get_meta("object_definition_id", "") == IMPORTED_ID, "import assigns the new definition ID to the copy")
 			_expect(imported_root.get_meta("object_category", "") == "Tests", "import assigns the selected category to the copy")
 			var imported_data := imported_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
-			_expect(imported_data != null, "import adds ObjectPropertyData without replacing other nodes")
+			_expect(imported_data != null, "import preserves an existing ObjectPropertyData node")
 			if imported_data != null:
-				_expect(imported_data.get_custom_property("speed", -1) == 42, "imported object receives its custom property defaults")
+				_expect(imported_data.get_custom_property("legacy_value", -1) == 29, "import preserves existing custom property values")
+				_expect(imported_data.get_custom_property_definition("legacy_value") != null, "import preserves existing custom property definitions")
+			_expect(imported_definition.custom_properties.size() == 1, "import copies existing custom property definitions into the ObjectDefinition")
 			imported_root.free()
 
 	var reloaded_source := ResourceLoader.load(import_source_path, "", ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
@@ -162,6 +163,13 @@ func _make_import_source_scene() -> PackedScene:
 	unknown_marker.name = "NestedUnknown"
 	unknown_parent.add_child(unknown_marker)
 	unknown_marker.owner = root
+
+	var property_data := ObjectPropertyData.new()
+	property_data.name = "ObjectProperties"
+	property_data.property_definitions.append(_make_test_property("legacy_value", "Сохранённое свойство", 12))
+	property_data.stored_values["legacy_value"] = 29
+	root.add_child(property_data)
+	property_data.owner = root
 
 	var unknown_body := StaticBody2D.new()
 	unknown_body.name = "UnknownCollision"
