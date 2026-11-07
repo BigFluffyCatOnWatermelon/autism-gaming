@@ -143,7 +143,11 @@ func _run() -> void:
 	_expect(controller.call("get_visible_definition", 0) == template, "template card selection resolves to its template definition")
 	controller.call("toggle_favorite", "template_crate")
 	entries = controller.call("build_visible_entries", "", "", "", "favorites")
-	_expect(entries.size() == 2 and entries.any(func(entry: Dictionary) -> bool: return entry.get("definition") == template), "favorites mode also includes favorited templates")
+	var favorite_template_found := false
+	for favorite_entry in entries:
+		if favorite_entry.get("definition") == template:
+			favorite_template_found = true
+	_expect(entries.size() == 3 and favorite_template_found, "favorites mode also includes favorited templates")
 
 	await process_frame
 	if failures.is_empty():
