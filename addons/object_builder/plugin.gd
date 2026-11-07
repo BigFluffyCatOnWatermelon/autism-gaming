@@ -13,7 +13,7 @@ const ObjectPropertyValueCodec = preload("res://scripts/object_system/object_pro
 const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder/ui/property_list_view.gd")
 const ObjectBuilderComponentEditorViewScript = preload("res://addons/object_builder/ui/component_editor_view.gd")
 const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_builder/ui/capability_list_view.gd")
-const ObjectBuilderCapabilitySettingsViewScript = preload("res://addons/object_builder/ui/capability_settings_view.gd")
+const ObjectBuilderCapabilitySettingsPanelScript = preload("res://addons/object_builder/ui/capability_settings_panel.gd")
 const ObjectBuilderCapabilityCatalogControllerScript = preload("res://addons/object_builder/controllers/capability_catalog_controller.gd")
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
@@ -81,7 +81,7 @@ var _favorite_button: Button
 var _property_list: VBoxContainer
 var _component_view: Control
 var _capability_view: Control
-var _capability_settings_dialog: AcceptDialog
+var _capability_settings_panel: Control
 var _editing_capability_selection: ObjectCapabilitySelection
 var _capability_change_dialog: AcceptDialog
 var _pending_capability_values: Array[ObjectCapabilitySelection] = []
@@ -343,7 +343,9 @@ func _build_ui() -> void:
 	_workspace_view.call("build")
 	_workspace_view.call("apply_layout_state", _workspace_layout_state)
 	_workspace_view.connect("layout_changed", Callable(self, "_save_local_state"))
-	_build_library_details(_workspace_view.call("get_inspector_host") as VBoxContainer)
+	var inspector_host := _workspace_view.call("get_inspector_host") as VBoxContainer
+	_build_library_details(inspector_host)
+	_build_capability_settings_panel(inspector_host)
 	_build_library_action_dialogs()
 
 	_build_workspace_toolbar(_workspace_view.call("get_toolbar_actions") as HBoxContainer)
@@ -661,7 +663,7 @@ func _build_dialogs() -> void:
 	(_dialog_view.call("get_creation_dialog") as AcceptDialog).confirmed.connect(_on_new_object_dialog_confirmed)
 	(_dialog_view.call("get_node_dialog") as AcceptDialog).confirmed.connect(_on_node_dialog_confirmed)
 	_dialog_view.connect("creation_profile_selected", Callable(self, "_on_new_object_type_selected"))
-	_build_capability_settings_dialog()
+	_build_capability_change_dialog()
 
 func _build_capability_editor(parent: VBoxContainer) -> void:
 	var view: VBoxContainer = ObjectBuilderCapabilityListViewScript.new()
@@ -678,11 +680,7 @@ func _build_capability_editor(parent: VBoxContainer) -> void:
 	_rebuild_capability_list()
 
 
-func _build_capability_settings_dialog() -> void:
-	_capability_settings_dialog = ObjectBuilderCapabilitySettingsViewScript.new()
-	_capability_settings_dialog.confirmed.connect(_on_capability_settings_confirmed)
-	add_child(_capability_settings_dialog)
-
+func _build_capability_change_dialog() -> void:
 	_capability_change_dialog = AcceptDialog.new()
 	_capability_change_dialog.title = "Подтвердить изменение объекта"
 	_capability_change_dialog.ok_button_text = "Применить"
@@ -690,6 +688,16 @@ func _build_capability_settings_dialog() -> void:
 	_capability_change_dialog.canceled.connect(_on_capability_change_canceled)
 	_capability_change_dialog.add_cancel_button("Отмена")
 	add_child(_capability_change_dialog)
+
+
+func _build_capability_settings_panel(parent: VBoxContainer) -> void:
+	_capability_settings_panel = ObjectBuilderCapabilitySettingsPanelScript.new()
+	_capability_settings_panel.name = "CapabilitySettingsPanel"
+	_capability_settings_panel.call("build")
+	_capability_settings_panel.connect("apply_requested", Callable(self, "_on_capability_settings_panel_apply"))
+	_capability_settings_panel.connect("close_requested", Callable(self, "_on_capability_settings_panel_close"))
+	parent.add_child(_capability_settings_panel)
+	_capability_settings_panel.visible = false
 
 
 func _on_capability_search_changed(_query: String) -> void:
@@ -889,52 +897,110 @@ func _apply_working_capabilities(values: Array[ObjectCapabilitySelection]) -> vo
 	if _working_definition.capabilities == next_values:
 		return
 	_working_definition.capabilities = next_values
+	if _capability_settings_panel != null and _capability_settings_panel.visible:
+		var editing_id := str(_capability_settings_panel.call("get_capability_id"))
+		var editing_selection := _find_capability_selection(editing_id)
+		if editing_selection == null or not editing_selection.enabled:
+			_on_capability_settings_panel_close()
+		else:
+			_editing_capability_selection = editing_selection
 	_mark_editor_session_changed()
 	_rebuild_capability_list()
 
 func _on_capability_settings_pressed(capability_id: String) -> void:
-	if _working_definition == null:
+	if _working_definition == null or _capability_settings_panel == null:
 		return
-	_editing_capability_selection = _find_capability_selection(capability_id)
-	if _editing_capability_selection == null or not _editing_capability_selection.enabled:
+	var selection := _find_capability_selection(capability_id)
+	if selection == null or not selection.enabled:
 		return
-
 	var capability := ObjectCapabilityCatalog.get_definition(capability_id)
 	if capability == null:
 		return
 
-	_capability_settings_dialog.call(
+	_editing_capability_selection = selection
+	_capability_settings_panel.call(
 		"configure",
 		capability,
-		_editing_capability_selection,
+		selection,
 		ObjectCapabilityCatalog.get_settings_schema(capability_id)
 	)
-	ObjectBuilderDialogService.popup_window_safely(
-		_capability_settings_dialog,
-		Vector2i(520, 460),
-		0.82
-	)
+	_library_details_view.visible = false
+	_capability_settings_panel.visible = true
+	_workspace_view.call("set_inspector_visible", true)
 
 
-func _on_capability_settings_confirmed() -> void:
-	if _working_definition == null or _editing_capability_selection == null:
+func _on_capability_settings_panel_apply() -> void:
+	if _working_definition == null or _capability_settings_panel == null:
 		return
-	var updated := _editing_capability_selection.duplicate(true) as ObjectCapabilitySelection
-	var setting_values: Array[Dictionary] = _capability_settings_dialog.call("get_values")
+	var capability_id := str(_capability_settings_panel.call("get_capability_id"))
+	if capability_id.is_empty():
+		return
+	var current_selection := _find_capability_selection(capability_id)
+	if current_selection == null or not current_selection.enabled:
+		_set_status("Эта возможность больше не установлена. Её настройки закрыты.", true)
+		_on_capability_settings_panel_close()
+		return
+
+	var updated := current_selection.duplicate(true) as ObjectCapabilitySelection
+	var setting_values: Array[Dictionary] = _capability_settings_panel.call("get_values")
 	for entry in setting_values:
 		updated.set_component_setting(
 			str(entry.get("component_id", "")),
 			str(entry.get("setting_key", "")),
 			entry.get("value")
 		)
+	if updated.settings_by_component == current_selection.settings_by_component:
+		_set_status("Настройки не изменились.", false)
+		return
 
-	var next_values: Array[ObjectCapabilitySelection] = _working_definition.capabilities.duplicate()
-	var index := next_values.find(_editing_capability_selection)
-	if index >= 0:
-		next_values[index] = updated
-		_commit_working_capabilities(next_values, "Изменить настройки возможности")
-		_set_status("Настройки обновлены. Нажми «Сохранить объект», чтобы записать изменения.", false)
+	var next_values := _duplicate_capability_selections(_working_definition.capabilities)
+	var selection_index := -1
+	for index in range(next_values.size()):
+		if next_values[index].capability_id == capability_id:
+			selection_index = index
+			break
+	if selection_index < 0:
+		return
+	next_values[selection_index] = updated
+
+	var application_plan := ObjectCapabilityService.build_application_plan(
+		_working_definition.capabilities,
+		next_values
+	)
+	if not bool(application_plan.get("ok", false)):
+		var errors: PackedStringArray = application_plan.get("errors", PackedStringArray())
+		_set_status("Настройки не применены: " + "; ".join(errors), true)
+		return
+	if not bool(application_plan.get("changed", false)):
+		_set_status("Настройки не изменились.", false)
+		return
+
+	_commit_working_capabilities(next_values, "Изменить настройки возможности")
+	_editing_capability_selection = _find_capability_selection(capability_id)
+	if _editing_capability_selection != null:
+		_capability_settings_panel.call(
+			"configure",
+			ObjectCapabilityCatalog.get_definition(capability_id),
+			_editing_capability_selection,
+			ObjectCapabilityCatalog.get_settings_schema(capability_id)
+		)
+	_set_status("Настройки обновлены. Нажми «Сохранить объект», чтобы записать изменения.", false)
+
+
+func _on_capability_settings_panel_close() -> void:
+	if _capability_settings_panel != null:
+		_capability_settings_panel.visible = false
+		_capability_settings_panel.call("clear")
 	_editing_capability_selection = null
+	if _library_details_view != null:
+		_library_details_view.visible = true
+		var selected_index := int(_library_view.call("get_selected_index")) if _library_view != null else -1
+		var selected_definition := (
+			_library_controller.call("get_visible_definition", selected_index) as ObjectDefinition
+			if selected_index >= 0
+			else _working_definition
+		)
+		_refresh_library_details(selected_definition)
 
 
 func _on_simple_add_image_pressed() -> void:
@@ -1310,6 +1376,8 @@ func _refresh_library_details(definition: ObjectDefinition) -> void:
 		return
 	var details: Dictionary = _library_controller.call("build_detail_data", definition)
 	_library_details_view.call("set_details", details)
+	if _capability_settings_panel != null and _capability_settings_panel.visible:
+		_library_details_view.visible = false
 
 
 func _on_search_changed(_value: String) -> void:
@@ -1321,6 +1389,7 @@ func _on_filter_changed(_index: int) -> void:
 
 
 func _on_library_item_selected(index: int) -> void:
+	_on_capability_settings_panel_close()
 	var definition := _library_controller.call("get_visible_definition", index) as ObjectDefinition
 	if definition == null:
 		return
@@ -1337,6 +1406,7 @@ func _on_library_item_selected(index: int) -> void:
 	_load_definition(definition)
 
 func _on_library_entry_action_requested(action: String, index: int) -> void:
+	_on_capability_settings_panel_close()
 	_pending_collection_id = ""
 	_pending_library_definition = null
 	var definition := _library_controller.call("get_visible_definition", index) as ObjectDefinition
