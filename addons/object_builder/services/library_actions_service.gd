@@ -62,7 +62,8 @@ static func delete_definition(definition: ObjectDefinition) -> Dictionary:
 		and scene_path.begins_with(ObjectLibraryService.SCENES_PATH + "/")
 		and FileAccess.file_exists(scene_path)
 	)
-	if managed_scene:
+	var scene_shared := managed_scene and _is_scene_referenced_by_other_definition(definition, scene_path)
+	if managed_scene and not scene_shared:
 		backup_scene = backup_base + ".tscn"
 		copy_error = DirAccess.copy_absolute(
 			ProjectSettings.globalize_path(scene_path),
@@ -71,7 +72,7 @@ static func delete_definition(definition: ObjectDefinition) -> Dictionary:
 		if copy_error != OK:
 			return _failure("Не удалось создать резервную копию сцены. Удаление отменено.")
 
-	if managed_scene:
+	if managed_scene and not scene_shared:
 		var remove_scene_error := DirAccess.remove_absolute(ProjectSettings.globalize_path(scene_path))
 		if remove_scene_error != OK:
 			return _failure("Не удалось удалить сцену. Запись библиотеки сохранена.")
@@ -87,7 +88,7 @@ static func delete_definition(definition: ObjectDefinition) -> Dictionary:
 
 	return {
 		"ok": true,
-		"message": "Запись удалена. Резервная копия сохранена в %s" % TRASH_PATH,
+		"message": "Запись удалена. %s" % ("Общая сцена оставлена без изменений." if scene_shared else "Резервная копия сохранена в %s." % TRASH_PATH),
 		"backup_path": backup_definition,
 		"scene_backup_path": backup_scene
 	}
@@ -150,6 +151,18 @@ static func _copy_definition(source: ObjectDefinition, as_template: bool) -> Dic
 		_cleanup_generated_scene(target)
 		return _failure("Не удалось сохранить копию. Код ошибки: %d" % save_error)
 	return {"ok": true, "definition": target, "message": "Копия сохранена в библиотеку."}
+
+
+static func _is_scene_referenced_by_other_definition(
+	deleted_definition: ObjectDefinition,
+	scene_path: String
+) -> bool:
+	for candidate in ObjectLibraryService.load_definitions() + ObjectLibraryService.load_templates():
+		if candidate == null or candidate.object_id == deleted_definition.object_id:
+			continue
+		if candidate.scene_path == scene_path:
+			return true
+	return false
 
 
 static func _get_definition_path(definition: ObjectDefinition) -> String:
