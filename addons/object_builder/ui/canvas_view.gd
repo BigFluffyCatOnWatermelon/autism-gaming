@@ -170,6 +170,8 @@ func _build_context_menu() -> void:
 
 
 func _on_context_menu_requested(path: NodePath) -> void:
+	if _context_menu != null:
+		_context_menu.hide()
 	_selected_path = path
 	if not _editing_enabled or path.is_empty() or _preview_instance == null or not is_instance_valid(_preview_instance):
 		return
@@ -263,6 +265,8 @@ func set_preview_instance(
 
 
 func clear_canvas(message: String) -> void:
+	if _context_menu != null:
+		_context_menu.hide()
 	_clear_preview()
 	_selected_path = NodePath("")
 	_editing_enabled = false
