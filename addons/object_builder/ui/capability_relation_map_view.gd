@@ -113,11 +113,11 @@ func _create_graph_node(
 	graph_node.title = title_text
 	graph_node.custom_minimum_size = Vector2(190, 92)
 	graph_node.resizable = false
-	graph_node.set_slot(0, true, 0, Color(0.62, 0.75, 0.95), true, 0, Color(0.62, 0.75, 0.95))
 
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 3)
 	graph_node.add_child(content)
+	graph_node.set_slot(0, true, 0, Color(0.62, 0.75, 0.95), true, 0, Color(0.62, 0.75, 0.95))
 
 	var subtitle_label := Label.new()
 	subtitle_label.text = subtitle
