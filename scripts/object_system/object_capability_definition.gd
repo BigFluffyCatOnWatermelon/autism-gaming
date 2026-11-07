@@ -23,6 +23,7 @@ class_name ObjectCapabilityDefinition
 @export var implementation_type: String = "unclassified"
 @export var readiness_status: String = ""
 @export var icon_resource_path: String = ""
+@export_range(-1, 9999, 1) var icon_atlas_index: int = -1
 @export var illustration_resource_path: String = ""
 @export var synonyms: PackedStringArray = PackedStringArray()
 @export var example_queries: PackedStringArray = PackedStringArray()
