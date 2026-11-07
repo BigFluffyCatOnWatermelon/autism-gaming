@@ -3,9 +3,11 @@ extends VBoxContainer
 ## Displays an object's scene tree and forwards user actions to the editor controller.
 
 signal add_node_requested
+signal duplicate_node_requested
 signal remove_node_requested
 signal refresh_requested
 signal node_selected(path: NodePath)
+signal node_rename_requested(path: NodePath, new_name: String)
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 
@@ -31,6 +33,12 @@ func build() -> void:
 	)
 	UIFactory.add_action_button(
 		toolbar,
+		"Дублировать",
+		_on_duplicate_pressed,
+		"Создать копию выбранной части вместе с дочерними узлами."
+	)
+	UIFactory.add_action_button(
+		toolbar,
 		"Удалить",
 		_on_remove_pressed,
 		"Удаляет выбранный дочерний узел через Undo/Redo."
@@ -47,8 +55,13 @@ func build() -> void:
 	tree.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tree.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	tree.hide_root = false
+	tree.columns = 2
+	tree.set_column_expand(0, true)
+	tree.set_column_expand(1, false)
+	tree.set_column_custom_minimum_width(1, 86)
 	tree.select_mode = Tree.SELECT_SINGLE
 	tree.item_selected.connect(_on_item_selected)
+	tree.item_edited.connect(_on_tree_item_edited)
 	add_child(tree)
 
 	status_label = Label.new()
@@ -68,9 +81,11 @@ func set_scene_root(scene_root: Node) -> void:
 		return
 
 	var root_item := tree.create_item()
-	root_item.set_text(0, "%s  <%s>" % [scene_root.name, scene_root.get_class()])
+	root_item.set_text(0, scene_root.name)
+	root_item.set_text(1, scene_root.get_class())
 	root_item.set_metadata(0, NodePath("."))
-	root_item.set_tooltip_text(0, scene_root.get_path())
+	root_item.set_tooltip_text(0, str(scene_root.get_path()))
+	root_item.set_editable(0, false)
 	for child in scene_root.get_children():
 		_add_node_item(child, root_item, scene_root)
 	status_label.text = "Дерево синхронизируется со штатными Scene dock и Inspector. Ctrl+S сохраняет сцену."
@@ -107,9 +122,11 @@ func get_selected_node(scene_root: Node) -> Node:
 func _add_node_item(node: Node, parent_item: TreeItem, scene_root: Node) -> void:
 	var item := tree.create_item(parent_item)
 	var display_name := "Параметры объекта" if node is ObjectPropertyData else node.name
-	item.set_text(0, "%s  <%s>" % [display_name, node.get_class()])
+	item.set_text(0, display_name)
+	item.set_text(1, node.get_class())
 	item.set_metadata(0, scene_root.get_path_to(node))
-	item.set_tooltip_text(0, str(node.get_path()))
+	item.set_tooltip_text(0, "Дважды щёлкни имя, чтобы переименовать.\n" + str(node.get_path()))
+	item.set_editable(0, true)
 	for child in node.get_children():
 		_add_node_item(child, item, scene_root)
 
@@ -141,9 +158,31 @@ func _on_add_pressed() -> void:
 	add_node_requested.emit()
 
 
+func _on_duplicate_pressed() -> void:
+	duplicate_node_requested.emit()
+
+
 func _on_remove_pressed() -> void:
 	remove_node_requested.emit()
 
 
 func _on_refresh_pressed() -> void:
 	refresh_requested.emit()
+
+
+func _on_tree_item_edited() -> void:
+	if tree == null:
+		return
+	var edited_item := tree.get_edited()
+	if edited_item == null:
+		return
+	var path_value: Variant = edited_item.get_metadata(0)
+	if path_value is NodePath:
+		request_rename(NodePath(str(path_value)), edited_item.get_text(0))
+
+
+func request_rename(path: NodePath, new_name: String) -> void:
+	var clean_name := new_name.strip_edges()
+	if path.is_empty() or path == NodePath(".") or clean_name.is_empty():
+		return
+	node_rename_requested.emit(path, clean_name)

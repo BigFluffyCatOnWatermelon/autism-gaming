@@ -408,6 +408,8 @@ func _build_advanced_editor(parent: VBoxContainer) -> void:
 	_scene_tree_view.name = "SceneTreeView"
 	_scene_tree_view.connect("add_node_requested", Callable(self, "_on_add_node_pressed"))
 	_scene_tree_view.connect("remove_node_requested", Callable(self, "_on_remove_node_pressed"))
+	_scene_tree_view.connect("duplicate_node_requested", Callable(self, "_on_duplicate_node_pressed"))
+	_scene_tree_view.connect("node_rename_requested", Callable(self, "_on_scene_tree_node_rename_requested"))
 	_scene_tree_view.connect("refresh_requested", Callable(self, "_refresh_scene_tree"))
 	_scene_tree_view.connect("node_selected", Callable(self, "_on_scene_tree_item_selected"))
 	_scene_tree_view.call("build")
@@ -1925,6 +1927,94 @@ func _on_node_dialog_confirmed() -> void:
 	EditorInterface.edit_node(new_node)
 	_refresh_scene_tree()
 	_set_status("Добавлен узел %s. Для сохранения сцены нажми Ctrl+S." % new_node.name, false)
+
+func _on_duplicate_node_pressed() -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		_set_status("Открой сцену выбранного объекта.", true)
+		return
+	var source_node := _get_selected_scene_tree_node()
+	if source_node == null or source_node == scene_root:
+		_set_status("Выбери дочернюю часть, которую нужно дублировать.", true)
+		return
+	var parent_node := source_node.get_parent()
+	if parent_node == null:
+		return
+	var duplicate_node := source_node.duplicate()
+	if duplicate_node == null:
+		_set_status("Не удалось создать копию выбранной части.", true)
+		return
+	duplicate_node.name = _get_unique_child_name(parent_node, source_node.name + "_copy")
+	var insert_index := source_node.get_index() + 1
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: дублировать часть", 0, scene_root)
+	undo_redo.add_do_method(parent_node, "add_child", duplicate_node)
+	undo_redo.add_do_method(parent_node, "move_child", duplicate_node, insert_index)
+	undo_redo.add_do_method(duplicate_node, "set_owner", scene_root)
+	for child in duplicate_node.get_children():
+		_add_owner_do_methods(undo_redo, child, scene_root)
+	undo_redo.add_undo_method(parent_node, "remove_child", duplicate_node)
+	undo_redo.add_do_reference(duplicate_node)
+	undo_redo.commit_action()
+	EditorInterface.edit_node(duplicate_node)
+	_sync_scene_tree_selection(duplicate_node)
+	_set_status("Создана копия «%s». Измени её независимо от оригинала и сохрани сцену через Ctrl+S." % duplicate_node.name, false)
+
+
+func _add_owner_do_methods(undo_redo: EditorUndoRedoManager, node: Node, scene_root: Node) -> void:
+	undo_redo.add_do_method(node, "set_owner", scene_root)
+	for child in node.get_children():
+		_add_owner_do_methods(undo_redo, child, scene_root)
+
+
+func _get_unique_child_name(parent_node: Node, base_name: String) -> String:
+	var safe_base := base_name.strip_edges().validate_node_name()
+	if safe_base.is_empty():
+		safe_base = "Part"
+	var candidate := safe_base
+	var suffix := 2
+	while parent_node.get_node_or_null(NodePath(candidate)) != null:
+		candidate = "%s%d" % [safe_base, suffix]
+		suffix += 1
+	return candidate
+
+
+func _on_scene_tree_node_rename_requested(path: NodePath, requested_name: String) -> void:
+	var scene_root := _get_open_object_scene_root()
+	if scene_root == null:
+		return
+	var node := scene_root.get_node_or_null(path)
+	if node == null or node == scene_root:
+		return
+	var parent_node := node.get_parent()
+	if parent_node == null:
+		return
+	var clean_name := requested_name.strip_edges().validate_node_name()
+	if clean_name.is_empty():
+		_refresh_scene_tree()
+		_set_status("Имя части не может быть пустым.", true)
+		return
+	var next_name := clean_name
+	var suffix := 2
+	while true:
+		var sibling := parent_node.get_node_or_null(NodePath(next_name))
+		if sibling == null or sibling == node:
+			break
+		next_name = "%s%d" % [clean_name, suffix]
+		suffix += 1
+	if next_name == node.name:
+		_refresh_scene_tree()
+		return
+	var old_name := str(node.name)
+	var undo_redo := EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("Object Builder: переименовать часть", 0, scene_root)
+	undo_redo.add_do_property(node, "name", next_name)
+	undo_redo.add_undo_property(node, "name", old_name)
+	undo_redo.commit_action()
+	EditorInterface.edit_node(node)
+	_refresh_scene_tree()
+	_set_status("Часть переименована в «%s». Ctrl+Z отменяет изменение." % next_name, false)
+
 
 func _on_remove_node_pressed() -> void:
 	var scene_root := _get_open_object_scene_root()
