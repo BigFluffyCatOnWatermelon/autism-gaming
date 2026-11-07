@@ -768,10 +768,16 @@ func _rebuild_capability_list() -> void:
 	if not _working_definition.display_name.strip_edges().is_empty():
 		recommendation_context_parts.append(_working_definition.display_name.strip_edges())
 	var profile_name := ObjectCreationProfileRegistry.get_display_name(_working_definition.object_type)
-	if not profile_name.is_empty():
+	if not profile_name.is_empty() and _working_definition.object_type.strip_edges().to_lower() != "other":
 		recommendation_context_parts.append(profile_name)
 	elif not _working_definition.category.strip_edges().is_empty():
-		recommendation_context_parts.append(_working_definition.category.strip_edges())
+		var category_name := str(_library_controller.call(
+			"get_category_display_name",
+			_working_definition.category
+		))
+		recommendation_context_parts.append(
+			category_name if not category_name.is_empty() else _working_definition.category.strip_edges()
+		)
 	_capability_view.call(
 		"set_recommended_entries",
 		recommended_entries,
