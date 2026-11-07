@@ -13,6 +13,7 @@ const ObjectBuilderCapabilitySettingsViewScript = preload("res://addons/object_b
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
 const ObjectBuilderDialogViewScript = preload("res://addons/object_builder/ui/dialog_view.gd")
+const ObjectBuilderWorkspaceViewScript = preload("res://addons/object_builder/ui/workspace_view.gd")
 const ObjectBuilderLibraryControllerScript = preload("res://addons/object_builder/controllers/library_controller.gd")
 const ObjectBuilderEditorSessionScript = preload("res://addons/object_builder/controllers/object_editor_session.gd")
 const ObjectBuilderSceneDraftService = preload("res://addons/object_builder/services/scene_draft_service.gd")
@@ -42,6 +43,8 @@ const CHILD_NODE_TYPES := [
 	"AnimationPlayer"
 ]
 var _main_screen: MarginContainer
+var _workspace_view: Control
+var _workspace_layout_state: Dictionary = {}
 var _library_view: Control
 var _editor_view: TabContainer
 var _dialog_view: Node
@@ -94,6 +97,8 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
 	_disconnect_editor_sync()
+	if _library_controller != null and _workspace_view != null:
+		_save_local_state()
 	if _editor_session != null:
 		_editor_session.call("clear")
 	_working_definition = null
@@ -206,6 +211,8 @@ func _on_editor_selection_changed() -> void:
 	var selected_node := _get_editor_selected_scene_node(scene_root)
 	if selected_node == null:
 		_refresh_visual_editor(null)
+		if _workspace_view != null:
+			_workspace_view.call("set_selection_info", "", "")
 		return
 	_refresh_scene_tree()
 	_sync_scene_tree_selection(selected_node)
@@ -263,57 +270,34 @@ func _sync_scene_tree_selection(node: Node) -> void:
 	_scene_tree_view.call("select_node", scene_root, node)
 	_syncing_tree_selection = false
 	_refresh_visual_editor(node)
-
+	if _workspace_view != null:
+		_workspace_view.call("set_selection_info", node.name, str(node.get_path()))
 func _build_ui() -> void:
 	_main_screen = MarginContainer.new()
 	_main_screen.name = "Object Builder"
-	_main_screen.custom_minimum_size = Vector2(560, 320)
+	_main_screen.custom_minimum_size = Vector2(620, 320)
 	_main_screen.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_main_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	for margin_name in ["left", "top", "right", "bottom"]:
 		_main_screen.add_theme_constant_override("margin_" + margin_name, 8)
 
-	var layout := VBoxContainer.new()
-	layout.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	layout.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_main_screen.add_child(layout)
-	_build_workspace_toolbar(layout)
+	_workspace_view = ObjectBuilderWorkspaceViewScript.new()
+	_workspace_view.name = "WorkspaceView"
+	_workspace_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_workspace_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_main_screen.add_child(_workspace_view)
+	_workspace_view.call("build")
+	_workspace_view.call("apply_layout_state", _workspace_layout_state)
+	_workspace_view.connect("layout_changed", Callable(self, "_save_local_state"))
 
-	var workspace_split := HSplitContainer.new()
-	workspace_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	layout.add_child(workspace_split)
-	_build_library_panel(workspace_split)
-	_build_editor_tabs(workspace_split)
-
-
-func _build_workspace_toolbar(parent: VBoxContainer) -> void:
-	var toolbar := HBoxContainer.new()
-	parent.add_child(toolbar)
-	var title := Label.new()
-	title.text = "Object Builder"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	toolbar.add_child(title)
-	
-	ObjectBuilderUIFactory.add_action_button(
-		toolbar,
-		"Создать объект",
-		_on_new_object_pressed,
-		"Начать создание нового игрового объекта"
-	)
-	ObjectBuilderUIFactory.add_action_button(
-		toolbar,
-		"Из шаблона",
-		_on_create_from_template_pressed
-	)
-	ObjectBuilderUIFactory.add_action_button(
-		toolbar,
-		"↻",
-		_on_refresh_pressed,
-		"Обновить библиотеку"
-	)
-
-
-func _build_library_panel(parent: HSplitContainer) -> void:
+	_build_workspace_toolbar(_workspace_view.call("get_toolbar_actions") as HBoxContainer)
+	_build_library_panel(_workspace_view.call("get_library_host") as VBoxContainer)
+	_build_editor_tabs(_workspace_view.call("get_editor_host") as VBoxContainer)
+func _build_workspace_toolbar(parent: HBoxContainer) -> void:
+	ObjectBuilderUIFactory.add_action_button(parent, "Создать объект", _on_new_object_pressed, "Начать создание нового игрового объекта")
+	ObjectBuilderUIFactory.add_action_button(parent, "Из шаблона", _on_create_from_template_pressed)
+	ObjectBuilderUIFactory.add_action_button(parent, "↻", _on_refresh_pressed, "Обновить библиотеку")
+func _build_library_panel(parent: VBoxContainer) -> void:
 	_library_view = ObjectBuilderLibraryViewScript.new()
 	_library_view.name = "LibraryView"
 	parent.add_child(_library_view)
@@ -322,7 +306,7 @@ func _build_library_panel(parent: HSplitContainer) -> void:
 	_library_view.connect("filter_changed", Callable(self, "_on_filter_changed"))
 	_library_view.connect("object_selected", Callable(self, "_on_library_item_selected"))
 
-func _build_editor_tabs(parent: HSplitContainer) -> void:
+func _build_editor_tabs(parent: VBoxContainer) -> void:
 	_editor_view = ObjectBuilderEditorViewScript.new()
 	_editor_view.name = "ObjectEditorView"
 	parent.add_child(_editor_view)
@@ -1026,23 +1010,17 @@ func _build_visual_editor(parent: VBoxContainer) -> void:
 
 func _load_local_state() -> void:
 	var settings := EditorInterface.get_editor_settings()
-	var stored_favorites: Variant = settings.get_project_metadata(
-		METADATA_SECTION,
-		"favorites",
-		PackedStringArray()
-	)
-	var stored_recent: Variant = settings.get_project_metadata(
-		METADATA_SECTION,
-		"recent",
-		PackedStringArray()
-	)
+	var stored_favorites: Variant = settings.get_project_metadata(METADATA_SECTION, "favorites", PackedStringArray())
+	var stored_recent: Variant = settings.get_project_metadata(METADATA_SECTION, "recent", PackedStringArray())
+	var stored_layout: Variant = settings.get_project_metadata(METADATA_SECTION, "workspace_layout", {})
+	_workspace_layout_state = stored_layout.duplicate(true) if stored_layout is Dictionary else {}
 	_library_controller.call("set_local_state", stored_favorites, stored_recent)
-
 func _save_local_state() -> void:
 	var settings := EditorInterface.get_editor_settings()
 	settings.set_project_metadata(METADATA_SECTION, "favorites", _library_controller.call("get_favorites"))
 	settings.set_project_metadata(METADATA_SECTION, "recent", _library_controller.call("get_recent_ids"))
-
+	if _workspace_view != null:
+		settings.set_project_metadata(METADATA_SECTION, "workspace_layout", _workspace_view.call("get_layout_state"))
 func _refresh_library() -> void:
 	_library_controller.call("load_library")
 	_rebuild_category_filter()
@@ -1184,7 +1162,9 @@ func _load_definition(definition: ObjectDefinition, is_new: bool = false) -> voi
 	_refresh_favorite_button()
 	_refresh_scene_tree()
 	_is_loading_editor_form = false
-
+	_refresh_workspace_document_info()
+	if _workspace_view != null:
+		_workspace_view.call("set_selection_info", "", "")
 func _select_root_type(type_name: String) -> void:
 	for index in range(_root_type.item_count):
 		if _root_type.get_item_text(index) == type_name:
@@ -1825,10 +1805,28 @@ func _set_owner_recursive(node: Node, new_owner: Node) -> void:
 
 
 func _set_status(message: String, is_error: bool) -> void:
-	if _status_label == null:
+	if _status_label != null:
+		_status_label.text = message
+		if is_error:
+			_status_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
+		else:
+			_status_label.remove_theme_color_override("font_color")
+	if _workspace_view != null:
+		_refresh_workspace_document_info()
+		_workspace_view.call("set_status", message, is_error)
+
+
+func _refresh_workspace_document_info() -> void:
+	if _workspace_view == null:
 		return
-	_status_label.text = message
-	if is_error:
-		_status_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.4))
-	else:
-		_status_label.remove_theme_color_override("font_color")
+	if _working_definition == null:
+		_workspace_view.call("set_document_info", "", "", false, false)
+		return
+	var is_dirty := bool(_editor_session.call("is_dirty")) if _editor_session != null else false
+	_workspace_view.call(
+		"set_document_info",
+		_working_definition.display_name,
+		_working_definition.category,
+		_working_definition.is_template,
+		is_dirty
+	)
