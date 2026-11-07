@@ -333,12 +333,19 @@ func _add_recommendation_candidate(
 		return
 
 	var existing: Dictionary = candidates[normalized_id]
-	existing["score"] = maxi(int(existing.get("score", 0)), relation_score) + 4
+	var existing_score := int(existing.get("score", 0))
+	if relation_score > existing_score:
+		existing["score"] = relation_score
+		existing["relation_type"] = relation_type
+		existing["explanation"] = reason
+	else:
+		existing["score"] = existing_score + 4
 	var source_names: PackedStringArray = existing.get("source_names", PackedStringArray())
 	if not source_names.has(source_name):
 		source_names.append(source_name)
 		existing["source_names"] = source_names
-		existing["explanation"] = str(existing.get("explanation", "")) + " Также связано с «%s»." % source_name
+		if relation_score <= existing_score:
+			existing["explanation"] = str(existing.get("explanation", "")) + " Также связано с «%s»." % source_name
 	candidates[normalized_id] = existing
 
 
