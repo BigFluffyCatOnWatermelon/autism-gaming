@@ -110,6 +110,30 @@ func _run_tests() -> void:
 		"focused capability highlights its outgoing relationships"
 	)
 
+	var focused_relations: Array[Dictionary] = controller.call("build_related_entries")
+	_expect(focused_relations.size() == 1, "focused capability produces a compact related-mechanics list")
+	if not focused_relations.is_empty():
+		_expect(
+			str(focused_relations[0].get("capability_id", "")) == DATA_ID
+			and str(focused_relations[0].get("relation_type", "")) == "related",
+			"related-mechanics list contains the target and typed relationship"
+		)
+		_expect(
+			str(focused_relations[0].get("explanation", "")).contains("данные"),
+			"related-mechanics list carries the relationship explanation"
+		)
+
+	controller.call("set_focused_capability", "plays_attack_animation")
+	var attack_suggestions: Array[Dictionary] = controller.call("build_related_entries")
+	var attack_recommendation_found := false
+	for suggestion in attack_suggestions:
+		if (
+			str(suggestion.get("capability_id", "")) == "can_attack"
+			and str(suggestion.get("relation_type", "")) == "recommends"
+		):
+			attack_recommendation_found = true
+	_expect(attack_recommendation_found, "curated recommendation appears in the related-mechanics strip")
+
 	var phrase_entries: Array[Dictionary] = controller.call(
 		"build_entries",
 		visual_ids,
