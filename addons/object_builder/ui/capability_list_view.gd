@@ -286,7 +286,7 @@ func set_preset_data(
 		)
 		var capability_id := str(entry.get("capability_id", ""))
 		choice.tooltip_text = str(entry.get("description", ""))
-		if not bool(entry.get("blocked_reason", "")).is_empty():
+		if not str(entry.get("blocked_reason", "")).is_empty():
 			choice.tooltip_text = str(entry.get("blocked_reason", ""))
 		var dependencies: PackedStringArray = entry.get("automatic_dependencies", PackedStringArray())
 		if not dependencies.is_empty():
