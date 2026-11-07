@@ -16,6 +16,7 @@ const PAGE_SIZE := 20
 var search_input: LineEdit
 var category_option: OptionButton
 var entries_container: VBoxContainer
+var _entries_scroll: ScrollContainer
 var _pagination_row: HBoxContainer
 var _previous_page_button: Button
 var _next_page_button: Button
@@ -62,11 +63,19 @@ func build(categories: Array[Dictionary]) -> void:
 	category_option.item_selected.connect(_on_category_selected)
 	add_child(category_option)
 
+	_build_selection_bar()
+
+	_entries_scroll = ScrollContainer.new()
+	_entries_scroll.custom_minimum_size = Vector2(0, 420)
+	_entries_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_entries_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_entries_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(_entries_scroll)
+
 	entries_container = VBoxContainer.new()
 	entries_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	entries_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	entries_container.add_theme_constant_override("separation", 6)
-	add_child(entries_container)
+	_entries_scroll.add_child(entries_container)
 
 	_pagination_row = HBoxContainer.new()
 	_pagination_row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -84,8 +93,6 @@ func build(categories: Array[Dictionary]) -> void:
 	_next_page_button.pressed.connect(_on_next_page_pressed)
 	_pagination_row.add_child(_next_page_button)
 	add_child(_pagination_row)
-
-	_build_selection_bar()
 
 
 func _build_selection_bar() -> void:
@@ -145,6 +152,7 @@ func show_empty_state(message: String) -> void:
 	_pagination_row.visible = false
 	UIFactory.clear_children(entries_container)
 	UIFactory.add_empty_state(entries_container, message)
+	_entries_scroll.scroll_vertical = 0
 	set_selected_count(_selected_count)
 
 
@@ -154,6 +162,7 @@ func set_entries(
 	ready_count: int
 ) -> void:
 	_entries = entries.duplicate()
+	_entries_scroll.scroll_vertical = 0
 	_total_count = total_count
 	_ready_count = ready_count
 	_page_index = 0
