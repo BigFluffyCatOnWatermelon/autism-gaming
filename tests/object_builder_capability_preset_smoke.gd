@@ -19,6 +19,7 @@ func _run_tests() -> void:
 	_test_preset_registry()
 	_test_preset_preview_and_selection()
 	_test_installed_and_selected_states()
+	_test_custom_preset_management()
 
 	if failures.is_empty():
 		print("Object Builder capability preset tests passed.")
@@ -157,6 +158,61 @@ func _test_installed_and_selected_states() -> void:
 		int(with_selected_details.get("selected_count", 0)) >= 1,
 		"preset summary counts selected but not-yet-installed capabilities"
 	)
+
+
+func _test_custom_preset_management() -> void:
+	var controller = ControllerScript.new()
+	var preset_store: RefCounted = controller.get("_preset_store")
+	var storage_path := "user://object_builder_capability_preset_controller_smoke.json"
+	preset_store.set("storage_path", storage_path)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(storage_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(storage_path + ".tmp"))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(storage_path + ".bak"))
+
+	controller.call("set_selected", "has_health", true)
+	controller.call("set_selected", "can_receive_damage", true)
+	var selected_ids: PackedStringArray = controller.call("get_selected_ids")
+	_expect(selected_ids.size() == 2, "custom preset creation reads the shared catalog selection")
+	var preset_id := str(controller.call("build_unique_custom_preset_id", "Мой ресурс"))
+	_expect(preset_id.begins_with("user_moy_resurs"), "Russian preset names receive readable IDs")
+	var saved: Dictionary = controller.call("save_custom_preset", {
+		"id": preset_id,
+		"display_name": "Мой ресурс",
+		"description": "Сохранённый пользовательский набор.",
+		"capability_ids": Array(selected_ids)
+	})
+	_expect(bool(saved.get("ok", false)), "controller saves a validated custom preset")
+	var second_id := str(controller.call("build_unique_custom_preset_id", "Мой ресурс"))
+	_expect(second_id != preset_id, "generated preset IDs remain unique after a save")
+	controller.call("set_active_preset", preset_id)
+	var no_current_selections: Array[ObjectCapabilitySelection] = []
+	var details: Dictionary = controller.call("build_active_preset_details", no_current_selections)
+	_expect(bool(details.get("is_custom", false)), "active preset details identify user-owned presets")
+	_expect(details.get("capability_ids", []).size() == 2, "active preset details expose the saved composition")
+
+	var updated: Dictionary = controller.call("save_custom_preset", {
+		"id": preset_id,
+		"display_name": "Мой ресурс обновлён",
+		"description": "Новый состав.",
+		"capability_ids": ["has_health"]
+	})
+	_expect(bool(updated.get("ok", false)), "controller updates a custom preset using its stable ID")
+	var after_update: Array[Dictionary] = controller.call("get_custom_presets")
+	_expect(after_update.size() == 1, "updating a preset does not create a duplicate")
+	_expect(after_update[0].get("capability_ids", []).size() == 1, "updated composition is persisted")
+
+	var duplicate_id := str(controller.call("build_unique_custom_preset_id", "Копия ресурса"))
+	var duplicated: Dictionary = controller.call("duplicate_custom_preset", preset_id, duplicate_id, "Копия ресурса")
+	_expect(bool(duplicated.get("ok", false)), "controller duplicates an existing custom preset")
+	_expect(controller.call("get_custom_presets").size() == 2, "duplicate is stored separately")
+	var deleted: Dictionary = controller.call("delete_custom_preset", preset_id)
+	_expect(bool(deleted.get("ok", false)), "controller deletes a user-owned preset")
+	_expect(controller.call("get_custom_presets").size() == 1, "deleting one preset preserves its duplicate")
+	_expect(not bool(controller.call("delete_custom_preset", "breakable_resource").get("ok", false)), "controller cannot delete a built-in preset")
+
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(storage_path))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(storage_path + ".tmp"))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(storage_path + ".bak"))
 
 
 func _find_entry(entries: Array, capability_id: String) -> Dictionary:

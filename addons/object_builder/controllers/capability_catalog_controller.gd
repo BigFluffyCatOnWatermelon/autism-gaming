@@ -57,6 +57,48 @@ func get_active_preset_id() -> String:
 	return _active_preset_id
 
 
+func get_preset_definition(preset_id: String) -> Dictionary:
+	return _get_preset_definition(preset_id.strip_edges().to_lower())
+
+
+func build_unique_custom_preset_id(display_name: String) -> String:
+	var normalized_name := display_name.strip_edges().to_lower().replace("ё", "е")
+	var transliteration := {
+		"а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e",
+		"ж": "zh", "з": "z", "и": "i", "й": "y", "к": "k", "л": "l",
+		"м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s",
+		"т": "t", "у": "u", "ф": "f", "х": "h", "ц": "ts", "ч": "ch",
+		"ш": "sh", "щ": "shch", "ъ": "", "ы": "y", "ь": "", "э": "e",
+		"ю": "yu", "я": "ya"
+	}
+	var slug := ""
+	for index in range(normalized_name.length()):
+		var character := normalized_name.substr(index, 1)
+		if transliteration.has(character):
+			slug += str(transliteration[character])
+		elif "abcdefghijklmnopqrstuvwxyz0123456789_-".contains(character):
+			slug += character
+		elif not slug.ends_with("_"):
+			slug += "_"
+	while slug.begins_with("_"):
+		slug = slug.substr(1)
+	while slug.ends_with("_"):
+		slug = slug.left(slug.length() - 1)
+	if slug.is_empty():
+		slug = "preset"
+	var base_id := "user_" + slug.left(43)
+	var used_ids: Dictionary = {}
+	for preset in _get_all_presets():
+		used_ids[str(preset.get("id", ""))] = true
+	var candidate := base_id
+	var suffix := 2
+	while used_ids.has(candidate):
+		var suffix_text := "_" + str(suffix)
+		candidate = base_id.left(48 - suffix_text.length()) + suffix_text
+		suffix += 1
+	return candidate
+
+
 func build_preset_summaries() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for preset in _get_all_presets():
@@ -207,6 +249,8 @@ func build_active_preset_details(
 		"id": _active_preset_id,
 		"display_name": str(preset.get("display_name", "")),
 		"description": str(preset.get("description", "")),
+		"is_custom": bool(preset.get("is_custom", false)),
+		"capability_ids": (preset.get("capability_ids", []) as Array).duplicate(),
 		"entries": entries,
 		"available_count": available_count,
 		"installed_count": installed_count,

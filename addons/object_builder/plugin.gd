@@ -13,6 +13,7 @@ const ObjectPropertyValueCodec = preload("res://scripts/object_system/object_pro
 const ObjectBuilderPropertyListViewScript = preload("res://addons/object_builder/ui/property_list_view.gd")
 const ObjectBuilderComponentEditorViewScript = preload("res://addons/object_builder/ui/component_editor_view.gd")
 const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_builder/ui/capability_list_view.gd")
+const ObjectBuilderCapabilityPresetDialogScript = preload("res://addons/object_builder/ui/capability_preset_dialog.gd")
 const ObjectBuilderCapabilitySettingsPanelScript = preload("res://addons/object_builder/ui/capability_settings_panel.gd")
 const ObjectBuilderCapabilityCatalogControllerScript = preload("res://addons/object_builder/controllers/capability_catalog_controller.gd")
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
@@ -81,6 +82,12 @@ var _favorite_button: Button
 var _property_list: VBoxContainer
 var _component_view: Control
 var _capability_view: Control
+var _capability_preset_dialog: ConfirmationDialog
+var _capability_preset_delete_dialog: ConfirmationDialog
+var _pending_capability_preset_action := ""
+var _pending_capability_preset_id := ""
+var _pending_capability_preset_icon := "shapes"
+var _pending_capability_preset_capability_ids := PackedStringArray()
 var _capability_settings_panel: Control
 var _editing_capability_selection: ObjectCapabilitySelection
 var _capability_change_dialog: AcceptDialog
@@ -678,7 +685,9 @@ func _build_capability_editor(parent: VBoxContainer) -> void:
 	view.connect("clear_selection_requested", Callable(self, "_on_capability_catalog_selection_cleared"))
 	view.connect("preset_requested", Callable(self, "_on_capability_preset_requested"))
 	view.connect("preset_select_all_requested", Callable(self, "_on_capability_preset_select_all_requested"))
+	view.connect("preset_action_requested", Callable(self, "_on_capability_preset_action_requested"))
 	view.call("build", ObjectCapabilityCatalog.get_categories())
+	_build_capability_preset_dialog()
 	parent.add_child(view)
 	_rebuild_capability_list()
 
@@ -691,6 +700,22 @@ func _build_capability_change_dialog() -> void:
 	_capability_change_dialog.canceled.connect(_on_capability_change_canceled)
 	_capability_change_dialog.add_cancel_button("Отмена")
 	add_child(_capability_change_dialog)
+
+
+func _build_capability_preset_dialog() -> void:
+	if _capability_preset_dialog == null:
+		_capability_preset_dialog = ObjectBuilderCapabilityPresetDialogScript.new()
+		_capability_preset_dialog.call("build")
+		_capability_preset_dialog.confirmed.connect(_on_capability_preset_dialog_confirmed)
+		add_child(_capability_preset_dialog)
+	if _capability_preset_delete_dialog == null:
+		_capability_preset_delete_dialog = ConfirmationDialog.new()
+		_capability_preset_delete_dialog.title = "Удалить пользовательский набор"
+		_capability_preset_delete_dialog.dialog_text = "Удалить выбранный пользовательский набор? Это действие нельзя отменить."
+		_capability_preset_delete_dialog.ok_button_text = "Удалить"
+		_capability_preset_delete_dialog.add_cancel_button("Отмена")
+		_capability_preset_delete_dialog.confirmed.connect(_on_capability_preset_delete_confirmed)
+		add_child(_capability_preset_delete_dialog)
 
 
 func _build_capability_settings_panel(parent: VBoxContainer) -> void:
@@ -824,6 +849,103 @@ func _on_capability_preset_select_all_requested() -> void:
 		_set_status("В общий список выбора добавлено из набора: %d." % added_count, false)
 	else:
 		_set_status("В этом наборе больше нет новых совместимых возможностей для выбора.", false)
+
+
+func _on_capability_preset_action_requested(action: String, preset_id: String) -> void:
+	if _working_definition == null:
+		return
+	var source: Dictionary = _capability_catalog_controller.call("get_preset_definition", preset_id)
+	var selected_ids: PackedStringArray = _capability_catalog_controller.call("get_selected_ids")
+	_pending_capability_preset_action = action
+	_pending_capability_preset_id = preset_id
+	_pending_capability_preset_icon = str(source.get("icon", "shapes"))
+	_pending_capability_preset_capability_ids = PackedStringArray()
+
+	match action:
+		"create":
+			if selected_ids.is_empty():
+				_set_status("Сначала отметь в каталоге хотя бы одну готовую возможность.", true)
+				return
+			_pending_capability_preset_capability_ids = selected_ids.duplicate()
+			_capability_preset_dialog.call("configure", "Новый пользовательский набор", "Мой набор возможностей", "", "Сохранить")
+			_capability_preset_dialog.popup_centered(Vector2i(480, 320))
+		"update":
+			if source.is_empty() or not bool(source.get("is_custom", false)):
+				_set_status("Обновлять можно только пользовательские наборы.", true)
+				return
+			if selected_ids.is_empty():
+				_set_status("Выбери в каталоге состав, которым нужно заменить текущий набор.", true)
+				return
+			_pending_capability_preset_capability_ids = selected_ids.duplicate()
+			_capability_preset_dialog.call("configure", "Обновить пользовательский набор", str(source.get("display_name", "")), str(source.get("description", "")), "Сохранить изменения")
+			_capability_preset_dialog.popup_centered(Vector2i(480, 320))
+		"duplicate":
+			if source.is_empty():
+				_set_status("Исходный набор больше не найден.", true)
+				return
+			for capability_id in source.get("capability_ids", []):
+				_pending_capability_preset_capability_ids.append(str(capability_id))
+			_capability_preset_dialog.call("configure", "Дублировать набор", str(source.get("display_name", "")) + " — копия", str(source.get("description", "")), "Создать копию")
+			_capability_preset_dialog.popup_centered(Vector2i(480, 320))
+		"delete":
+			if source.is_empty() or not bool(source.get("is_custom", false)):
+				_set_status("Встроенные наборы нельзя удалить.", true)
+				return
+			_pending_capability_preset_id = preset_id
+			_capability_preset_delete_dialog.dialog_text = "Удалить пользовательский набор «%s»? Это действие нельзя отменить." % str(source.get("display_name", preset_id))
+			_capability_preset_delete_dialog.popup_centered(Vector2i(440, 180))
+		_:
+			_pending_capability_preset_action = ""
+
+
+func _on_capability_preset_dialog_confirmed() -> void:
+	if _working_definition == null or _pending_capability_preset_action.is_empty():
+		return
+	var display_name := str(_capability_preset_dialog.call("get_display_name")).strip_edges()
+	var description := str(_capability_preset_dialog.call("get_description")).strip_edges()
+	if display_name.is_empty():
+		_set_status("Укажи название пользовательского набора.", true)
+		_capability_preset_dialog.popup_centered(Vector2i(480, 320))
+		return
+	var preset_id := _pending_capability_preset_id
+	if _pending_capability_preset_action in ["create", "duplicate"]:
+		preset_id = str(_capability_catalog_controller.call("build_unique_custom_preset_id", display_name))
+	var result: Dictionary = _capability_catalog_controller.call("save_custom_preset", {
+		"id": preset_id,
+		"display_name": display_name,
+		"description": description,
+		"icon": _pending_capability_preset_icon,
+		"capability_ids": Array(_pending_capability_preset_capability_ids)
+	})
+	if not bool(result.get("ok", false)):
+		var errors: PackedStringArray = result.get("errors", PackedStringArray())
+		_set_status("Набор не сохранён: " + "; ".join(errors), true)
+		_capability_preset_dialog.popup_centered(Vector2i(480, 320))
+		return
+	_capability_catalog_controller.call("set_active_preset", preset_id)
+	var action_text := "создан" if _pending_capability_preset_action in ["create", "duplicate"] else "обновлён"
+	_set_status("Пользовательский набор «%s» %s. Он сохранён отдельно и ещё не применён к объекту." % [display_name, action_text], false)
+	_pending_capability_preset_action = ""
+	_pending_capability_preset_id = ""
+	_pending_capability_preset_capability_ids.clear()
+	_rebuild_capability_list()
+
+
+func _on_capability_preset_delete_confirmed() -> void:
+	if _working_definition == null or _pending_capability_preset_id.is_empty():
+		return
+	var deleted_id := _pending_capability_preset_id
+	var result: Dictionary = _capability_catalog_controller.call("delete_custom_preset", deleted_id)
+	if not bool(result.get("ok", false)):
+		var errors: PackedStringArray = result.get("errors", PackedStringArray())
+		_set_status("Набор не удалён: " + "; ".join(errors), true)
+		return
+	_capability_catalog_controller.call("set_active_preset", "")
+	_pending_capability_preset_action = ""
+	_pending_capability_preset_id = ""
+	_pending_capability_preset_capability_ids.clear()
+	_rebuild_capability_list()
+	_set_status("Пользовательский набор удалён. Встроенные наборы не затронуты.", false)
 
 
 func _on_capability_catalog_selection_cleared() -> void:

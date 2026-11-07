@@ -2,6 +2,7 @@ extends SceneTree
 
 const ViewScript = preload("res://addons/object_builder/ui/capability_list_view.gd")
 const DefinitionScript = preload("res://scripts/object_system/object_capability_definition.gd")
+const PresetDialogScript = preload("res://addons/object_builder/ui/capability_preset_dialog.gd")
 
 var failures: Array[String] = []
 var search_events: Array[String] = []
@@ -14,6 +15,7 @@ var batch_add_count := 0
 var clear_selection_count := 0
 var preset_events: Array[String] = []
 var preset_select_all_count := 0
+var preset_action_events: Array[String] = []
 
 
 func _initialize() -> void:
@@ -41,6 +43,7 @@ func _run() -> void:
 	view.connect("clear_selection_requested", Callable(self, "_on_clear_selection_requested"))
 	view.connect("preset_requested", Callable(self, "_on_preset_requested"))
 	view.connect("preset_select_all_requested", Callable(self, "_on_preset_select_all_requested"))
+	view.connect("preset_action_requested", Callable(self, "_on_preset_action_requested"))
 
 	_expect(view.get_child_count() == 10, "capability view owns title, hint, search, filter, selection, relation/recommendation/preset panels, entries and pagination")
 	_expect(str(view.call("get_selected_category")) == "", "capability filter starts with all categories")
@@ -268,7 +271,8 @@ func _run() -> void:
 		"description": "Прочность, разрушение и добыча.",
 		"ready_count": 3,
 		"total_count": 3,
-		"selected_count": 0
+		"selected_count": 0,
+		"is_custom": false
 	}]
 	view.call("set_preset_data", preset_summaries, {})
 	var preset_section := view.get("_preset_section") as PanelContainer
@@ -284,6 +288,7 @@ func _run() -> void:
 		"id": "breakable_resource",
 		"display_name": "Разрушаемый ресурс",
 		"description": "Прочность, разрушение и добыча.",
+		"is_custom": false,
 		"available_count": 1,
 		"entries": [
 			{
@@ -335,6 +340,51 @@ func _run() -> void:
 	_expect(preset_select_all_button.text == "Отметить все доступные (1)" and not preset_select_all_button.disabled, "preset footer reports the number of compatible additions")
 	preset_select_all_button.pressed.emit()
 	_expect(preset_select_all_count == 1, "preset bulk selection is separate from final batch application")
+	var duplicate_button := view.get("_preset_duplicate_button") as Button
+	var update_button := view.get("_preset_update_button") as Button
+	var delete_button := view.get("_preset_delete_button") as Button
+	_expect(duplicate_button.visible and not update_button.visible and not delete_button.visible, "built-in presets can be duplicated but not overwritten or deleted")
+	duplicate_button.pressed.emit()
+	_expect(preset_action_events.back() == "duplicate:breakable_resource", "duplicate action targets the active built-in preset")
+
+	var custom_summary: Array[Dictionary] = [{
+		"id": "my_custom_bundle",
+		"display_name": "Мой набор",
+		"description": "Личный состав.",
+		"ready_count": 2,
+		"total_count": 2,
+		"selected_count": 1,
+		"is_custom": true
+	}]
+	var custom_detail: Dictionary = {
+		"id": "my_custom_bundle",
+		"display_name": "Мой набор",
+		"description": "Личный состав.",
+		"is_custom": true,
+		"available_count": 1,
+		"entries": []
+	}
+	view.call("set_preset_data", custom_summary, custom_detail)
+	view.call("set_selected_count", 1)
+	var create_button := view.get("_preset_create_button") as Button
+	_expect(not create_button.disabled, "selected catalogue mechanics can be saved as a new preset")
+	create_button.pressed.emit()
+	_expect(preset_action_events.back() == "create:", "create action does not depend on the active preset")
+	_expect(update_button.visible and not update_button.disabled and delete_button.visible, "custom presets can be updated and removed")
+	update_button.pressed.emit()
+	_expect(preset_action_events.back() == "update:my_custom_bundle", "update action targets the active custom preset")
+	delete_button.pressed.emit()
+	_expect(preset_action_events.back() == "delete:my_custom_bundle", "delete action targets the active custom preset")
+
+	var preset_dialog = PresetDialogScript.new()
+	root.add_child(preset_dialog)
+	preset_dialog.call("configure", "Тестовый набор", "Мой набор", "Описание набора", "Создать")
+	_expect(preset_dialog.call("get_display_name") == "Мой набор", "preset dialog restores the entered name")
+	_expect(preset_dialog.call("get_description") == "Описание набора", "preset dialog restores the entered description")
+	_expect(preset_dialog.get_ok_button().text == "Создать", "preset dialog shows a context-specific confirmation action")
+	preset_dialog.queue_free()
+
+	view.call("set_selected_count", 0)
 	view.call("set_preset_data", [], {})
 	_expect(not preset_section.visible and not preset_detail_panel.visible, "preset cards and detail panel hide when the catalog has no presets")
 
@@ -417,6 +467,10 @@ func _on_preset_requested(preset_id: String) -> void:
 
 func _on_preset_select_all_requested() -> void:
 	preset_select_all_count += 1
+
+
+func _on_preset_action_requested(action: String, preset_id: String) -> void:
+	preset_action_events.append("%s:%s" % [action, preset_id])
 
 
 func _expect(condition: bool, description: String) -> void:

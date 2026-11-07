@@ -12,6 +12,7 @@ signal batch_add_requested
 signal clear_selection_requested
 signal preset_requested(preset_id: String)
 signal preset_select_all_requested
+signal preset_action_requested(action: String, preset_id: String)
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 const CapabilityIconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
@@ -39,6 +40,11 @@ var _preset_detail_title: Label
 var _preset_detail_description: Label
 var _preset_detail_items: VBoxContainer
 var _preset_select_all_button: Button
+var _preset_create_button: Button
+var _preset_update_button: Button
+var _preset_duplicate_button: Button
+var _preset_delete_button: Button
+var _active_preset_id := ""
 var _selection_summary: Label
 var _add_selected_button: Button
 var _clear_selection_button: Button
@@ -201,6 +207,13 @@ func _build_preset_section() -> void:
 	hint.add_theme_font_size_override("font_size", 10)
 	content.add_child(hint)
 
+	_preset_create_button = Button.new()
+	_preset_create_button.text = "Сохранить выбранное как набор"
+	_preset_create_button.tooltip_text = "Создать пользовательский набор из отмеченных в каталоге возможностей."
+	_preset_create_button.disabled = true
+	_preset_create_button.pressed.connect(_on_preset_management_action_pressed.bind("create"))
+	content.add_child(_preset_create_button)
+
 	_preset_container = HFlowContainer.new()
 	_preset_container.add_theme_constant_override("h_separation", 5)
 	_preset_container.add_theme_constant_override("v_separation", 4)
@@ -232,6 +245,32 @@ func _build_preset_section() -> void:
 	_preset_select_all_button.pressed.connect(_on_preset_select_all_pressed)
 	detail_content.add_child(_preset_select_all_button)
 
+	var management_row := HFlowContainer.new()
+	management_row.add_theme_constant_override("h_separation", 5)
+	management_row.add_theme_constant_override("v_separation", 4)
+	detail_content.add_child(management_row)
+
+	_preset_update_button = Button.new()
+	_preset_update_button.text = "Обновить состав"
+	_preset_update_button.tooltip_text = "Заменить состав пользовательского набора текущим выделением в каталоге."
+	_preset_update_button.visible = false
+	_preset_update_button.pressed.connect(_on_preset_management_action_pressed.bind("update"))
+	management_row.add_child(_preset_update_button)
+
+	_preset_duplicate_button = Button.new()
+	_preset_duplicate_button.text = "Дублировать"
+	_preset_duplicate_button.tooltip_text = "Создать собственный набор на основе выбранного встроенного или пользовательского набора."
+	_preset_duplicate_button.visible = false
+	_preset_duplicate_button.pressed.connect(_on_preset_management_action_pressed.bind("duplicate"))
+	management_row.add_child(_preset_duplicate_button)
+
+	_preset_delete_button = Button.new()
+	_preset_delete_button.text = "Удалить"
+	_preset_delete_button.tooltip_text = "Удалить только пользовательский набор. Встроенные наборы защищены."
+	_preset_delete_button.visible = false
+	_preset_delete_button.pressed.connect(_on_preset_management_action_pressed.bind("delete"))
+	management_row.add_child(_preset_delete_button)
+
 
 func set_preset_data(
 	presets: Array[Dictionary],
@@ -242,9 +281,12 @@ func set_preset_data(
 	UIFactory.clear_children(_preset_container)
 	_preset_section.visible = not presets.is_empty()
 	var active_id := str(active_preset.get("id", ""))
+	_active_preset_id = active_id
 	for preset in presets:
 		var preset_id := str(preset.get("id", ""))
 		var display_name := str(preset.get("display_name", preset_id))
+		if bool(preset.get("is_custom", false)):
+			display_name = "Мой набор · " + display_name
 		var ready_count := int(preset.get("ready_count", 0))
 		var total_count := int(preset.get("total_count", 0))
 		var selected_count := int(preset.get("selected_count", 0))
@@ -260,10 +302,21 @@ func set_preset_data(
 
 	_preset_detail_panel.visible = not active_preset.is_empty()
 	if active_preset.is_empty():
+		_active_preset_id = ""
 		UIFactory.clear_children(_preset_detail_items)
 		_preset_select_all_button.disabled = true
+		_preset_update_button.visible = false
+		_preset_duplicate_button.visible = false
+		_preset_delete_button.visible = false
 		return
 
+	var is_custom := bool(active_preset.get("is_custom", false))
+	_preset_update_button.visible = is_custom
+	_preset_update_button.disabled = _selected_count <= 0
+	_preset_duplicate_button.visible = true
+	_preset_duplicate_button.disabled = false
+	_preset_delete_button.visible = is_custom
+	_preset_delete_button.disabled = false
 	_preset_detail_title.text = str(active_preset.get("display_name", "Набор"))
 	_preset_detail_description.text = str(active_preset.get("description", ""))
 	UIFactory.clear_children(_preset_detail_items)
@@ -470,6 +523,10 @@ func set_selected_count(count: int) -> void:
 	if _selection_bar == null:
 		return
 	_selection_bar.visible = _selected_count > 0
+	if _preset_create_button != null:
+		_preset_create_button.disabled = _selected_count <= 0
+	if _preset_update_button != null:
+		_preset_update_button.disabled = _selected_count <= 0
 	_selection_summary.text = "Выбрано в разных разделах: %d" % _selected_count
 	_add_selected_button.text = "Добавить выбранные (%d)" % _selected_count
 	_add_selected_button.disabled = _selected_count <= 0
@@ -720,6 +777,11 @@ func _on_preset_toggled(pressed: bool, preset_id: String) -> void:
 func _on_preset_select_all_pressed() -> void:
 	if not _preset_select_all_button.disabled:
 		preset_select_all_requested.emit()
+
+
+func _on_preset_management_action_pressed(action: String) -> void:
+	if action == "create" or not _active_preset_id.is_empty():
+		preset_action_requested.emit(action, _active_preset_id)
 
 
 func _on_search_changed(query: String) -> void:
