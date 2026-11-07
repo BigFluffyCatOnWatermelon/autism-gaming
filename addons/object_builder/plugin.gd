@@ -131,7 +131,17 @@ func _exit_tree() -> void:
 
 func _debug_list_shutdown_controls(node: Node) -> void:
 	if node is Button or node is TextureRect:
-		print("[ObjectBuilder shutdown] control ", node.get_class(), " id=", node.get_instance_id(), " name=", node.name)
+		var parent_name := str(node.get_parent().name) if node.get_parent() != null else "<none>"
+		var parent_class := node.get_parent().get_class() if node.get_parent() != null else "<none>"
+		var node_path := str(node.get_path()) if node.is_inside_tree() else "<detached>"
+		print(
+			"[ObjectBuilder shutdown] control ",
+			node.get_class(),
+			" id=", node.get_instance_id(),
+			" name=", node.name,
+			" path=", node_path,
+			" parent=", parent_class, "/", parent_name
+		)
 	for child in node.get_children(true):
 		_debug_list_shutdown_controls(child)
 
