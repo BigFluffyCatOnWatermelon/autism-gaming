@@ -163,8 +163,12 @@ static func _pack_and_save(scene_root: Node, definition: ObjectDefinition) -> Di
 
 	ObjectLibraryService.ensure_directories()
 	var target_path := ObjectLibraryService.get_scene_path(definition.object_id)
+	if FileAccess.file_exists(target_path):
+		return _failure("Сцена с таким ID уже существует. Исходный файл не перезаписан: " + target_path)
 	var save_error := ResourceSaver.save(packed_scene, target_path)
 	if save_error != OK:
+		if FileAccess.file_exists(target_path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(target_path))
 		return _failure("Не удалось сохранить сцену. Код ошибки: %d" % save_error)
 
 	definition.scene = packed_scene
