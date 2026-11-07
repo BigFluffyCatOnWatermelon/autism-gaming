@@ -105,11 +105,12 @@ func _run() -> void:
 	var previous_page := view.get("_previous_page_button") as Button
 	var next_page := view.get("_next_page_button") as Button
 	var page_label := view.get("_page_label") as Label
-	_expect(not previous_page.disabled and not next_page.disabled, "pagination enables both directions on the middle page")
+	_expect(previous_page.disabled and not next_page.disabled, "first page only enables forward navigation")
 	_expect(page_label.text == "Страница 1 из 3 · 45 возможностей", "pagination displays the current page and total")
 	next_page.pressed.emit()
 	_expect(entries_container.get_child_count() == 21, "next page still creates no more than 20 capability cards")
 	_expect(page_label.text == "Страница 2 из 3 · 45 возможностей", "next page advances the page label")
+	_expect(not previous_page.disabled and not next_page.disabled, "middle page enables navigation in both directions")
 	previous_page.pressed.emit()
 	_expect(page_label.text == "Страница 1 из 3 · 45 возможностей", "previous page returns to the first page")
 
