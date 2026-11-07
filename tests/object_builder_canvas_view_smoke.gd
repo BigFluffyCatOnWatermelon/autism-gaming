@@ -77,6 +77,10 @@ func _run() -> void:
 		_expect(context_action_events == ["duplicate:Sprite"], "context menu forwards a stable duplicate action and selected path")
 		if context_menu != null:
 			context_menu.hide()
+		var pointer_motion := InputEventMouseMotion.new()
+		pointer_motion.position = screen_position
+		interaction.call("handle_input", pointer_motion)
+		_expect((canvas.get("_coordinates_label") as Label).text == "X: 64 · Y: 32", "canvas displays live world coordinates under the pointer")
 		canvas.call("set_locked_paths", [NodePath("Sprite")])
 		canvas.call("_on_context_menu_requested", NodePath("Sprite"))
 		if context_menu != null:
