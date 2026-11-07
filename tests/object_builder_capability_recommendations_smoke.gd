@@ -102,7 +102,7 @@ func _test_recommendations_for_empty_object() -> void:
 			"recommendation preview names the automatic Health dependency"
 		)
 		_expect(
-			str(damage_entry.get("explanation", "")).contains("Понадобится"),
+			str(damage_entry.get("explanation", "")).contains("потребуется"),
 			"recommendation explains that the dependency will be added with the selection"
 		)
 
