@@ -54,6 +54,7 @@ func _run() -> void:
 	map.call("open_full", host_control, "can_attack")
 	_expect(int(map.call("get_node_count")) >= 200, "full graph creates all 200 catalogue capability nodes")
 	_expect(int(map.call("get_connection_count")) >= 60, "full graph renders the curated relationship network")
+	_expect(int(map.call("get_relation_type_count")) == 6, "full graph exposes all six typed relationship kinds")
 	_expect(int(map.call("get_focus_button_count")) == 200, "all catalogue nodes provide a navigation action")
 	_expect(int(map.call("get_visible_node_count")) == 200, "full graph starts with every capability visible")
 	map.call("filter_full_map", "атака")
