@@ -201,7 +201,8 @@ func _refresh_animated_controls(sprite: AnimatedSprite2D) -> void:
 		_animated_frame.editable = false
 		_animation_fps.editable = false
 		_animation_fps.set_value_no_signal(8.0)
-		_animation_loop.set_pressed_no_signal(true)
+		_animation_loop_mode.disabled = true
+		_animation_loop_mode.select(1)
 		_animation_hint.text = "Выбери анимацию из списка."
 		return
 
