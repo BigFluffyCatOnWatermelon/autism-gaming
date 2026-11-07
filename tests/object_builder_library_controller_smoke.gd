@@ -140,6 +140,18 @@ func _run() -> void:
 	_expect(controller.call("get_template", 0) == template, "template index returns its definition")
 	_expect(controller.call("get_template", -1) == null, "invalid template indices return null")
 	_expect(controller.call("get_template_names") == ["Ящик"], "template names are exposed for the UI")
+	var template_source_options: Array[Dictionary] = controller.call("get_creation_source_options", true)
+	_expect(template_source_options.size() == 1 and template_source_options[0].get("id") == "template_crate", "creation wizard receives stable template source IDs")
+	_expect(template_source_options[0].get("label") == "Ящик", "creation wizard receives template display names")
+	var object_source_options: Array[Dictionary] = controller.call("get_creation_source_options", false)
+	_expect(object_source_options.size() == definitions.size(), "creation wizard receives all saved object sources")
+	var oak_source: Dictionary = {}
+	for source_option in object_source_options:
+		if source_option.get("id") == "tree_oak":
+			oak_source = source_option
+	_expect(oak_source.get("category") == "Nature", "creation sources include source category")
+	_expect(oak_source.get("description") == "Большое дерево", "creation sources include source description")
+	_expect(oak_source.get("tags") == PackedStringArray(["tree", "wood", "forest"]), "creation sources include source tags")
 	entries = controller.call("build_visible_entries", "", "", "", "templates")
 	_expect(entries.size() == 1 and entries[0].get("definition") == template, "template mode exposes starter templates as library cards")
 	_expect(controller.call("get_visible_definition", 0) == template, "template card selection resolves to its template definition")
