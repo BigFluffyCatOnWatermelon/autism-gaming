@@ -44,11 +44,19 @@ var debug_selected_inventory_slot := -1
 var debug_object_selection_enabled := true
 var debug_refresh_timer := 0.0
 var _pickup_scan_timer := 0.0
+var _mechanic_signal_scan_timer := 0.0
+var _camera_shake_strength_override := -1.0
+var _world_time_day := 1
+var _world_time_hour := 8.0
+var _last_dispatched_world_day := -1
+var _last_dispatched_world_hour := -1
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	config = GameConfigScript.make_default()
+	_world_time_day = maxi(1, int(config.world.get("start_day", 1)))
+	_world_time_hour = fposmod(float(config.world.get("start_hour", 8.0)), 24.0)
 	defaults_config = config.duplicate(true)
 	backpack_slots = int(config.inventory.base_backpack_slots)
 	rng.seed = int(config.world.seed)
@@ -213,12 +221,56 @@ func _create_ui() -> void:
 	ui.set_inventory_data(inventory, backpack_slots, int(config.inventory.max_backpack_slots), config.items)
 	ui.set_player_data(player.current_health, float(config.player.max_health), player.current_stamina, float(config.player.max_stamina), arrow_count)
 
+func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint() or not is_finite(delta) or delta <= 0.0:
+		return
+	_update_ai_mechanics(delta)
+
+
+func _update_ai_mechanics(delta: float) -> void:
+	for ai_component in _get_world_components("has_ai"):
+		if ai_component == null or not is_instance_valid(ai_component) or not ai_component.has_method("get_ai_intent"):
+			continue
+		var root := ObjectFactoryScript.get_object_root(ai_component)
+		if root == null or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		var intent_value: Variant = ai_component.call("get_ai_intent", delta, [], [])
+		if not intent_value is Dictionary:
+			continue
+		var intent: Dictionary = intent_value
+		var state := str(intent.get("state", "idle"))
+		if state not in ["patrol", "wander", "chase", "follow", "flee", "assist"]:
+			continue
+		var direction_value: Variant = intent.get("direction", Vector2.ZERO)
+		if not direction_value is Vector2:
+			continue
+		var direction: Vector2 = direction_value
+		if direction.length_squared() <= 0.0001:
+			continue
+		var movement := ObjectFactoryScript.get_component(root, "can_move")
+		if movement == null:
+			movement = ObjectFactoryScript.get_component(root, "can_walk")
+		if movement == null:
+			continue
+		if movement.has_method("move_direction"):
+			movement.call("move_direction", direction, delta)
+		elif movement.has_method("walk"):
+			movement.call("walk", direction, delta)
+
+
 func _process(delta: float) -> void:
 	_handle_hotkeys()
 	_update_attack_cooldowns(delta)
 	_handle_held_combat()
 	_update_projectiles(delta)
 	_update_drops()
+	_update_animal_mechanics(delta)
+	_update_world_clock(delta)
+	_update_construction_mechanics(delta)
+	_mechanic_signal_scan_timer -= delta
+	if _mechanic_signal_scan_timer <= 0.0:
+		_bind_world_mechanic_signals()
+		_mechanic_signal_scan_timer = 0.5
 	_pickup_scan_timer -= delta
 	if _pickup_scan_timer <= 0.0:
 		_update_component_pickups()
@@ -651,6 +703,365 @@ func _consume_item(item_id: String, quantity: int) -> bool:
 	_update_resource_counts()
 	return true
 
+## Inventory adapter used by Object Builder construction and transfer mechanics.
+func get_item_count(item_id: String) -> int:
+	return _get_item_count(item_id)
+
+
+func remove_item(item_id: String, amount: int = 1, _allow_bound: bool = false) -> bool:
+	return _consume_item(item_id, amount)
+
+
+func add_item(
+	item_id: String,
+	amount: int = 1,
+	_max_stack: int = -1,
+	_weight: float = 0.0,
+	_tags: Array = [],
+	_rarity: String = "common"
+) -> Dictionary:
+	var requested := maxi(0, amount)
+	var remaining := _inventory_add(item_id, requested)
+	return {"ok": remaining == 0, "accepted": requested - remaining, "remainder": remaining}
+
+
+func _has_mechanic(mechanic_id: String) -> bool:
+	return mechanic_id.strip_edges().to_lower() in ["has_inventory", "supports_quick_transfer"]
+
+
+func transfer_object_inventory_to_player(
+	source_root: Node,
+	item_id: String,
+	amount: int
+) -> Dictionary:
+	if source_root == null or not is_instance_valid(source_root):
+		return {"ok": false, "transferred": 0, "remainder": maxi(0, amount)}
+	var source_inventory := ObjectFactoryScript.get_component(source_root, "has_inventory")
+	if source_inventory == null or not source_inventory.has_method("transfer_to"):
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	var transfer_value: Variant = source_inventory.call("transfer_to", self, item_id, amount)
+	return transfer_value if transfer_value is Dictionary else {"ok": false, "transferred": 0, "remainder": amount}
+
+
+func transfer_player_item_to_object_inventory(
+	target_root: Node,
+	item_id: String,
+	amount: int
+) -> Dictionary:
+	if target_root == null or not is_instance_valid(target_root) or amount <= 0:
+		return {"ok": false, "transferred": 0, "remainder": maxi(0, amount)}
+	var target_inventory := ObjectFactoryScript.get_component(target_root, "has_inventory")
+	if target_inventory == null or not target_inventory.has_method("add_item"):
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	var available := mini(amount, _get_item_count(item_id))
+	if available <= 0:
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	var item_data: Dictionary = config.items.get(item_id, {})
+	var added_value: Variant = target_inventory.call(
+		"add_item",
+		item_id,
+		available,
+		maxi(1, int(item_data.get("max_stack", config.inventory.max_stack))),
+		maxf(0.0, float(item_data.get("weight", 0.0))),
+		item_data.get("tags", []) if item_data.get("tags", []) is Array else [],
+		str(item_data.get("rarity", "common"))
+	)
+	if not added_value is Dictionary:
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	var accepted := clampi(int(added_value.get("accepted", 0)), 0, available)
+	if accepted <= 0:
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	if not _consume_item(item_id, accepted):
+		if target_inventory.has_method("remove_item"):
+			target_inventory.call("remove_item", item_id, accepted, true)
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	return {"ok": accepted == amount, "transferred": accepted, "remainder": amount - accepted}
+
+
+func get_inventory() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for slot in inventory:
+		var item_id := str(slot.get("id", ""))
+		var amount := int(slot.get("amount", 0))
+		if item_id.is_empty() or amount <= 0:
+			continue
+		var item_data: Dictionary = config.items.get(item_id, {})
+		result.append({
+			"item_id": item_id,
+			"amount": amount,
+			"max_stack": maxi(1, int(item_data.get("max_stack", config.inventory.max_stack))),
+			"weight": maxf(0.0, float(item_data.get("weight", 0.0))),
+			"tags": item_data.get("tags", []).duplicate(true) if item_data.get("tags", []) is Array else [],
+			"rarity": str(item_data.get("rarity", "common"))
+		})
+	return result
+
+
+func deposit_item_to_container(
+	container_root: Node,
+	item_id: String,
+	amount: int,
+	actor_id: String = "player",
+	faction_id: String = ""
+) -> Dictionary:
+	if container_root == null or not is_instance_valid(container_root) or amount <= 0:
+		return {"ok": false, "accepted": 0, "remainder": maxi(0, amount)}
+	var container := ObjectFactoryScript.get_component(container_root, "stores_items")
+	if container == null or not container.has_method("add_item"):
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var available := mini(amount, _get_item_count(item_id))
+	if available <= 0:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var item_data: Dictionary = config.items.get(item_id, {})
+	var max_stack := maxi(1, int(item_data.get("max_stack", config.inventory.max_stack)))
+	var item_weight := maxf(0.0, float(item_data.get("weight", 0.0)))
+	var item_tags: Array = item_data.get("tags", []) if item_data.get("tags", []) is Array else []
+	var previous_state_value: Variant = container.call("export_runtime_state") if container.has_method("export_runtime_state") else {}
+	var previous_state: Dictionary = previous_state_value if previous_state_value is Dictionary else {}
+	var result_value: Variant = container.call(
+		"add_item",
+		item_id,
+		available,
+		max_stack,
+		item_weight,
+		item_tags,
+		actor_id,
+		faction_id
+	)
+	if not result_value is Dictionary:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var result: Dictionary = result_value
+	var accepted := clampi(int(result.get("accepted", 0)), 0, available)
+	if accepted <= 0:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	if not _consume_item(item_id, accepted):
+		if not previous_state.is_empty() and container.has_method("import_runtime_state"):
+			container.call("import_runtime_state", previous_state)
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	return {"ok": accepted == amount, "accepted": accepted, "remainder": amount - accepted}
+
+
+func withdraw_item_from_container(
+	container_root: Node,
+	item_id: String,
+	amount: int,
+	actor_id: String = "player",
+	faction_id: String = ""
+) -> Dictionary:
+	if container_root == null or not is_instance_valid(container_root) or amount <= 0:
+		return {"ok": false, "accepted": 0, "remainder": maxi(0, amount)}
+	var container := ObjectFactoryScript.get_component(container_root, "stores_items")
+	if container == null or not container.has_method("get_contents") or not container.has_method("remove_item"):
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var contents_value: Variant = container.call("get_contents", actor_id, faction_id)
+	if not contents_value is Array:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var available := 0
+	for entry in contents_value:
+		if entry is Dictionary and str(entry.get("item_id", "")) == item_id:
+			available += maxi(0, int(entry.get("amount", 0)))
+	available = mini(available, amount)
+	if available <= 0:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var inventory_before := inventory.duplicate(true)
+	var remaining := _inventory_add(item_id, available)
+	var accepted := available - remaining
+	if accepted <= 0:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	if not bool(container.call("remove_item", item_id, accepted, actor_id, faction_id)):
+		inventory = inventory_before
+		inventory_dirty = true
+		_update_resource_counts()
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	return {"ok": accepted == amount, "accepted": accepted, "remainder": amount - accepted}
+
+
+func place_constructed_object(
+	definition: ObjectDefinition,
+	position: Vector2,
+	blockers: Array = [],
+	terrain_id: String = ""
+) -> Node2D:
+	if definition == null or world_objects == null:
+		return null
+	var instance := ObjectFactoryScript.instantiate(definition)
+	if not instance is Node2D:
+		if instance != null:
+			instance.free()
+		return null
+	var placement := ObjectFactoryScript.get_component(instance, "can_be_placed")
+	if placement == null or not placement.has_method("can_be_placed"):
+		instance.free()
+		return null
+	if not bool(placement.call("can_be_placed", position, blockers, terrain_id)):
+		instance.free()
+		return null
+	var snapped_value: Variant = placement.call("snap_position", position)
+	if not snapped_value is Vector2:
+		instance.free()
+		return null
+	var snapped_position: Vector2 = snapped_value
+	var materials := ObjectFactoryScript.get_component(instance, "requires_build_materials")
+	if materials != null and materials.has_method("consume_build_materials"):
+		if not bool(materials.call("consume_build_materials", self)):
+			instance.free()
+			return null
+	world_objects.add_child(instance)
+	(instance as Node2D).global_position = snapped_position
+	if ObjectFactoryScript.get_component(instance, "has_build_stages") != null:
+		instance.set_meta("object_builder_build_in_progress", true)
+		instance.set_meta("object_builder_built", false)
+	return instance as Node2D
+
+
+func get_construction_preview_state(
+	definition: ObjectDefinition,
+	position: Vector2,
+	blockers: Array = [],
+	terrain_id: String = ""
+) -> Dictionary:
+	if definition == null:
+		return {"valid": false, "error": "Не передано определение объекта."}
+	var preview_object := ObjectFactoryScript.instantiate(definition)
+	if preview_object == null:
+		return {"valid": false, "error": "Не удалось создать временный объект для preview."}
+	var construction := ObjectFactoryScript.get_component(preview_object, "supports_build_preview")
+	if construction == null or not construction.has_method("get_preview_state"):
+		preview_object.free()
+		return {"valid": false, "error": "У объекта не включён предпросмотр строительства."}
+	var result_value: Variant = construction.call("get_preview_state", position, blockers, terrain_id)
+	preview_object.free()
+	return result_value if result_value is Dictionary else {"valid": false, "error": "Preview вернул некорректные данные."}
+
+
+func generate_objects_from_definition(
+	definition: ObjectDefinition,
+	bounds: Rect2,
+	context: Dictionary = {},
+	seed_override: int = -1
+) -> Array[Node2D]:
+	var spawned: Array[Node2D] = []
+	if definition == null or world_objects == null:
+		return spawned
+	var prototype := ObjectFactoryScript.instantiate(definition)
+	if prototype == null:
+		return spawned
+	var generator := ObjectFactoryScript.get_component(prototype, "has_procedural_layout")
+	if generator == null:
+		generator = ObjectFactoryScript.get_component(prototype, "has_spawn_conditions")
+	if generator == null or not generator.has_method("generate_layout"):
+		prototype.free()
+		return spawned
+	var resolved_seed := seed_override
+	if resolved_seed < 0 and generator.has_method("get_world_seed"):
+		resolved_seed = int(generator.call("get_world_seed"))
+	if resolved_seed < 0:
+		resolved_seed = int(config.world.seed)
+	var positions_value: Variant = generator.call("generate_layout", bounds, resolved_seed)
+	if not positions_value is Array:
+		prototype.free()
+		return spawned
+	var region_id := str(context.get("region", "")).strip_edges().to_lower()
+	var biome_id := str(context.get("biome", "")).strip_edges().to_lower()
+	var current_count := _count_generated_objects(definition.object_id, region_id)
+	for index in range(positions_value.size()):
+		var position_value: Variant = positions_value[index]
+		if not position_value is Vector2:
+			continue
+		var spawn_context := context.duplicate(true)
+		spawn_context["region_count"] = current_count
+		spawn_context["season"] = str(spawn_context.get("season", _get_world_season(_world_time_day)))
+		if generator.has_method("can_spawn") and not bool(generator.call("can_spawn", spawn_context)):
+			continue
+		var instance := ObjectFactoryScript.instantiate(definition)
+		if instance == null or not instance is Node2D:
+			if instance != null:
+				instance.free()
+			continue
+		world_objects.add_child(instance)
+		(instance as Node2D).global_position = position_value
+		instance.set_meta("object_builder_generated", true)
+		instance.set_meta("object_builder_region_id", region_id)
+		instance.set_meta("object_builder_biome_id", biome_id)
+		var instance_generator := ObjectFactoryScript.get_component(instance, "supports_world_seed")
+		if instance_generator != null and instance_generator.has_method("set_world_seed"):
+			instance_generator.call("set_world_seed", resolved_seed + index)
+		var variant_value: Variant = generator.call("choose_variant", resolved_seed + index) if generator.has_method("choose_variant") else {}
+		if variant_value is Dictionary and not variant_value.is_empty():
+			instance.set_meta("object_builder_variant", variant_value.duplicate(true))
+		spawned.append(instance as Node2D)
+		current_count += 1
+	prototype.free()
+	return spawned
+
+
+func _count_generated_objects(object_id: String, region_id: String) -> int:
+	var count := 0
+	if world_objects == null:
+		return count
+	var stack: Array[Node] = [world_objects]
+	while not stack.is_empty():
+		var current: Node = stack.pop_back()
+		for child in current.get_children():
+			if child is Node:
+				stack.append(child)
+			if str(child.get_meta("object_definition_id", "")) != object_id:
+				continue
+			if not bool(child.get_meta("object_builder_generated", false)):
+				continue
+			if region_id.is_empty() or str(child.get_meta("object_builder_region_id", "")) == region_id:
+				count += 1
+	return count
+
+
+func upgrade_constructed_object(object_root: Node) -> Dictionary:
+	if object_root == null or not is_instance_valid(object_root):
+		return {"ok": false, "error": "Объект строительства не найден."}
+	var construction := ObjectFactoryScript.get_component(object_root, "can_be_upgraded")
+	if construction == null or not construction.has_method("upgrade"):
+		return {"ok": false, "error": "У объекта не включены улучшения."}
+	var result_value: Variant = construction.call("upgrade", self)
+	return result_value if result_value is Dictionary else {"ok": false, "error": "Механика улучшения вернула некорректный результат."}
+
+
+func dismantle_constructed_object(object_root: Node) -> Dictionary:
+	if object_root == null or not is_instance_valid(object_root):
+		return {"ok": false, "error": "Объект строительства не найден."}
+	var construction := ObjectFactoryScript.get_component(object_root, "can_be_dismantled")
+	if construction == null or not construction.has_method("dismantle"):
+		return {"ok": false, "error": "Объект нельзя разобрать."}
+	var result_value: Variant = construction.call("dismantle")
+	if not result_value is Dictionary:
+		return {"ok": false, "error": "Механика разбора вернула некорректный результат."}
+	var result: Dictionary = result_value
+	if not bool(result.get("ok", false)):
+		return result
+	var refund: Variant = result.get("refund", {})
+	if refund is Dictionary:
+		for item_id in refund:
+			add_item(str(item_id), int(refund[item_id]))
+	object_root.queue_free()
+	return result
+
+
+func _update_construction_mechanics(delta: float) -> void:
+	if delta <= 0.0 or not is_finite(delta):
+		return
+	for component in _get_world_components("has_build_stages"):
+		var root := ObjectFactoryScript.get_object_root(component)
+		if root == null or not is_instance_valid(root) or not bool(root.get_meta("object_builder_build_in_progress", false)):
+			continue
+		if not component.has_method("advance_build_progress"):
+			continue
+		var result_value: Variant = component.call("advance_build_progress", delta)
+		if not result_value is Dictionary:
+			continue
+		var result: Dictionary = result_value
+		if bool(result.get("completed", false)):
+			root.set_meta("object_builder_build_in_progress", false)
+			root.set_meta("object_builder_built", true)
+
+
 func _get_item_count(item_id: String) -> int:
 	var total := 0
 	for slot in inventory:
@@ -760,8 +1171,105 @@ func _attack(secondary: bool) -> void:
 				continue
 			_damage_target(target, attack)
 			hit_count += 1
+	hit_count += _apply_harvesting_hits(
+		weapon_id,
+		attack_origin,
+		aim_direction,
+		attack_arc,
+		attack,
+		_get_world_season(_world_time_day)
+	)
 	if hit_count == 0:
 		_log("Удар: %s" % weapon_id)
+
+func _apply_harvesting_hits(
+	weapon_id: String,
+	attack_origin: Vector2,
+	aim_direction: Vector2,
+	arc_degrees: float,
+	attack: Dictionary,
+	season: String
+) -> int:
+	var candidates := _get_world_components("can_be_harvested")
+	candidates.append_array(_get_world_components("can_be_mined"))
+	var visited_roots: Dictionary = {}
+	var completed_count := 0
+	var reach := maxf(0.0, float(attack.get("reach", 70.0)))
+	var hit_angle := aim_direction.angle()
+	var work_step := maxf(0.05, float(attack.get("cooldown", 0.4)))
+	for candidate in candidates:
+		if candidate == null or not is_instance_valid(candidate):
+			continue
+		var root := ObjectFactoryScript.get_object_root(candidate)
+		if root == null or root == player or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		var root_id := root.get_instance_id()
+		if visited_roots.has(root_id):
+			continue
+		visited_roots[root_id] = true
+		var harvesting := ObjectFactoryScript.get_component(root, "can_be_harvested")
+		if harvesting == null:
+			harvesting = ObjectFactoryScript.get_component(root, "can_be_mined")
+		if harvesting == null or not harvesting.has_method("advance_harvest"):
+			continue
+		var target_position := _get_component_world_position(harvesting, root)
+		if not CombatSystemScript.point_in_arc(
+			attack_origin,
+			target_position,
+			hit_angle,
+			reach + 16.0,
+			arc_degrees
+		):
+			continue
+		var result_value: Variant = harvesting.call(
+			"advance_harvest",
+			work_step,
+			weapon_id,
+			season
+		)
+		if not result_value is Dictionary:
+			continue
+		var result: Dictionary = result_value
+		if not bool(result.get("ok", false)):
+			continue
+		_trigger_object_mechanic(root, "plays_damage_sound", "play_event", ["damage"])
+		_trigger_object_mechanic(root, "emits_particles", "emit_particles")
+		if not bool(result.get("completed", false)):
+			continue
+		_trigger_object_mechanic(root, "plays_destroy_sound", "play_event", ["destroy"])
+		var yielded: Variant = result.get("resources", {})
+		if yielded is Dictionary:
+			for raw_item_id in yielded:
+				var item_id := str(raw_item_id).strip_edges()
+				var amount := maxi(0, int(yielded[raw_item_id]))
+				if not item_id.is_empty() and amount > 0:
+					_deliver_mechanic_output(item_id, amount, root)
+			if harvesting.has_method("start_regrowth"):
+				harvesting.call("start_regrowth")
+			_log("Добыча завершена: %s · качество %s." % [
+				str(root.name),
+				str(result.get("quality", "normal"))
+			])
+			completed_count += 1
+	return completed_count
+
+
+func _trigger_object_mechanic(
+	object_root: Node,
+	component_id: String,
+	method_name: String,
+	arguments: Array = []
+) -> bool:
+	if object_root == null or not is_instance_valid(object_root):
+		return false
+	var component := ObjectFactoryScript.get_component(object_root, component_id)
+	if component == null or not component.has_method(method_name):
+		return false
+	if method_name == "play_event" and str(component.get_setting("stream_path", "")).strip_edges().is_empty():
+		return false
+	component.callv(method_name, arguments)
+	return true
+
 
 func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_degrees: float, effect_width: float) -> void:
 	if player == null:
@@ -998,6 +1506,236 @@ func _update_component_pickups() -> void:
 		if actor_position.distance_to(target_position) <= pickup.pickup_radius:
 			pickup.try_pickup(self)
 
+	# New item mechanics use their own stack state, but feed the existing player
+	# inventory so there is still exactly one source of truth for carried items.
+	for item_component in _get_world_components("is_pickup_item"):
+		if not item_component.has_method("is_pickup_allowed") or not item_component.has_method("get_count"):
+			continue
+		if not bool(item_component.call("is_pickup_allowed")):
+			continue
+		var source := ObjectFactoryScript.get_object_root(item_component)
+		if source == null or source == item_component or not is_instance_valid(source) or source.is_queued_for_deletion():
+			continue
+		# Legacy PickupComponent remains authoritative for objects that explicitly use it.
+		if ObjectFactoryScript.get_component(source, "pickup") != null:
+			continue
+		var pickup_radius := maxf(0.0, float(item_component.get_setting("pickup_radius", 48.0)))
+		if actor_position.distance_to(_get_component_world_position(item_component, source)) > pickup_radius:
+			continue
+		var item_id := str(source.get_meta(
+			"object_builder_item_id",
+			ObjectFactoryScript.get_custom_property(source, "item_id", source.get_meta("object_definition_id", ""))
+		)).strip_edges()
+		var available := maxi(0, int(item_component.call("get_count")))
+		if item_id.is_empty() or available <= 0:
+			continue
+		var accepted := receive_pickup(item_id, available, source)
+		if accepted <= 0:
+			continue
+		if accepted >= available and item_component.has_method("mark_picked_up"):
+			item_component.call("mark_picked_up")
+		if item_component.has_method("remove_from_stack"):
+			item_component.call("remove_from_stack", accepted)
+		if int(item_component.call("get_count")) <= 0:
+			source.queue_free()
+
+
+func _update_animal_mechanics(delta: float) -> void:
+	if delta <= 0.0 or not is_finite(delta):
+		return
+	var candidates: Array[ObjectComponent] = []
+	for mechanic_id in [
+		"can_be_tamed",
+		"can_be_fed",
+		"can_breed",
+		"can_produce_resources",
+		"has_habitat",
+		"has_happiness",
+		"has_daily_routine",
+		"can_be_mounted",
+		"can_migrate",
+		"can_be_petted"
+	]:
+		candidates.append_array(_get_world_components(mechanic_id))
+	var visited_roots: Dictionary = {}
+	for component in candidates:
+		if component == null or not is_instance_valid(component):
+			continue
+		var root := ObjectFactoryScript.get_object_root(component)
+		if root == null or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		var root_id := root.get_instance_id()
+		if visited_roots.has(root_id):
+			continue
+		visited_roots[root_id] = true
+		var animal_driver := ObjectFactoryScript.get_component(root, "can_be_fed")
+		if animal_driver == null:
+			animal_driver = component
+		if animal_driver.has_method("advance_time"):
+			animal_driver.call("advance_time", delta)
+		if ObjectFactoryScript.get_component(root, "can_produce_resources") != null:
+			if animal_driver.has_method("advance_resource_production"):
+				animal_driver.call("advance_resource_production", delta)
+
+
+func _update_world_clock(delta: float) -> void:
+	var minutes_per_second := maxf(0.0, float(config.world.get("game_minutes_per_real_second", 1.0)))
+	if is_finite(delta) and delta > 0.0 and minutes_per_second > 0.0:
+		_world_time_hour += delta * minutes_per_second / 60.0
+		while _world_time_hour >= 24.0:
+			_world_time_hour -= 24.0
+			_world_time_day += 1
+	var hour_bucket := floori(_world_time_hour)
+	if _world_time_day == _last_dispatched_world_day and hour_bucket == _last_dispatched_world_hour:
+		return
+	_last_dispatched_world_day = _world_time_day
+	_last_dispatched_world_hour = hour_bucket
+	_dispatch_world_time()
+
+
+func _dispatch_world_time() -> void:
+	var season := _get_world_season(_world_time_day)
+	var weather := str(config.world.get("default_weather", "clear")).strip_edges().to_lower()
+	var time_components: Array[ObjectComponent] = []
+	for mechanic_id in ["has_day_night_schedule", "changes_by_season", "supports_event_schedule", "reacts_to_weather"]:
+		time_components.append_array(_get_world_components(mechanic_id))
+	var visited_time_roots: Dictionary = {}
+	for component in time_components:
+		var root := ObjectFactoryScript.get_object_root(component)
+		if root == null or not is_instance_valid(root):
+			continue
+		var root_id := root.get_instance_id()
+		if visited_time_roots.has(root_id):
+			continue
+		visited_time_roots[root_id] = true
+		var phase := "day"
+		var time_driver := ObjectFactoryScript.get_component(root, "has_day_night_schedule")
+		if time_driver == null:
+			time_driver = component
+		if time_driver.has_method("get_day_phase"):
+			phase = str(time_driver.call("get_day_phase", _world_time_hour))
+		if time_driver.has_method("update_world_time"):
+			time_driver.call("update_world_time", _world_time_day, _world_time_hour)
+		root.set_meta("object_builder_world_day", _world_time_day)
+		root.set_meta("object_builder_day_phase", phase)
+		root.set_meta("object_builder_season", season)
+		if time_driver.has_method("get_season_data"):
+			var season_data: Variant = time_driver.call("get_season_data", season)
+			if season_data is Dictionary:
+				root.set_meta("object_builder_season_data", season_data)
+		if time_driver.has_method("get_weather_effect"):
+			var weather_effect: Variant = time_driver.call("get_weather_effect", weather)
+			if weather_effect is Dictionary:
+				root.set_meta("object_builder_weather_effect", weather_effect)
+
+	var animal_components := _get_world_components("has_daily_routine")
+	for animal_component in animal_components:
+		var animal_root := ObjectFactoryScript.get_object_root(animal_component)
+		if animal_root == null or not is_instance_valid(animal_root):
+			continue
+		if animal_component.has_method("get_routine_action"):
+			animal_root.set_meta(
+				"object_builder_animal_routine_action",
+				animal_component.call("get_routine_action", _world_time_hour)
+			)
+
+	for generation_component in _get_world_components("adapts_to_environment"):
+		var generation_root := ObjectFactoryScript.get_object_root(generation_component)
+		if generation_root == null or not is_instance_valid(generation_root):
+			continue
+		var generation_phase := str(generation_root.get_meta("object_builder_day_phase", "day"))
+		var generation_time := ObjectFactoryScript.get_component(generation_root, "has_day_night_schedule")
+		if generation_time != null and generation_time.has_method("get_day_phase"):
+			generation_phase = str(generation_time.call("get_day_phase", _world_time_hour))
+		if generation_component.has_method("adapt_to_environment"):
+			var modifiers: Variant = generation_component.call(
+				"adapt_to_environment",
+				{"season": season, "day_phase": generation_phase, "weather": weather}
+			)
+			if modifiers is Dictionary:
+				generation_root.set_meta("object_builder_environment_modifiers", modifiers)
+
+
+func _get_world_season(day: int) -> String:
+	var days_per_season := maxi(1, int(config.world.get("days_per_season", 30)))
+	var day_of_year := posmod(maxi(1, day) - 1, days_per_season * 4)
+	return ["spring", "summer", "autumn", "winter"][int(floor(float(day_of_year) / float(days_per_season)))]
+
+
+func _bind_world_mechanic_signals() -> void:
+	for component in _get_world_components("can_produce_resources"):
+		_connect_mechanic_signal(component, "resource_produced", "_on_mechanic_resource_produced")
+	for component in _get_world_components("has_periodic_output"):
+		_connect_mechanic_signal(component, "periodic_output", "_on_mechanic_resource_produced")
+	for component in _get_world_components("supports_screen_shake"):
+		_connect_mechanic_signal(component, "screen_shake_requested", "_on_mechanic_screen_shake_requested")
+
+
+func _connect_mechanic_signal(
+	component: ObjectComponent,
+	signal_name: String,
+	callback_method: String
+) -> void:
+	if component == null or not is_instance_valid(component) or not component.has_signal(signal_name):
+		return
+	var callback := Callable(self, callback_method).bind(component)
+	if not component.is_connected(signal_name, callback):
+		component.connect(signal_name, callback)
+
+
+func _on_mechanic_resource_produced(
+	item_id: String,
+	amount: int,
+	source_component: ObjectComponent
+) -> void:
+	if source_component == null or not is_instance_valid(source_component):
+		return
+	_deliver_mechanic_output(item_id, amount, ObjectFactoryScript.get_object_root(source_component))
+
+
+func _deliver_mechanic_output(item_id: String, amount: int, source: Node) -> void:
+	var normalized_id := item_id.strip_edges()
+	var remaining := maxi(0, amount)
+	if normalized_id.is_empty() or remaining <= 0:
+		return
+	var accepted_before := remaining
+	remaining = _inventory_add(normalized_id, remaining)
+	var accepted := accepted_before - remaining
+	if accepted > 0:
+		_log("Получено от механики: %s ×%d." % [
+			str(config.items.get(normalized_id, {}).get("label", normalized_id)),
+			accepted
+		])
+	if remaining <= 0:
+		return
+	var definition := config.item_definitions.get(normalized_id) as ItemDefinition
+	if definition == null or world_objects == null:
+		_log("Не удалось разместить остаток ресурса '%s' в мире." % normalized_id)
+		return
+	var drop := ResourceDropScript.new() as ResourceDrop
+	drop.name = "MechanicDrop_%s_%03d" % [normalized_id, drops.size() + 1]
+	drop.configure(normalized_id, remaining, Vector2.ZERO, config.drops, definition)
+	world_objects.add_child(drop)
+	var spawn_position := Vector2.ZERO
+	if source is Node2D:
+		spawn_position = (source as Node2D).global_position
+	drop.global_position = spawn_position
+	drops.append(drop)
+	_log("На земле осталось: %s ×%d." % [normalized_id, remaining])
+
+
+func _on_mechanic_screen_shake_requested(
+	intensity: float,
+	duration: float,
+	_source_component: ObjectComponent
+) -> void:
+	if not screen_shake_enabled or not is_finite(intensity) or not is_finite(duration):
+		return
+	if intensity <= 0.0 or duration <= 0.0:
+		return
+	_camera_shake_strength_override = maxf(_camera_shake_strength_override, intensity)
+	camera_shake_timer = maxf(camera_shake_timer, duration)
+
 
 func _try_interact_with_nearest() -> void:
 	if player == null:
@@ -1017,14 +1755,74 @@ func _try_interact_with_nearest() -> void:
 			nearest = interactable
 			nearest_distance = distance
 	if nearest == null:
+		if _try_interact_with_nearest_animal(actor_position):
+			return
 		_log("Рядом нет доступных объектов для взаимодействия.")
 		return
 	if nearest.try_interact(player):
 		var source := ObjectFactoryScript.get_object_root(nearest)
 		if source != null:
+			_trigger_object_mechanic(source, "plays_interaction_sound", "play_event", ["interact"])
+			_trigger_object_mechanic(source, "emits_particles", "emit_particles")
 			_log("Взаимодействие: %s." % source.name)
 	else:
 		_log("Не удалось взаимодействовать с объектом.")
+
+
+func _try_interact_with_nearest_animal(actor_position: Vector2) -> bool:
+	var candidates := _get_world_components("can_be_fed")
+	candidates.append_array(_get_world_components("can_be_petted"))
+	var nearest_root: Node
+	var nearest_animal: ObjectComponent
+	var nearest_distance := 72.0
+	var visited: Dictionary = {}
+	for component in candidates:
+		if component == null or not is_instance_valid(component):
+			continue
+		var root := ObjectFactoryScript.get_object_root(component)
+		if root == null or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		var root_id := root.get_instance_id()
+		if visited.has(root_id):
+			continue
+		visited[root_id] = true
+		var animal_driver := ObjectFactoryScript.get_component(root, "can_be_fed")
+		if animal_driver == null:
+			animal_driver = ObjectFactoryScript.get_component(root, "can_be_petted")
+		if animal_driver == null:
+			continue
+		var distance := actor_position.distance_to(_get_component_world_position(animal_driver, root))
+		if distance <= nearest_distance:
+			nearest_root = root
+			nearest_animal = animal_driver
+			nearest_distance = distance
+	if nearest_root == null or nearest_animal == null:
+		return false
+
+	var selected_item := _get_selected_item_id()
+	var feeding_component := ObjectFactoryScript.get_component(nearest_root, "can_be_fed")
+	if feeding_component != null and not selected_item.is_empty():
+		var accepted_foods := str(feeding_component.get_setting("accepted_foods_csv", "")).to_lower().split(",", false)
+		if accepted_foods.has(selected_item.to_lower()) and _get_item_count(selected_item) > 0:
+			var inventory_before := inventory.duplicate(true)
+			if _consume_item(selected_item, 1):
+				if bool(nearest_animal.call("feed", selected_item)):
+					_trigger_object_mechanic(nearest_root, "plays_interaction_sound", "play_event", ["feed"])
+					_log("Животное накормлено: %s." % nearest_root.name)
+					return true
+				inventory = inventory_before
+				inventory_dirty = true
+				_update_resource_counts()
+
+	var pet_component := ObjectFactoryScript.get_component(nearest_root, "can_be_petted")
+	if pet_component != null and pet_component.has_method("pet"):
+		if bool(pet_component.call("pet", "player")):
+			_trigger_object_mechanic(nearest_root, "plays_interaction_sound", "play_event", ["pet"])
+			_log("Вы погладили: %s." % nearest_root.name)
+		else:
+			_log("Животное пока не готово к повторному контакту.")
+		return true
+	return false
 
 
 func _get_world_components(component_id: String) -> Array[ObjectComponent]:
@@ -1099,10 +1897,11 @@ func _update_camera(delta: float) -> void:
 	camera.zoom = camera.zoom.lerp(Vector2.ONE * target_zoom, amount)
 	if camera_shake_timer > 0.0:
 		camera_shake_timer -= delta
-		var strength := float(config.camera.shake_strength)
+		var strength := _camera_shake_strength_override if _camera_shake_strength_override >= 0.0 else float(config.camera.shake_strength)
 		camera.offset = Vector2(rng.randf_range(-strength, strength), rng.randf_range(-strength, strength))
 	else:
 		camera.offset = Vector2.ZERO
+		_camera_shake_strength_override = -1.0
 
 func _camera_shake() -> void:
 	if screen_shake_enabled:
