@@ -63,6 +63,7 @@ func _run_tests() -> void:
 	_test_capability_library_size_and_status()
 	await _test_component_node_bindings()
 	_test_mechanic_target_binding()
+	_test_animation_target_binding()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -857,6 +858,56 @@ func _test_mechanic_target_binding() -> void:
 		_expect(
 			is_equal_approx(target.position.x, 120.0),
 			"bound movement mechanic changes the assigned node, not the object root"
+		)
+	instance.free()
+
+
+func _test_animation_target_binding() -> void:
+	var scene_root := Node2D.new()
+	scene_root.name = "AnimationBindingRoot"
+	var visuals := Node2D.new()
+	visuals.name = "Visuals"
+	scene_root.add_child(visuals)
+	visuals.owner = scene_root
+
+	var animation_player := AnimationPlayer.new()
+	animation_player.name = "AnimationPlayer"
+	var animation_library := AnimationLibrary.new()
+	var idle_animation := Animation.new()
+	idle_animation.length = 0.5
+	_expect(animation_library.add_animation("idle", idle_animation) == OK, "smoke animation library accepts idle animation")
+	_expect(animation_player.add_animation_library("", animation_library) == OK, "smoke AnimationPlayer accepts its animation library")
+	visuals.add_child(animation_player)
+	animation_player.owner = scene_root
+
+	var packed_scene := PackedScene.new()
+	_expect(packed_scene.pack(scene_root) == OK, "animation target scene can be packed")
+	scene_root.free()
+
+	var binding := ObjectComponentCatalog.create_binding("plays_idle_animation", NodePath("Visuals"))
+	_expect(binding != null, "mechanic catalog creates an animation component binding")
+	if binding == null:
+		return
+
+	binding.binding_id = "idle_animation_binding"
+	var definition := ObjectDefinition.new()
+	definition.object_id = "animation_target_binding_smoke_test"
+	definition.display_name = "Animation Target Binding Test"
+	definition.category = "Other"
+	definition.scene = packed_scene
+	definition.component_bindings = [binding]
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory instantiates an animation component with its visual target")
+	if instance == null:
+		return
+
+	var idle_component := ObjectFactory.get_component(instance, "plays_idle_animation")
+	_expect(idle_component != null, "factory attaches the idle animation mechanic")
+	if idle_component != null:
+		_expect(
+			bool(idle_component.call("play_idle")),
+			"factory binds the mechanic to the AnimationPlayer under its assigned node"
 		)
 	instance.free()
 
