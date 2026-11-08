@@ -76,7 +76,7 @@ func _run() -> void:
 	_expect(first_row.has_method("_get_drag_data") and first_row.has_method("_drop_data"), "visual part rows support native drag-and-drop reordering")
 	var row_content := first_row.get_child(0) as HBoxContainer
 	_expect(row_content.get_child(0).has_method("_get_drag_data"), "visual part rows expose a dedicated drag handle")
-	var drag_payload: Variant = row_content.get_child(0).call("_get_drag_data", Vector2.ZERO)
+	var drag_payload: Variant = row_content.get_child(0).call("get_drag_payload")
 	_expect(drag_payload is Dictionary and drag_payload.get("part_path", "") == "Visuals/Leaf", "drag handle carries the exact source path and parent context")
 	_expect(bool(first_row.call("_can_drop_data", Vector2.ZERO, {"part_path": "Visuals/Glow", "parent_path": "Visuals"})), "drag reorder accepts a target row with the same parent")
 	_expect(not bool(first_row.call("_can_drop_data", Vector2.ZERO, {"part_path": "Other/Part", "parent_path": "Other"})), "drag reorder rejects rows from another parent")

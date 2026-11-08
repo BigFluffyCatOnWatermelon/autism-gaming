@@ -7,13 +7,16 @@ var parent_path := NodePath("")
 
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
-	if part_path.is_empty():
+	var payload := get_drag_payload()
+	if payload.is_empty():
 		return null
 	var preview := Label.new()
 	preview.text = "Переместить часть"
-	var viewport := get_viewport()
-	if viewport != null and viewport.gui_is_dragging():
-		set_drag_preview(preview)
-	else:
-		preview.free()
+	set_drag_preview(preview)
+	return payload
+
+
+func get_drag_payload() -> Dictionary:
+	if part_path.is_empty():
+		return {}
 	return {"part_path": str(part_path), "parent_path": str(parent_path)}
