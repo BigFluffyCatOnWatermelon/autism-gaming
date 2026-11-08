@@ -303,7 +303,6 @@ static func _apply_curated_relations(definitions: Array[ObjectCapabilityDefiniti
 		["can_be_fed", "related", "has_hunger", "Кормление меняет показатель голода животного или персонажа."],
 		["can_be_mounted", "recommends", "can_move", "Оседланное животное должно поддерживать перемещение."],
 		["has_patrol_route", "extends", "can_move", "Маршрут задаёт точки и правила для уже доступного движения."],
-		["can_chase", "recommends", "can_target_enemy", "Преследование требует определить и отслеживать цель."],
 		["can_block", "related", "has_armor", "Блок и броня могут совместно снижать входящий урон."],
 		["has_shield", "related", "has_armor", "Щит и броня образуют разные слои защиты объекта."],
 		["has_damage_resistance", "related", "resists_status_effects", "Сопротивления урону и эффектам задают защиту от разных типов угроз."],
