@@ -8,6 +8,15 @@ func _on_configured() -> void:
     _load_options({"part_paths": "", "parts_visible": true, "parts_offset": Vector2.ZERO})
 
 
+func _apply_bound_target() -> bool:
+    var root := get_bound_target()
+    if root == null:
+        return fail("Не привязан корневой узел составного объекта.")
+    if str(get_option("part_paths", "")).strip_edges().is_empty():
+        return true
+    return apply_to(root)
+
+
 func apply_to(root: Node) -> bool:
     if not is_instance_valid(root):
         return fail("Не передан корневой узел составного объекта.")
