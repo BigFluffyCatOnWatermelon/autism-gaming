@@ -457,7 +457,7 @@ func _read_entry_value(entry: Dictionary) -> Variant:
 			if control is TextEdit:
 				return (control as TextEdit).text
 			if control is ColorPickerButton:
-				return (control as ColorPickerButton).color.to_html(false)
+				return "#" + (control as ColorPickerButton).color.to_html(false).trim_prefix("#")
 			return (control as LineEdit).text
 		"Vector2":
 			var vector_row := control as HBoxContainer
