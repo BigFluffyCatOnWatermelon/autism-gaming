@@ -357,6 +357,98 @@ static func get_component_by_binding_id(instance: Node, binding_id: String) -> O
 	return null
 
 
+## Captures serializable runtime state from components that expose the state contract.
+## Component binding IDs keep snapshots stable when several components share one script.
+static func export_runtime_state(instance: Node) -> Dictionary:
+	if instance == null:
+		return {}
+	var object_root := get_object_root(instance)
+	if object_root == null:
+		return {}
+	var component_states: Dictionary = {}
+	for component in get_components(object_root):
+		if not component.has_method("export_runtime_state"):
+			continue
+		var exported: Variant = component.call("export_runtime_state")
+		if not exported is Dictionary:
+			push_warning(
+				"ObjectFactory: export_runtime_state() компонента '%s' должен возвращать Dictionary."
+				% component.component_id
+			)
+			continue
+		var state_key := component.binding_id.strip_edges()
+		if state_key.is_empty():
+			state_key = component.component_id.strip_edges()
+		if state_key.is_empty():
+			continue
+		component_states[state_key] = {
+			"component_id": component.component_id,
+			"state": exported.duplicate(true)
+		}
+	return {
+		"schema_version": 1,
+		"object_id": str(object_root.get_meta("object_definition_id", "")),
+		"components": component_states
+	}
+
+
+## Restores a snapshot. Unknown bindings are ignored for forward/backward compatibility.
+## If a component rejects its state, already restored components are rolled back.
+static func import_runtime_state(instance: Node, snapshot: Dictionary) -> bool:
+	if instance == null:
+		return false
+	var object_root := get_object_root(instance)
+	if object_root == null:
+		return false
+	var schema_version := int(snapshot.get("schema_version", 1))
+	if schema_version < 1 or schema_version > 1:
+		push_warning("ObjectFactory: неподдерживаемая версия runtime-состояния: %d." % schema_version)
+		return false
+	var snapshot_object_id := str(snapshot.get("object_id", ""))
+	var current_object_id := str(object_root.get_meta("object_definition_id", ""))
+	if not snapshot_object_id.is_empty() and not current_object_id.is_empty() and snapshot_object_id != current_object_id:
+		push_warning("ObjectFactory: runtime-состояние принадлежит другому объекту.")
+		return false
+	var component_states: Variant = snapshot.get("components", {})
+	if not component_states is Dictionary:
+		push_warning("ObjectFactory: секция components runtime-состояния должна быть Dictionary.")
+		return false
+
+	var applied: Array[Dictionary] = []
+	for state_key in component_states:
+		var record: Variant = component_states[state_key]
+		if not record is Dictionary or not record.get("state", {}) is Dictionary:
+			_rollback_runtime_state(applied)
+			return false
+		var component := get_component_by_binding_id(object_root, str(state_key))
+		if component == null:
+			# A removed optional mechanic must not prevent the rest of the object loading.
+			continue
+		var expected_component_id := str(record.get("component_id", ""))
+		if not expected_component_id.is_empty() and component.component_id != expected_component_id:
+			_rollback_runtime_state(applied)
+			return false
+		if not component.has_method("import_runtime_state") or not component.has_method("export_runtime_state"):
+			continue
+		var previous: Variant = component.call("export_runtime_state")
+		if not previous is Dictionary:
+			_rollback_runtime_state(applied)
+			return false
+		if not bool(component.call("import_runtime_state", record.get("state", {}))):
+			_rollback_runtime_state(applied)
+			return false
+		applied.append({"component": component, "state": previous.duplicate(true)})
+	return true
+
+
+static func _rollback_runtime_state(applied: Array[Dictionary]) -> void:
+	for index in range(applied.size() - 1, -1, -1):
+		var entry := applied[index]
+		var component: Object = entry.get("component")
+		if is_instance_valid(component) and component.has_method("import_runtime_state"):
+			component.call("import_runtime_state", entry.get("state", {}))
+
+
 static func has_component(instance: Node, component_id: String) -> bool:
 	return get_component(instance, component_id) != null
 
