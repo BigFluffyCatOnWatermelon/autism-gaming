@@ -58,6 +58,9 @@ func _run() -> void:
 	_expect(bool(canvas.get("_editing_enabled")), "canvas enables edits for an open scene")
 	var interaction: RefCounted = canvas.get("_interaction_controller")
 	_expect(interaction != null, "canvas delegates pointer handling to a separate controller")
+	var no_guides: Array[float] = []
+	interaction.call("set_guides", no_guides, no_guides)
+	interaction.call("set_pivot_edit_mode", false)
 	_expect(bool(canvas.get("_grid_enabled")) and bool(canvas.get("_snap_enabled")), "grid and pixel snapping are enabled by default")
 
 	var preview_root := canvas.get("_preview_instance") as Node
