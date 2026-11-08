@@ -1707,7 +1707,7 @@ func _test_world_time_mechanics() -> void:
 	_expect(bool(time_component.call("start_lifespan")), "lifespan timer can start")
 	_expect(not bool(time_component.call("advance_lifespan", 1.0)), "lifespan remains active before expiry")
 	_expect(bool(time_component.call("advance_lifespan", 1.0)), "lifespan expires at its deadline")
-	_expect(float(time_component.call("get_weather_effect", "rain").get("movement_multiplier", 0.0)) == 0.8, "weather effects return configured modifiers")
+	_expect(is_equal_approx(float(time_component.call("get_weather_effect", "rain").get("movement_multiplier", 0.0)), 0.8), "weather effects return configured modifiers")
 	_expect(not bool(time_component.call("get_weather_effect", "heat").get("allowed", true)), "weather rules reject unsupported conditions")
 	var output: Dictionary = time_component.call("advance_periodic_output", 4.0)
 	_expect(int(output.get("output", {}).get("ore", 0)) == 6, "periodic output accounts for multiple elapsed cycles")
