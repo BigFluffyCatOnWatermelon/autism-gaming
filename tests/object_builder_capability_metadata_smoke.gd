@@ -26,10 +26,14 @@ func _run_tests() -> void:
 		_expect(visual.kind_id == "presentation", "visual category maps to presentation kind")
 		_expect(visual.get_effective_readiness_status() == "planned", "planned visual capability keeps its own readiness")
 		_expect(not visual.is_ready(), "planned visual capability cannot be enabled")
-		_expect(visual.component_ids.is_empty(), "visual catalogue record does not receive a fake runtime component")
+		_expect(visual.component_ids.has("has_sprite"), "visual mechanic resolves to its registered component definition")
 		_expect(visual.icon_resource_path.is_empty(), "unfinished icon resource remains optional")
 		_expect(visual.illustration_resource_path.is_empty(), "unfinished illustration resource remains optional")
-		_expect(visual.relations.is_empty(), "typed relationships are represented as structured metadata")
+		var has_typed_relation := false
+		for relation in visual.relations:
+			if str(relation.get("type", "")) == "recommends" and str(relation.get("target_id", "")) == "plays_idle_animation":
+				has_typed_relation = true
+		_expect(has_typed_relation, "visual mechanic inherits its curated typed relationship metadata")
 		_expect(visual.compatibility_rules.is_empty(), "compatibility rules are represented independently")
 
 	var health := ObjectCapabilityCatalog.get_definition_reference("has_health")
