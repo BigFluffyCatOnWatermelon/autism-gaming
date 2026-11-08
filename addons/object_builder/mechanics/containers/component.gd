@@ -65,7 +65,7 @@ func add_item(item_id: String, amount: int = 1, max_stack: int = 1, weight: floa
 	var state := _get_state()
 	var items: Array = state.get("items", [])
 	var amount_allowed := amount
-	var max_weight := float(_option("has_container_capacity", "max_weight", 0.0))
+	var max_weight := float(state.get("max_weight", _option("has_container_capacity", "max_weight", 0.0)))
 	if _has_mechanic("has_container_capacity") and max_weight > 0.0 and weight > 0.0:
 		amount_allowed = mini(amount, int(floor(maxf(0.0, max_weight - get_total_weight()) / weight)))
 	var capacity_remainder := amount - amount_allowed
@@ -83,7 +83,7 @@ func add_item(item_id: String, amount: int = 1, max_stack: int = 1, weight: floa
 			remaining -= accepted
 			if remaining <= 0:
 				break
-	var slot_capacity := maxi(1, int(_option("has_container_capacity", "max_slots", 24)))
+	var slot_capacity := maxi(1, int(state.get("max_slots", _option("has_container_capacity", "max_slots", 24))))
 	while remaining > 0 and items.size() < slot_capacity:
 		var accepted_new := mini(remaining, max_stack)
 		items.append({
@@ -207,6 +207,24 @@ func link_container(target: Object) -> bool:
 	var own_root := get_object_root()
 	if target_root == null or own_root == null or target_root == own_root:
 		return _fail("Нельзя связать контейнер с самим собой.")
+	var own_group := str(own_root.get_meta("object_builder_container_shared_group", ""))
+	var target_group := str(target_root.get_meta("object_builder_container_shared_group", ""))
+	if not own_group.is_empty() or not target_group.is_empty():
+		if own_group == target_group and not own_group.is_empty():
+			return true
+		return _fail("Сначала отключите контейнер от прежней группы.")
+	var own_config_group := str(_option("has_shared_storage", "shared_group_id", "")).strip_edges()
+	var target_config_group := str(target.call("_option", "has_shared_storage", "shared_group_id", "")).strip_edges()
+	if not own_config_group.is_empty() and own_config_group == target_config_group:
+		return true
+	var own_owner := str(_option("has_container_permissions", "owner_id", ""))
+	var target_owner := str(target.call("_option", "has_container_permissions", "owner_id", ""))
+	var own_factions := str(_option("has_container_permissions", "allowed_factions_csv", ""))
+	var target_factions := str(target.call("_option", "has_container_permissions", "allowed_factions_csv", ""))
+	var own_public := bool(_option("has_container_permissions", "public_access", true))
+	var target_public := bool(target.call("_option", "has_container_permissions", "public_access", true))
+	if own_owner != target_owner or own_factions != target_factions or own_public != target_public:
+		return _fail("Перед связыванием настройте одинаковые права доступа у обоих контейнеров.")
 	var own_state := _get_state()
 	var target_state: Dictionary = target.call("_get_state")
 	var merged_items: Array = target_state.get("items", []).duplicate(true)
@@ -214,19 +232,28 @@ func link_container(target: Object) -> bool:
 		merged_items.append(item.duplicate(true))
 	var own_capacity := maxi(1, int(_option("has_container_capacity", "max_slots", 24)))
 	var target_capacity := maxi(1, int(target.call("_option", "has_container_capacity", "max_slots", 24)))
-	if merged_items.size() > mini(own_capacity, target_capacity):
+	var shared_capacity := mini(own_capacity, target_capacity)
+	if merged_items.size() > shared_capacity:
 		return _fail("Содержимое не помещается в общую вместимость контейнеров.")
 	var own_max_weight := float(_option("has_container_capacity", "max_weight", 0.0))
 	var target_max_weight := float(target.call("_option", "has_container_capacity", "max_weight", 0.0))
+	var shared_max_weight := own_max_weight
+	if shared_max_weight <= 0.0 or (target_max_weight > 0.0 and target_max_weight < shared_max_weight):
+		shared_max_weight = target_max_weight
 	var merged_weight := 0.0
 	for item in merged_items:
 		merged_weight += float(item.get("weight", 0.0)) * float(item.get("amount", 0))
-	if (own_max_weight > 0.0 and merged_weight > own_max_weight) or (target_max_weight > 0.0 and merged_weight > target_max_weight):
-		return _fail("Содержимое превышает весовой лимит одного из контейнеров.")
-	var group_id := str(target_root.get_meta("object_builder_container_shared_group", ""))
+	if shared_max_weight > 0.0 and merged_weight > shared_max_weight:
+		return _fail("Содержимое превышает общий весовой лимит контейнеров.")
+	var group_id := own_config_group if not own_config_group.is_empty() else target_config_group
 	if group_id.is_empty():
 		group_id = "container_group_" + str(Time.get_ticks_usec()) + "_" + str(randi())
-	var merged_state := {"items": merged_items, "locked": bool(own_state.get("locked", false)) or bool(target_state.get("locked", false))}
+	var merged_state := {
+		"items": merged_items,
+		"locked": bool(own_state.get("locked", false)) or bool(target_state.get("locked", false)),
+		"max_slots": shared_capacity,
+		"max_weight": shared_max_weight
+	}
 	_shared_storage_states[group_id] = merged_state.duplicate(true)
 	target_root.remove_meta("object_builder_container_force_local")
 	own_root.remove_meta("object_builder_container_force_local")
@@ -239,6 +266,8 @@ func unlink_container() -> bool:
 	if root == null:
 		return false
 	var group_id := str(root.get_meta("object_builder_container_shared_group", ""))
+	if group_id.is_empty():
+		group_id = str(_option("has_shared_storage", "shared_group_id", "")).strip_edges()
 	if group_id.is_empty():
 		return false
 	var local_state := _get_state()
@@ -291,7 +320,7 @@ func _load_local_state(root: Node) -> Dictionary:
 		for item in parsed:
 			if item is Dictionary and not str(item.get("item_id", "")).is_empty() and int(item.get("amount", 0)) > 0:
 				items.append(item.duplicate(true))
-	return {"items": items, "locked": bool(_option("can_be_locked", "initially_locked", false))}
+	return {"items": items, "locked": bool(_option("can_be_locked", "initially_locked", false)), "max_slots": maxi(1, int(_option("has_container_capacity", "max_slots", 24))), "max_weight": maxf(0.0, float(_option("has_container_capacity", "max_weight", 0.0)))}
 
 
 func _save_state(state: Dictionary) -> void:
