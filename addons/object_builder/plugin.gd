@@ -581,8 +581,6 @@ func _refresh_installed_capabilities_view() -> void:
 	var entries: Array[Dictionary] = []
 	if _working_definition == null:
 		_installed_capabilities_view.call("set_entries", entries, "Сначала создай объект или выбери его в библиотеке.")
-		if _installed_capability_map_view != null:
-			_installed_capability_map_view.call("update_installed", [])
 		return
 	for selection in _working_definition.capabilities:
 		if selection == null or not selection.enabled:
@@ -605,11 +603,6 @@ func _refresh_installed_capabilities_view() -> void:
 			entry["icon"] = ObjectBuilderCapabilityIconRegistryScript.get_icon(definition)
 		entries.append(entry)
 	_installed_capabilities_view.call("set_entries", entries)
-	if _installed_capability_map_view != null:
-		var installed_ids: Array[String] = []
-		for entry in entries:
-			installed_ids.append(str(entry.get("capability_id", "")))
-		_installed_capability_map_view.call("update_installed", installed_ids)
 
 
 func _on_installed_capability_map_requested(capability_ids: Array[String]) -> void:
