@@ -104,13 +104,11 @@ func _run() -> void:
 		if context_menu != null:
 			context_menu.hide()
 		interaction.call("_begin_selection", screen_position)
-		print("CANVAS_DEBUG begin: world=", interaction.call("_screen_to_world", screen_position), "selected=", interaction.get("_selected_paths"), "mode=", interaction.get("_drag_mode"), "nodes=", (interaction.get("_drag_group_nodes") as Array).size(), "handles=", interaction.call("_get_transform_handle_positions"))
 		_expect(not selected_paths.is_empty() and selected_paths[-1] == NodePath("Sprite"), "clicking the sprite emits its scene-relative path")
 		var world_delta := Vector2(10.0, 0.0)
 		var viewport_delta := (viewport.get_canvas_transform() * world_delta) - (viewport.get_canvas_transform() * Vector2.ZERO)
 		var screen_delta := viewport_delta * surface.size / Vector2(viewport.size)
 		interaction.call("_update_drag", screen_position + screen_delta)
-		print("CANVAS_DEBUG moved: screen_delta=", screen_delta, "position=", preview_sprite.position, "mode=", interaction.get("_drag_mode"), "nodes=", (interaction.get("_drag_group_nodes") as Array).size())
 		_expect(preview_sprite.position == Vector2(72.0, 32.0), "dragging applies the configured eight-pixel snap step")
 		interaction.call("_finish_drag")
 		_expect(committed_transforms.size() == 1, "releasing a moved part commits one transform")

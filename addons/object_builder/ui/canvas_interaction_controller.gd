@@ -190,7 +190,7 @@ func handle_input(event: InputEvent) -> void:
 				_last_mouse_position = button.position
 				return
 			if button.pressed:
-				_begin_selection(button.position)
+				_begin_selection(button.position, button.ctrl_pressed or button.shift_pressed)
 			elif _left_pan_active:
 				_pan_active = false
 				_left_pan_active = false
@@ -450,7 +450,7 @@ func _get_transform_handle_positions() -> Dictionary:
 	handles["rotate"] = pivot_screen + Vector2(0.0, -28.0)
 	return handles
 
-func _begin_selection(screen_position: Vector2) -> void:
+func _begin_selection(screen_position: Vector2, additive_selection: bool = false) -> void:
 	if not _editing_enabled or _preview_instance == null:
 		return
 	var guide := _get_guide_at_screen_position(screen_position)
@@ -483,7 +483,6 @@ func _begin_selection(screen_position: Vector2) -> void:
 		return
 
 	var hit_path := _preview_instance.get_path_to(hit)
-	var additive_selection := Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_SHIFT)
 	if additive_selection:
 		_toggle_selected_path(hit_path)
 		if not _selected_paths.has(hit_path):
