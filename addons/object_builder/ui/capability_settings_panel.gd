@@ -25,6 +25,7 @@ var _editable_count := 0
 var _updating_controls := false
 var _resource_dialog: FileDialog
 var _resource_target_index := -1
+var _discard_dialog: ConfirmationDialog
 
 
 func build() -> void:
@@ -151,6 +152,8 @@ func configure(
 	_editable_count = 0
 
 	var previous_group := ""
+	var group_instance := 0
+	var current_group_key := ""
 	var current_group_header: Button
 	var current_group_body: VBoxContainer
 	for descriptor in descriptors:
@@ -163,6 +166,8 @@ func configure(
 		if group_name.is_empty():
 			group_name = "Основные параметры"
 		if group_name != previous_group:
+			group_instance += 1
+			current_group_key = "%s#%d" % [group_name, group_instance]
 			var group_panel := PanelContainer.new()
 			group_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			_form.add_child(group_panel)
@@ -179,8 +184,8 @@ func configure(
 			current_group_body = VBoxContainer.new()
 			current_group_body.add_theme_constant_override("separation", 7)
 			group_content.add_child(current_group_body)
-			current_group_header.toggled.connect(_on_group_toggled.bind(current_group_body, group_name))
-			_group_bodies[group_name] = {"header": current_group_header, "body": current_group_body}
+			current_group_header.toggled.connect(_on_group_toggled.bind(current_group_body, current_group_key, group_name))
+			_group_bodies[current_group_key] = {"header": current_group_header, "body": current_group_body, "display_name": group_name}
 			previous_group = group_name
 
 		var value_type := str(descriptor.get("value_type", ""))
@@ -267,6 +272,7 @@ func configure(
 			"range_slider": range_slider,
 			"row": row,
 			"group_name": group_name,
+			"group_key": current_group_key,
 			"group_header": current_group_header,
 			"group_body": current_group_body,
 			"reset_button": reset_button,
@@ -495,13 +501,13 @@ func _update_filters() -> void:
 		if row.visible:
 			visible_count += 1
 
-	for group_name in _group_bodies:
-		var group: Dictionary = _group_bodies[group_name]
+	for group_key in _group_bodies:
+		var group: Dictionary = _group_bodies[group_key]
 		var body := group.get("body") as Control
 		var header := group.get("header") as Button
 		var group_has_visible := false
 		for entry in _setting_controls:
-			if str(entry.get("group_name", "")) == str(group_name):
+			if str(entry.get("group_key", "")) == str(group_key):
 				var row := entry.get("row") as Control
 				if row != null and row.visible:
 					group_has_visible = true
@@ -518,10 +524,10 @@ func _update_filters() -> void:
 		_empty_state.text = "По этому запросу ничего не найдено. Измени поиск или уровень параметров."
 
 
-func _on_group_toggled(expanded: bool, body: VBoxContainer, group_name: String) -> void:
+func _on_group_toggled(expanded: bool, body: VBoxContainer, group_key: String, group_name: String) -> void:
 	if body != null:
 		body.visible = expanded
-	var group: Dictionary = _group_bodies.get(group_name, {})
+	var group: Dictionary = _group_bodies.get(group_key, {})
 	var header := group.get("header") as Button
 	if header != null:
 		header.text = ("▾  " if expanded else "▸  ") + group_name
@@ -705,4 +711,19 @@ func _on_apply_pressed() -> void:
 
 
 func _on_close_pressed() -> void:
+	if get_changed_values().is_empty():
+		close_requested.emit()
+		return
+	if _discard_dialog == null or not is_instance_valid(_discard_dialog):
+		_discard_dialog = ConfirmationDialog.new()
+		_discard_dialog.title = "Несохранённые изменения"
+		_discard_dialog.dialog_text = "В этой механике есть несохранённые изменения. Отбросить их?"
+		_discard_dialog.get_ok_button().text = "Отбросить изменения"
+		_discard_dialog.get_cancel_button().text = "Продолжить редактирование"
+		_discard_dialog.confirmed.connect(_on_discard_confirmed)
+		add_child(_discard_dialog)
+	_discard_dialog.popup_centered(Vector2i(440, 180))
+
+
+func _on_discard_confirmed() -> void:
 	close_requested.emit()
