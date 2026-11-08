@@ -166,7 +166,7 @@ class CapabilityMapData:
 	) -> void:
 		if source_id.is_empty() or target_id.is_empty() or source_id == target_id:
 			return
-		if not RELATION_TYPE_IDS.has(relation_type):
+		if not CapabilityRelationMapView.RELATION_TYPE_IDS.has(relation_type):
 			relation_type = "related"
 		var key := source_id + ">" + target_id + ":" + relation_type
 		if seen.has(key):
@@ -206,8 +206,8 @@ class CapabilityMapData:
 			copied["is_reverse"] = is_reverse
 			result.append(copied)
 		result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-			var a_type := RELATION_TYPE_ORDER.find(str(a["type"]))
-			var b_type := RELATION_TYPE_ORDER.find(str(b["type"]))
+			var a_type := CapabilityRelationMapView.RELATION_TYPE_ORDER.find(str(a["type"]))
+			var b_type := CapabilityRelationMapView.RELATION_TYPE_ORDER.find(str(b["type"]))
 			if a_type != b_type:
 				return a_type < b_type
 			var a_def := ObjectCapabilityCatalog.get_definition_reference(str(a["capability_id"]))
@@ -895,6 +895,18 @@ func _relation_caption(relation_type: String) -> String:
 
 func get_domain_count() -> int:
 	return _domains.size()
+
+func get_domain_mechanic_count(domain_id: String) -> int:
+	var domain: Dictionary = _domains.get(domain_id, {})
+	return (domain.get("mechanics", []) as Array).size()
+
+
+func get_domain_id_for_category(category_id: String) -> String:
+	return str(CapabilityMapData.get_domain_for_category(category_id).get("id", ""))
+
+
+func get_domain_position(index: int) -> Vector2:
+	return CapabilityMapLayout.domain_position(index)
 
 
 func get_mechanic_count() -> int:
