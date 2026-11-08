@@ -65,6 +65,7 @@ func _run_tests() -> void:
 	_test_mechanic_target_binding()
 	_test_animation_target_binding()
 	_test_harvesting_mechanics()
+	_test_item_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -986,6 +987,88 @@ func _test_harvesting_mechanics() -> void:
 		_expect(bool(harvesting.call("start_regrowth")), "harvesting can start a regrowth timer")
 		_expect(not bool(harvesting.call("advance_regrowth", 0.5)), "regrowth waits until its duration")
 		_expect(bool(harvesting.call("advance_regrowth", 0.5)), "regrowth completes at its duration")
+	instance.free()
+
+
+func _test_item_mechanics() -> void:
+	var item_ids := PackedStringArray([
+		"is_pickup_item",
+		"is_stackable",
+		"has_item_weight",
+		"has_item_value",
+		"is_consumable",
+		"can_be_equipped",
+		"can_be_dropped",
+		"can_be_traded",
+		"has_item_durability",
+		"has_item_uses"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for item_id in item_ids:
+		var binding := ObjectComponentCatalog.create_binding(item_id)
+		_expect(binding != null, "item component is registered: " + item_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+
+	for binding in bindings:
+		match binding.get_component_id():
+			"is_stackable":
+				binding.component_definition.settings["initial_count"] = 4
+				binding.component_definition.settings["max_stack_size"] = 10
+			"has_item_weight":
+				binding.component_definition.settings["weight_per_unit"] = 2.5
+			"has_item_value":
+				binding.component_definition.settings["base_value"] = 3.0
+			"is_consumable":
+				binding.component_definition.settings["consume_amount"] = 2
+			"can_be_equipped":
+				binding.component_definition.settings["allowed_slots_csv"] = "hand,armor"
+			"can_be_traded":
+				binding.component_definition.settings["trade_price_multiplier"] = 1.5
+			"has_item_durability":
+				binding.component_definition.settings["maximum_durability"] = 100.0
+				binding.component_definition.settings["starting_durability"] = 100.0
+			"has_item_uses":
+				binding.component_definition.settings["maximum_uses"] = 10
+				binding.component_definition.settings["starting_uses"] = 10
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "item_mechanics_smoke_test"
+	definition.display_name = "Item Mechanics Test"
+	definition.category = "Item"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the item package")
+	if instance == null:
+		return
+
+	var item := ObjectFactory.get_component(instance, "is_pickup_item")
+	_expect(item != null, "item entry component is attached")
+	if item != null:
+		_expect(bool(item.call("is_pickup_allowed")), "pickup item is available before pickup")
+		_expect(bool(item.call("mark_picked_up")), "pickup state can be recorded")
+		_expect(not bool(item.call("is_pickup_allowed")), "picked-up item cannot be picked up twice")
+		_expect(bool(item.call("can_stack_with", definition.object_id)), "same item can join its stack")
+		_expect(int(item.call("add_to_stack", 8)) == 6, "stack addition respects the maximum size")
+		_expect(int(item.call("remove_from_stack", 2)) == 2, "stack quantity can be removed")
+		_expect(int(item.call("get_count")) == 8, "stack count is shared by item mechanics")
+		_expect(is_equal_approx(float(item.call("get_total_weight")), 20.0), "item weight uses unit weight and stack count")
+		_expect(bool(item.call("consume")), "consumable uses its configured amount")
+		_expect(int(item.call("get_count")) == 6, "consumption removes the configured quantity")
+		_expect(bool(item.call("equip", "armor")), "item can be equipped in an allowed slot")
+		_expect(not bool(item.call("equip", "invalid")), "item rejects a disallowed equipment slot")
+		var dropped: Dictionary = item.call("drop", 1)
+		_expect(bool(dropped.get("ok", false)), "droppable item returns a drop payload")
+		var traded: Dictionary = item.call("trade", 1, 2.0)
+		_expect(bool(traded.get("ok", false)), "tradable item completes a trade")
+		_expect(is_equal_approx(float(traded.get("total_value", 0.0)), 9.0), "trade uses item value and configured price multiplier")
+		_expect(bool(item.call("apply_durability_damage", 25.0)), "item durability accepts damage")
+		_expect(is_equal_approx(float(item.call("get_durability").get("current", 0.0)), 75.0), "item durability decreases by applied damage")
+		_expect(bool(item.call("consume_uses", 2)), "limited-use item consumes charges")
+		_expect(int(item.call("get_remaining_uses")) == 8, "remaining item uses are tracked")
+		var saved_state: Dictionary = item.call("export_runtime_state")
+		_expect(bool(item.call("import_runtime_state", saved_state)), "item runtime state can be restored")
 	instance.free()
 
 
