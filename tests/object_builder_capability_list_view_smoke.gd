@@ -116,7 +116,7 @@ func _run() -> void:
 	view.call("set_entries", entries, 200, 42)
 	var entries_container := view.get("entries_container") as VBoxContainer
 	_expect(entries_container.get_child_count() == 4, "summary and three capability cards are displayed")
-	_expect((entries_container.get_child(0) as Label).text == "Механик в библиотеке: 200 · доступно сейчас: 42", "summary counts are supplied by the controller")
+	_expect((entries_container.get_child(0) as Label).text == "Механик в библиотеке: 200 · доступно сейчас: 42 · найдено: 3", "summary separates global library totals from the current filtered result count")
 
 	var implemented_card := entries_container.get_child(1) as PanelContainer
 	var implemented_content := implemented_card.get_child(0) as VBoxContainer
@@ -186,6 +186,12 @@ func _run() -> void:
 	}]
 	view.call("set_recommended_entries", recommendation_entries)
 	_expect((view.get("_recommendation_section") as PanelContainer).visible, "context-aware suggestions appear in a dedicated panel")
+	var recommendation_toggle := view.get("_recommendation_toggle") as Button
+	var recommendation_body := view.get("_recommendation_body") as VBoxContainer
+	_expect(not recommendation_body.visible and recommendation_toggle.text.contains("1"), "recommendations stay compact until explicitly expanded and show their count")
+	recommendation_toggle.button_pressed = true
+	recommendation_toggle.toggled.emit(true)
+	_expect(recommendation_body.visible, "recommendation section expands on demand")
 	_expect(view.call("get_recommendation_card_count") == 1, "recommendation panel shows each ranked suggestion as a card")
 	var recommendation_container := view.get("_recommendation_container") as HFlowContainer
 	var recommendation_card := recommendation_container.get_child(0) as PanelContainer
@@ -281,7 +287,13 @@ func _run() -> void:
 	}]
 	view.call("set_preset_data", preset_summaries, {})
 	var preset_section := view.get("_preset_section") as PanelContainer
+	var preset_toggle := view.get("_preset_toggle") as Button
+	var preset_body := view.get("_preset_body") as VBoxContainer
 	_expect(preset_section.visible, "catalog shows curated presets when they are available")
+	_expect(not preset_body.visible and preset_toggle.text.contains("1"), "preset section stays compact until expanded and shows its count")
+	preset_toggle.button_pressed = true
+	preset_toggle.toggled.emit(true)
+	_expect(preset_body.visible, "preset section expands on demand")
 	_expect(view.call("get_preset_button_count") == 1, "preset panel creates one card per preset definition")
 	var preset_container := view.get("_preset_container") as HFlowContainer
 	var preset_button := preset_container.get_child(0) as Button
