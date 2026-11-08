@@ -72,8 +72,8 @@ func _run_tests() -> void:
 	_test_ai_mechanics()
 	_test_animal_mechanics()
 	_test_audio_effects_mechanics()
-	_test_world_time_mechanics()
-	_test_world_generation_mechanics()
+	await _test_world_time_mechanics()
+	await _test_world_generation_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1726,6 +1726,12 @@ func _test_world_time_mechanics() -> void:
 	_expect(time_component.call("update_world_time", 2, 8.0).size() == 1, "daily scheduled events become eligible on the next day")
 	var saved_state: Dictionary = time_component.call("export_runtime_state")
 	_expect(bool(time_component.call("import_runtime_state", saved_state)), "world-time runtime state can be restored")
+	time_component.settings["delay_seconds"] = 0.01
+	time_component.call("start_timed_activation")
+	add_child(instance)
+	await create_timer(0.05).timeout
+	_expect(bool(instance.get_meta("object_active", false)), "world-time activation timer advances automatically while the object is in the scene tree")
+	remove_child(instance)
 	instance.free()
 
 
@@ -1824,6 +1830,13 @@ func _test_world_generation_mechanics() -> void:
 	_expect(is_equal_approx(float(adaptation.get("growth", 0.0)), 0.6) and str(adaptation.get("color", "")) == "green", "environmental modifiers combine deterministically")
 	var saved_state: Dictionary = generation.call("export_runtime_state")
 	_expect(bool(generation.call("import_runtime_state", saved_state)), "world-generation runtime state can be restored")
+	var growth_component := ObjectFactory.get_component(instance, "can_grow")
+	growth_component.settings["growth_duration"] = 0.01
+	_expect(bool(growth_component.call("import_runtime_state", {"growth_elapsed":0.0,"growth_stage":0})), "world-generation growth can be reset before automatic tick test")
+	add_child(instance)
+	await create_timer(0.05).timeout
+	_expect(int(growth_component.call("get_growth_stage")) == 2, "world-generation growth advances automatically while the object is in the scene tree")
+	remove_child(instance)
 	instance.free()
 
 
