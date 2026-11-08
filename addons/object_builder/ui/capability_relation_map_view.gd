@@ -343,6 +343,7 @@ func _open_window(host_control: Control, title_text: String) -> void:
 func _rebuild_view() -> void:
 	if _layout == null:
 		return
+	_focus_button_count = 0
 	for child in _toolbar.get_children():
 		child.queue_free()
 	for child in _layout.get_children():
@@ -503,6 +504,9 @@ func _build_domain_toolbar() -> void:
 		_relation_filter.set_item_metadata(_relation_filter.item_count - 1, str(relation_type))
 	_relation_filter.item_selected.connect(_on_relation_selected)
 	filters.add_child(_relation_filter)
+	for relation_index in range(_relation_filter.item_count):
+		if str(_relation_filter.get_item_metadata(relation_index)) == _selected_relation_type:
+			_relation_filter.select(relation_index)
 	_status_filter = OptionButton.new()
 	_status_filter.add_item("Все состояния")
 	_status_filter.set_item_metadata(0, "all")
@@ -688,8 +692,20 @@ func _create_local_node(node_name: String, definition: ObjectCapabilityDefinitio
 	var node := GraphNode.new()
 	node.name = node_name
 	node.title = definition.display_name
-	node.custom_minimum_size = Vector2(205, 110)
+	node.custom_minimum_size = Vector2(230, 185)
 	node.resizable = false
+	for relation_type in RELATION_TYPE_ORDER:
+		var row := HBoxContainer.new()
+		var label := Label.new()
+		label.text = str(RELATION_TYPE_NAMES[relation_type])
+		label.add_theme_font_size_override("font_size", 9)
+		label.add_theme_color_override("font_color", RELATION_TYPE_COLORS[relation_type])
+		row.add_child(label)
+		node.add_child(row)
+		var slot_index := node.get_child_count() - 1
+		var type_id := _relation_type_id(str(relation_type))
+		var color: Color = RELATION_TYPE_COLORS[relation_type]
+		node.set_slot(slot_index, true, type_id, color, true, type_id, color)
 	var content := VBoxContainer.new()
 	node.add_child(content)
 	var subtitle_label := Label.new()
