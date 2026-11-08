@@ -291,7 +291,7 @@ func _run() -> void:
 	var readonly_context_click := InputEventMouseButton.new()
 	readonly_context_click.button_index = MOUSE_BUTTON_RIGHT
 	readonly_context_click.pressed = true
-	readonly_context_click.position = screen_position
+	readonly_context_click.position = surface.size * 0.5
 	interaction.call("handle_input", readonly_context_click)
 	_expect(context_action_events.size() == 1, "read-only preview ignores right-click context actions")
 	_expect(not (canvas.get("_context_menu") as PopupMenu).visible, "read-only preview never opens the part context menu")
