@@ -203,6 +203,10 @@ func configure(
 			editor_hint = "scene"
 		elif editor_hint.is_empty() and setting_key in ["texture_path", "icon_path"]:
 			editor_hint = "texture"
+		var control_descriptor: Dictionary = descriptor
+		if editor_hint != str(descriptor.get("editor_hint", "")):
+			control_descriptor = descriptor.duplicate()
+			control_descriptor["editor_hint"] = editor_hint
 		var component_settings := selection.get_component_settings(component_id)
 		var current_value: Variant = component_settings.get(setting_key, descriptor.get("default_value"))
 		var default_value: Variant = descriptor.get("default_value")
@@ -225,7 +229,7 @@ func configure(
 			setting_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			label_row.add_child(setting_label)
 
-		var control: Control = _create_setting_control(value_type, current_value, descriptor)
+		var control: Control = _create_setting_control(value_type, current_value, control_descriptor)
 		if control == null:
 			var unsupported := Label.new()
 			unsupported.text = "Тип «%s» пока не поддерживается редактором. Значение сохранено без изменений." % value_type
