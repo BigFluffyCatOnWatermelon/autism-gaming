@@ -592,28 +592,23 @@ func _update_dirty_state() -> void:
 	if _apply_button == null:
 		return
 	var changed := get_changed_values().size()
-	var has_required_error := false
+	var validation_message := ""
 	for entry in _setting_controls:
-		if not bool(entry.get("required", false)):
-			continue
-		if str(entry.get("value_type", "")) == "String" and bool(entry.get("required", false)) and str(_read_entry_value(entry)).strip_edges().is_empty():
-			has_required_error = true
+		if bool(entry.get("required", false)) and str(entry.get("value_type", "")) == "String" and str(_read_entry_value(entry)).strip_edges().is_empty():
+			validation_message = "Заполни обязательное поле: " + str(entry.get("setting_key", ""))
 			break
 		if str(entry.get("editor_hint", "")) == "json":
 			var json_parser := JSON.new()
 			if json_parser.parse(str(_read_entry_value(entry))) != OK:
-				has_required_error = true
-				_change_summary.text = "Проверь формат JSON: " + str(entry.get("setting_key", ""))
+				validation_message = "Проверь формат JSON: " + str(entry.get("setting_key", ""))
 				break
-	_apply_button.disabled = changed == 0 or has_required_error or _editable_count == 0
+	_apply_button.disabled = changed == 0 or not validation_message.is_empty() or _editable_count == 0
 	_reset_all_button.disabled = changed == 0
 	_change_summary.text = (
-		"Изменено параметров: %d" % changed
-		if changed > 0
-		else "Нет изменений"
+		validation_message
+		if not validation_message.is_empty()
+		else ("Изменено параметров: %d" % changed if changed > 0 else "Нет изменений")
 	)
-	if has_required_error:
-		_change_summary.text = "Заполни обязательные поля"
 
 
 func _on_control_value_changed(_value: float) -> void:
