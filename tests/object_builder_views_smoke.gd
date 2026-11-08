@@ -149,6 +149,8 @@ func _run() -> void:
 	library.free()
 	root.remove_child(editor)
 	editor.free()
+	root.remove_child(installed_view)
+	installed_view.free()
 	await process_frame
 	if failures.is_empty():
 		print("Object Builder view component tests passed.")
