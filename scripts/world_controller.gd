@@ -824,6 +824,8 @@ func _apply_harvesting_hits(
 				var amount := maxi(0, int(yielded[raw_item_id]))
 				if not item_id.is_empty() and amount > 0:
 					_deliver_mechanic_output(item_id, amount, root)
+			if harvesting.has_method("start_regrowth"):
+				harvesting.call("start_regrowth")
 			_log("Добыча завершена: %s · качество %s." % [
 				str(root.name),
 				str(result.get("quality", "normal"))
@@ -1071,9 +1073,20 @@ func _update_component_pickups() -> void:
 func _update_animal_mechanics(delta: float) -> void:
 	if delta <= 0.0 or not is_finite(delta):
 		return
-	var candidates := _get_world_components("can_be_fed")
-	candidates.append_array(_get_world_components("can_be_tamed"))
-	candidates.append_array(_get_world_components("can_produce_resources"))
+	var candidates: Array[ObjectComponent] = []
+	for mechanic_id in [
+		"can_be_tamed",
+		"can_be_fed",
+		"can_breed",
+		"can_produce_resources",
+		"has_habitat",
+		"has_happiness",
+		"has_daily_routine",
+		"can_be_mounted",
+		"can_migrate",
+		"can_be_petted"
+	]:
+		candidates.append_array(_get_world_components(mechanic_id))
 	var visited_roots: Dictionary = {}
 	for component in candidates:
 		if component == null or not is_instance_valid(component):
