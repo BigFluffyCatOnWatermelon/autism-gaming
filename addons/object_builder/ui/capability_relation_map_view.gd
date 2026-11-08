@@ -493,6 +493,13 @@ func _build_overview() -> void:
 		var target_node := str(pair["target"])
 		var type_id := _relation_type_id(str(pair["type"]))
 		_graph.connect_node(str(_domain_node_names[source_node]), type_id - 1, str(_domain_node_names[target_node]), type_id - 1)
+		var source_graph_node := _graph.get_node(str(_domain_node_names[source_node])) as GraphNode
+		var target_graph_node := _graph.get_node(str(_domain_node_names[target_node])) as GraphNode
+		var summary := "%s · %d связей" % [_relation_caption(str(pair["type"])), int(pair["count"])]
+		if source_graph_node != null:
+			source_graph_node.tooltip_text += "\n→ %s: %s" % [str(_domains[source_node]["name"]), summary]
+		if target_graph_node != null:
+			target_graph_node.tooltip_text += "\n← %s: %s" % [str(_domains[target_node]["name"]), summary]
 	_domain_edges = []
 	for pair in aggregate.values():
 		_domain_edges.append(pair)
@@ -715,6 +722,11 @@ func _build_local_graph(
 		var relation_type := str(entry.get("type", entry.get("relation_type", "related")))
 		var type_id := _relation_type_id(relation_type)
 		var neighbor_name := str(_node_names_by_id[neighbor_id])
+		var neighbor_node := _nodes_by_id.get(neighbor_id) as GraphNode
+		var explanation := str(entry.get("explanation", ""))
+		var relation_summary := "%s: %s" % [_relation_caption(relation_type), explanation if not explanation.is_empty() else "Объяснение пока не добавлено."]
+		if neighbor_node != null and not neighbor_node.tooltip_text.contains(relation_summary):
+			neighbor_node.tooltip_text += "\n" + relation_summary
 		if bool(entry.get("is_reverse", false)):
 			_graph.connect_node(neighbor_name, type_id - 1, "FocusedCapability", type_id - 1)
 		else:
