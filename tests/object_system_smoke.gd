@@ -1036,7 +1036,7 @@ func _test_item_mechanics() -> void:
 	var definition := ObjectDefinition.new()
 	definition.object_id = "item_mechanics_smoke_test"
 	definition.display_name = "Item Mechanics Test"
-	definition.category = "Item"
+	definition.category = "Other"
 	definition.component_bindings = bindings
 	var instance := ObjectFactory.instantiate(definition)
 	_expect(instance != null, "factory creates an object with the item package")
