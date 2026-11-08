@@ -1102,6 +1102,9 @@ func _update_component_pickups() -> void:
 		var source := ObjectFactoryScript.get_object_root(item_component)
 		if source == null or source == item_component or not is_instance_valid(source) or source.is_queued_for_deletion():
 			continue
+		# Legacy PickupComponent remains authoritative for objects that explicitly use it.
+		if ObjectFactoryScript.get_component(source, "pickup") != null:
+			continue
 		var pickup_radius := maxf(0.0, float(item_component.get_setting("pickup_radius", 48.0)))
 		if actor_position.distance_to(_get_component_world_position(item_component, source)) > pickup_radius:
 			continue
