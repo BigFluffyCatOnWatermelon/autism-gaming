@@ -185,6 +185,12 @@ func configure(
 
 		var value_type := str(descriptor.get("value_type", ""))
 		var editor_hint := str(descriptor.get("editor_hint", ""))
+		if editor_hint.is_empty() and setting_key.ends_with("_json"):
+			editor_hint = "json"
+		elif editor_hint.is_empty() and setting_key.ends_with("_scene_path"):
+			editor_hint = "scene"
+		elif editor_hint.is_empty() and setting_key in ["texture_path", "icon_path"]:
+			editor_hint = "texture"
 		var component_settings := selection.get_component_settings(component_id)
 		var current_value: Variant = component_settings.get(setting_key, descriptor.get("default_value"))
 		var default_value: Variant = descriptor.get("default_value")
@@ -239,7 +245,7 @@ func configure(
 		reset_button.disabled = not _is_supported_type(value_type)
 		reset_button.pressed.connect(_reset_setting.bind(_setting_controls.size()))
 		label_row.add_child(reset_button)
-		if editor_hint == "texture":
+		if editor_hint in ["texture", "scene"]:
 			var browse_button := Button.new()
 			browse_button.text = "Обзор…"
 			browse_button.tooltip_text = "Выбрать текстуру проекта."
@@ -640,7 +646,8 @@ func _open_resource_picker(index: int) -> void:
 	if index < 0 or index >= _setting_controls.size():
 		return
 	var entry: Dictionary = _setting_controls[index]
-	if str(entry.get("editor_hint", "")) != "texture":
+	var editor_hint := str(entry.get("editor_hint", ""))
+	if editor_hint not in ["texture", "scene"]:
 		return
 	var control := entry.get("control") as LineEdit
 	if control == null:
@@ -648,12 +655,17 @@ func _open_resource_picker(index: int) -> void:
 	_resource_target_index = index
 	if _resource_dialog == null or not is_instance_valid(_resource_dialog):
 		_resource_dialog = FileDialog.new()
-		_resource_dialog.title = "Выбрать текстуру"
 		_resource_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 		_resource_dialog.access = FileDialog.ACCESS_RESOURCES
-		_resource_dialog.add_filter("*.png, *.jpg, *.jpeg, *.webp, *.svg, *.bmp ; Изображения")
 		_resource_dialog.file_selected.connect(_on_resource_file_selected)
 		add_child(_resource_dialog)
+	_resource_dialog.clear_filters()
+	if editor_hint == "scene":
+		_resource_dialog.title = "Выбрать сцену"
+		_resource_dialog.add_filter("*.tscn, *.scn ; Сцены Godot")
+	else:
+		_resource_dialog.title = "Выбрать текстуру"
+		_resource_dialog.add_filter("*.png, *.jpg, *.jpeg, *.webp, *.svg, *.bmp ; Изображения")
 	_resource_dialog.current_dir = "res://"
 	_resource_dialog.popup_centered(Vector2i(760, 520))
 
