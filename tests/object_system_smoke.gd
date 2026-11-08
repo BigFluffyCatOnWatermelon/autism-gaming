@@ -1238,6 +1238,16 @@ func _test_inventory_mechanics() -> void:
 		_expect(int(target_inventory.call("get_item_count", "plank")) == 1, "receiving inventory stores the transferred item")
 		var saved_state: Dictionary = inventory.call("export_runtime_state")
 		_expect(bool(inventory.call("import_runtime_state", saved_state)), "inventory runtime state can be restored")
+		var object_snapshot: Dictionary = ObjectFactory.export_runtime_state(instance)
+		_expect(int(object_snapshot.get("schema_version", 0)) == 1, "ObjectFactory exports a versioned runtime snapshot")
+		_expect(not object_snapshot.get("components", {}).is_empty(), "ObjectFactory captures stateful component bindings")
+		var saved_wood_count := int(inventory.call("get_item_count", "wood"))
+		_expect(bool(inventory.call("remove_item", "wood", saved_wood_count)), "inventory can be mutated after a runtime snapshot")
+		_expect(bool(ObjectFactory.import_runtime_state(instance, object_snapshot)), "ObjectFactory restores component runtime state")
+		_expect(int(inventory.call("get_item_count", "wood")) == saved_wood_count, "ObjectFactory restores the inventory contents")
+		var foreign_snapshot := object_snapshot.duplicate(true)
+		foreign_snapshot["object_id"] = "different_object_definition"
+		_expect(not bool(ObjectFactory.import_runtime_state(instance, foreign_snapshot)), "ObjectFactory rejects a snapshot from another object")
 		target_instance.free()
 	instance.free()
 
