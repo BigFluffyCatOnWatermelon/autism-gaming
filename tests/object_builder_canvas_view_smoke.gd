@@ -300,6 +300,10 @@ func _run() -> void:
 	animation_image.fill(Color.WHITE)
 	var animation_texture := ImageTexture.create_from_image(animation_image)
 	frames.add_frame(&"idle", animation_texture)
+	for _frame_index in range(4):
+		frames.add_frame(&"idle", animation_texture)
+	frames.set_animation_speed(&"idle", 12.0)
+	frames.set_animation_loop_mode(&"idle", SpriteFrames.LOOP_PINGPONG)
 	var animated_sprite := AnimatedSprite2D.new()
 	animated_sprite.name = "Animated"
 	animated_sprite.sprite_frames = frames
@@ -310,11 +314,20 @@ func _run() -> void:
 	logic_node.set_process(true)
 	animated_scene.add_child(logic_node)
 
-	canvas.call("set_preview_instance", animated_scene.duplicate(), false, true)
+	canvas.call("set_preview_instance", animated_scene.duplicate(), false, true, NodePath("Animated"))
 	var animation_button := canvas.get("_animation_button") as Button
 	_expect(not animation_button.disabled, "canvas enables animation preview when AnimatedSprite2D exists")
-	animation_button.toggled.emit(true)
+	var range_row := canvas.get("_animation_range_row") as HBoxContainer
+	_expect(range_row.visible, "selecting AnimatedSprite2D exposes the Canvas preview range controls")
+	canvas.call("set_animation_preview_range", 2, 4)
 	var animated_preview := (canvas.get("_preview_instance") as Node).get_node("Animated") as AnimatedSprite2D
+	var ranged_frames := animated_preview.sprite_frames
+	_expect(ranged_frames != frames, "limited preview uses a private SpriteFrames copy")
+	_expect(ranged_frames.get_frame_count(&"idle") == 3, "Start/End trims the preview to the selected inclusive frame range")
+	_expect(frames.get_frame_count(&"idle") == 5, "changing the preview range never mutates the source SpriteFrames")
+	_expect(ranged_frames.get_animation_loop_mode(&"idle") == SpriteFrames.LOOP_PINGPONG, "limited preview preserves Ping-Pong playback mode")
+	_expect(is_equal_approx(ranged_frames.get_animation_speed(&"idle"), 12.0), "limited preview preserves the animation FPS")
+	animation_button.toggled.emit(true)
 	var disabled_logic := (canvas.get("_preview_instance") as Node).get_node("GameLogic") as Node
 	_expect(animated_preview.is_playing(), "play starts AnimatedSprite2D inside the isolated canvas")
 	_expect(animated_preview.process_mode == Node.PROCESS_MODE_ALWAYS, "only animated sprites opt into processing")
