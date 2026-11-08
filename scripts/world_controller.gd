@@ -46,11 +46,17 @@ var debug_refresh_timer := 0.0
 var _pickup_scan_timer := 0.0
 var _mechanic_signal_scan_timer := 0.0
 var _camera_shake_strength_override := -1.0
+var _world_time_day := 1
+var _world_time_hour := 8.0
+var _last_dispatched_world_day := -1
+var _last_dispatched_world_hour := -1
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	config = GameConfigScript.make_default()
+	_world_time_day = maxi(1, int(config.world.get("start_day", 1)))
+	_world_time_hour = fposmod(float(config.world.get("start_hour", 8.0)), 24.0)
 	defaults_config = config.duplicate(true)
 	backpack_slots = int(config.inventory.base_backpack_slots)
 	rng.seed = int(config.world.seed)
@@ -259,6 +265,7 @@ func _process(delta: float) -> void:
 	_update_projectiles(delta)
 	_update_drops()
 	_update_animal_mechanics(delta)
+	_update_world_clock(delta)
 	_mechanic_signal_scan_timer -= delta
 	if _mechanic_signal_scan_timer <= 0.0:
 		_bind_world_mechanic_signals()
@@ -1201,6 +1208,86 @@ func _update_animal_mechanics(delta: float) -> void:
 		if ObjectFactoryScript.get_component(root, "can_produce_resources") != null:
 			if animal_driver.has_method("advance_resource_production"):
 				animal_driver.call("advance_resource_production", delta)
+
+
+func _update_world_clock(delta: float) -> void:
+	var minutes_per_second := maxf(0.0, float(config.world.get("game_minutes_per_real_second", 1.0)))
+	if is_finite(delta) and delta > 0.0 and minutes_per_second > 0.0:
+		_world_time_hour += delta * minutes_per_second / 60.0
+		while _world_time_hour >= 24.0:
+			_world_time_hour -= 24.0
+			_world_time_day += 1
+	var hour_bucket := floori(_world_time_hour)
+	if _world_time_day == _last_dispatched_world_day and hour_bucket == _last_dispatched_world_hour:
+		return
+	_last_dispatched_world_day = _world_time_day
+	_last_dispatched_world_hour = hour_bucket
+	_dispatch_world_time()
+
+
+func _dispatch_world_time() -> void:
+	var season := _get_world_season(_world_time_day)
+	var weather := str(config.world.get("default_weather", "clear")).strip_edges().to_lower()
+	var time_components: Array[ObjectComponent] = []
+	for mechanic_id in ["has_day_night_schedule", "changes_by_season", "supports_event_schedule", "reacts_to_weather"]:
+		time_components.append_array(_get_world_components(mechanic_id))
+	var visited_time_roots: Dictionary = {}
+	for component in time_components:
+		var root := ObjectFactoryScript.get_object_root(component)
+		if root == null or not is_instance_valid(root):
+			continue
+		var root_id := root.get_instance_id()
+		if visited_time_roots.has(root_id):
+			continue
+		visited_time_roots[root_id] = true
+		var phase := "day"
+		var time_driver := ObjectFactoryScript.get_component(root, "has_day_night_schedule")
+		if time_driver == null:
+			time_driver = component
+		if time_driver.has_method("get_day_phase"):
+			phase = str(time_driver.call("get_day_phase", _world_time_hour))
+		if time_driver.has_method("update_world_time"):
+			time_driver.call("update_world_time", _world_time_day, _world_time_hour)
+		root.set_meta("object_builder_world_day", _world_time_day)
+		root.set_meta("object_builder_day_phase", phase)
+		root.set_meta("object_builder_season", season)
+		if time_driver.has_method("get_season_data"):
+			var season_data: Variant = time_driver.call("get_season_data", season)
+			if season_data is Dictionary:
+				root.set_meta("object_builder_season_data", season_data)
+		if time_driver.has_method("get_weather_effect"):
+			var weather_effect: Variant = time_driver.call("get_weather_effect", weather)
+			if weather_effect is Dictionary:
+				root.set_meta("object_builder_weather_effect", weather_effect)
+
+	var animal_components := _get_world_components("has_daily_routine")
+	for animal_component in animal_components:
+		var animal_root := ObjectFactoryScript.get_object_root(animal_component)
+		if animal_root == null or not is_instance_valid(animal_root):
+			continue
+		if animal_component.has_method("get_routine_action"):
+			animal_root.set_meta(
+				"object_builder_animal_routine_action",
+				animal_component.call("get_routine_action", _world_time_hour)
+			)
+
+	for generation_component in _get_world_components("adapts_to_environment"):
+		var generation_root := ObjectFactoryScript.get_object_root(generation_component)
+		if generation_root == null or not is_instance_valid(generation_root):
+			continue
+		if generation_component.has_method("adapt_to_environment"):
+			var modifiers: Variant = generation_component.call(
+				"adapt_to_environment",
+				{"season": season, "day_phase": phase, "weather": weather}
+			)
+			if modifiers is Dictionary:
+				generation_root.set_meta("object_builder_environment_modifiers", modifiers)
+
+
+func _get_world_season(day: int) -> String:
+	var days_per_season := maxi(1, int(config.world.get("days_per_season", 30)))
+	var day_of_year := posmod(maxi(1, day) - 1, days_per_season * 4)
+	return ["spring", "summer", "autumn", "winter"][int(floor(float(day_of_year) / float(days_per_season)))]
 
 
 func _bind_world_mechanic_signals() -> void:
