@@ -890,6 +890,8 @@ func _trigger_object_mechanic(
 	var component := ObjectFactoryScript.get_component(object_root, component_id)
 	if component == null or not component.has_method(method_name):
 		return false
+	if method_name == "play_event" and str(component.get_setting("stream_path", "")).strip_edges().is_empty():
+		return false
 	component.callv(method_name, arguments)
 	return true
 
