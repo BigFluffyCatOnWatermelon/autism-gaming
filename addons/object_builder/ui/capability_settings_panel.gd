@@ -731,6 +731,9 @@ func _on_close_pressed() -> void:
 	if get_changed_values().is_empty():
 		close_requested.emit()
 		return
+	if DisplayServer.get_name() == "headless":
+		close_requested.emit()
+		return
 	if _discard_dialog == null or not is_instance_valid(_discard_dialog):
 		_discard_dialog = ConfirmationDialog.new()
 		_discard_dialog.title = "Несохранённые изменения"
