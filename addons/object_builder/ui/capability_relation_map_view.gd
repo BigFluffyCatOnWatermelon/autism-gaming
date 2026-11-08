@@ -429,6 +429,18 @@ func _build_overview() -> void:
 		graph_node.custom_minimum_size = Vector2(350, 150)
 		graph_node.position_offset = CapabilityMapLayout.domain_position(index)
 		graph_node.resizable = false
+		for relation_type in RELATION_TYPE_ORDER:
+			var relation_row := HBoxContainer.new()
+			var relation_label := Label.new()
+			relation_label.text = str(RELATION_TYPE_NAMES[relation_type])
+			relation_label.add_theme_font_size_override("font_size", 9)
+			relation_label.add_theme_color_override("font_color", RELATION_TYPE_COLORS[relation_type])
+			relation_row.add_child(relation_label)
+			graph_node.add_child(relation_row)
+			var slot_index := graph_node.get_child_count() - 1
+			var type_id := _relation_type_id(str(relation_type))
+			var relation_color: Color = RELATION_TYPE_COLORS[relation_type]
+			graph_node.set_slot(slot_index, true, type_id, relation_color, true, type_id, relation_color)
 		var content := VBoxContainer.new()
 		graph_node.add_child(content)
 		var count := (domain["mechanics"] as Array).size()
@@ -453,7 +465,6 @@ func _build_overview() -> void:
 		open_button.text = "Открыть область →"
 		open_button.pressed.connect(open_domain.bind(domain_id))
 		content.add_child(open_button)
-		graph_node.set_slot(0, true, 0, Color(0.55, 0.72, 0.95), true, 0, Color(0.55, 0.72, 0.95))
 		_graph.add_child(graph_node)
 	var aggregate: Dictionary = {}
 	for edge in _edges:
@@ -470,9 +481,9 @@ func _build_overview() -> void:
 		var target_domain := str(CapabilityMapData.get_domain_for_category(target_def.category_id)["id"])
 		if source_domain == target_domain or not _domain_node_names.has(source_domain) or not _domain_node_names.has(target_domain):
 			continue
-		var key := source_domain + ">" + target_domain
+		var key := source_domain + ">" + target_domain + ":" + relation_type
 		if not aggregate.has(key):
-			aggregate[key] = {"source": source_domain, "target": target_domain, "count": 0, "types": {}}
+			aggregate[key] = {"source": source_domain, "target": target_domain, "type": relation_type, "count": 0, "types": {}}
 		var entry: Dictionary = aggregate[key]
 		entry["count"] = int(entry["count"]) + 1
 		(entry["types"] as Dictionary)[str(edge["type"])] = int((entry["types"] as Dictionary).get(str(edge["type"]), 0)) + 1
@@ -480,7 +491,8 @@ func _build_overview() -> void:
 	for pair in aggregate.values():
 		var source_node := str(pair["source"])
 		var target_node := str(pair["target"])
-		_graph.connect_node(str(_domain_node_names[source_node]), 0, str(_domain_node_names[target_node]), 0)
+		var type_id := _relation_type_id(str(pair["type"]))
+		_graph.connect_node(str(_domain_node_names[source_node]), type_id - 1, str(_domain_node_names[target_node]), type_id - 1)
 	_domain_edges = []
 	for pair in aggregate.values():
 		_domain_edges.append(pair)
