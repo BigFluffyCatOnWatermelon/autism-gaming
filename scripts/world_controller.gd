@@ -739,7 +739,8 @@ func transfer_object_inventory_to_player(
 	var source_inventory := ObjectFactoryScript.get_component(source_root, "has_inventory")
 	if source_inventory == null or not source_inventory.has_method("transfer_to"):
 		return {"ok": false, "transferred": 0, "remainder": amount}
-	return source_inventory.call("transfer_to", self, item_id, amount)
+	var transfer_value: Variant = source_inventory.call("transfer_to", self, item_id, amount)
+	return transfer_value if transfer_value is Dictionary else {"ok": false, "transferred": 0, "remainder": amount}
 
 
 func transfer_player_item_to_object_inventory(
