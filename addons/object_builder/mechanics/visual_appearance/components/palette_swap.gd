@@ -6,6 +6,16 @@ func _on_configured() -> void:
     _load_options({"palette_json": "{}"})
 
 
+func _apply_bound_target() -> bool:
+    var sprite := find_sprite()
+    if sprite == null:
+        return fail("Для смены палитры нужен Sprite2D в целевой ветке.")
+    var palette: Variant = JSON.parse_string(str(get_option("palette_json", "{}")))
+    if not palette is Dictionary or palette.is_empty():
+        return true
+    return apply_to(sprite)
+
+
 func apply_to(sprite: Sprite2D) -> bool:
     if not is_instance_valid(sprite) or sprite.texture == null:
         return fail("Для смены палитры нужен Sprite2D с текстурой.")
