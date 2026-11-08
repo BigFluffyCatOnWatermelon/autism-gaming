@@ -194,9 +194,11 @@ func equip_from_slot(slot_index: int, equipment_slot: String) -> bool:
 		return _fail("Неизвестный слот экипировки: " + slot_id)
 	var state := _get_state()
 	var slots: Array = state.get("slots", [])
-	if slot_index < 0 or slot_index >= slots.size() or (slots[slot_index] as Dictionary).is_empty():
+	if slot_index < 0 or slot_index >= slots.size():
 		return _fail("В выбранном слоте нет предмета.")
 	var item: Dictionary = slots[slot_index]
+	if item.is_empty():
+		return _fail("В выбранном слоте нет предмета.")
 	if bool(item.get("bound", false)) and _has_mechanic("supports_item_binding"):
 		return _fail("Предмет закреплён и не может быть перемещён.")
 	var equipment: Dictionary = state.get("equipment", {})
@@ -230,6 +232,9 @@ func unequip_to_inventory(equipment_slot: String) -> bool:
 		str(item.get("rarity", "common"))
 	)
 	if int(add_result.get("accepted", 0)) < int(item.get("amount", 1)):
+		var accepted := int(add_result.get("accepted", 0))
+		if accepted > 0:
+			remove_item(str(item.get("item_id", "")), accepted, true)
 		state = _get_state()
 		equipment = state.get("equipment", {})
 		equipment[slot_id] = item
@@ -409,9 +414,11 @@ func bind_item(slot_index: int, bound: bool = true) -> bool:
 		return _fail("Закрепление предметов отключено.")
 	var state := _get_state()
 	var slots: Array = state.get("slots", [])
-	if slot_index < 0 or slot_index >= slots.size() or (slots[slot_index] as Dictionary).is_empty():
+	if slot_index < 0 or slot_index >= slots.size():
 		return _fail("Выбранный слот пуст.")
 	var item: Dictionary = slots[slot_index]
+	if item.is_empty():
+		return _fail("Выбранный слот пуст.")
 	item["bound"] = bound
 	slots[slot_index] = item
 	state["slots"] = slots
