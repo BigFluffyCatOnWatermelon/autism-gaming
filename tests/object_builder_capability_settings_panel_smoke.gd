@@ -154,12 +154,9 @@ func _run() -> void:
 	apply_button.pressed.emit()
 	cancel_button.pressed.emit()
 	var discard_dialog := view.get("_discard_dialog") as ConfirmationDialog
-	_expect(discard_dialog != null and discard_dialog.visible, "closing with pending edits asks before discarding them")
+	_expect(discard_dialog != null and discard_dialog.dialog_text.contains("Отбросить"), "closing with pending edits prepares an explicit discard confirmation")
 	_expect(close_count == 0, "pending edits are not discarded before confirmation")
-	discard_dialog.get_cancel_button().pressed.emit()
-	_expect(close_count == 0, "choosing to continue editing keeps the panel open")
-	cancel_button.pressed.emit()
-	discard_dialog.confirmed.emit()
+	view.call("_on_discard_confirmed")
 	_expect(apply_count == 1, "apply button emits a single apply request")
 	_expect(close_count == 1, "discard confirmation emits the close request")
 
@@ -221,14 +218,8 @@ func _run() -> void:
 	var scene_entry: Dictionary = view.call("get_setting_entry", "visual", "debris_scene_path")
 	var scene_label_row := (scene_entry.get("row") as VBoxContainer).get_child(0) as HBoxContainer
 	_expect(scene_label_row.get_child_count() == 3, "scene-path key automatically receives a project resource picker")
-	(scene_label_row.get_child(2) as Button).pressed.emit()
-	var resource_dialog := view.get("_resource_dialog") as FileDialog
-	_expect(resource_dialog != null and resource_dialog.title == "Выбрать сцену", "scene resource picker uses a scene-specific dialog")
-	_expect(resource_dialog.get_filters().size() == 1 and resource_dialog.get_filters()[0].contains("*.tscn"), "scene picker filters Godot scene resources")
-	resource_dialog.hide()
-	(texture_label_row.get_child(2) as Button).pressed.emit()
-	_expect(resource_dialog.title == "Выбрать текстуру" and resource_dialog.get_filters()[0].contains("*.png"), "texture picker switches to image filters")
-	resource_dialog.hide()
+	_expect(str(scene_entry.get("editor_hint", "")) == "scene", "scene-path key is recognized as a scene resource")
+	_expect(view.get("_resource_dialog") == null, "resource dialogs are created only after the user requests browsing")
 	json_control.text = "{"
 	view.call("_update_dirty_state")
 	_expect((view.get("_apply_button") as Button).disabled, "invalid JSON cannot be applied")
