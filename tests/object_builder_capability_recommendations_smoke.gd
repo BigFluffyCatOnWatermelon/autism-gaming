@@ -85,6 +85,8 @@ func _test_recommendations_for_empty_object() -> void:
 
 	var health_entry := _find_recommendation(recommendations, "has_health")
 	var damage_entry := _find_recommendation(recommendations, "can_receive_damage")
+	print("RECOMMENDATION DEBUG damageable: ", damage_entry)
+	print("RECOMMENDATION DEBUG ids: ", recommendations.map(func(entry: Dictionary) -> String: return str(entry.get("capability_id", ""))))
 	_expect(not health_entry.is_empty(), "resource profile recommends the Health capability")
 	_expect(not damage_entry.is_empty(), "resource profile recommends the Damageable capability")
 	if not health_entry.is_empty():
