@@ -21,6 +21,8 @@ const PAGE_SIZE := 20
 
 var search_input: LineEdit
 var category_option: OptionButton
+var status_option: OptionButton
+var sort_option: OptionButton
 var _full_map_button: Button
 var entries_container: VBoxContainer
 var _entries_scroll: ScrollContainer
@@ -55,6 +57,7 @@ var _selection_summary: Label
 var _add_selected_button: Button
 var _clear_selection_button: Button
 var _entries: Array[Dictionary] = []
+var _source_entries: Array[Dictionary] = []
 var _page_index := 0
 var _total_count := 0
 var _ready_count := 0
@@ -78,9 +81,13 @@ func build(categories: Array[Dictionary]) -> void:
 	search_input.text_changed.connect(_on_search_changed)
 	add_child(search_input)
 
+	var filter_row := HBoxContainer.new()
+	filter_row.add_theme_constant_override("separation", 5)
+	add_child(filter_row)
+
 	category_option = OptionButton.new()
 	category_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	category_option.add_item("Все возможности")
+	category_option.add_item("Все категории")
 	category_option.set_item_metadata(0, "")
 	for category in categories:
 		category_option.add_item(str(category.get("display_name", "")))
@@ -90,7 +97,27 @@ func build(categories: Array[Dictionary]) -> void:
 		)
 	category_option.select(0)
 	category_option.item_selected.connect(_on_category_selected)
-	add_child(category_option)
+	category_option.tooltip_text = "Ограничить каталог выбранной категорией."
+	filter_row.add_child(category_option)
+
+	status_option = OptionButton.new()
+	status_option.add_item("Любой статус", 0)
+	status_option.add_item("Можно добавить", 1)
+	status_option.add_item("Установлено", 2)
+	status_option.add_item("Отключено", 3)
+	status_option.add_item("В разработке", 4)
+	status_option.add_item("Выбрано", 5)
+	status_option.tooltip_text = "Показать только механики с выбранным состоянием."
+	status_option.item_selected.connect(_on_status_filter_selected)
+	filter_row.add_child(status_option)
+
+	sort_option = OptionButton.new()
+	sort_option.add_item("По релевантности", 0)
+	sort_option.add_item("По алфавиту", 1)
+	sort_option.add_item("Сначала готовые", 2)
+	sort_option.tooltip_text = "Изменить порядок карточек, не меняя данные каталога."
+	sort_option.item_selected.connect(_on_sort_selected)
+	filter_row.add_child(sort_option)
 
 	_full_map_button = Button.new()
 	_full_map_button.text = "Открыть полную карту механик (200)"
@@ -589,6 +616,7 @@ func get_selected_count() -> int:
 
 func show_empty_state(message: String) -> void:
 	_entries.clear()
+	_source_entries.clear()
 	_page_index = 0
 	_pagination_row.visible = false
 	UIFactory.clear_children(entries_container)
@@ -605,10 +633,64 @@ func set_entries(
 	total_count: int,
 	ready_count: int
 ) -> void:
-	_entries = entries.duplicate()
-	_entries_scroll.scroll_vertical = 0
+	_source_entries = entries.duplicate(true)
 	_total_count = total_count
 	_ready_count = ready_count
+	_apply_view_filters()
+	_entries_scroll.scroll_vertical = 0
+	_page_index = 0
+	_render_current_page()
+
+
+func _apply_view_filters() -> void:
+	_entries.clear()
+	for entry in _source_entries:
+		var capability := entry.get("definition") as ObjectCapabilityDefinition
+		if capability == null:
+			continue
+		var enabled := bool(entry.get("enabled", false))
+		var installed := bool(entry.get("installed", enabled))
+		var selected := bool(entry.get("selected_in_catalog", false))
+		var ready := capability.is_ready()
+		var matches := true
+		match status_option.selected if status_option != null else 0:
+			1:
+				matches = ready and not installed
+			2:
+				matches = installed and enabled
+			3:
+				matches = installed and not enabled
+			4:
+				matches = not ready
+			5:
+				matches = selected
+		if matches:
+			_entries.append(entry)
+
+	if sort_option != null and sort_option.selected == 1:
+		_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			var left := a.get("definition") as ObjectCapabilityDefinition
+			var right := b.get("definition") as ObjectCapabilityDefinition
+			return left.display_name.naturalnocasecmp_to(right.display_name) < 0
+		)
+	elif sort_option != null and sort_option.selected == 2:
+		_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+			var left := a.get("definition") as ObjectCapabilityDefinition
+			var right := b.get("definition") as ObjectCapabilityDefinition
+			if left.is_ready() != right.is_ready():
+				return left.is_ready()
+			return left.display_name.naturalnocasecmp_to(right.display_name) < 0
+		)
+
+
+func _on_status_filter_selected(_index: int) -> void:
+	_apply_view_filters()
+	_page_index = 0
+	_render_current_page()
+
+
+func _on_sort_selected(_index: int) -> void:
+	_apply_view_filters()
 	_page_index = 0
 	_render_current_page()
 
