@@ -2757,7 +2757,12 @@ func _test_capability_library_size_and_status() -> void:
 	var category_counts: Dictionary = {}
 	var implemented_count := 0
 	var planned_count := 0
-	var planned_without_runtime: bool = true
+	var verified_package_count := 0
+	var component_references_valid: bool = true
+	var verified_package_categories := [
+		"harvesting", "items", "inventory", "containers", "construction",
+		"ai", "animals", "audio_effects", "world_time", "world_generation"
+	]
 
 	for capability_id in all_ids:
 		_expect(
@@ -2767,27 +2772,38 @@ func _test_capability_library_size_and_status() -> void:
 		seen_ids[capability_id] = true
 		var definition := ObjectCapabilityCatalog.get_definition(capability_id)
 		if definition == null:
-			planned_without_runtime = false
+			component_references_valid = false
 			continue
 		category_counts[definition.category_id] = int(category_counts.get(definition.category_id, 0)) + 1
 		if definition.runtime_status == "Implemented":
 			implemented_count += 1
 		elif definition.runtime_status == "Planned":
 			planned_count += 1
-			for component_id in definition.component_ids:
-				var runtime_component := ObjectComponentCatalog.create_definition(str(component_id))
-				if runtime_component == null or runtime_component.component_script == null:
-					planned_without_runtime = false
 		else:
-			planned_without_runtime = false
+			component_references_valid = false
+
+		if verified_package_categories.has(definition.category_id):
+			if definition.runtime_status == "Implemented":
+				verified_package_count += 1
+			if definition.component_ids.size() != 1 or str(definition.component_ids[0]) != capability_id:
+				component_references_valid = false
+
+		for component_id in definition.component_ids:
+			var runtime_component := ObjectComponentCatalog.create_definition(str(component_id))
+			if runtime_component == null or runtime_component.component_script == null:
+				component_references_valid = false
 
 	_expect(
-		implemented_count == 42 and planned_count == 158,
-		"catalogue explicitly distinguishes 42 runtime mechanics and 158 planned mechanics"
+		implemented_count == 142 and planned_count == 58,
+		"catalogue explicitly distinguishes 142 ready mechanics and 58 planned mechanics"
 	)
 	_expect(
-		planned_without_runtime,
-		"planned entries do not advertise missing runtime components"
+		verified_package_count == 100,
+		"all 100 mechanics from the ten verified runtime packages are available"
+	)
+	_expect(
+		component_references_valid,
+		"every capability component reference resolves to a registered runtime script"
 	)
 	_expect(
 		category_counts.size() == 20,
