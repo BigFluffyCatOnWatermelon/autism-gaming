@@ -898,7 +898,9 @@ func _rebuild_domain_graph_only() -> void:
 	var previous_status := _selected_status
 	_rebuild_view()
 	if _search_input != null:
+		_search_input.set_block_signals(true)
 		_search_input.text = previous_search
+		_search_input.set_block_signals(false)
 	if _category_filter != null:
 		for index in range(_category_filter.item_count):
 			if str(_category_filter.get_item_metadata(index)) == previous_category:
@@ -1075,8 +1077,6 @@ func has_connection(from_node: String, to_node: String) -> bool:
 
 func filter_full_map(query: String) -> void:
 	_search_query = query.strip_edges().to_lower().replace("ё", "е")
-	if _search_input != null:
-		_search_input.text = query
 	_rebuild_domain_graph_only()
 
 
