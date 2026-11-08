@@ -92,6 +92,8 @@ func _run() -> void:
 	_expect((view.call("get_visible_setting_keys") as PackedStringArray) == PackedStringArray(["max_health", "parts_offset"]), "basic filter shows only basic settings by default")
 	var health_spin := view.call("get_setting_control", "health", "max_health") as SpinBox
 	_expect(health_spin != null and is_equal_approx(health_spin.value, 50.0), "panel loads the selected object's current setting")
+	_expect((view.get("_apply_button") as Button).disabled, "Apply starts disabled until a value actually changes")
+	_expect((view.get("_reset_all_button") as Button).disabled, "reset-all starts disabled when there are no pending changes")
 	var offset_control := view.call("get_setting_control", "health", "parts_offset") as HBoxContainer
 	_expect(offset_control != null and offset_control.get_child_count() == 2, "Vector2 settings use two numeric axis controls")
 	(offset_control.get_child(0) as SpinBox).value = 12.0
@@ -103,9 +105,14 @@ func _run() -> void:
 	var reset_button := health_entry.get("reset_button") as Button
 	reset_button.pressed.emit()
 	_expect(is_equal_approx(health_spin.value, 100.0), "per-setting reset restores its declared default value")
+	_expect(not (view.get("_apply_button") as Button).disabled, "changing a Vector2 value enables Apply")
+	_expect(not (view.get("_reset_all_button") as Button).disabled, "reset-all becomes available while edits are pending")
+	_expect((view.call("get_changed_values") as Array).size() == 1, "pending payload contains only values changed from the initial state")
 
 	view.call("_on_level_filter_selected", 1)
-	_expect((view.call("get_visible_setting_keys") as PackedStringArray).size() == 3, "all-level filter reveals advanced and expert settings")
+	_expect((view.call("get_visible_setting_keys") as PackedStringArray).size() == 3, "intermediate filter reveals basic and advanced settings without expert fields")
+	view.call("_on_level_filter_selected", 2)
+	_expect((view.call("get_visible_setting_keys") as PackedStringArray).size() == 4, "all-level filter reveals expert settings too")
 	view.call("_on_search_changed", "неуязвимость")
 	_expect((view.call("get_visible_setting_keys") as PackedStringArray) == PackedStringArray(["invulnerable"]), "search matches localized setting labels")
 	view.call("_on_search_changed", "количество")
@@ -123,8 +130,9 @@ func _run() -> void:
 	_expect(setting_values[3].get("value") == "Обычный", "string value is read from the inline control")
 
 	var footer := view.get_child(view.get_child_count() - 1) as HBoxContainer
-	var cancel_button := footer.get_child(0) as Button
-	var apply_button := footer.get_child(1) as Button
+	_expect(footer.get_child(0) is Label, "fixed footer explains the pending edit state")
+	var cancel_button := footer.get_child(1) as Button
+	var apply_button := footer.get_child(2) as Button
 	apply_button.pressed.emit()
 	cancel_button.pressed.emit()
 	_expect(apply_count == 1, "apply button emits a single apply request")
