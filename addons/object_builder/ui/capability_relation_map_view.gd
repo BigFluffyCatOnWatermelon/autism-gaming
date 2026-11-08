@@ -366,9 +366,11 @@ func _rebuild_view() -> void:
 	_add_toolbar_button("Обзор", _show_overview, _current_mode == "overview")
 	if _current_mode != "overview":
 		_add_toolbar_button("Назад", _go_back)
-	_add_toolbar_button("Связи", _show_local_focus, _current_mode == "local")
+	if not _focused_capability_id.is_empty() and _current_mode != "local":
+		_add_toolbar_button("Связи", _show_local_focus)
 	_add_toolbar_button("Зависимости", _show_dependencies, _current_mode == "dependencies")
-	_add_toolbar_button("Область", _show_current_domain, _current_mode == "domain")
+	if not _current_domain_id.is_empty() and _current_mode != "domain":
+		_add_toolbar_button("Область", _show_current_domain)
 	_add_toolbar_button("Закрыть", _close_window)
 	_hint = Label.new()
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
