@@ -15,23 +15,28 @@ signal scheduled_event_dispatched(event: Dictionary)
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
-	set_process(true)
+	if component_id in ["has_timed_activation", "has_cooldown", "supports_timed_respawn", "has_lifespan", "has_periodic_output"]:
+		set_process(true)
 	_initialize_runtime_timers()
 
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint() or not is_inside_tree() or not is_finite(delta) or delta < 0.0:
 		return
-	if _has_mechanic("has_timed_activation"):
-		advance_timed_activation(delta)
-	if _has_mechanic("has_cooldown") and get_cooldown_remaining() > 0.0:
-		advance_cooldown(delta)
-	if _has_mechanic("supports_timed_respawn") and not bool(_get_state().get("alive", true)):
-		advance_respawn(delta)
-	if _has_mechanic("has_lifespan") and not bool(_get_state().get("expired", false)):
-		advance_lifespan(delta)
-	if _has_mechanic("has_periodic_output"):
-		advance_periodic_output(delta)
+	match component_id:
+		"has_timed_activation":
+			advance_timed_activation(delta)
+		"has_cooldown":
+			if get_cooldown_remaining() > 0.0:
+				advance_cooldown(delta)
+		"supports_timed_respawn":
+			if not bool(_get_state().get("alive", true)):
+				advance_respawn(delta)
+		"has_lifespan":
+			if not bool(_get_state().get("expired", false)):
+				advance_lifespan(delta)
+		"has_periodic_output":
+			advance_periodic_output(delta)
 
 
 func _initialize_runtime_timers() -> void:
