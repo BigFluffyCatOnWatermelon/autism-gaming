@@ -109,7 +109,9 @@ func build() -> void:
 func set_scene_root(scene_root: Node, selected_path: NodePath = NodePath("")) -> void:
 	_scene_root = scene_root
 	_selected_path = selected_path
-	_selected_paths = [selected_path] if not selected_path.is_empty() else []
+	_selected_paths.clear()
+	if not selected_path.is_empty():
+		_selected_paths.append(selected_path)
 	_parts.clear()
 	if scene_root != null and is_instance_valid(scene_root):
 		for child in scene_root.get_children():
@@ -120,7 +122,9 @@ func set_scene_root(scene_root: Node, selected_path: NodePath = NodePath("")) ->
 
 func set_selected_path(path: NodePath) -> void:
 	_selected_path = path
-	_selected_paths = [path] if not path.is_empty() else []
+	_selected_paths.clear()
+	if not path.is_empty():
+		_selected_paths.append(path)
 	_update_row_selection()
 	_update_resource_button()
 
