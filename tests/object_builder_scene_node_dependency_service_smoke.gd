@@ -82,7 +82,6 @@ func _run() -> void:
 	scene_root.add_child(internal_parent)
 	internal_parent.visibility_changed.connect(Callable(internal_child, "queue_redraw"))
 	var internal_references: Array[Dictionary] = DependencyService.inspect(scene_root, internal_parent)
-	print("INTERNAL_REFERENCES_DEBUG: ", internal_references)
 	_expect(internal_references.is_empty(), "connections entirely inside a deleted subtree are not reported as external dependencies")
 
 	var outside_node := Node2D.new()

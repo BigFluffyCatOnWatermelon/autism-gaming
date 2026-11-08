@@ -117,6 +117,9 @@ static func _collect_signal_references(
 			for connection in source_node.get_signal_connection_list(signal_name):
 				var callable: Callable = connection.get("callable", Callable())
 				var target_node := callable.get_object() as Node
+				# Viewport receives engine-managed CanvasItem notifications, not user dependencies.
+				if target_node is Viewport:
+					continue
 				var target_is_removed := _is_within(target_node, removed_node)
 				if not source_is_removed and not target_is_removed:
 					continue
