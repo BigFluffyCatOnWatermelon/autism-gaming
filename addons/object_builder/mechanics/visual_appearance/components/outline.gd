@@ -10,6 +10,19 @@ func _on_configured() -> void:
     set_option("outline_width", clampf(float(get_option("outline_width", 1.0)), 1.0, 4.0))
 
 
+func _apply_bound_target() -> bool:
+    var sprite := find_sprite()
+    if sprite == null or sprite.texture == null:
+        return fail("Для обводки нужен Sprite2D с текстурой в целевой ветке.")
+    return apply_to(sprite)
+
+
+func _exit_tree() -> void:
+    var sprite := find_sprite()
+    if sprite != null:
+        remove_from(sprite)
+
+
 func apply_to(sprite: Sprite2D) -> bool:
     if not is_instance_valid(sprite) or sprite.texture == null:
         return fail("Для обводки нужен Sprite2D с текстурой.")
