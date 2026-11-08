@@ -42,6 +42,7 @@ var _drag_mode := "move"
 var _drag_group_nodes: Array[Node2D] = []
 var _drag_group_paths: Array[NodePath] = []
 var _drag_group_old_positions: Array[Vector2] = []
+var _drag_group_start_world := Vector2.ZERO
 var _drag_group_old_scales: Array[Vector2] = []
 var _drag_group_old_rotations: Array[float] = []
 var _drag_group_old_pivots: Array[Vector2] = []
@@ -583,12 +584,12 @@ func _update_drag(screen_position: Vector2) -> void:
 			var pivot_offset := node.global_transform * _get_pivot_local(node) - node.global_position
 			node.global_position = target_pivot - pivot_offset
 	else:
-		var delta := world_position - _drag_group_start_world
+		var delta: Vector2 = world_position - _drag_group_start_world
 		for index in range(_drag_group_nodes.size()):
 			var node := _drag_group_nodes[index]
 			if node == null or not is_instance_valid(node):
 				continue
-			var next_global := _drag_group_old_positions[index] + delta
+			var next_global: Vector2 = _drag_group_old_positions[index] + delta
 			if _snap_enabled:
 				next_global.x = roundf(next_global.x / SNAP_STEP) * SNAP_STEP
 				next_global.y = roundf(next_global.y / SNAP_STEP) * SNAP_STEP
@@ -649,6 +650,7 @@ func _finish_drag() -> void:
 
 func _clear_drag() -> void:
 	_marquee_active = false
+	_drag_group_start_world = Vector2.ZERO
 	_guide_drag_axis = ""
 	_guide_drag_index = -1
 	_drag_group_nodes.clear()
