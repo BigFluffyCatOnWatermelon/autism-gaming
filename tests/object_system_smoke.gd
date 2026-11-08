@@ -64,6 +64,7 @@ func _run_tests() -> void:
 	await _test_component_node_bindings()
 	_test_mechanic_target_binding()
 	_test_animation_target_binding()
+	_test_harvesting_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -909,6 +910,82 @@ func _test_animation_target_binding() -> void:
 			bool(idle_component.call("play_idle")),
 			"factory binds the mechanic to the AnimationPlayer under its assigned node"
 		)
+	instance.free()
+
+
+func _test_harvesting_mechanics() -> void:
+	var capability_ids := PackedStringArray([
+		"can_be_harvested",
+		"requires_tool",
+		"has_harvest_progress",
+		"yields_resources",
+		"has_regrowth",
+		"has_seasonal_yield",
+		"has_quality_variants",
+		"has_tool_efficiency",
+		"has_multi_stage_harvest",
+		"can_be_mined"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for capability_id in capability_ids:
+		var binding := ObjectComponentCatalog.create_binding(capability_id)
+		_expect(binding != null, "harvesting component is registered: " + capability_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+
+	for binding in bindings:
+		match binding.get_component_id():
+			"requires_tool":
+				binding.component_definition.settings["required_tool_id"] = "pickaxe"
+				binding.component_definition.settings["minimum_tool_level"] = 2
+				binding.component_definition.settings["tool_requirements_json"] = "{\"pickaxe\":{\"level\":2}}"
+			"has_harvest_progress":
+				binding.component_definition.settings["harvest_duration"] = 2.0
+			"yields_resources":
+				binding.component_definition.settings["resource_table_json"] = "[{\"item_id\":\"ore\",\"min\":2,\"max\":2,\"chance\":1.0}]"
+			"has_regrowth":
+				binding.component_definition.settings["regrowth_seconds"] = 1.0
+			"has_seasonal_yield":
+				binding.component_definition.settings["seasonal_yields_json"] = "{\"spring\":1.0}"
+			"has_quality_variants":
+				binding.component_definition.settings["quality_chances_json"] = "{\"normal\":1.0}"
+			"has_tool_efficiency":
+				binding.component_definition.settings["tool_efficiency_json"] = "{\"pickaxe\":2.0}"
+			"has_multi_stage_harvest":
+				binding.component_definition.settings["harvest_stages_json"] = "[0.25,0.75,1.0]"
+			"can_be_mined":
+				binding.component_definition.settings["required_tool_id"] = "pickaxe"
+				binding.component_definition.settings["minimum_mining_power"] = 2.0
+				binding.component_definition.settings["tool_power_json"] = "{\"pickaxe\":{\"power\":2.0}}"
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "harvesting_mechanics_smoke_test"
+	definition.display_name = "Harvesting Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the harvesting package")
+	if instance == null:
+		return
+
+	var harvesting := ObjectFactory.get_component(instance, "can_be_harvested")
+	_expect(harvesting != null, "harvesting entry component is attached")
+	if harvesting != null:
+		_expect(not bool(harvesting.call("can_harvest", "axe", "spring")), "harvesting rejects the wrong tool")
+		_expect(not bool(harvesting.call("can_harvest", "pickaxe", "winter")), "seasonal harvesting rejects an unavailable season")
+		_expect(bool(harvesting.call("begin_harvest", "pickaxe", "spring")), "harvesting starts with a valid tool and season")
+		var first_step: Dictionary = harvesting.call("advance_harvest", 0.5, "pickaxe", "spring")
+		_expect(bool(first_step.get("ok", false)), "harvesting advances progress")
+		_expect(is_equal_approx(float(first_step.get("progress", 0.0)), 1.0), "tool efficiency accelerates harvesting progress")
+		_expect(int(harvesting.call("get_harvest_progress").get("stage", 0)) >= 1, "multi-stage harvesting advances its stage")
+		var final_step: Dictionary = harvesting.call("advance_harvest", 0.5, "pickaxe", "spring")
+		_expect(bool(final_step.get("completed", false)), "harvesting completes at its configured duration")
+		_expect(int(final_step.get("resources", {}).get("ore", 0)) == 2, "harvesting returns configured resource yield")
+		_expect(str(final_step.get("quality", "")) == "normal", "harvesting selects a configured quality variant")
+		_expect(bool(harvesting.call("start_regrowth")), "harvesting can start a regrowth timer")
+		_expect(not bool(harvesting.call("advance_regrowth", 0.5)), "regrowth waits until its duration")
+		_expect(bool(harvesting.call("advance_regrowth", 0.5)), "regrowth completes at its duration")
 	instance.free()
 
 
