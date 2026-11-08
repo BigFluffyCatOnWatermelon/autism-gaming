@@ -1,6 +1,8 @@
 @tool
 extends "res://addons/object_builder/mechanics/visual_appearance/components/mechanic_component.gd"
 
+var _original_positions: Dictionary = {}
+
 
 func _on_configured() -> void:
     _load_options({"part_paths": "", "parts_visible": true, "parts_offset": Vector2.ZERO})
@@ -20,10 +22,11 @@ func apply_to(root: Node) -> bool:
             continue
         if node is CanvasItem:
             node.visible = bool(get_option("parts_visible", true))
-            if node is Node2D:
-                node.position += get_option("parts_offset", Vector2.ZERO)
-            elif node is Control:
-                node.position += get_option("parts_offset", Vector2.ZERO)
+            var instance_id := node.get_instance_id()
+            if not _original_positions.has(instance_id):
+                _original_positions[instance_id] = node.position
+            if node is Node2D or node is Control:
+                node.position = _original_positions[instance_id] + get_option("parts_offset", Vector2.ZERO)
             changed += 1
     if changed == 0:
         return fail("Не найдено ни одной визуальной части по указанным NodePath.")
