@@ -216,7 +216,8 @@ func _run() -> void:
 		batch_add_count == batch_count_before_recommendation,
 		"choosing a recommendation does not apply the batch automatically"
 	)
-	view.call("set_recommended_entries", [])
+	var no_recommendations: Array[Dictionary] = []
+	view.call("set_recommended_entries", no_recommendations)
 	_expect(not (view.get("_recommendation_section") as PanelContainer).visible, "recommendation strip hides when no candidates remain")
 
 	var related_entries: Array[Dictionary] = [{
@@ -237,7 +238,8 @@ func _run() -> void:
 	_expect(related_button.text == "Полёт" and related_button.tooltip_text.contains("Проверь"), "related strip displays the mechanic name and relation explanation")
 	related_button.pressed.emit()
 	_expect(focus_events == ["can_attack", "can_fly", "can_fly"], "following a related suggestion moves focus without enabling it")
-	view.call("set_related_entries", [])
+	var no_related_entries: Array[Dictionary] = []
+	view.call("set_related_entries", no_related_entries)
 	_expect(not (view.get("_related_map_button") as Button).visible, "relation map action hides when there is no focused relationship")
 	_expect(not (view.get("_related_section") as PanelContainer).visible, "related strip hides when the focused capability has no links")
 
@@ -402,7 +404,8 @@ func _run() -> void:
 	preset_dialog.queue_free()
 
 	view.call("set_selected_count", 0)
-	view.call("set_preset_data", [], {})
+	var no_presets: Array[Dictionary] = []
+	view.call("set_preset_data", no_presets, {})
 	_expect(not preset_section.visible and not preset_detail_panel.visible, "preset cards and detail panel hide when the catalog has no presets")
 
 	var many_entries: Array[Dictionary] = []
@@ -456,7 +459,8 @@ func _run() -> void:
 	standalone.display_name = "Сон"
 	standalone.description = "Восстанавливает силы со временем."
 	standalone.runtime_status = "Implemented"
-	view.call("set_entries", [{"definition": standalone, "has_relations": false}], 200, 42)
+	var standalone_entries: Array[Dictionary] = [{"definition": standalone, "has_relations": false}]
+	view.call("set_entries", standalone_entries, 200, 42)
 	var standalone_card := entries_container.get_child(1) as PanelContainer
 	var standalone_header := standalone_card.get_child(0).get_child(0) as HBoxContainer
 	var standalone_details_button := standalone_header.get_child(3) as Button

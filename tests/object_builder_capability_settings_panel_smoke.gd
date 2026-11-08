@@ -84,7 +84,6 @@ func _run() -> void:
 		}
 	]
 	view.call("configure", capability, selection, descriptors)
-	print("SETTINGS_SMOKE: configured basic descriptors")
 
 	_expect(view.call("get_capability_id") == "has_health", "panel stores the active capability ID")
 	var title_label := view.get("_title_label") as Label
@@ -128,7 +127,6 @@ func _run() -> void:
 	_expect(not (view.get("_apply_button") as Button).disabled, "changing a Vector2 value enables Apply")
 	_expect(not (view.get("_reset_all_button") as Button).disabled, "reset-all becomes available while edits are pending")
 	_expect((view.call("get_changed_values") as Array).size() == 2, "pending payload contains only values changed from the initial state")
-	print("SETTINGS_SMOKE: basic editor interactions complete")
 
 	view.call("_on_level_filter_selected", 1)
 	_expect((view.call("get_visible_setting_keys") as PackedStringArray).size() == 3, "intermediate filter reveals basic and advanced settings without expert fields")
@@ -207,7 +205,6 @@ func _run() -> void:
 	selection.set_component_setting("visual", "texture_path", "")
 	selection.set_component_setting("visual", "debris_scene_path", "")
 	view.call("configure", capability, selection, rich_descriptors)
-	print("SETTINGS_SMOKE: configured rich descriptors")
 	var color_control := view.call("get_setting_control", "visual", "tint_color") as ColorPickerButton
 	var json_control := view.call("get_setting_control", "visual", "palette_json") as TextEdit
 	var texture_control := view.call("get_setting_control", "visual", "texture_path") as LineEdit
@@ -239,7 +236,6 @@ func _run() -> void:
 		if str(rich_entry.get("setting_key", "")) == "tint_color":
 			color_value = str(rich_entry.get("value", ""))
 	_expect(color_value == "#ff0000", "color picker converts its value back to the component's expected HTML color string")
-	print("SETTINGS_SMOKE: rich editors complete")
 
 	var no_descriptors: Array[Dictionary] = []
 	view.call("configure", capability, selection, no_descriptors)
@@ -250,7 +246,6 @@ func _run() -> void:
 	_expect((view.call("get_values") as Array).is_empty(), "empty schema returns no values")
 
 	view.call("clear")
-	print("SETTINGS_SMOKE: clear complete")
 	_expect(view.call("get_capability_id").is_empty(), "closing clears the active capability context")
 
 	root.remove_child(view)
