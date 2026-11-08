@@ -782,6 +782,106 @@ func place_constructed_object(
 	return instance as Node2D
 
 
+func get_construction_preview_state(
+	definition: ObjectDefinition,
+	position: Vector2,
+	blockers: Array = [],
+	terrain_id: String = ""
+) -> Dictionary:
+	if definition == null:
+		return {"valid": false, "error": "Не передано определение объекта."}
+	var preview_object := ObjectFactoryScript.instantiate(definition)
+	if preview_object == null:
+		return {"valid": false, "error": "Не удалось создать временный объект для preview."}
+	var construction := ObjectFactoryScript.get_component(preview_object, "supports_build_preview")
+	if construction == null or not construction.has_method("get_preview_state"):
+		preview_object.free()
+		return {"valid": false, "error": "У объекта не включён предпросмотр строительства."}
+	var result_value: Variant = construction.call("get_preview_state", position, blockers, terrain_id)
+	preview_object.free()
+	return result_value if result_value is Dictionary else {"valid": false, "error": "Preview вернул некорректные данные."}
+
+
+func generate_objects_from_definition(
+	definition: ObjectDefinition,
+	bounds: Rect2,
+	context: Dictionary = {},
+	seed_override: int = -1
+) -> Array[Node2D]:
+	var spawned: Array[Node2D] = []
+	if definition == null or world_objects == null:
+		return spawned
+	var prototype := ObjectFactoryScript.instantiate(definition)
+	if prototype == null:
+		return spawned
+	var generator := ObjectFactoryScript.get_component(prototype, "has_procedural_layout")
+	if generator == null:
+		generator = ObjectFactoryScript.get_component(prototype, "has_spawn_conditions")
+	if generator == null or not generator.has_method("generate_layout"):
+		prototype.free()
+		return spawned
+	var resolved_seed := seed_override
+	if resolved_seed < 0 and generator.has_method("get_world_seed"):
+		resolved_seed = int(generator.call("get_world_seed"))
+	if resolved_seed < 0:
+		resolved_seed = int(config.world.seed)
+	var positions_value: Variant = generator.call("generate_layout", bounds, resolved_seed)
+	if not positions_value is Array:
+		prototype.free()
+		return spawned
+	var region_id := str(context.get("region", "")).strip_edges().to_lower()
+	var biome_id := str(context.get("biome", "")).strip_edges().to_lower()
+	var current_count := _count_generated_objects(definition.object_id, region_id)
+	for index in range(positions_value.size()):
+		var position_value: Variant = positions_value[index]
+		if not position_value is Vector2:
+			continue
+		var spawn_context := context.duplicate(true)
+		spawn_context["region_count"] = current_count
+		spawn_context["season"] = str(spawn_context.get("season", _get_world_season(_world_time_day)))
+		if generator.has_method("can_spawn") and not bool(generator.call("can_spawn", spawn_context)):
+			continue
+		var instance := ObjectFactoryScript.instantiate(definition)
+		if instance == null or not instance is Node2D:
+			if instance != null:
+				instance.free()
+			continue
+		world_objects.add_child(instance)
+		(instance as Node2D).global_position = position_value
+		instance.set_meta("object_builder_generated", true)
+		instance.set_meta("object_builder_region_id", region_id)
+		instance.set_meta("object_builder_biome_id", biome_id)
+		var instance_generator := ObjectFactoryScript.get_component(instance, "supports_world_seed")
+		if instance_generator != null and instance_generator.has_method("set_world_seed"):
+			instance_generator.call("set_world_seed", resolved_seed + index)
+		var variant_value: Variant = generator.call("choose_variant", resolved_seed + index) if generator.has_method("choose_variant") else {}
+		if variant_value is Dictionary and not variant_value.is_empty():
+			instance.set_meta("object_builder_variant", variant_value.duplicate(true))
+		spawned.append(instance as Node2D)
+		current_count += 1
+	prototype.free()
+	return spawned
+
+
+func _count_generated_objects(object_id: String, region_id: String) -> int:
+	var count := 0
+	if world_objects == null:
+		return count
+	var stack: Array[Node] = [world_objects]
+	while not stack.is_empty():
+		var current: Node = stack.pop_back()
+		for child in current.get_children():
+			if child is Node:
+				stack.append(child)
+			if str(child.get_meta("object_definition_id", "")) != object_id:
+				continue
+			if not bool(child.get_meta("object_builder_generated", false)):
+				continue
+			if region_id.is_empty() or str(child.get_meta("object_builder_region_id", "")) == region_id:
+				count += 1
+	return count
+
+
 func upgrade_constructed_object(object_root: Node) -> Dictionary:
 	if object_root == null or not is_instance_valid(object_root):
 		return {"ok": false, "error": "Объект строительства не найден."}
