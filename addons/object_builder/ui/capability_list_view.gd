@@ -127,8 +127,8 @@ func build(categories: Array[Dictionary]) -> void:
 	filter_row.add_child(sort_option)
 
 	_full_map_button = Button.new()
-	_full_map_button.text = "Открыть полную карту механик (200)"
-	_full_map_button.tooltip_text = "Показать все механики, их категории и связи в одном графе. Поиск работает прямо на карте."
+	_full_map_button.text = "Открыть карту механик"
+	_full_map_button.tooltip_text = "Исследовать тематические области, подгруппы и объяснимые связи между механиками без перегружающего общего графа."
 	_full_map_button.pressed.connect(_on_full_map_pressed)
 	add_child(_full_map_button)
 
