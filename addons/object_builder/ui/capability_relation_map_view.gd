@@ -217,6 +217,8 @@ class CapabilityMapData:
 				return str(a["capability_id"]) < str(b["capability_id"])
 			return a_def.display_name.naturalnocasecmp_to(b_def.display_name) < 0
 		)
+		if result.size() > 12:
+			result.resize(12)
 		return result
 
 
@@ -384,7 +386,7 @@ func _rebuild_view() -> void:
 		"local":
 			var definition := _definitions.get(_focused_capability_id) as ObjectCapabilityDefinition
 			_breadcrumb.text = "Карта механик  /  Связи  /  " + (definition.display_name if definition != null else _focused_capability_id)
-			_hint.text = "В центре — выбранная механика. Вокруг — прямые входящие и исходящие связи, включая связи с другими тематическими областями. Наведи курсор на узел, чтобы прочитать объяснение."
+			_hint.text = "В центре — выбранная механика. Вокруг — до 12 наиболее значимых прямых входящих и исходящих связей, включая другие тематические области. Наведи курсор на узел, чтобы прочитать объяснение."
 			_build_local_from_catalog()
 		"dependencies":
 			_hint.text = "Показаны только обязательные зависимости и конфликты. Рекомендации и тематические связи не выдаются за обязательные требования."
@@ -732,7 +734,7 @@ func _build_local_graph(
 		else:
 			_graph.connect_node("FocusedCapability", type_id - 1, neighbor_name, type_id - 1)
 	if add_hint:
-		_hint.text = "Показаны %d прямых связей. Наведи курсор на соседний узел, чтобы увидеть тип связи и объяснение." % unique_neighbors.size()
+		_hint.text = "Показаны %d наиболее значимых прямых связей. Наведи курсор на соседний узел, чтобы увидеть тип связи и объяснение." % unique_neighbors.size()
 
 
 func _create_local_node(node_name: String, definition: ObjectCapabilityDefinition, subtitle: String, is_center: bool) -> GraphNode:
