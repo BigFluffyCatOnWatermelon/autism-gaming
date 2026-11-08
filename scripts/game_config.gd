@@ -11,6 +11,11 @@ static func make_default() -> Dictionary:
 			"height": 3600,
 			"grass_tile_size": 32,
 			"seed": 20261102,
+			"start_day": 1,
+			"start_hour": 8.0,
+			"game_minutes_per_real_second": 1.0,
+			"days_per_season": 30,
+			"default_weather": "clear",
 		},
 		"player": {
 			"max_health": 100.0,
