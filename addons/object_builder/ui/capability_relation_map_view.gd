@@ -424,6 +424,8 @@ func _build_overview() -> void:
 		return a_order < b_order
 	)
 	_domain_node_names.clear()
+	_nodes_by_id.clear()
+	_node_names_by_id.clear()
 	for index in range(domain_ids.size()):
 		var domain_id := str(domain_ids[index])
 		var domain: Dictionary = _domains[domain_id]
