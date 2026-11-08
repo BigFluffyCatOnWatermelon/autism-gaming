@@ -213,6 +213,21 @@ func configure(
 			control = unsupported
 		control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(control)
+		var range_slider: HSlider
+		if value_type in ["Integer", "Float"] and bool(descriptor.get("has_range", false)):
+			var minimum := float(descriptor.get("minimum", 0.0))
+			var maximum := float(descriptor.get("maximum", 0.0))
+			if maximum > minimum and maximum - minimum <= 10000.0:
+				range_slider = HSlider.new()
+				range_slider.min_value = minimum
+				range_slider.max_value = maximum
+				range_slider.step = float(descriptor.get("step", 1.0 if value_type == "Integer" else 0.1))
+				range_slider.value = float(current_value)
+				range_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				range_slider.custom_minimum_size.y = 14
+				range_slider.tooltip_text = "Перетащи ползунок или введи точное значение в поле выше."
+				row.add_child(range_slider)
+				range_slider.value_changed.connect(_on_numeric_slider_changed.bind(control as SpinBox))
 
 		var reset_button := Button.new()
 		reset_button.text = "↺"
@@ -233,6 +248,7 @@ func configure(
 			"value_type": value_type,
 			"level": level,
 			"control": control,
+			"range_slider": range_slider,
 			"row": row,
 			"group_name": group_name,
 			"group_header": current_group_header,
@@ -300,7 +316,7 @@ func _create_setting_control(value_type: String, value: Variant, descriptor: Dic
 
 func _connect_control_changes(control: Control, value_type: String) -> void:
 	if control is SpinBox:
-		(control as SpinBox).value_changed.connect(_on_control_value_changed)
+		(control as SpinBox).value_changed.connect(_on_numeric_spin_changed.bind(_find_slider_for_control(control)))
 	elif control is CheckBox:
 		(control as CheckBox).toggled.connect(_on_control_toggled)
 	elif control is LineEdit:
@@ -507,7 +523,32 @@ func _set_entry_value(entry: Dictionary, value: Variant) -> void:
 				var vector_value: Vector2 = value if value is Vector2 else Vector2.ZERO
 				(vector_row.get_child(0) as SpinBox).value = vector_value.x
 				(vector_row.get_child(1) as SpinBox).value = vector_value.y
+	var slider := entry.get("range_slider") as HSlider
+	if slider != null:
+		slider.value = float(value)
 	_updating_controls = false
+
+
+func _find_slider_for_control(control: Control) -> HSlider:
+	for entry in _setting_controls:
+		if entry.get("control") == control:
+			return entry.get("range_slider") as HSlider
+	return null
+
+
+func _on_numeric_spin_changed(value: float, slider: HSlider) -> void:
+	if _updating_controls:
+		return
+	if slider != null:
+		slider.value = value
+	_update_dirty_state()
+
+
+func _on_numeric_slider_changed(value: float, spin: SpinBox) -> void:
+	if _updating_controls or spin == null:
+		return
+	spin.value = value
+	_update_dirty_state()
 
 
 func _update_dirty_state() -> void:
