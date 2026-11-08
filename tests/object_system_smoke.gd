@@ -1258,6 +1258,23 @@ func _test_inventory_mechanics() -> void:
 		var foreign_snapshot := object_snapshot.duplicate(true)
 		foreign_snapshot["object_id"] = "different_object_definition"
 		_expect(not bool(ObjectFactory.import_runtime_state(instance, foreign_snapshot)), "ObjectFactory rejects a snapshot from another object")
+		var invalid_object_snapshot := object_snapshot.duplicate(true)
+		var invalid_component_states: Dictionary = invalid_object_snapshot.get("components", {})
+		if not invalid_component_states.is_empty():
+			var first_state_key = invalid_component_states.keys()[0]
+			var first_record: Dictionary = invalid_component_states[first_state_key]
+			var first_component_state: Dictionary = first_record.get("state", {})
+			var corrupted_slots: Array = first_component_state.get("slots", [])
+			for slot_index in range(corrupted_slots.size()):
+				if not corrupted_slots[slot_index].is_empty():
+					corrupted_slots[slot_index]["amount"] = 0
+					break
+			first_component_state["slots"] = corrupted_slots
+			first_record["state"] = first_component_state
+			invalid_component_states[first_state_key] = first_record
+			invalid_object_snapshot["components"] = invalid_component_states
+			_expect(not bool(ObjectFactory.import_runtime_state(instance, invalid_object_snapshot)), "ObjectFactory rejects a component state that fails validation")
+			_expect(inventory.call("export_runtime_state") == before_invalid_import, "ObjectFactory rolls back the component that rejected its state")
 		target_instance.free()
 	instance.free()
 
