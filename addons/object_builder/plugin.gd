@@ -16,6 +16,8 @@ const ObjectBuilderComponentEditorViewScript = preload("res://addons/object_buil
 const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_builder/ui/capability_list_view.gd")
 const ObjectBuilderCapabilityPresetDialogScript = preload("res://addons/object_builder/ui/capability_preset_dialog.gd")
 const ObjectBuilderCapabilitySettingsPanelScript = preload("res://addons/object_builder/ui/capability_settings_panel.gd")
+const ObjectBuilderInstalledCapabilitiesViewScript = preload("res://addons/object_builder/ui/installed_capabilities_view.gd")
+const ObjectBuilderCapabilityIconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
 const ObjectBuilderCapabilityCatalogControllerScript = preload("res://addons/object_builder/controllers/capability_catalog_controller.gd")
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
 const ObjectBuilderVisualEditorViewScript = preload("res://addons/object_builder/ui/visual_editor_view.gd")
@@ -94,6 +96,7 @@ var _pending_capability_preset_id := ""
 var _pending_capability_preset_icon := "shapes"
 var _pending_capability_preset_capability_ids := PackedStringArray()
 var _capability_settings_panel: Control
+var _installed_capabilities_view: Control
 var _editing_capability_selection: ObjectCapabilitySelection
 var _capability_change_dialog: AcceptDialog
 var _pending_capability_values: Array[ObjectCapabilitySelection] = []
@@ -516,6 +519,7 @@ func _build_editor_tabs(parent: VBoxContainer) -> void:
 	_build_appearance_editor(_editor_view.get("appearance_content") as VBoxContainer)
 	_build_capability_editor(_editor_view.get("capabilities_content") as VBoxContainer)
 	_build_object_settings_editor(_editor_view.get("settings_content") as VBoxContainer)
+	_build_installed_capabilities_view(_editor_view.get("settings_content") as VBoxContainer)
 	_build_advanced_editor(_editor_view.get("advanced_content") as VBoxContainer)
 	_build_dialogs()
 
@@ -557,6 +561,47 @@ func _build_object_settings_editor(parent: VBoxContainer) -> void:
 	_status_label = Label.new()
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	parent.add_child(_status_label)
+
+func _build_installed_capabilities_view(parent: VBoxContainer) -> void:
+	_installed_capabilities_view = ObjectBuilderInstalledCapabilitiesViewScript.new()
+	_installed_capabilities_view.name = "InstalledCapabilitiesView"
+	_installed_capabilities_view.call("build")
+	_installed_capabilities_view.connect("configure_requested", Callable(self, "_on_capability_settings_pressed"))
+	_installed_capabilities_view.connect("focus_requested", Callable(self, "_on_installed_capability_focus_requested"))
+	parent.add_child(_installed_capabilities_view)
+	_refresh_installed_capabilities_view()
+
+
+func _refresh_installed_capabilities_view() -> void:
+	if _installed_capabilities_view == null:
+		return
+	var entries: Array[Dictionary] = []
+	if _working_definition == null:
+		_installed_capabilities_view.call("set_entries", entries, "Сначала создай объект или выбери его в библиотеке.")
+		return
+	for selection in _working_definition.capabilities:
+		if selection == null or not selection.enabled:
+			continue
+		var capability_id := selection.capability_id.strip_edges().to_lower()
+		var definition := ObjectCapabilityCatalog.get_definition(capability_id)
+		if definition == null:
+			continue
+		entries.append({
+			"capability_id": capability_id,
+			"display_name": definition.display_name,
+			"description": definition.description,
+			"category_id": definition.category_id,
+			"category_name": definition.category_name,
+			"icon": ObjectBuilderCapabilityIconRegistryScript.get_icon(definition)
+		})
+	_installed_capabilities_view.call("set_entries", entries)
+
+
+func _on_installed_capability_focus_requested(capability_id: String) -> void:
+	if _editor_view != null:
+		_editor_view.current_tab = 1
+	_on_capability_focus_requested(capability_id)
+
 
 func _build_advanced_editor(parent: VBoxContainer) -> void:
 	var advanced_editor := parent
@@ -819,6 +864,7 @@ func _rebuild_capability_list() -> void:
 			"show_empty_state",
 			"Сначала создай объект или выбери его в библиотеке."
 		)
+		_refresh_installed_capabilities_view()
 		return
 
 	var category_id := str(_capability_view.call("get_selected_category"))
@@ -882,6 +928,7 @@ func _rebuild_capability_list() -> void:
 		_working_definition.capabilities
 	)
 	_capability_view.call("set_preset_data", preset_summaries, active_preset_details)
+	_refresh_installed_capabilities_view()
 
 func _on_capability_focus_requested(capability_id: String) -> void:
 	if _working_definition == null:
