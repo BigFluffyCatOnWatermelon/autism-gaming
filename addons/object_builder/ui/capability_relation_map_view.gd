@@ -540,13 +540,16 @@ func _build_domain_graph() -> void:
 			group_indices[str(capability_id)] = group_index
 	var visible_ids: Dictionary = {}
 	var index_by_id: Dictionary = {}
+	var group_local_counts: Dictionary = {}
 	for capability_id in mechanics:
 		var id := str(capability_id)
 		var definition := _definitions.get(id) as ObjectCapabilityDefinition
 		if definition == null or not _matches_filters(definition):
 			continue
 		visible_ids[id] = true
-		index_by_id[id] = index_by_id.size()
+		var group_index := int(group_indices.get(id, 0))
+		index_by_id[id] = int(group_local_counts.get(group_index, 0))
+		group_local_counts[group_index] = int(group_local_counts.get(group_index, 0)) + 1
 	for capability_id in mechanics:
 		var id := str(capability_id)
 		if not visible_ids.has(id):
