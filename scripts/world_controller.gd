@@ -266,6 +266,7 @@ func _process(delta: float) -> void:
 	_update_drops()
 	_update_animal_mechanics(delta)
 	_update_world_clock(delta)
+	_update_construction_mechanics(delta)
 	_mechanic_signal_scan_timer -= delta
 	if _mechanic_signal_scan_timer <= 0.0:
 		_bind_world_mechanic_signals()
@@ -701,6 +702,128 @@ func _consume_item(item_id: String, quantity: int) -> bool:
 	inventory_dirty = true
 	_update_resource_counts()
 	return true
+
+## Inventory adapter used by Object Builder construction and transfer mechanics.
+func get_item_count(item_id: String) -> int:
+	return _get_item_count(item_id)
+
+
+func remove_item(item_id: String, amount: int = 1, _allow_bound: bool = false) -> bool:
+	return _consume_item(item_id, amount)
+
+
+func add_item(
+	item_id: String,
+	amount: int = 1,
+	_max_stack: int = -1,
+	_weight: float = 0.0,
+	_tags: Array = [],
+	_rarity: String = "common"
+) -> Dictionary:
+	var requested := maxi(0, amount)
+	var remaining := _inventory_add(item_id, requested)
+	return {"ok": remaining == 0, "accepted": requested - remaining, "remainder": remaining}
+
+
+func get_inventory() -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for slot in inventory:
+		var item_id := str(slot.get("id", ""))
+		var amount := int(slot.get("amount", 0))
+		if item_id.is_empty() or amount <= 0:
+			continue
+		var item_data: Dictionary = config.items.get(item_id, {})
+		result.append({
+			"item_id": item_id,
+			"amount": amount,
+			"max_stack": maxi(1, int(item_data.get("max_stack", config.inventory.max_stack))),
+			"weight": maxf(0.0, float(item_data.get("weight", 0.0))),
+			"tags": item_data.get("tags", []).duplicate(true) if item_data.get("tags", []) is Array else [],
+			"rarity": str(item_data.get("rarity", "common"))
+		})
+	return result
+
+
+func place_constructed_object(
+	definition: ObjectDefinition,
+	position: Vector2,
+	blockers: Array = [],
+	terrain_id: String = ""
+) -> Node2D:
+	if definition == null or world_objects == null:
+		return null
+	var instance := ObjectFactoryScript.instantiate(definition)
+	if not instance is Node2D:
+		if instance != null:
+			instance.free()
+		return null
+	var placement := ObjectFactoryScript.get_component(instance, "can_be_placed")
+	if placement == null or not placement.has_method("can_be_placed"):
+		instance.free()
+		return null
+	if not bool(placement.call("can_be_placed", position, blockers, terrain_id)):
+		instance.free()
+		return null
+	var snapped_position: Vector2 = placement.call("snap_position", position)
+	var materials := ObjectFactoryScript.get_component(instance, "requires_build_materials")
+	if materials != null and materials.has_method("consume_build_materials"):
+		if not bool(materials.call("consume_build_materials", self)):
+			instance.free()
+			return null
+	world_objects.add_child(instance)
+	(instance as Node2D).global_position = snapped_position
+	if ObjectFactoryScript.get_component(instance, "has_build_stages") != null:
+		instance.set_meta("object_builder_build_in_progress", true)
+		instance.set_meta("object_builder_built", false)
+	return instance as Node2D
+
+
+func upgrade_constructed_object(object_root: Node) -> Dictionary:
+	if object_root == null or not is_instance_valid(object_root):
+		return {"ok": false, "error": "Объект строительства не найден."}
+	var construction := ObjectFactoryScript.get_component(object_root, "can_be_upgraded")
+	if construction == null or not construction.has_method("upgrade"):
+		return {"ok": false, "error": "У объекта не включены улучшения."}
+	return construction.call("upgrade", self)
+
+
+func dismantle_constructed_object(object_root: Node) -> Dictionary:
+	if object_root == null or not is_instance_valid(object_root):
+		return {"ok": false, "error": "Объект строительства не найден."}
+	var construction := ObjectFactoryScript.get_component(object_root, "can_be_dismantled")
+	if construction == null or not construction.has_method("dismantle"):
+		return {"ok": false, "error": "Объект нельзя разобрать."}
+	var result_value: Variant = construction.call("dismantle")
+	if not result_value is Dictionary:
+		return {"ok": false, "error": "Механика разбора вернула некорректный результат."}
+	var result: Dictionary = result_value
+	if not bool(result.get("ok", false)):
+		return result
+	var refund: Variant = result.get("refund", {})
+	if refund is Dictionary:
+		for item_id in refund:
+			add_item(str(item_id), int(refund[item_id]))
+	object_root.queue_free()
+	return result
+
+
+func _update_construction_mechanics(delta: float) -> void:
+	if delta <= 0.0 or not is_finite(delta):
+		return
+	for component in _get_world_components("has_build_stages"):
+		var root := ObjectFactoryScript.get_object_root(component)
+		if root == null or not is_instance_valid(root) or not bool(root.get_meta("object_builder_build_in_progress", false)):
+			continue
+		if not component.has_method("advance_build_progress"):
+			continue
+		var result_value: Variant = component.call("advance_build_progress", delta)
+		if not result_value is Dictionary:
+			continue
+		var result: Dictionary = result_value
+		if bool(result.get("completed", false)):
+			root.set_meta("object_builder_build_in_progress", false)
+			root.set_meta("object_builder_built", true)
+
 
 func _get_item_count(item_id: String) -> int:
 	var total := 0
