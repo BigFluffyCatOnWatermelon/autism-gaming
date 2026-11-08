@@ -809,14 +809,22 @@ func _apply_harvesting_hits(
 			arc_degrees
 		):
 			continue
-		var result: Dictionary = harvesting.call(
+		var result_value: Variant = harvesting.call(
 			"advance_harvest",
 			work_step,
 			weapon_id,
 			""
 		)
-		if not bool(result.get("ok", false)) or not bool(result.get("completed", false)):
+		if not result_value is Dictionary:
 			continue
+		var result: Dictionary = result_value
+		if not bool(result.get("ok", false)):
+			continue
+		_trigger_object_mechanic(root, "plays_damage_sound", "play_event", ["damage"])
+		_trigger_object_mechanic(root, "emits_particles", "emit_particles")
+		if not bool(result.get("completed", false)):
+			continue
+		_trigger_object_mechanic(root, "plays_destroy_sound", "play_event", ["destroy"])
 		var yielded: Variant = result.get("resources", {})
 		if yielded is Dictionary:
 			for raw_item_id in yielded:
@@ -832,6 +840,21 @@ func _apply_harvesting_hits(
 			])
 			completed_count += 1
 	return completed_count
+
+
+func _trigger_object_mechanic(
+	object_root: Node,
+	component_id: String,
+	method_name: String,
+	arguments: Array = []
+) -> bool:
+	if object_root == null or not is_instance_valid(object_root):
+		return false
+	var component := ObjectFactoryScript.get_component(object_root, component_id)
+	if component == null or not component.has_method(method_name):
+		return false
+	component.callv(method_name, arguments)
+	return true
 
 
 func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_degrees: float, effect_width: float) -> void:
@@ -1069,6 +1092,36 @@ func _update_component_pickups() -> void:
 		if actor_position.distance_to(target_position) <= pickup.pickup_radius:
 			pickup.try_pickup(self)
 
+	# New item mechanics use their own stack state, but feed the existing player
+	# inventory so there is still exactly one source of truth for carried items.
+	for item_component in _get_world_components("is_pickup_item"):
+		if not item_component.has_method("is_pickup_allowed") or not item_component.has_method("get_count"):
+			continue
+		if not bool(item_component.call("is_pickup_allowed")):
+			continue
+		var source := ObjectFactoryScript.get_object_root(item_component)
+		if source == null or source == item_component or not is_instance_valid(source) or source.is_queued_for_deletion():
+			continue
+		var pickup_radius := maxf(0.0, float(item_component.get_setting("pickup_radius", 48.0)))
+		if actor_position.distance_to(_get_component_world_position(item_component, source)) > pickup_radius:
+			continue
+		var item_id := str(source.get_meta(
+			"object_builder_item_id",
+			ObjectFactoryScript.get_custom_property(source, "item_id", source.get_meta("object_definition_id", ""))
+		)).strip_edges()
+		var available := maxi(0, int(item_component.call("get_count")))
+		if item_id.is_empty() or available <= 0:
+			continue
+		var accepted := receive_pickup(item_id, available, source)
+		if accepted <= 0:
+			continue
+		if accepted >= available and item_component.has_method("mark_picked_up"):
+			item_component.call("mark_picked_up")
+		if item_component.has_method("remove_from_stack"):
+			item_component.call("remove_from_stack", accepted)
+		if int(item_component.call("get_count")) <= 0:
+			source.queue_free()
+
 
 func _update_animal_mechanics(delta: float) -> void:
 	if delta <= 0.0 or not is_finite(delta):
@@ -1206,6 +1259,8 @@ func _try_interact_with_nearest() -> void:
 	if nearest.try_interact(player):
 		var source := ObjectFactoryScript.get_object_root(nearest)
 		if source != null:
+			_trigger_object_mechanic(source, "plays_interaction_sound", "play_event", ["interact"])
+			_trigger_object_mechanic(source, "emits_particles", "emit_particles")
 			_log("Взаимодействие: %s." % source.name)
 	else:
 		_log("Не удалось взаимодействовать с объектом.")
