@@ -73,9 +73,12 @@ func get_build_cost() -> Dictionary:
 
 
 func can_afford(inventory: Object) -> bool:
+	return _can_afford_costs(inventory, _get_material_costs())
+
+
+func _can_afford_costs(inventory: Object, costs: Dictionary) -> bool:
 	if inventory == null or not inventory.has_method("get_item_count"):
 		return false
-	var costs := _get_material_costs()
 	for item_id in costs:
 		if int(inventory.call("get_item_count", str(item_id))) < int(costs[item_id]):
 			return false
@@ -108,7 +111,7 @@ func upgrade(inventory: Object = null) -> Dictionary:
 	if not costs.is_empty():
 		if inventory == null or not inventory.has_method("get_item_count") or not inventory.has_method("remove_item"):
 			return _failed_result("Для улучшения нужен доступный инвентарь.")
-		if not can_afford(inventory):
+		if not _can_afford_costs(inventory, costs):
 			return _failed_result("Недостаточно материалов для улучшения.")
 		if not _consume_costs(inventory, costs):
 			return _failed_result("Не удалось списать материал улучшения.")
