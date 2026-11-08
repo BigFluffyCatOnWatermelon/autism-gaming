@@ -198,9 +198,10 @@ class CapabilityMapData:
 			if source_id != capability_id and not is_reverse:
 				continue
 			var neighbor_id := source_id if is_reverse else target_id
-			if seen.has(neighbor_id):
+			var relation_key := neighbor_id + ":" + str(edge["type"]) + ":" + str(is_reverse)
+			if seen.has(relation_key):
 				continue
-			seen[neighbor_id] = true
+			seen[relation_key] = true
 			var copied: Dictionary = edge.duplicate(true)
 			copied["capability_id"] = neighbor_id
 			copied["is_reverse"] = is_reverse
@@ -653,11 +654,14 @@ func _build_local_graph(
 	_nodes_by_id[capability_id] = center
 	_node_names_by_id[capability_id] = "FocusedCapability"
 	var unique_neighbors: Array[Dictionary] = []
+	var neighbor_indices: Dictionary = {}
 	for entry in neighbors:
 		var neighbor_id := str(entry.get("capability_id", ""))
 		if neighbor_id.is_empty() or neighbor_id == capability_id or not _definitions.has(neighbor_id):
 			continue
-		unique_neighbors.append(entry)
+		if not neighbor_indices.has(neighbor_id):
+			neighbor_indices[neighbor_id] = unique_neighbors.size()
+			unique_neighbors.append(entry)
 	for index in range(unique_neighbors.size()):
 		var entry: Dictionary = unique_neighbors[index]
 		var neighbor_id := str(entry["capability_id"])
@@ -666,11 +670,10 @@ func _build_local_graph(
 			continue
 		var relation_type := str(entry.get("type", entry.get("relation_type", "related")))
 		var explanation := str(entry.get("explanation", ""))
-		var is_reverse := bool(entry.get("is_reverse", false))
+		var domain_info := CapabilityMapData.get_domain_for_category(neighbor_definition.category_id)
 		var node_name := "Neighbor_" + str(index)
 		var node := _create_local_node(node_name, neighbor_definition, _relation_caption(relation_type), false)
-		var domain_info := CapabilityMapData.get_domain_for_category(neighbor_definition.category_id)
-		node.tooltip_text = "%s\n%s\n%s" % [
+		node.tooltip_text = "%s\\n%s\\n%s" % [
 			str(domain_info.get("name", "Другая область")),
 			str(RELATION_TYPE_NAMES.get(relation_type, "Связано")),
 			explanation if not explanation.is_empty() else "Объяснение для этой связи пока не добавлено."
@@ -679,11 +682,17 @@ func _build_local_graph(
 		_graph.add_child(node)
 		_nodes_by_id[neighbor_id] = node
 		_node_names_by_id[neighbor_id] = node_name
+	for entry in neighbors:
+		var neighbor_id := str(entry.get("capability_id", ""))
+		if not _node_names_by_id.has(neighbor_id):
+			continue
+		var relation_type := str(entry.get("type", entry.get("relation_type", "related")))
 		var type_id := _relation_type_id(relation_type)
-		if is_reverse:
-			_graph.connect_node(node_name, type_id - 1, "FocusedCapability", type_id - 1)
+		var neighbor_name := str(_node_names_by_id[neighbor_id])
+		if bool(entry.get("is_reverse", false)):
+			_graph.connect_node(neighbor_name, type_id - 1, "FocusedCapability", type_id - 1)
 		else:
-			_graph.connect_node("FocusedCapability", type_id - 1, node_name, type_id - 1)
+			_graph.connect_node("FocusedCapability", type_id - 1, neighbor_name, type_id - 1)
 	if add_hint:
 		_hint.text = "Показаны %d прямых связей. Наведи курсор на соседний узел, чтобы увидеть тип связи и объяснение." % unique_neighbors.size()
 
