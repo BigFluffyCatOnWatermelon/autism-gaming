@@ -6,6 +6,14 @@ func _on_configured() -> void:
     _load_options({"texture_path": ""})
 
 
+func _apply_bound_target() -> bool:
+    var sprite := find_sprite()
+    if sprite == null:
+        return fail("Для механики изображения нужен Sprite2D в целевой ветке.")
+    var texture_path := str(get_option("texture_path", "")).strip_edges()
+    return true if texture_path.is_empty() else apply_to(sprite)
+
+
 func apply_to(sprite: Sprite2D, path_override: String = "") -> bool:
     if not is_instance_valid(sprite):
         return fail("Не передан действительный Sprite2D.")
