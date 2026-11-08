@@ -1056,7 +1056,13 @@ func get_visible_mechanic_count() -> int:
 
 
 func get_node_count() -> int:
-	return _graph.get_child_count() if _graph != null else 0
+	if _graph == null:
+		return 0
+	var count := 0
+	for child in _graph.get_children():
+		if child is GraphNode:
+			count += 1
+	return count
 
 
 func get_connection_count() -> int:
