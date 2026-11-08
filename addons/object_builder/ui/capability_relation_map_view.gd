@@ -436,7 +436,8 @@ func _build_overview() -> void:
 		for relation_type in RELATION_TYPE_ORDER:
 			var relation_row := HBoxContainer.new()
 			var relation_label := Label.new()
-			relation_label.text = str(RELATION_TYPE_NAMES[relation_type])
+			relation_label.text = _relation_short_caption(str(relation_type))
+		label.tooltip_text = str(RELATION_TYPE_NAMES[relation_type])
 			relation_label.add_theme_font_size_override("font_size", 9)
 			relation_label.add_theme_color_override("font_color", RELATION_TYPE_COLORS[relation_type])
 			relation_row.add_child(relation_label)
@@ -1011,6 +1012,22 @@ func _domain_order(domain_id: String) -> int:
 
 func _relation_type_id(relation_type: String) -> int:
 	return int(RELATION_TYPE_IDS.get(relation_type, RELATION_TYPE_IDS["related"]))
+
+
+func _relation_short_caption(relation_type: String) -> String:
+	match relation_type:
+		"requires":
+			return "Нужно"
+		"conflicts":
+			return "Конфликт"
+		"recommends":
+			return "Совет"
+		"extends":
+			return "Расширяет"
+		"alternative":
+			return "Вариант"
+		_:
+			return "Связано"
 
 
 func _relation_caption(relation_type: String) -> String:
