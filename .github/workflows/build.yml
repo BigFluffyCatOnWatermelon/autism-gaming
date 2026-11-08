@@ -297,7 +297,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          godot --headless --path . --script res://tests/object_builder_canvas_view_smoke.gd 2>&1 | tee object-builder-canvas-test.log
+          timeout -k 5s 30s godot --headless --path . --script res://tests/object_builder_canvas_view_smoke.gd 2>&1 | tee object-builder-canvas-test.log
           errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-canvas-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
           if [[ -n "$errors" ]]; then
             echo "$errors"

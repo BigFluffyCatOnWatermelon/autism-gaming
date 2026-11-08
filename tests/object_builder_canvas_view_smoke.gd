@@ -93,12 +93,14 @@ func _run() -> void:
 		pointer_motion.position = screen_position
 		interaction.call("handle_input", pointer_motion)
 		_expect((canvas.get("_coordinates_label") as Label).text == "X: 64 · Y: 32", "canvas displays live world coordinates under the pointer")
-		canvas.call("set_locked_paths", [NodePath("Sprite")])
+		var initial_locked_paths: Array[NodePath] = [NodePath("Sprite")]
+		canvas.call("set_locked_paths", initial_locked_paths)
 		canvas.call("_on_context_menu_requested", NodePath("Sprite"))
 		if context_menu != null:
 			var lock_item_index := context_menu.get_item_index(3)
 			_expect(context_menu.get_item_text(lock_item_index) == "Снять фиксацию", "context menu reflects the current locked state")
-		canvas.call("set_locked_paths", [])
+		var no_locked_paths: Array[NodePath] = []
+		canvas.call("set_locked_paths", no_locked_paths)
 		if context_menu != null:
 			context_menu.hide()
 		interaction.call("_begin_selection", screen_position)
@@ -195,7 +197,9 @@ func _run() -> void:
 			_expect(restored_pivot_sprite.get_meta("object_builder_pivot") == Vector2(4.0, 6.0), "serialized pivot retains its local coordinates")
 			restored_pivot_scene.free()
 
-		canvas.call("set_guides", [12.0], [24.0])
+		var vertical_guides: Array[float] = [12.0]
+		var horizontal_guides: Array[float] = [24.0]
+		canvas.call("set_guides", vertical_guides, horizontal_guides)
 		var guide_state: Dictionary = canvas.call("get_guides")
 		_expect(guide_state.get("vertical", []).size() == 1 and guide_state.get("horizontal", []).size() == 1, "canvas stores vertical and horizontal guides")
 		var guide_screen := (viewport.get_canvas_transform() * Vector2(12.0, 0.0)) * surface.size / Vector2(viewport.size)
