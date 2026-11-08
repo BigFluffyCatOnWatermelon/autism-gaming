@@ -1149,6 +1149,7 @@ func _test_inventory_mechanics() -> void:
 	_expect(not bool(inventory.call("remove_item", "wood", 1)), "bound items cannot be removed by ordinary operations")
 	_expect(bool(inventory.call("bind_item", 0, false)), "inventory can unbind an item")
 	_expect(bool(inventory.call("remove_item", "wood", 1)), "unbound items can be removed")
+	_expect(bool(inventory.call("bind_item", split_slot, false)), "inventory can unbind the remaining ingredient stack before crafting")
 
 	var crafted: Dictionary = inventory.call("craft", "plank")
 	_expect(bool(crafted.get("ok", false)), "inventory crafts an output from configured ingredients")
