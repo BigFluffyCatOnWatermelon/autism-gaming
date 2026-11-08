@@ -439,7 +439,7 @@ func _build_overview() -> void:
 			var relation_row := HBoxContainer.new()
 			var relation_label := Label.new()
 			relation_label.text = _relation_short_caption(str(relation_type))
-		label.tooltip_text = str(RELATION_TYPE_NAMES[relation_type])
+			relation_label.tooltip_text = str(RELATION_TYPE_NAMES[relation_type])
 			relation_label.add_theme_font_size_override("font_size", 9)
 			relation_label.add_theme_color_override("font_color", RELATION_TYPE_COLORS[relation_type])
 			relation_row.add_child(relation_label)
@@ -638,7 +638,8 @@ func _create_mechanic_node(node_name: String, definition: ObjectCapabilityDefini
 	for relation_type in RELATION_TYPE_ORDER:
 		var row := HBoxContainer.new()
 		var label := Label.new()
-		label.text = str(RELATION_TYPE_NAMES[relation_type])
+		label.text = _relation_short_caption(str(relation_type))
+		label.tooltip_text = str(RELATION_TYPE_NAMES[relation_type])
 		label.add_theme_font_size_override("font_size", 9)
 		label.add_theme_color_override("font_color", RELATION_TYPE_COLORS[relation_type])
 		row.add_child(label)
@@ -762,7 +763,8 @@ func _create_local_node(node_name: String, definition: ObjectCapabilityDefinitio
 	for relation_type in RELATION_TYPE_ORDER:
 		var row := HBoxContainer.new()
 		var label := Label.new()
-		label.text = str(RELATION_TYPE_NAMES[relation_type])
+		label.text = _relation_short_caption(str(relation_type))
+		label.tooltip_text = str(RELATION_TYPE_NAMES[relation_type])
 		label.add_theme_font_size_override("font_size", 9)
 		label.add_theme_color_override("font_color", RELATION_TYPE_COLORS[relation_type])
 		row.add_child(label)
