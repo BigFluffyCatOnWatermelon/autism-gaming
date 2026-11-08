@@ -145,10 +145,13 @@ func _run() -> void:
 
 	var setting_values: Array[Dictionary] = view.call("get_values")
 	_expect(setting_values.size() == 4, "filtering never drops values from the pending apply payload")
-	_expect(is_equal_approx(float(setting_values[0].get("value", 0.0)), 100.0), "reset value is included in the pending apply payload")
-	_expect(setting_values[1].get("value") == Vector2(12.0, 24.0), "Vector2 value preserves both edited axes")
-	_expect(setting_values[2].get("value") == false, "boolean value preserves its type")
-	_expect(setting_values[3].get("value") == "Обычный", "string value is read from the inline control")
+	var values_by_key: Dictionary = {}
+	for setting_value in setting_values:
+		values_by_key[str(setting_value.get("setting_key", ""))] = setting_value.get("value")
+	_expect(is_equal_approx(float(values_by_key.get("max_health", 0.0)), 100.0), "reset value is included in the pending apply payload")
+	_expect(values_by_key.get("parts_offset") == Vector2(12.0, 24.0), "Vector2 value preserves both edited axes")
+	_expect(values_by_key.get("invulnerable") == false, "boolean value preserves its type")
+	_expect(values_by_key.get("label") == "Обычный", "string value is read from the inline control")
 
 	var footer := view.get_child(view.get_child_count() - 1) as HBoxContainer
 	_expect(footer.get_child(0) is Label, "fixed footer explains the pending edit state")
