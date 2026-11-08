@@ -9,6 +9,64 @@ signal lifespan_expired
 signal periodic_output(item_id: String, amount: int)
 signal signal_triggered(signal_id: String, action: Dictionary)
 signal action_failed(reason: String)
+signal scheduled_event_dispatched(event: Dictionary)
+
+
+func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
+	set_process(true)
+	_initialize_runtime_timers()
+
+
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint() or not is_inside_tree() or not is_finite(delta) or delta < 0.0:
+		return
+	if _has_mechanic("has_timed_activation"):
+		advance_timed_activation(delta)
+	if _has_mechanic("has_cooldown") and get_cooldown_remaining() > 0.0:
+		advance_cooldown(delta)
+	if _has_mechanic("supports_timed_respawn") and not bool(_get_state().get("alive", true)):
+		advance_respawn(delta)
+	if _has_mechanic("has_lifespan") and not bool(_get_state().get("expired", false)):
+		advance_lifespan(delta)
+	if _has_mechanic("has_periodic_output"):
+		advance_periodic_output(delta)
+
+
+func _initialize_runtime_timers() -> void:
+	var state := _get_state()
+	if _has_mechanic("has_timed_activation") and not bool(state.get("activation_started", false)):
+		state["activation_elapsed"] = 0.0
+		state["activated"] = false
+		state["activation_started"] = true
+	if _has_mechanic("has_lifespan") and not bool(state.get("lifespan_started", false)):
+		state["lifespan_remaining"] = maxf(0.0, float(_option("has_lifespan", "lifespan_seconds", 60.0)))
+		state["expired"] = false
+		state["lifespan_started"] = true
+	_save_state(state)
+
+
+func update_world_time(day: int, hour: float) -> Array[Dictionary]:
+	var dispatched: Array[Dictionary] = []
+	if not is_finite(hour):
+		return dispatched
+	var normalized_hour := fposmod(hour, 24.0)
+	var state := _get_state()
+	var fired: Dictionary = state.get("fired_schedule_events", {})
+	for event in get_scheduled_events(day, normalized_hour):
+		var event_id := str(event.get("event_id", ""))
+		if event_id.is_empty():
+			event_id = JSON.stringify(event)
+		var event_key := "%d:%s" % [day, event_id]
+		if fired.has(event_key):
+			continue
+		fired[event_key] = true
+		dispatched.append(event.duplicate(true))
+		scheduled_event_dispatched.emit(event.duplicate(true))
+	state["fired_schedule_events"] = fired
+	_save_state(state)
+	return dispatched
 
 
 func get_day_phase(hour: float) -> String:
@@ -43,6 +101,7 @@ func start_timed_activation() -> bool:
 	var state := _get_state()
 	state["activation_elapsed"] = 0.0
 	state["activated"] = false
+	state["activation_started"] = true
 	_save_state(state)
 	return true
 
@@ -101,6 +160,9 @@ func start_respawn() -> bool:
 		return _fail("Возрождение по таймеру не включено.")
 	var state := _get_state()
 	state["alive"] = false
+	var root := get_object_root()
+	if root != null:
+		root.set_meta("object_alive", false)
 	state["respawn_remaining"] = maxf(0.0, float(_option("supports_timed_respawn", "respawn_delay", 30.0)))
 	_save_state(state)
 	return true
@@ -116,6 +178,9 @@ func advance_respawn(delta: float) -> bool:
 	state["respawn_remaining"] = remaining
 	if remaining <= 0.0:
 		state["alive"] = true
+		var root := get_object_root()
+		if root != null:
+			root.set_meta("object_alive", true)
 		_save_state(state)
 		respawned.emit()
 		return true
@@ -129,6 +194,7 @@ func start_lifespan() -> bool:
 	var state := _get_state()
 	state["lifespan_remaining"] = maxf(0.0, float(_option("has_lifespan", "lifespan_seconds", 60.0)))
 	state["expired"] = false
+	state["lifespan_started"] = true
 	_save_state(state)
 	return true
 
@@ -145,6 +211,9 @@ func advance_lifespan(delta: float) -> bool:
 	state["expired"] = expired
 	_save_state(state)
 	if expired:
+		var root := get_object_root()
+		if root != null:
+			root.set_meta("object_active", false)
 		lifespan_expired.emit()
 	return expired
 
@@ -230,12 +299,15 @@ func _get_state() -> Dictionary:
 	return {
 		"activation_elapsed": 0.0,
 		"activated": false,
+		"activation_started": false,
 		"cooldown_remaining": 0.0,
 		"cooldown_ready": false,
 		"alive": true,
 		"respawn_remaining": 0.0,
 		"lifespan_remaining": float(_option("has_lifespan", "lifespan_seconds", 60.0)),
 		"expired": false,
+		"lifespan_started": false,
+		"fired_schedule_events": {},
 		"output_elapsed": 0.0
 	}
 
