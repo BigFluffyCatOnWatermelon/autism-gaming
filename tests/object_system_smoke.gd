@@ -72,6 +72,7 @@ func _run_tests() -> void:
 	_test_ai_mechanics()
 	_test_animal_mechanics()
 	_test_audio_effects_mechanics()
+	_test_world_time_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1632,6 +1633,89 @@ func _test_audio_effects_mechanics() -> void:
 	_expect(bool(light.call("import_runtime_state", saved_state)), "visual effect state can be restored")
 	trail.call("stop_trail")
 	light.call("disable_light")
+	instance.free()
+
+
+func _test_world_time_mechanics() -> void:
+	var time_ids := PackedStringArray([
+		"has_day_night_schedule",
+		"changes_by_season",
+		"has_timed_activation",
+		"has_cooldown",
+		"supports_timed_respawn",
+		"has_lifespan",
+		"reacts_to_weather",
+		"has_periodic_output",
+		"supports_signal_triggers",
+		"supports_event_schedule"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for time_id in time_ids:
+		var binding := ObjectComponentCatalog.create_binding(time_id)
+		_expect(binding != null, "world-time component is registered: " + time_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+		match time_id:
+			"has_day_night_schedule":
+				binding.component_definition.settings["schedule_json"] = "[{\"start\":6,\"end\":18,\"phase\":\"day\"},{\"start\":18,\"end\":6,\"phase\":\"night\"}]"
+			"changes_by_season":
+				binding.component_definition.settings["seasonal_values_json"] = "{\"spring\":{\"growth\":1.0},\"winter\":{\"growth\":0.2}}"
+			"has_timed_activation":
+				binding.component_definition.settings["delay_seconds"] = 2.0
+			"has_cooldown":
+				binding.component_definition.settings["cooldown_seconds"] = 3.0
+			"supports_timed_respawn":
+				binding.component_definition.settings["respawn_delay"] = 2.0
+			"has_lifespan":
+				binding.component_definition.settings["lifespan_seconds"] = 2.0
+			"reacts_to_weather":
+				binding.component_definition.settings["allowed_weather_csv"] = "rain,snow"
+				binding.component_definition.settings["weather_effects_json"] = "{\"rain\":{\"movement_multiplier\":0.8}}"
+			"has_periodic_output":
+				binding.component_definition.settings["output_item_id"] = "ore"
+				binding.component_definition.settings["output_interval"] = 2.0
+				binding.component_definition.settings["amount_per_cycle"] = 3
+			"supports_signal_triggers":
+				binding.component_definition.settings["event_rules_json"] = "{\"on_open\":{\"action\":\"play_sound\",\"value\":\"door\"}}"
+			"supports_event_schedule":
+				binding.component_definition.settings["events_json"] = "[{\"day\":1,\"hour\":8,\"event_id\":\"market\"}]"
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "world_time_mechanics_smoke_test"
+	definition.display_name = "World Time Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the world-time package")
+	if instance == null:
+		return
+
+	var time_component := ObjectFactory.get_component(instance, "has_day_night_schedule")
+	_expect(str(time_component.call("get_day_phase", 8.0)) == "day", "world-time schedule resolves daytime")
+	_expect(str(time_component.call("get_day_phase", 22.0)) == "night", "world-time schedule resolves overnight phases")
+	_expect(float(time_component.call("get_season_data", "spring").get("growth", 0.0)) == 1.0, "world-time returns seasonal modifiers")
+	_expect(bool(time_component.call("start_timed_activation")), "timed activation can start")
+	_expect(not bool(time_component.call("advance_timed_activation", 1.0)), "timed activation waits for its delay")
+	_expect(bool(time_component.call("advance_timed_activation", 1.0)), "timed activation fires at its delay")
+	_expect(bool(time_component.call("start_cooldown")), "cooldown can start")
+	_expect(not bool(time_component.call("advance_cooldown", 2.0)), "cooldown remains active before its deadline")
+	_expect(bool(time_component.call("advance_cooldown", 1.0)), "cooldown becomes ready at its deadline")
+	_expect(bool(time_component.call("start_respawn")), "timed respawn can start")
+	_expect(not bool(time_component.call("advance_respawn", 1.0)), "respawn waits for its timer")
+	_expect(bool(time_component.call("advance_respawn", 1.0)), "respawn restores the object at its deadline")
+	_expect(bool(time_component.call("start_lifespan")), "lifespan timer can start")
+	_expect(not bool(time_component.call("advance_lifespan", 1.0)), "lifespan remains active before expiry")
+	_expect(bool(time_component.call("advance_lifespan", 1.0)), "lifespan expires at its deadline")
+	_expect(float(time_component.call("get_weather_effect", "rain").get("movement_multiplier", 0.0)) == 0.8, "weather effects return configured modifiers")
+	_expect(not bool(time_component.call("get_weather_effect", "heat").get("allowed", true)), "weather rules reject unsupported conditions")
+	var output: Dictionary = time_component.call("advance_periodic_output", 4.0)
+	_expect(int(output.get("output", {}).get("ore", 0)) == 6, "periodic output accounts for multiple elapsed cycles")
+	var trigger: Dictionary = time_component.call("receive_signal", "on_open", {"source":"test"})
+	_expect(bool(trigger.get("matched", false)) and str(trigger.get("action", {}).get("action", "")) == "play_sound", "signal triggers resolve configured actions")
+	_expect(time_component.call("get_scheduled_events", 1, 8.0).size() == 1, "event schedule matches the configured day and hour")
+	var saved_state: Dictionary = time_component.call("export_runtime_state")
+	_expect(bool(time_component.call("import_runtime_state", saved_state)), "world-time runtime state can be restored")
 	instance.free()
 
 
