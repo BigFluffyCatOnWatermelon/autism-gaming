@@ -7,12 +7,13 @@ func _on_configured() -> void:
 
 
 func is_enabled() -> bool:
-    return bool(get_option("initially_enabled", false))
+    return get_shared_enabled_state(bool(get_option("initially_enabled", false)))
 
 
 func enable() -> bool:
     if not bool(get_option("allow_enable", true)):
         return fail("Включение этого объекта запрещено настройками.")
+    set_shared_enabled_state(true)
     set_option("initially_enabled", true)
     action_completed.emit(true)
     return true
