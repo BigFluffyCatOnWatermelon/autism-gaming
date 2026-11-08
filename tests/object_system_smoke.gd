@@ -68,6 +68,7 @@ func _run_tests() -> void:
 	_test_item_mechanics()
 	_test_inventory_mechanics()
 	_test_container_mechanics()
+	_test_construction_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1290,6 +1291,99 @@ func _test_container_mechanics() -> void:
 		_expect(bool(container.call("unlink_container")), "container can leave a shared storage group")
 		_expect(int(container.call("get_item_count", "ore")) == 1, "unlinking preserves the local copy of shared contents")
 		target_instance.free()
+	instance.free()
+
+
+func _test_construction_mechanics() -> void:
+	var construction_ids := PackedStringArray([
+		"can_be_placed",
+		"snaps_to_grid",
+		"supports_rotation_placement",
+		"has_build_cost",
+		"requires_build_materials",
+		"can_be_upgraded",
+		"can_be_dismantled",
+		"supports_build_preview",
+		"has_build_stages",
+		"supports_blueprint"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for construction_id in construction_ids:
+		var binding := ObjectComponentCatalog.create_binding(construction_id)
+		_expect(binding != null, "construction component is registered: " + construction_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+		match construction_id:
+			"can_be_placed":
+				binding.component_definition.settings["world_bounds_json"] = "{\"min\":[0,0],\"max\":[100,100]}"
+				binding.component_definition.settings["allowed_terrain_csv"] = "grass,soil"
+				binding.component_definition.settings["placement_clearance"] = 4.0
+			"snaps_to_grid":
+				binding.component_definition.settings["grid_size"] = Vector2(16.0, 16.0)
+			"supports_rotation_placement":
+				binding.component_definition.settings["rotation_step_degrees"] = 90.0
+			"has_build_cost":
+				binding.component_definition.settings["build_cost_json"] = "{\"wood\":4,\"stone\":2}"
+			"can_be_upgraded":
+				binding.component_definition.settings["max_upgrade_level"] = 2
+				binding.component_definition.settings["upgrade_costs_json"] = "{\"1\":{\"wood\":2},\"2\":{\"stone\":2}}"
+			"can_be_dismantled":
+				binding.component_definition.settings["refund_ratio"] = 0.5
+			"has_build_stages":
+				binding.component_definition.settings["build_duration"] = 4.0
+				binding.component_definition.settings["stage_thresholds_json"] = "[0.5,1.0]"
+
+	var inventory_binding := ObjectComponentCatalog.create_binding("has_inventory")
+	_expect(inventory_binding != null, "construction smoke can create its material inventory")
+	if inventory_binding == null:
+		return
+	bindings.append(inventory_binding)
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "construction_mechanics_smoke_test"
+	definition.display_name = "Construction Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the construction package")
+	if instance == null:
+		return
+
+	var construction := ObjectFactory.get_component(instance, "can_be_placed")
+	var inventory := ObjectFactory.get_component(instance, "has_inventory")
+	_expect(construction != null and inventory != null, "construction and material inventory are attached")
+	if construction == null or inventory == null:
+		instance.free()
+		return
+
+	inventory.call("add_item", "wood", 10, 99, 0.0, ["material"])
+	inventory.call("add_item", "stone", 5, 99, 0.0, ["material"])
+	_expect(bool(construction.call("can_be_placed", Vector2(23.0, 41.0), [], "grass")), "construction accepts a valid snapped position")
+	_expect(not bool(construction.call("can_be_placed", Vector2(23.0, 41.0), [Rect2(Vector2(10.0, 40.0), Vector2(20.0, 20.0))], "grass")), "construction rejects a blocked position")
+	_expect(not bool(construction.call("can_be_placed", Vector2(23.0, 41.0), [], "water")), "construction rejects an unsupported terrain")
+	var preview: Dictionary = construction.call("get_preview_state", Vector2(23.0, 41.0), [], "grass")
+	_expect(bool(preview.get("valid", false)) and preview.get("position", Vector2.ZERO) == Vector2(16.0, 48.0), "build preview returns snapped position and validity")
+	_expect(is_equal_approx(float(construction.call("rotate_placement", 1)), 90.0), "construction rotates by its configured angle step")
+	_expect(bool(construction.call("can_afford", inventory)), "construction checks required materials")
+	_expect(bool(construction.call("consume_build_materials", inventory)), "construction consumes its build materials")
+	_expect(int(inventory.call("get_item_count", "wood")) == 6 and int(inventory.call("get_item_count", "stone")) == 3, "construction removes the configured build cost")
+	var first_upgrade: Dictionary = construction.call("upgrade", inventory)
+	_expect(bool(first_upgrade.get("ok", false)) and int(first_upgrade.get("level", 0)) == 1, "construction can purchase its first upgrade")
+	var second_upgrade: Dictionary = construction.call("upgrade", inventory)
+	_expect(bool(second_upgrade.get("ok", false)) and int(second_upgrade.get("level", 0)) == 2, "construction can purchase its second upgrade")
+	_expect(not bool(construction.call("upgrade", inventory).get("ok", false)), "construction rejects upgrades above its configured maximum")
+	var first_stage: Dictionary = construction.call("advance_build_progress", 2.0)
+	_expect(int(first_stage.get("stage", 0)) == 1, "construction advances to its first stage")
+	var final_stage: Dictionary = construction.call("advance_build_progress", 2.0)
+	_expect(bool(final_stage.get("completed", false)) and int(final_stage.get("stage", 0)) == 2, "construction reaches its final stage")
+	var blueprint: Dictionary = construction.call("export_blueprint")
+	_expect(int(blueprint.get("upgrade_level", 0)) == 2, "construction blueprint stores upgrade level")
+	_expect(bool(construction.call("apply_blueprint", blueprint)), "construction can restore a blueprint")
+	var dismantle: Dictionary = construction.call("dismantle")
+	_expect(bool(dismantle.get("ok", false)), "construction can be dismantled")
+	_expect(int(dismantle.get("refund", {}).get("wood", 0)) == 2 and int(dismantle.get("refund", {}).get("stone", 0)) == 1, "dismantling returns the configured fraction of materials")
+	_expect(not bool(construction.call("can_be_placed", Vector2(32.0, 32.0), [], "grass")), "dismantled construction cannot be placed again")
 	instance.free()
 
 
