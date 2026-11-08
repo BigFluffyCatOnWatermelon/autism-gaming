@@ -244,8 +244,12 @@ func _update_ai_mechanics(delta: float) -> void:
 		var movement := ObjectFactoryScript.get_component(root, "can_move")
 		if movement == null:
 			movement = ObjectFactoryScript.get_component(root, "can_walk")
-		if movement != null and movement.has_method("move_direction"):
+		if movement == null:
+			continue
+		if movement.has_method("move_direction"):
 			movement.call("move_direction", direction, delta)
+		elif movement.has_method("walk"):
+			movement.call("walk", direction, delta)
 
 
 func _process(delta: float) -> void:
