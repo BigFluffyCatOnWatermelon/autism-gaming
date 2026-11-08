@@ -201,7 +201,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          timeout 45s godot --headless --path . --script res://tests/object_builder_capability_settings_panel_smoke.gd 2>&1 | tee object-builder-capability-settings-panel-test.log
+          timeout -k 5s 30s godot --headless --path . --script res://tests/object_builder_capability_settings_panel_smoke.gd 2>&1 | tee object-builder-capability-settings-panel-test.log
           errors="$(grep -E 'SCRIPT ERROR:|ERROR:' object-builder-capability-settings-panel-test.log | grep -v 'RID allocations of type .* were leaked at exit' || true)"
           if [[ -n "$errors" ]]; then
             echo "$errors"
