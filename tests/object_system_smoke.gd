@@ -69,6 +69,7 @@ func _run_tests() -> void:
 	_test_inventory_mechanics()
 	_test_container_mechanics()
 	_test_construction_mechanics()
+	_test_ai_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1385,6 +1386,93 @@ func _test_construction_mechanics() -> void:
 	_expect(int(dismantle.get("refund", {}).get("wood", 0)) == 2 and int(dismantle.get("refund", {}).get("stone", 0)) == 1, "dismantling returns the configured fraction of materials")
 	_expect(not bool(construction.call("can_be_placed", Vector2(32.0, 32.0), [], "grass")), "dismantled construction cannot be placed again")
 	instance.free()
+
+
+func _test_ai_mechanics() -> void:
+	var ai_ids := PackedStringArray([
+		"has_ai",
+		"can_follow_target",
+		"can_patrol",
+		"can_chase",
+		"can_flee",
+		"can_guard_area",
+		"can_wander",
+		"can_assist",
+		"can_call_for_help",
+		"supports_dialogue"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for ai_id in ai_ids:
+		var binding := ObjectComponentCatalog.create_binding(ai_id)
+		_expect(binding != null, "AI component is registered: " + ai_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+		match ai_id:
+			"can_patrol":
+				binding.component_definition.settings["patrol_points_json"] = "[[0,0],[64,0]]"
+			"can_chase":
+				binding.component_definition.settings["detection_radius"] = 16.0
+			"can_guard_area":
+				binding.component_definition.settings["guard_center"] = Vector2.ZERO
+				binding.component_definition.settings["guard_radius"] = 8.0
+			"can_assist":
+				binding.component_definition.settings["assist_radius"] = 100.0
+			"can_wander":
+				binding.component_definition.settings["wander_radius"] = 32.0
+			"supports_dialogue":
+				binding.component_definition.settings["dialogue_json"] = "{\"greeting\":[\"Hello\",\"Welcome\"]}"
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "ai_mechanics_smoke_test"
+	definition.display_name = "AI Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the AI package")
+	if instance == null:
+		return
+
+	var ai := ObjectFactory.get_component(instance, "has_ai")
+	_expect(ai != null, "AI component is attached and bound to the actor")
+	if ai == null:
+		instance.free()
+		return
+
+	var target := Node2D.new()
+	target.global_position = Vector2(32.0, 0.0)
+	ai.call("set_target", target)
+	var follow_intent: Dictionary = ai.call("get_ai_intent", 0.1)
+	_expect(str(follow_intent.get("state", "")) == "follow", "AI follows a target outside the chase radius")
+	target.global_position = Vector2(4.0, 0.0)
+	var guard_intent: Dictionary = ai.call("get_ai_intent", 0.1)
+	_expect(str(guard_intent.get("state", "")) == "guard", "AI guards a target inside its protected area")
+	ai.call("set_health_ratio", 0.1)
+	var flee_intent: Dictionary = ai.call("get_ai_intent", 0.1)
+	_expect(str(flee_intent.get("state", "")) == "flee", "AI flees when health falls below its threshold")
+
+	ai.call("set_target", null)
+	var ally := Node2D.new()
+	ally.global_position = Vector2(12.0, 0.0)
+	ally.set_meta("needs_assistance", true)
+	var assist_intent: Dictionary = ai.call("get_ai_intent", 0.1, [], [ally])
+	_expect(str(assist_intent.get("state", "")) == "assist", "AI assists a nearby ally that needs help")
+	_expect(bool(ai.call("call_for_help")), "AI can emit a help request")
+	_expect(ai.call("get_dialogue", "greeting").size() == 2, "AI dialogue returns configured lines")
+	_expect(bool(ai.call("start_dialogue", "greeting")), "AI can start a configured dialogue")
+
+	ai.call("set_health_ratio", 1.0)
+	var patrol_intent: Dictionary = ai.call("get_ai_intent", 0.1)
+	_expect(str(patrol_intent.get("state", "")) == "patrol", "AI follows configured patrol points")
+	var patrol_component := ObjectFactory.get_component(instance, "can_patrol")
+	patrol_component.call("configure_mechanic", {"patrol_points_json":"[]"})
+	var wander_intent: Dictionary = ai.call("get_ai_intent", 0.1)
+	_expect(str(wander_intent.get("state", "")) == "wander", "AI chooses a random wander target when no patrol route exists")
+	var saved_state: Dictionary = ai.call("export_runtime_state")
+	_expect(bool(ai.call("import_runtime_state", saved_state)), "AI runtime state can be restored")
+	instance.free()
+	target.free()
+	ally.free()
 
 
 func _test_declarative_scene_structure() -> void:
