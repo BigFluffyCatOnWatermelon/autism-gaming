@@ -414,6 +414,30 @@ func _run() -> void:
 	previous_page.pressed.emit()
 	_expect(page_label.text == "Страница 1 из 3 · 45 возможностей", "previous page returns to the first page")
 
+	view.call("set_entries", entries, 200, 42)
+	var status_option := view.get("status_option") as OptionButton
+	var sort_option := view.get("sort_option") as OptionButton
+	_expect(status_option != null and status_option.item_count == 6, "catalog exposes useful lifecycle status filters")
+	_expect(sort_option != null and sort_option.item_count == 3, "catalog exposes relevance, alphabetical and readiness sorting")
+	status_option.select(4)
+	status_option.item_selected.emit(4)
+	_expect(entries_container.get_child_count() == 2, "planned filter keeps only unfinished mechanics")
+	status_option.select(1)
+	status_option.item_selected.emit(1)
+	_expect(entries_container.get_child_count() == 2, "available filter keeps ready mechanics that are not installed")
+	status_option.select(2)
+	status_option.item_selected.emit(2)
+	_expect(entries_container.get_child_count() == 2, "installed filter keeps enabled mechanics")
+	status_option.select(0)
+	status_option.item_selected.emit(0)
+	sort_option.select(1)
+	sort_option.item_selected.emit(1)
+	var alphabetic_first_card := entries_container.get_child(1) as PanelContainer
+	var alphabetic_header := alphabetic_first_card.get_child(0).get_child(0) as HBoxContainer
+	_expect((alphabetic_header.get_child(1) as CheckBox).text == "Атака", "alphabetical sorting changes presentation without mutating the source catalog")
+	sort_option.select(0)
+	sort_option.item_selected.emit(0)
+
 	var empty_entries: Array[Dictionary] = []
 	view.call("set_entries", empty_entries, 200, 42)
 	_expect(entries_container.get_child_count() == 2, "empty search still preserves library summary")
