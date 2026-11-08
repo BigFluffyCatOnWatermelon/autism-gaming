@@ -73,6 +73,7 @@ func _run_tests() -> void:
 	_test_animal_mechanics()
 	_test_audio_effects_mechanics()
 	_test_world_time_mechanics()
+	_test_world_generation_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1716,6 +1717,103 @@ func _test_world_time_mechanics() -> void:
 	_expect(time_component.call("get_scheduled_events", 1, 8.0).size() == 1, "event schedule matches the configured day and hour")
 	var saved_state: Dictionary = time_component.call("export_runtime_state")
 	_expect(bool(time_component.call("import_runtime_state", saved_state)), "world-time runtime state can be restored")
+	instance.free()
+
+
+func _test_world_generation_mechanics() -> void:
+	var generation_ids := PackedStringArray([
+		"spawns_by_biome",
+		"has_spawn_conditions",
+		"has_random_variants",
+		"has_procedural_layout",
+		"supports_world_seed",
+		"has_density_rules",
+		"can_spread",
+		"can_grow",
+		"adapts_to_environment",
+		"supports_region_rules"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for generation_id in generation_ids:
+		var binding := ObjectComponentCatalog.create_binding(generation_id)
+		_expect(binding != null, "world-generation component is registered: " + generation_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+		match generation_id:
+			"spawns_by_biome":
+				binding.component_definition.settings["allowed_biomes_csv"] = "forest,plains"
+			"has_spawn_conditions":
+				binding.component_definition.settings["conditions_json"] = "{\"min_temperature\":0,\"max_temperature\":35,\"min_elevation\":0,\"max_elevation\":100,\"seasons\":[\"spring\"],\"required_tags\":[\"fertile\"]}"
+			"has_random_variants":
+				binding.component_definition.settings["variants_json"] = "[{\"id\":\"oak\",\"weight\":1.0},{\"id\":\"pine\",\"weight\":1.0}]"
+			"has_procedural_layout":
+				binding.component_definition.settings["pattern"] = "grid"
+				binding.component_definition.settings["object_count"] = 5
+				binding.component_definition.settings["spacing"] = 16.0
+			"supports_world_seed":
+				binding.component_definition.settings["default_seed"] = 123
+			"has_density_rules":
+				binding.component_definition.settings["max_per_region"] = 2
+				binding.component_definition.settings["density_by_region_json"] = "{\"forest\":3}"
+			"can_spread":
+				binding.component_definition.settings["spread_radius"] = 1
+				binding.component_definition.settings["max_spread_cells"] = 2
+				binding.component_definition.settings["allow_diagonal"] = true
+			"can_grow":
+				binding.component_definition.settings["growth_duration"] = 10.0
+				binding.component_definition.settings["growth_stages_json"] = "[0.5,1.0]"
+			"adapts_to_environment":
+				binding.component_definition.settings["adaptation_rules_json"] = "{\"temperature\":{\"cold\":{\"growth\":0.5}},\"weather\":{\"rain\":{\"growth\":1.2,\"color\":\"green\"}}}"
+			"supports_region_rules":
+				binding.component_definition.settings["allowed_regions_csv"] = "forest,plains"
+				binding.component_definition.settings["blocked_regions_csv"] = "desert"
+				binding.component_definition.settings["region_rules_json"] = "{\"forest\":{\"allowed\":true}}"
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "world_generation_mechanics_smoke_test"
+	definition.display_name = "World Generation Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the world-generation package")
+	if instance == null:
+		return
+
+	var generation := ObjectFactory.get_component(instance, "supports_world_seed")
+	_expect(bool(generation.call("set_world_seed", 123)), "world-generation accepts a fixed seed")
+	_expect(int(generation.call("get_world_seed")) == 123, "world-generation stores its seed")
+	var valid_context := {"biome":"forest","region":"forest","region_count":1,"temperature":10.0,"elevation":50.0,"season":"spring","tags":["fertile"]}
+	_expect(bool(generation.call("can_spawn", valid_context)), "world-generation accepts a valid spawn context")
+	var invalid_context := valid_context.duplicate(true)
+	invalid_context["region"] = "desert"
+	_expect(not bool(generation.call("can_spawn", invalid_context)), "world-generation rejects a blocked region")
+	invalid_context = valid_context.duplicate(true)
+	invalid_context["biome"] = "desert"
+	_expect(not bool(generation.call("can_spawn", invalid_context)), "world-generation rejects an unsupported biome")
+	invalid_context = valid_context.duplicate(true)
+	invalid_context["tags"] = []
+	_expect(not bool(generation.call("can_spawn", invalid_context)), "world-generation enforces required environment tags")
+	_expect(int(generation.call("get_spawn_limit", "forest")) == 3, "world-generation resolves region-specific density")
+	_expect(bool(generation.call("can_spawn_in_region", "forest", 2)), "world-generation allows spawns below the density limit")
+	_expect(not bool(generation.call("can_spawn_in_region", "forest", 3)), "world-generation blocks spawns at the density limit")
+
+	var first_variant: Dictionary = generation.call("choose_variant", 123)
+	var second_variant: Dictionary = generation.call("choose_variant", 123)
+	_expect(str(first_variant.get("id", "")) == str(second_variant.get("id", "")), "world-generation selects variants deterministically from a seed")
+	var first_layout: Array = generation.call("generate_layout", Rect2(Vector2.ZERO, Vector2(100.0, 100.0)), 123)
+	var second_layout: Array = generation.call("generate_layout", Rect2(Vector2.ZERO, Vector2(100.0, 100.0)), 123)
+	_expect(first_layout.size() == 5 and first_layout == second_layout, "procedural layouts are deterministic for the same seed")
+	var spread: Array = generation.call("get_spread_cells", Vector2i.ZERO, [Vector2i(1, 0)])
+	_expect(spread.size() == 2 and not spread.has(Vector2i(1, 0)), "spread selects free neighbouring cells")
+	var first_growth: Dictionary = generation.call("advance_growth", 5.0)
+	_expect(int(first_growth.get("stage", 0)) == 1, "world-generation advances to the first growth stage")
+	var final_growth: Dictionary = generation.call("advance_growth", 5.0)
+	_expect(bool(final_growth.get("completed", false)) and int(final_growth.get("stage", 0)) == 2, "world-generation completes its growth stages")
+	var adaptation: Dictionary = generation.call("adapt_to_environment", {"temperature":"cold","weather":"rain"})
+	_expect(is_equal_approx(float(adaptation.get("growth", 0.0)), 0.6) and str(adaptation.get("color", "")) == "green", "environmental modifiers combine deterministically")
+	var saved_state: Dictionary = generation.call("export_runtime_state")
+	_expect(bool(generation.call("import_runtime_state", saved_state)), "world-generation runtime state can be restored")
 	instance.free()
 
 
