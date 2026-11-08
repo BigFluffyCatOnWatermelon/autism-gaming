@@ -44,7 +44,7 @@ func build() -> void:
 	_category.custom_minimum_size.x = 125
 	_category.add_item("Все категории")
 	_category.set_item_metadata(0, "")
-	_category.item_selected.connect(_on_filter_changed.bind(""))
+	_category.item_selected.connect(_on_filter_changed)
 	toolbar.add_child(_category)
 
 	_count_label = Label.new()
