@@ -1275,10 +1275,14 @@ func _dispatch_world_time() -> void:
 		var generation_root := ObjectFactoryScript.get_object_root(generation_component)
 		if generation_root == null or not is_instance_valid(generation_root):
 			continue
+		var generation_phase := str(generation_root.get_meta("object_builder_day_phase", "day"))
+		var generation_time := ObjectFactoryScript.get_component(generation_root, "has_day_night_schedule")
+		if generation_time != null and generation_time.has_method("get_day_phase"):
+			generation_phase = str(generation_time.call("get_day_phase", _world_time_hour))
 		if generation_component.has_method("adapt_to_environment"):
 			var modifiers: Variant = generation_component.call(
 				"adapt_to_environment",
-				{"season": season, "day_phase": phase, "weather": weather}
+				{"season": season, "day_phase": generation_phase, "weather": weather}
 			)
 			if modifiers is Dictionary:
 				generation_root.set_meta("object_builder_environment_modifiers", modifiers)
