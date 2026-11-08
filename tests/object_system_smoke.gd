@@ -246,7 +246,12 @@ func _test_serialized_property_data() -> void:
 
 func _test_component_catalog_and_health() -> void:
 	var categories := ObjectComponentCatalog.get_categories()
-	_expect(categories.size() == 8, "component catalog exposes the planned category groups")
+	var category_ids := PackedStringArray()
+	for category in categories:
+		category_ids.append(str(category.get("id", "")))
+	_expect(categories.size() >= 18, "component catalog exposes the built-in and mechanic-package category groups")
+	for package_category in ["Harvesting", "Items", "Inventory", "Containers", "Construction", "AI", "Animals", "AudioEffects", "WorldTime", "WorldGeneration"]:
+		_expect(category_ids.has(package_category), "component catalog exposes mechanic category: " + package_category)
 	_expect(ObjectComponentCatalog.get_component_ids("Stats").has("health"), "Health is listed in the Stats category")
 	_expect(ObjectComponentCatalog.get_component_ids("Combat").has("damageable"), "Damageable is listed in the Combat category")
 	_expect(ObjectComponentCatalog.get_component_ids("Combat").has("attack"), "Attack is listed in the Combat category")
