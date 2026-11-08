@@ -7,6 +7,13 @@ func _on_configured() -> void:
     set_option("z_index", clampi(int(get_option("z_index", 0)), -4096, 4096))
 
 
+func _apply_bound_target() -> bool:
+    var target := find_canvas_item()
+    if target == null:
+        return fail("Для порядка отрисовки нужен CanvasItem в целевой ветке.")
+    return apply_to(target)
+
+
 func apply_to(target: CanvasItem, z_value: int = 2147483647) -> bool:
     if not is_instance_valid(target):
         return fail("Не передан действительный CanvasItem.")
