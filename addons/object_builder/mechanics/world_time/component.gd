@@ -54,17 +54,20 @@ func update_world_time(day: int, hour: float) -> Array[Dictionary]:
 	var normalized_hour := fposmod(hour, 24.0)
 	var state := _get_state()
 	var fired: Dictionary = state.get("fired_schedule_events", {})
+	if int(state.get("fired_schedule_day", day)) != day:
+		fired.clear()
 	for event in get_scheduled_events(day, normalized_hour):
 		var event_id := str(event.get("event_id", ""))
 		if event_id.is_empty():
 			event_id = JSON.stringify(event)
-		var event_key := "%d:%s" % [day, event_id]
+		var event_key := event_id
 		if fired.has(event_key):
 			continue
 		fired[event_key] = true
 		dispatched.append(event.duplicate(true))
 		scheduled_event_dispatched.emit(event.duplicate(true))
 	state["fired_schedule_events"] = fired
+	state["fired_schedule_day"] = day
 	_save_state(state)
 	return dispatched
 
@@ -274,7 +277,9 @@ func get_scheduled_events(day: int, hour: float) -> Array[Dictionary]:
 		var event_day := int(event.get("day", -1))
 		if event_day >= 0 and event_day != day:
 			continue
-		if absf(float(event.get("hour", 0.0)) - normalized_hour) <= maxf(0.0, float(_option("supports_event_schedule", "hour_tolerance", 0.25))):
+		var event_hour := fposmod(float(event.get("hour", 0.0)), 24.0)
+		var hour_distance := minf(absf(event_hour - normalized_hour), 24.0 - absf(event_hour - normalized_hour))
+		if hour_distance <= maxf(0.0, float(_option("supports_event_schedule", "hour_tolerance", 0.25))):
 			result.append(event.duplicate(true))
 	return result
 
