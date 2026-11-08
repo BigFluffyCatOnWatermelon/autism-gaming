@@ -574,9 +574,12 @@ func set_related_entries(
 		for name in _get_capability_names(relation_conflicts):
 			if not conflict_names.has(name):
 				conflict_names.append(name)
-		var requirement_text := "Требуется: " + ", ".join(requirement_names) if not requirement_names.is_empty() else ""
-		var conflict_text := "Конфликтует: " + ", ".join(conflict_names) if not conflict_names.is_empty() else ""
-		_focused_requirements.text = "\n".join(PackedStringArray([requirement_text, conflict_text]).filter(func(value: String) -> bool: return not value.is_empty()))
+		var detail_lines := PackedStringArray()
+		if not requirement_names.is_empty():
+			detail_lines.append("Требуется: " + ", ".join(requirement_names))
+		if not conflict_names.is_empty():
+			detail_lines.append("Конфликтует: " + ", ".join(conflict_names))
+		_focused_requirements.text = "\n".join(detail_lines)
 	else:
 		_related_title.text = "СВЯЗАННЫЕ ВОЗМОЖНОСТИ"
 		_focused_description.text = ""
