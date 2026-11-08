@@ -38,6 +38,14 @@ func update_shadow(source: Sprite2D, shadow: Sprite2D) -> bool:
     if not is_instance_valid(source) or not is_instance_valid(shadow):
         return fail("Исходный спрайт или тень больше не существуют.")
     shadow.texture = source.texture
+    shadow.region_enabled = source.region_enabled
+    shadow.region_rect = source.region_rect
+    shadow.hframes = source.hframes
+    shadow.vframes = source.vframes
+    shadow.frame = source.frame
+    shadow.centered = source.centered
+    shadow.offset = source.offset
+    shadow.modulate = Color(0.0, 0.0, 0.0, float(get_option("shadow_opacity", 0.35)))
     shadow.position = source.position + get_option("shadow_offset", Vector2(0.0, 8.0))
     shadow.scale = source.scale * get_option("shadow_scale", Vector2(1.0, 0.55))
     shadow.z_index = maxi(-4096, source.z_index - 1)
