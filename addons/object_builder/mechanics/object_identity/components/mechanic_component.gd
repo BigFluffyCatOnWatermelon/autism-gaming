@@ -55,6 +55,17 @@ func import_runtime_state(state: Dictionary) -> bool:
     return configure_mechanic(state)
 
 
+func get_shared_enabled_state(fallback: bool) -> bool:
+    var root := get_object_root()
+    return bool(root.get_meta("object_builder_enabled_state", fallback)) if root != null else fallback
+
+
+func set_shared_enabled_state(value: bool) -> void:
+    var root := get_object_root()
+    if root != null:
+        root.set_meta("object_builder_enabled_state", value)
+
+
 func fail(reason: String) -> bool:
     action_failed.emit(reason)
     return false
