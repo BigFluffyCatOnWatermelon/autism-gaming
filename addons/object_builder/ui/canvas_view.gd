@@ -408,6 +408,8 @@ func _clear_preview() -> void:
 	_preview_animation_ranges.clear()
 	_preview_original_sprite_frames.clear()
 	_preview_applied_start.clear()
+	if _animation_range_row != null:
+		_animation_range_row.visible = false
 	_selected_path = NodePath("")
 	if _coordinates_label != null:
 		_coordinates_label.text = "X: — · Y: —"
