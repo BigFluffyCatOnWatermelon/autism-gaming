@@ -215,6 +215,39 @@ func _create_ui() -> void:
 	ui.set_inventory_data(inventory, backpack_slots, int(config.inventory.max_backpack_slots), config.items)
 	ui.set_player_data(player.current_health, float(config.player.max_health), player.current_stamina, float(config.player.max_stamina), arrow_count)
 
+func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint() or not is_finite(delta) or delta <= 0.0:
+		return
+	_update_ai_mechanics(delta)
+
+
+func _update_ai_mechanics(delta: float) -> void:
+	for ai_component in _get_world_components("has_ai"):
+		if ai_component == null or not is_instance_valid(ai_component) or not ai_component.has_method("get_ai_intent"):
+			continue
+		var root := ObjectFactoryScript.get_object_root(ai_component)
+		if root == null or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		var intent_value: Variant = ai_component.call("get_ai_intent", delta, [], [])
+		if not intent_value is Dictionary:
+			continue
+		var intent: Dictionary = intent_value
+		var state := str(intent.get("state", "idle"))
+		if state not in ["patrol", "wander", "chase", "follow", "flee", "assist"]:
+			continue
+		var direction_value: Variant = intent.get("direction", Vector2.ZERO)
+		if not direction_value is Vector2:
+			continue
+		var direction: Vector2 = direction_value
+		if direction.length_squared() <= 0.0001:
+			continue
+		var movement := ObjectFactoryScript.get_component(root, "can_move")
+		if movement == null:
+			movement = ObjectFactoryScript.get_component(root, "can_walk")
+		if movement != null and movement.has_method("move_direction"):
+			movement.call("move_direction", direction, delta)
+
+
 func _process(delta: float) -> void:
 	_handle_hotkeys()
 	_update_attack_cooldowns(delta)
