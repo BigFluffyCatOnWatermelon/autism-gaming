@@ -70,6 +70,7 @@ func _run_tests() -> void:
 	_test_container_mechanics()
 	_test_construction_mechanics()
 	_test_ai_mechanics()
+	_test_animal_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1473,6 +1474,102 @@ func _test_ai_mechanics() -> void:
 	instance.free()
 	target.free()
 	ally.free()
+
+
+func _test_animal_mechanics() -> void:
+	var animal_ids := PackedStringArray([
+		"can_be_tamed",
+		"can_be_fed",
+		"can_breed",
+		"can_produce_resources",
+		"has_habitat",
+		"has_happiness",
+		"has_daily_routine",
+		"can_be_mounted",
+		"can_migrate",
+		"can_be_petted"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for animal_id in animal_ids:
+		var binding := ObjectComponentCatalog.create_binding(animal_id)
+		_expect(binding != null, "animal component is registered: " + animal_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+		match animal_id:
+			"can_be_tamed":
+				binding.component_definition.settings["taming_progress_required"] = 3.0
+				binding.component_definition.settings["taming_progress_per_feed"] = 1.0
+			"can_breed":
+				binding.component_definition.settings["offspring_object_id"] = "foal"
+				binding.component_definition.settings["breeding_cooldown_seconds"] = 0.0
+			"can_produce_resources":
+				binding.component_definition.settings["resource_item_id"] = "milk"
+				binding.component_definition.settings["production_interval"] = 2.0
+			"has_habitat":
+				binding.component_definition.settings["allowed_biomes_csv"] = "plains,forest"
+			"has_daily_routine":
+				binding.component_definition.settings["schedule_json"] = "[{\"start\":6,\"end\":12,\"action\":\"graze\"}]"
+			"can_migrate":
+				binding.component_definition.settings["migration_by_season_json"] = "{\"winter\":\"forest\"}"
+			"can_be_petted":
+				binding.component_definition.settings["pet_cooldown_seconds"] = 0.0
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "animal_mechanics_smoke_test"
+	definition.display_name = "Animal Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the animal package")
+	if instance == null:
+		return
+
+	var animal := ObjectFactory.get_component(instance, "can_be_fed")
+	_expect(animal != null, "animal care component is attached")
+	if animal == null:
+		instance.free()
+		return
+	animal.call("set_pending_owner", "player_1")
+	_expect(bool(animal.call("feed", "hay")), "animal accepts a configured food")
+	_expect(bool(animal.call("feed", "hay")), "animal accepts repeated feeding")
+	_expect(bool(animal.call("feed", "hay")), "feeding advances taming progress")
+	_expect(bool(animal.call("is_tamed")) and str(animal.call("get_owner_id")) == "player_1", "animal becomes tamed by its pending owner")
+	_expect(is_equal_approx(float(animal.call("get_happiness")), 65.0), "feeding improves animal happiness")
+	_expect(bool(animal.call("pet", "player_1")), "animal can be petted")
+	_expect(is_equal_approx(float(animal.call("get_happiness")), 75.0), "petting increases happiness")
+	_expect(bool(animal.call("can_live_in_habitat", "plains", 10.0)), "animal accepts a suitable habitat")
+	_expect(not bool(animal.call("can_live_in_habitat", "desert", 10.0)), "animal rejects an unsupported biome")
+	_expect(str(animal.call("get_routine_action", 8.0)) == "graze", "animal follows its daily schedule")
+	var production: Dictionary = animal.call("advance_resource_production", 4.0)
+	_expect(int(production.get("produced", {}).get("milk", 0)) == 2, "animal produces resources on timed cycles")
+	_expect(str(animal.call("get_migration_destination", "winter")) == "forest", "animal selects its seasonal migration destination")
+
+	var mate_binding := ObjectComponentCatalog.create_binding("can_breed")
+	_expect(mate_binding != null, "animal breeding component can be reused for a mate")
+	if mate_binding == null:
+		instance.free()
+		return
+	var mate_definition := ObjectDefinition.new()
+	mate_definition.object_id = "animal_mate_smoke_test"
+	mate_definition.display_name = "Animal Mate"
+	mate_definition.category = "Other"
+	mate_definition.component_bindings = [mate_binding]
+	var mate_instance := ObjectFactory.instantiate(mate_definition)
+	_expect(mate_instance != null, "factory creates a second animal for breeding")
+	if mate_instance != null:
+		var mate := ObjectFactory.get_component(mate_instance, "can_breed")
+		var breeding: Dictionary = animal.call("breed_with", mate)
+		_expect(bool(breeding.get("ok", false)) and str(breeding.get("offspring_object_id", "")) == "foal", "compatible animals produce offspring data")
+		mate_instance.free()
+
+	var mount_result: Dictionary = animal.call("mount", "player_1")
+	_expect(bool(mount_result.get("ok", false)) and float(mount_result.get("speed", 0.0)) > 0.0, "tamed animal can be mounted")
+	_expect(bool(animal.call("dismount")), "rider can dismount")
+	animal.call("advance_time", 1.0)
+	var saved_state: Dictionary = animal.call("export_runtime_state")
+	_expect(bool(animal.call("import_runtime_state", saved_state)), "animal runtime state can be restored")
+	instance.free()
 
 
 func _test_declarative_scene_structure() -> void:
