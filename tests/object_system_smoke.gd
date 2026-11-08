@@ -71,6 +71,7 @@ func _run_tests() -> void:
 	_test_construction_mechanics()
 	_test_ai_mechanics()
 	_test_animal_mechanics()
+	_test_audio_effects_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1569,6 +1570,68 @@ func _test_animal_mechanics() -> void:
 	animal.call("advance_time", 1.0)
 	var saved_state: Dictionary = animal.call("export_runtime_state")
 	_expect(bool(animal.call("import_runtime_state", saved_state)), "animal runtime state can be restored")
+	instance.free()
+
+
+func _test_audio_effects_mechanics() -> void:
+	var effect_ids := PackedStringArray([
+		"plays_ambient_sound",
+		"plays_interaction_sound",
+		"plays_footsteps",
+		"plays_attack_sound",
+		"plays_damage_sound",
+		"plays_destroy_sound",
+		"emits_particles",
+		"has_trail_effect",
+		"has_light_effect",
+		"supports_screen_shake"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for effect_id in effect_ids:
+		var binding := ObjectComponentCatalog.create_binding(effect_id)
+		_expect(binding != null, "audio/effect component is registered: " + effect_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+		if effect_id == "emits_particles":
+			binding.component_definition.settings["particle_amount"] = 8
+		if effect_id == "has_trail_effect":
+			binding.component_definition.settings["trail_length"] = 4
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "audio_effects_mechanics_smoke_test"
+	definition.display_name = "Audio Effects Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the audio/effects package")
+	if instance == null:
+		return
+
+	var audio := ObjectFactory.get_component(instance, "plays_interaction_sound")
+	var footsteps := ObjectFactory.get_component(instance, "plays_footsteps")
+	var particles := ObjectFactory.get_component(instance, "emits_particles")
+	var trail := ObjectFactory.get_component(instance, "has_trail_effect")
+	var light := ObjectFactory.get_component(instance, "has_light_effect")
+	var shake := ObjectFactory.get_component(instance, "supports_screen_shake")
+	_expect(audio != null and footsteps != null and particles != null and trail != null and light != null and shake != null, "audio/effect components are attached to the target")
+	if audio == null or footsteps == null or particles == null or trail == null or light == null or shake == null:
+		instance.free()
+		return
+
+	_expect(not bool(audio.call("play_event", "interaction")), "audio playback rejects a missing stream path")
+	_expect(not bool(footsteps.call("play_for_surface", "grass")), "footsteps reject an unmapped surface")
+	_expect(bool(particles.call("emit_particles", 8)), "particle mechanic creates an effect node")
+	_expect(instance.get_node_or_null("ObjectBuilderParticles") != null, "particle node is attached to the object")
+	_expect(bool(trail.call("start_trail")), "trail mechanic creates a Line2D")
+	_expect(trail.call("get_effect_nodes").get("trail") != null, "trail node is exposed to the host")
+	_expect(bool(light.call("enable_light")), "light mechanic creates a PointLight2D")
+	_expect(light.call("get_effect_nodes").get("light") != null, "light node is exposed to the host")
+	_expect(bool(shake.call("request_screen_shake", 6.0, 0.2)), "screen shake mechanic emits a camera request")
+	var saved_state: Dictionary = light.call("export_runtime_state")
+	_expect(bool(light.call("import_runtime_state", saved_state)), "visual effect state can be restored")
+	trail.call("stop_trail")
+	light.call("disable_light")
 	instance.free()
 
 
