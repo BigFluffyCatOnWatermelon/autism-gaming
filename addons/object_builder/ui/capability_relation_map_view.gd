@@ -6,6 +6,8 @@ class_name CapabilityRelationMapView
 
 signal focus_requested(capability_id: String)
 
+const CapabilityIconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
+
 const RELATION_TYPE_ORDER := ["requires", "conflicts", "recommends", "extends", "alternative", "related"]
 const RELATION_TYPE_IDS := {
 	"requires": 1,
@@ -642,6 +644,17 @@ func _create_mechanic_node(node_name: String, definition: ObjectCapabilityDefini
 		var type_id := _relation_type_id(str(relation_type))
 		var color: Color = RELATION_TYPE_COLORS[relation_type]
 		node.set_slot(slot_index, true, type_id, color, true, type_id, color)
+	var icon_row := HBoxContainer.new()
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(32, 32)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture = CapabilityIconRegistryScript.get_icon(definition)
+	icon_row.add_child(icon_rect)
+	var icon_spacer := Control.new()
+	icon_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon_row.add_child(icon_spacer)
+	node.add_child(icon_row)
 	var status := Label.new()
 	status.text = "%s  ·  %s" % [CapabilityMapData.get_group_for_category(definition.category_id), "Готово" if definition.is_ready() else "В разработке"]
 	status.add_theme_font_size_override("font_size", 9)
@@ -755,6 +768,17 @@ func _create_local_node(node_name: String, definition: ObjectCapabilityDefinitio
 		var type_id := _relation_type_id(str(relation_type))
 		var color: Color = RELATION_TYPE_COLORS[relation_type]
 		node.set_slot(slot_index, true, type_id, color, true, type_id, color)
+	var icon_row := HBoxContainer.new()
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(32, 32)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture = CapabilityIconRegistryScript.get_icon(definition)
+	icon_row.add_child(icon_rect)
+	var icon_spacer := Control.new()
+	icon_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	icon_row.add_child(icon_spacer)
+	node.add_child(icon_row)
 	var content := VBoxContainer.new()
 	node.add_child(content)
 	var subtitle_label := Label.new()
