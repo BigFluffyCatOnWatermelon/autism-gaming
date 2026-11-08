@@ -138,7 +138,9 @@ func import_runtime_state(state: Dictionary) -> bool:
 	_wander_remaining = remaining
 	if is_instance_valid(_actor):
 		var path_text := str(state.get("target_path", ""))
-		_target = _actor.get_node_or_null(NodePath(path_text)) as Node2D if not path_text.is_empty() else null
+		_target = null
+		if not path_text.is_empty():
+			_target = _actor.get_node_or_null(NodePath(path_text)) as Node2D
 	return true
 
 
@@ -167,7 +169,7 @@ func _find_target(candidates: Array) -> Node2D:
 	for candidate in candidates:
 		if not candidate is Node2D or candidate == _actor:
 			continue
-		var node: Node2D = candidate
+		var node := candidate as Node2D
 		var distance := _actor.global_position.distance_to(node.global_position)
 		if distance <= best_distance:
 			best = node
@@ -192,7 +194,7 @@ func _find_ally_needing_help(allies: Array) -> Node2D:
 	for ally in allies:
 		if not ally is Node2D or ally == _actor:
 			continue
-		var node: Node2D = ally
+		var node := ally as Node2D
 		var needs_help := bool(node.get_meta("needs_assistance", false))
 		if node.has_method("get_health_ratio"):
 			needs_help = needs_help or float(node.call("get_health_ratio")) <= float(_option("can_assist", "ally_health_threshold", 0.35))
