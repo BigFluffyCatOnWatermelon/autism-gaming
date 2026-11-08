@@ -48,6 +48,12 @@ var _snap_button: CheckBox
 var _pivot_button: CheckBox
 var _open_scene_button: Button
 var _animation_button: Button
+var _animation_range_row: HBoxContainer
+var _animation_start_spin: SpinBox
+var _animation_end_spin: SpinBox
+var _preview_animation_ranges: Dictionary = {}
+var _preview_original_sprite_frames: Dictionary = {}
+var _preview_applied_start: Dictionary = {}
 var _has_preview_animations := false
 var _animation_preview_playing := false
 
@@ -115,6 +121,40 @@ func build() -> void:
 	_animation_button.disabled = true
 	_animation_button.toggled.connect(_on_animation_preview_toggled)
 	toolbar.add_child(_animation_button)
+
+	_animation_range_row = HBoxContainer.new()
+	_animation_range_row.add_theme_constant_override("separation", 6)
+	_animation_range_row.visible = false
+	add_child(_animation_range_row)
+	var range_title := Label.new()
+	range_title.text = "Диапазон кадров предпросмотра:"
+	_animation_range_row.add_child(range_title)
+	var start_label := Label.new()
+	start_label.text = "С"
+	_animation_range_row.add_child(start_label)
+	_animation_start_spin = SpinBox.new()
+	_animation_start_spin.min_value = 1
+	_animation_start_spin.max_value = 1
+	_animation_start_spin.step = 1
+	_animation_start_spin.custom_minimum_size = Vector2(76, 0)
+	_animation_start_spin.tooltip_text = "Первый кадр диапазона (нумерация с 1)"
+	_animation_start_spin.value_changed.connect(_on_animation_range_changed)
+	_animation_range_row.add_child(_animation_start_spin)
+	var end_label := Label.new()
+	end_label.text = "По"
+	_animation_range_row.add_child(end_label)
+	_animation_end_spin = SpinBox.new()
+	_animation_end_spin.min_value = 1
+	_animation_end_spin.max_value = 1
+	_animation_end_spin.step = 1
+	_animation_end_spin.custom_minimum_size = Vector2(76, 0)
+	_animation_end_spin.tooltip_text = "Последний кадр диапазона (нумерация с 1)"
+	_animation_end_spin.value_changed.connect(_on_animation_range_changed)
+	_animation_range_row.add_child(_animation_end_spin)
+	var range_hint := Label.new()
+	range_hint.text = "Только для Canvas"
+	range_hint.tooltip_text = "Исходный SpriteFrames и сохранённая сцена не изменяются."
+	_animation_range_row.add_child(range_hint)
 
 	_open_scene_button.pressed.connect(_on_open_scene_pressed)
 	toolbar.add_child(_open_scene_button)
@@ -203,6 +243,7 @@ func _on_context_menu_requested(path: NodePath) -> void:
 	if _context_menu != null:
 		_context_menu.hide()
 	_selected_path = path
+	_refresh_animation_range_controls()
 	if not _editing_enabled or path.is_empty() or _preview_instance == null or not is_instance_valid(_preview_instance):
 		return
 	var selected_node := _preview_instance.get_node_or_null(path) as CanvasItem
@@ -283,7 +324,11 @@ func set_preview_instance(
 	_animation_button.button_pressed = false
 	_animation_button.text = "▶ Анимация"
 	_animation_button.disabled = not _has_preview_animations
+	_preview_animation_ranges.clear()
+	_preview_original_sprite_frames.clear()
+	_preview_applied_start.clear()
 	_editing_enabled = editing_enabled
+	_refresh_animation_range_controls()
 	_interaction_controller.call("set_scene", _preview_instance, editing_enabled, selected_path)
 	_open_scene_button.disabled = not can_open_scene
 	_open_scene_button.visible = not editing_enabled
@@ -317,6 +362,7 @@ func clear_canvas(message: String) -> void:
 
 func set_selected_path(path: NodePath) -> void:
 	_selected_path = path
+	_refresh_animation_range_controls()
 	if _interaction_controller != null:
 		_interaction_controller.call("set_selected_path", path)
 
@@ -358,6 +404,10 @@ func _disable_preview_processing(node: Node) -> void:
 func _clear_preview() -> void:
 	if _context_menu != null:
 		_context_menu.hide()
+	_restore_preview_sprite_frames()
+	_preview_animation_ranges.clear()
+	_preview_original_sprite_frames.clear()
+	_preview_applied_start.clear()
 	_selected_path = NodePath("")
 	if _coordinates_label != null:
 		_coordinates_label.text = "X: — · Y: —"
@@ -387,6 +437,132 @@ func _contains_animated_sprite(node: Node) -> bool:
 	return false
 
 
+func _get_selected_animated_sprite() -> AnimatedSprite2D:
+	if _preview_instance == null or not is_instance_valid(_preview_instance) or _selected_path.is_empty():
+		return null
+	return _preview_instance.get_node_or_null(_selected_path) as AnimatedSprite2D
+
+
+func _refresh_animation_range_controls() -> void:
+	_restore_preview_sprite_frames()
+	var animated := _get_selected_animated_sprite()
+	if animated == null or animated.sprite_frames == null or not animated.sprite_frames.has_animation(animated.animation):
+		if _animation_range_row != null:
+			_animation_range_row.visible = false
+		return
+	var frame_count := animated.sprite_frames.get_frame_count(animated.animation)
+	if frame_count <= 0:
+		_animation_range_row.visible = false
+		return
+	_animation_range_row.visible = true
+	_animation_start_spin.max_value = frame_count
+	_animation_end_spin.max_value = frame_count
+	var range_data: Dictionary = _preview_animation_ranges.get(_selected_path, {})
+	var stored_animation := StringName(str(range_data.get("animation", "")))
+	var start_frame := int(range_data.get("start", 1)) if stored_animation == animated.animation else 1
+	var end_frame := int(range_data.get("end", frame_count)) if stored_animation == animated.animation else frame_count
+	start_frame = clampi(start_frame, 1, frame_count)
+	end_frame = clampi(end_frame, start_frame, frame_count)
+	_animation_start_spin.set_value_no_signal(start_frame)
+	_animation_end_spin.set_value_no_signal(end_frame)
+	if stored_animation != animated.animation:
+		_preview_animation_ranges[_selected_path] = {
+			"animation": animated.animation,
+			"start": start_frame,
+			"end": end_frame
+		}
+	_apply_preview_range_to_selected_sprite()
+
+
+func _on_animation_range_changed(_value: float) -> void:
+	_restore_preview_sprite_frames()
+	var animated := _get_selected_animated_sprite()
+	if animated == null or animated.sprite_frames == null:
+		return
+	var frame_count := animated.sprite_frames.get_frame_count(animated.animation)
+	if frame_count <= 0:
+		return
+	var start_frame := clampi(roundi(_animation_start_spin.value), 1, frame_count)
+	var end_frame := clampi(roundi(_animation_end_spin.value), start_frame, frame_count)
+	_animation_start_spin.set_value_no_signal(start_frame)
+	_animation_end_spin.set_value_no_signal(end_frame)
+	_preview_animation_ranges[_selected_path] = {
+		"animation": animated.animation,
+		"start": start_frame,
+		"end": end_frame
+	}
+	_apply_preview_range_to_selected_sprite()
+
+
+func set_animation_preview_range(start_frame: int, end_frame: int) -> void:
+	if _animation_start_spin == null or _animation_end_spin == null:
+		return
+	_animation_start_spin.value = start_frame
+	_animation_end_spin.value = end_frame
+	_on_animation_range_changed(float(end_frame))
+
+
+func get_animation_preview_range() -> Dictionary:
+	if _animation_start_spin == null or _animation_end_spin == null:
+		return {}
+	return {"start": int(_animation_start_spin.value), "end": int(_animation_end_spin.value)}
+
+
+func _apply_preview_range_to_selected_sprite() -> void:
+	_restore_preview_sprite_frames()
+	var animated := _get_selected_animated_sprite()
+	if animated == null or animated.sprite_frames == null or not animated.sprite_frames.has_animation(animated.animation):
+		return
+	var original_frames := animated.sprite_frames
+	var animation := animated.animation
+	var frame_count := original_frames.get_frame_count(animation)
+	if frame_count <= 0:
+		return
+	var start_frame := clampi(roundi(_animation_start_spin.value), 1, frame_count)
+	var end_frame := clampi(roundi(_animation_end_spin.value), start_frame, frame_count)
+	if start_frame == 1 and end_frame == frame_count:
+		return
+	var original_frame := animated.frame
+	var preview_frames := original_frames.duplicate(true) as SpriteFrames
+	for frame_index in range(preview_frames.get_frame_count(animation) - 1, end_frame - 1, -1):
+		preview_frames.remove_frame(animation, frame_index)
+	for _index in range(start_frame - 1):
+		preview_frames.remove_frame(animation, 0)
+	_preview_original_sprite_frames[_selected_path] = original_frames
+	_preview_applied_start[_selected_path] = start_frame - 1
+	animated.sprite_frames = preview_frames
+	animated.animation = animation
+	animated.frame = clampi(original_frame - (start_frame - 1), 0, end_frame - start_frame)
+	if _animation_preview_playing:
+		animated.play()
+	else:
+		animated.pause()
+
+
+func _restore_preview_sprite_frames() -> void:
+	if _preview_original_sprite_frames.is_empty() or _preview_instance == null or not is_instance_valid(_preview_instance):
+		_preview_original_sprite_frames.clear()
+		_preview_applied_start.clear()
+		return
+	for path in _preview_original_sprite_frames.keys():
+		var animated := _preview_instance.get_node_or_null(path) as AnimatedSprite2D
+		var original_frames := _preview_original_sprite_frames[path] as SpriteFrames
+		if animated == null or original_frames == null:
+			continue
+		var preview_frame := animated.frame
+		var start_offset := int(_preview_applied_start.get(path, 0))
+		var animation := animated.animation
+		animated.pause()
+		animated.sprite_frames = original_frames
+		if original_frames.has_animation(animation):
+			animated.animation = animation
+			animated.frame = clampi(start_offset + preview_frame, 0, maxi(0, original_frames.get_frame_count(animation) - 1))
+		if _animation_preview_playing:
+			animated.play()
+	_preview_original_sprite_frames.clear()
+	_preview_applied_start.clear()
+
+
 func _set_preview_animation_processing(node: Node, enabled: bool) -> void:
 	if node is AnimatedSprite2D:
 		var animated := node as AnimatedSprite2D
@@ -410,6 +586,8 @@ func _on_animation_preview_toggled(enabled: bool) -> void:
 		_animation_button.set_pressed_no_signal(false)
 		return
 	_animation_preview_playing = enabled
+	if enabled:
+		_apply_preview_range_to_selected_sprite()
 	_set_preview_animation_processing(_preview_instance, enabled)
 	_animation_button.text = "⏸ Пауза" if enabled else "▶ Анимация"
 	_status_label.text = (
@@ -495,6 +673,7 @@ func _on_pointer_position_changed(world_position: Vector2) -> void:
 
 func _on_interaction_part_selected(path: NodePath) -> void:
 	_selected_path = path
+	_refresh_animation_range_controls()
 	part_selected.emit(path)
 
 
