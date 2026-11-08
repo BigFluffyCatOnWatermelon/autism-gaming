@@ -66,6 +66,7 @@ func _run_tests() -> void:
 	_test_animation_target_binding()
 	_test_harvesting_mechanics()
 	_test_item_mechanics()
+	_test_inventory_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1069,6 +1070,114 @@ func _test_item_mechanics() -> void:
 		_expect(int(item.call("get_remaining_uses")) == 8, "remaining item uses are tracked")
 		var saved_state: Dictionary = item.call("export_runtime_state")
 		_expect(bool(item.call("import_runtime_state", saved_state)), "item runtime state can be restored")
+	instance.free()
+
+
+func _test_inventory_mechanics() -> void:
+	var inventory_ids := PackedStringArray([
+		"has_inventory",
+		"has_equipment_slots",
+		"supports_hotbar",
+		"supports_item_filters",
+		"supports_item_sorting",
+		"supports_stack_splitting",
+		"supports_quick_transfer",
+		"has_weight_capacity",
+		"supports_item_crafting",
+		"supports_item_binding"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for inventory_id in inventory_ids:
+		var binding := ObjectComponentCatalog.create_binding(inventory_id)
+		_expect(binding != null, "inventory component is registered: " + inventory_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+		match inventory_id:
+			"has_inventory":
+				binding.component_definition.settings["slot_capacity"] = 5
+			"has_weight_capacity":
+				binding.component_definition.settings["max_weight"] = 20.0
+			"supports_item_filters":
+				binding.component_definition.settings["filter_rules_json"] = "{\"blocked_item_ids\":[\"cursed\"],\"required_tags\":[\"material\"]}"
+			"supports_item_crafting":
+				binding.component_definition.settings["recipes_json"] = "{\"plank\":{\"ingredients\":{\"wood\":3},\"output\":{\"item_id\":\"plank\",\"amount\":2,\"max_stack\":10,\"weight\":1.0,\"tags\":[\"material\"]}}}"
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "inventory_mechanics_smoke_test"
+	definition.display_name = "Inventory Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the inventory package")
+	if instance == null:
+		return
+
+	var inventory := ObjectFactory.get_component(instance, "has_inventory")
+	_expect(inventory != null, "inventory entry component is attached")
+	if inventory == null:
+		instance.free()
+		return
+
+	var added := inventory.call("add_item", "wood", 5, 99, 2.0, ["material"], "common")
+	_expect(int(added.get("accepted", 0)) == 5, "inventory accepts items into available slots")
+	var rejected := inventory.call("add_item", "cursed", 1, 1, 1.0, ["material"], "common")
+	_expect(int(rejected.get("accepted", 0)) == 0, "inventory filters blocked item IDs")
+	var weighted := inventory.call("add_item", "stone", 10, 99, 2.0, ["material"], "common")
+	_expect(int(weighted.get("accepted", 0)) == 5, "inventory respects its weight capacity")
+	_expect(is_equal_approx(float(inventory.call("get_inventory_weight")), 20.0), "inventory reports total carried weight")
+
+	var slots: Array = inventory.call("get_inventory")
+	_expect(bool(inventory.call("assign_hotbar", 0, 0)), "inventory assigns an item to the hotbar")
+	_expect(bool(inventory.call("select_hotbar_slot", 0)), "inventory selects a hotbar slot")
+	_expect(str(inventory.call("get_selected_hotbar_item").get("item_id", "")) == "wood", "hotbar resolves the selected inventory item")
+
+	var split_slot := int(inventory.call("split_stack", 0, 2))
+	_expect(split_slot >= 0, "inventory splits a stack into an empty slot")
+	_expect(bool(inventory.call("bind_item", 0, true)), "inventory can bind an item stack")
+	_expect(bool(inventory.call("bind_item", split_slot, true)), "inventory can bind the split stack")
+	_expect(not bool(inventory.call("remove_item", "wood", 1)), "bound items cannot be removed by ordinary operations")
+	_expect(bool(inventory.call("bind_item", 0, false)), "inventory can unbind an item")
+	_expect(bool(inventory.call("remove_item", "wood", 1)), "unbound items can be removed")
+
+	var crafted: Dictionary = inventory.call("craft", "plank")
+	_expect(bool(crafted.get("ok", false)), "inventory crafts an output from configured ingredients")
+	_expect(int(inventory.call("get_item_count", "plank")) == 2, "crafting adds the recipe output")
+	_expect(int(inventory.call("get_item_count", "wood")) == 1, "crafting consumes the required ingredients")
+
+	var helmet_result: Dictionary = inventory.call("add_item", "helmet", 1, 1, 1.0, ["material"], "rare")
+	_expect(int(helmet_result.get("accepted", 0)) == 1, "inventory accepts an equipment item")
+	var helmet_slot := -1
+	for index in range(inventory.call("get_inventory").size()):
+		var entry: Dictionary = inventory.call("get_inventory")[index]
+		if str(entry.get("item_id", "")) == "helmet":
+			helmet_slot = index
+	_expect(helmet_slot >= 0, "equipment item has an inventory slot")
+	if helmet_slot >= 0:
+		_expect(bool(inventory.call("equip_from_slot", helmet_slot, "head")), "inventory equips an item into a configured slot")
+		_expect(bool(inventory.call("unequip_to_inventory", "head")), "inventory returns equipped items to its slots")
+
+	var target_definition := ObjectDefinition.new()
+	target_definition.object_id = "inventory_transfer_target_smoke_test"
+	target_definition.display_name = "Inventory Transfer Target"
+	target_definition.category = "Other"
+	var target_bindings: Array[ObjectComponentBinding] = []
+	for inventory_id in inventory_ids:
+		var binding := ObjectComponentCatalog.create_binding(inventory_id)
+		if binding == null:
+			return
+		target_bindings.append(binding)
+	target_definition.component_bindings = target_bindings
+	var target_instance := ObjectFactory.instantiate(target_definition)
+	_expect(target_instance != null, "factory creates a second inventory for transfer")
+	if target_instance != null:
+		var target_inventory := ObjectFactory.get_component(target_instance, "has_inventory")
+		var transfer: Dictionary = inventory.call("transfer_to", target_inventory, "plank", 1)
+		_expect(bool(transfer.get("ok", false)), "quick transfer moves items between compatible inventories")
+		_expect(int(target_inventory.call("get_item_count", "plank")) == 1, "receiving inventory stores the transferred item")
+		var saved_state: Dictionary = inventory.call("export_runtime_state")
+		_expect(bool(inventory.call("import_runtime_state", saved_state)), "inventory runtime state can be restored")
+		target_instance.free()
 	instance.free()
 
 
