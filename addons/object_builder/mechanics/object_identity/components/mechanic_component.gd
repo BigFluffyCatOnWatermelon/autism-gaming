@@ -57,7 +57,17 @@ func import_runtime_state(state: Dictionary) -> bool:
 
 func get_shared_enabled_state(fallback: bool) -> bool:
     var root := get_object_root()
-    return bool(root.get_meta("object_builder_enabled_state", fallback)) if root != null else fallback
+    if root == null:
+        return fallback
+    if root.has_meta("object_builder_enabled_state"):
+        return bool(root.get_meta("object_builder_enabled_state"))
+    var disable_component := ObjectFactory.get_component(root, "can_be_disabled")
+    if disable_component != null:
+        return bool(disable_component.get_setting("initially_enabled", true))
+    var enable_component := ObjectFactory.get_component(root, "can_be_enabled")
+    if enable_component != null:
+        return bool(enable_component.get_setting("initially_enabled", false))
+    return fallback
 
 
 func set_shared_enabled_state(value: bool) -> void:
