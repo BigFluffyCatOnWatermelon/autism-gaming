@@ -48,6 +48,7 @@ func _run() -> void:
 			"level": "Basic",
 			"group_name": "Здоровье",
 			"unit": "ед.",
+			"has_range": true,
 			"minimum": 1.0,
 			"maximum": 1000.0,
 			"step": 1.0
