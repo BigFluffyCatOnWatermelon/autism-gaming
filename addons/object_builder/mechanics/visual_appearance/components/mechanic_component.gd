@@ -42,14 +42,14 @@ func find_canvas_item(root: Node = null) -> CanvasItem:
     var search_root := root if root != null else get_bound_target()
     if search_root == null or not is_instance_valid(search_root):
         return null
-    if search_root is CanvasItem:
+    if search_root is Sprite2D or search_root is AnimatedSprite2D:
         return search_root as CanvasItem
     for child in search_root.get_children():
         if child is Node:
             var found := find_canvas_item(child as Node)
             if found != null:
                 return found
-    return null
+    return search_root as CanvasItem if search_root is CanvasItem else null
 
 
 func _load_options(defaults: Dictionary) -> void:
