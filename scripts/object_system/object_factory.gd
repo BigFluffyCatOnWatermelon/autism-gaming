@@ -213,8 +213,68 @@ static func _attach_component(
 			)
 			component_node.free()
 			return false
+	if component_node.has_method("bind_animation_player"):
+		var animation_player := _find_animation_player(target_node)
+		if animation_player == null:
+			push_error(
+				"ObjectFactory: для компонента '%s' в узле '%s' не найден AnimationPlayer."
+				% [component_id, str(target_node_path)]
+			)
+			component_node.free()
+			return false
+		var animation_bind_result: Variant = component_node.call(
+			"bind_animation_player",
+			animation_player
+		)
+		if typeof(animation_bind_result) == TYPE_BOOL and not bool(animation_bind_result):
+			push_error("ObjectFactory: компонент '%s' не принял AnimationPlayer." % component_id)
+			component_node.free()
+			return false
+	if component_node.has_method("bind_animated_sprite"):
+		var animated_sprite := _find_animated_sprite(target_node)
+		if animated_sprite == null:
+			push_error(
+				"ObjectFactory: для компонента '%s' в узле '%s' не найден AnimatedSprite2D."
+				% [component_id, str(target_node_path)]
+			)
+			component_node.free()
+			return false
+		var sprite_bind_result: Variant = component_node.call(
+			"bind_animated_sprite",
+			animated_sprite
+		)
+		if typeof(sprite_bind_result) == TYPE_BOOL and not bool(sprite_bind_result):
+			push_error("ObjectFactory: компонент '%s' не принял AnimatedSprite2D." % component_id)
+			component_node.free()
+			return false
 	target_node.add_child(component_node)
 	return true
+
+
+static func _find_animation_player(node: Node) -> AnimationPlayer:
+	if node == null:
+		return null
+	if node is AnimationPlayer:
+		return node as AnimationPlayer
+	for child in node.get_children():
+		if child is Node:
+			var found := _find_animation_player(child as Node)
+			if found != null:
+				return found
+	return null
+
+
+static func _find_animated_sprite(node: Node) -> AnimatedSprite2D:
+	if node == null:
+		return null
+	if node is AnimatedSprite2D:
+		return node as AnimatedSprite2D
+	for child in node.get_children():
+		if child is Node:
+			var found := _find_animated_sprite(child as Node)
+			if found != null:
+				return found
+	return null
 
 
 static func _make_unique_child_name(parent: Node, requested_name: String) -> String:
