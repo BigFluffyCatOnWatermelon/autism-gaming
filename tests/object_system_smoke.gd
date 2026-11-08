@@ -64,6 +64,7 @@ func _run_tests() -> void:
 	await _test_component_node_bindings()
 	_test_mechanic_target_binding()
 	_test_animation_target_binding()
+	_test_visual_appearance_target_binding()
 	_test_harvesting_mechanics()
 	_test_item_mechanics()
 	_test_inventory_mechanics()
@@ -923,6 +924,75 @@ func _test_animation_target_binding() -> void:
 		_expect(
 			bool(idle_component.call("play_idle")),
 			"factory binds the mechanic to the AnimationPlayer under its assigned node"
+		)
+	instance.free()
+
+
+func _test_visual_appearance_target_binding() -> void:
+	var scene_root := Node2D.new()
+	scene_root.name = "VisualAppearanceRoot"
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite"
+	var image := Image.create(4, 4, false, Image.FORMAT_RGBA8)
+	image.fill(Color.WHITE)
+	sprite.texture = ImageTexture.create_from_image(image)
+	scene_root.add_child(sprite)
+	sprite.owner = scene_root
+	var packed_scene := PackedScene.new()
+	_expect(packed_scene.pack(scene_root) == OK, "visual appearance target scene can be packed")
+	scene_root.free()
+
+	var capability_ids := PackedStringArray([
+		"has_sprite",
+		"has_multiple_visual_parts",
+		"supports_directional_sprites",
+		"supports_tint",
+		"supports_opacity",
+		"casts_visual_shadow",
+		"supports_outline",
+		"supports_layer_order",
+		"supports_flip",
+		"supports_palette_swap"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for capability_id in capability_ids:
+		var binding := ObjectComponentCatalog.create_binding(capability_id)
+		_expect(binding != null, "visual appearance component is registered: " + capability_id)
+		if binding == null:
+			return
+		binding.binding_id = "visual:" + capability_id
+		if capability_id == "has_multiple_visual_parts":
+			binding.component_definition.settings["part_paths"] = "Sprite"
+		bindings.append(binding)
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "visual_appearance_target_binding_smoke_test"
+	definition.display_name = "Visual Appearance Target Binding Test"
+	definition.category = "Other"
+	definition.scene = packed_scene
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory instantiates visual appearance mechanics with a sprite target")
+	if instance == null:
+		return
+
+	var target_sprite := instance.get_node_or_null("Sprite") as Sprite2D
+	_expect(target_sprite != null, "visual appearance target sprite is present")
+	if target_sprite != null:
+		_expect(target_sprite.material is ShaderMaterial, "factory applies the outline mechanic to the target sprite")
+		_expect(target_sprite.get_node_or_null("Sprite_Shadow") is Sprite2D, "factory creates a shadow attached to the target sprite")
+		var tint := ObjectFactory.get_component(instance, "supports_tint")
+		_expect(
+			bool(tint.call("configure_mechanic", {"tint_color":"#ff0000"}))
+			and target_sprite.modulate.r > 0.99
+			and target_sprite.modulate.g < 0.01,
+			"bound tint mechanic reapplies changes to its target"
+		)
+		var opacity := ObjectFactory.get_component(instance, "supports_opacity")
+		_expect(
+			bool(opacity.call("configure_mechanic", {"opacity":0.4}))
+			and is_equal_approx(target_sprite.modulate.a, 0.4),
+			"bound opacity mechanic reapplies changes to its target"
 		)
 	instance.free()
 
