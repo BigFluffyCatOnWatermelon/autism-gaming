@@ -584,16 +584,21 @@ func _refresh_installed_capabilities_view() -> void:
 			continue
 		var capability_id := selection.capability_id.strip_edges().to_lower()
 		var definition := ObjectCapabilityCatalog.get_definition(capability_id)
-		if definition == null:
-			continue
-		entries.append({
+		var entry := {
 			"capability_id": capability_id,
-			"display_name": definition.display_name,
-			"description": definition.description,
-			"category_id": definition.category_id,
-			"category_name": definition.category_name,
-			"icon": ObjectBuilderCapabilityIconRegistryScript.get_icon(definition)
-		})
+			"display_name": capability_id,
+			"description": "Определение механики сейчас недоступно в каталоге.",
+			"category_id": "general",
+			"category_name": "Другие",
+			"icon": null
+		}
+		if definition != null:
+			entry["display_name"] = definition.display_name
+			entry["description"] = definition.description
+			entry["category_id"] = definition.category_id
+			entry["category_name"] = definition.category_name
+			entry["icon"] = ObjectBuilderCapabilityIconRegistryScript.get_icon(definition)
+		entries.append(entry)
 	_installed_capabilities_view.call("set_entries", entries)
 
 
