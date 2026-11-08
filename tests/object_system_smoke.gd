@@ -67,6 +67,7 @@ func _run_tests() -> void:
 	_test_harvesting_mechanics()
 	_test_item_mechanics()
 	_test_inventory_mechanics()
+	_test_container_mechanics()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -1180,6 +1181,100 @@ func _test_inventory_mechanics() -> void:
 		_expect(int(target_inventory.call("get_item_count", "plank")) == 1, "receiving inventory stores the transferred item")
 		var saved_state: Dictionary = inventory.call("export_runtime_state")
 		_expect(bool(inventory.call("import_runtime_state", saved_state)), "inventory runtime state can be restored")
+		target_instance.free()
+	instance.free()
+
+
+func _test_container_mechanics() -> void:
+	var container_ids := PackedStringArray([
+		"stores_items",
+		"has_container_capacity",
+		"can_be_locked",
+		"can_be_unlocked",
+		"can_be_looted",
+		"has_shared_storage",
+		"supports_container_links",
+		"has_container_permissions",
+		"supports_auto_sort",
+		"has_container_persistence"
+	])
+	var bindings: Array[ObjectComponentBinding] = []
+	for container_id in container_ids:
+		var binding := ObjectComponentCatalog.create_binding(container_id)
+		_expect(binding != null, "container component is registered: " + container_id)
+		if binding == null:
+			return
+		bindings.append(binding)
+		match container_id:
+			"has_container_capacity":
+				binding.component_definition.settings["max_slots"] = 3
+				binding.component_definition.settings["max_weight"] = 5.0
+			"can_be_locked":
+				binding.component_definition.settings["lock_key_id"] = "brass_key"
+			"can_be_unlocked":
+				binding.component_definition.settings["requires_key"] = true
+				binding.component_definition.settings["unlock_key_id"] = "brass_key"
+			"has_container_permissions":
+				binding.component_definition.settings["owner_id"] = "alice"
+				binding.component_definition.settings["allowed_factions_csv"] = "guild"
+				binding.component_definition.settings["public_access"] = false
+
+	var definition := ObjectDefinition.new()
+	definition.object_id = "container_mechanics_smoke_test"
+	definition.display_name = "Container Mechanics Test"
+	definition.category = "Other"
+	definition.component_bindings = bindings
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory creates an object with the container package")
+	if instance == null:
+		return
+
+	var container := ObjectFactory.get_component(instance, "stores_items")
+	_expect(container != null, "container storage component is attached")
+	if container == null:
+		instance.free()
+		return
+	var wood_result: Dictionary = container.call("add_item", "wood", 3, 99, 1.0, [], "alice", "")
+	_expect(int(wood_result.get("accepted", 0)) == 3, "container accepts items from its owner")
+	var stone_result: Dictionary = container.call("add_item", "stone", 4, 99, 1.0, [], "alice", "")
+	_expect(int(stone_result.get("accepted", 0)) == 2, "container enforces its weight capacity")
+	_expect(int(stone_result.get("remainder", 0)) == 2, "container reports the unaccepted remainder")
+	_expect(is_equal_approx(float(container.call("get_total_weight")), 5.0), "container calculates stored weight")
+	_expect(bool(container.call("can_access", "alice", "")), "container grants access to its owner")
+	_expect(not bool(container.call("can_access", "bob", "neutral")), "container denies unknown actors")
+	_expect(bool(container.call("can_access", "bob", "guild")), "container grants access to an allowed faction")
+
+	_expect(bool(container.call("lock", "brass_key")), "container can be locked with its configured key")
+	_expect(not bool(container.call("can_access", "alice", "")), "locked container blocks even its owner")
+	_expect(not bool(container.call("unlock", "wrong_key")), "container rejects an incorrect unlock key")
+	_expect(bool(container.call("unlock", "brass_key")), "container unlocks with the matching key")
+	_expect(bool(container.call("remove_item", "wood", 1, "alice", "")), "owner can loot items from the container")
+	_expect(bool(container.call("sort_contents", "name")), "container can sort stored contents")
+	_expect(bool(container.call("can_persist")), "container exposes its persistence setting")
+
+	var target_definition := ObjectDefinition.new()
+	target_definition.object_id = "container_link_target_smoke_test"
+	target_definition.display_name = "Container Link Target"
+	target_definition.category = "Other"
+	var target_bindings: Array[ObjectComponentBinding] = []
+	for container_id in container_ids:
+		var binding := ObjectComponentCatalog.create_binding(container_id)
+		if binding == null:
+			return
+		target_bindings.append(binding)
+	target_definition.component_bindings = target_bindings
+	var target_instance := ObjectFactory.instantiate(target_definition)
+	_expect(target_instance != null, "factory creates a second container for shared storage")
+	if target_instance != null:
+		var target_container := ObjectFactory.get_component(target_instance, "stores_items")
+		_expect(bool(container.call("link_container", target_container)), "containers can join a shared storage group")
+		var shared_add: Dictionary = target_container.call("add_item", "ore", 1, 10, 1.0, [], "", "")
+		_expect(int(shared_add.get("accepted", 0)) == 1, "linked container accepts a new shared item")
+		_expect(int(container.call("get_item_count", "ore")) == 1, "linked containers observe the same contents")
+		var saved_state: Dictionary = container.call("export_runtime_state")
+		_expect(bool(container.call("import_runtime_state", saved_state)), "container runtime state can be restored")
+		_expect(bool(container.call("unlink_container")), "container can leave a shared storage group")
+		_expect(int(container.call("get_item_count", "ore")) == 1, "unlinking preserves the local copy of shared contents")
 		target_instance.free()
 	instance.free()
 
