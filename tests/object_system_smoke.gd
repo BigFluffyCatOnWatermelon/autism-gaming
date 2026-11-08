@@ -1245,6 +1245,16 @@ func _test_inventory_mechanics() -> void:
 		_expect(bool(inventory.call("remove_item", "wood", saved_wood_count)), "inventory can be mutated after a runtime snapshot")
 		_expect(bool(ObjectFactory.import_runtime_state(instance, object_snapshot)), "ObjectFactory restores component runtime state")
 		_expect(int(inventory.call("get_item_count", "wood")) == saved_wood_count, "ObjectFactory restores the inventory contents")
+		var before_invalid_import: Dictionary = inventory.call("export_runtime_state")
+		var invalid_inventory_state := before_invalid_import.duplicate(true)
+		var invalid_slots: Array = invalid_inventory_state.get("slots", [])
+		for slot_index in range(invalid_slots.size()):
+			if not invalid_slots[slot_index].is_empty():
+				invalid_slots[slot_index]["amount"] = 0
+				break
+		invalid_inventory_state["slots"] = invalid_slots
+		_expect(not bool(inventory.call("import_runtime_state", invalid_inventory_state)), "inventory rejects malformed saved stack quantities")
+		_expect(inventory.call("export_runtime_state") == before_invalid_import, "rejected inventory state leaves the current contents untouched")
 		var foreign_snapshot := object_snapshot.duplicate(true)
 		foreign_snapshot["object_id"] = "different_object_definition"
 		_expect(not bool(ObjectFactory.import_runtime_state(instance, foreign_snapshot)), "ObjectFactory rejects a snapshot from another object")
