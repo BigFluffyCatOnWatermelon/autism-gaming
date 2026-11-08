@@ -808,7 +808,7 @@ func _matches_filters(definition: ObjectCapabilityDefinition) -> bool:
 			+ " ".join(definition.keywords) + " " + " ".join(definition.synonyms) + " "
 			+ " ".join(definition.example_queries) + " " + CapabilityMapData.get_group_for_category(definition.category_id)
 		).to_lower().replace("ё", "е")
-		query_match = searchable.contains(_search_query)
+		query_match = _matches_searchable_text(searchable, _search_query)
 	if not query_match:
 		return false
 	if not _selected_category_id.is_empty() and definition.category_id != _selected_category_id:
@@ -818,6 +818,41 @@ func _matches_filters(definition: ObjectCapabilityDefinition) -> bool:
 	if _selected_status == "planned" and definition.is_ready():
 		return false
 	return true
+
+
+func _matches_searchable_text(searchable: String, query: String) -> bool:
+	if query.is_empty() or searchable.contains(query):
+		return true
+	var query_tokens := _tokenize_search(query)
+	var searchable_tokens := _tokenize_search(searchable)
+	for query_token in query_tokens:
+		var found := false
+		for searchable_token in searchable_tokens:
+			if _tokens_share_search_stem(query_token, searchable_token):
+				found = true
+				break
+		if not found:
+			return false
+	return not query_tokens.is_empty()
+
+
+func _tokenize_search(value: String) -> PackedStringArray:
+	var normalized := value.to_lower().replace("ё", "е")
+	for punctuation in [",", ".", "!", "?", ":", ";", "(", ")", "[", "]", "-", "_", "\n", "\t"]:
+		normalized = normalized.replace(punctuation, " ")
+	var tokens := PackedStringArray()
+	for raw_token in normalized.split(" ", false):
+		var token := raw_token.strip_edges()
+		if token.length() >= 2 and not tokens.has(token):
+			tokens.append(token)
+	return tokens
+
+
+func _tokens_share_search_stem(first: String, second: String) -> bool:
+	if first == second:
+		return true
+	var shared_length := mini(4, mini(first.length(), second.length()))
+	return shared_length >= 4 and first.left(shared_length) == second.left(shared_length)
 
 
 func _on_search_changed(value: String) -> void:
