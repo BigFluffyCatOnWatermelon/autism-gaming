@@ -101,7 +101,7 @@ func _rebuild_category_options() -> void:
 
 func _rebuild_list() -> void:
 	for child in _list.get_children():
-		child.queue_free()
+		child.free()
 
 	var query := _search.text.strip_edges().to_lower()
 	var category_id := str(_category.get_item_metadata(_category.selected)) if _category.selected >= 0 else ""
