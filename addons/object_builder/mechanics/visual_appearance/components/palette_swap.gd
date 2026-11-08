@@ -1,6 +1,8 @@
 @tool
 extends "res://addons/object_builder/mechanics/visual_appearance/components/mechanic_component.gd"
 
+var _source_texture: Texture2D
+
 
 func _on_configured() -> void:
     _load_options({"palette_json": "{}"})
@@ -10,9 +12,15 @@ func _apply_bound_target() -> bool:
     var sprite := find_sprite()
     if sprite == null:
         return fail("Для смены палитры нужен Sprite2D в целевой ветке.")
+    if _source_texture == null:
+        _source_texture = sprite.texture
     var palette: Variant = JSON.parse_string(str(get_option("palette_json", "{}")))
     if not palette is Dictionary or palette.is_empty():
+        sprite.texture = _source_texture
         return true
+    # Always rebuild from the original texture so repeated setting changes do
+    # not accumulate palette replacements on already modified pixels.
+    sprite.texture = _source_texture
     return apply_to(sprite)
 
 
