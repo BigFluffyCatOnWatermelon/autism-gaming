@@ -144,6 +144,68 @@ func _run() -> void:
 	_expect(apply_count == 1, "apply button emits a single apply request")
 	_expect(close_count == 1, "cancel button emits a close request")
 
+	var rich_descriptors: Array[Dictionary] = [
+		{
+			"component_id": "visual",
+			"setting_key": "tint_color",
+			"display_name": "Цвет оттенка",
+			"value_type": "String",
+			"default_value": "#ffffff",
+			"editor_hint": "color",
+			"level": "Basic",
+			"group_name": "Цвет"
+		},
+		{
+			"component_id": "visual",
+			"setting_key": "palette_json",
+			"display_name": "Карта палитры",
+			"value_type": "String",
+			"default_value": "{}",
+			"editor_hint": "json",
+			"level": "Advanced",
+			"group_name": "Палитра"
+		},
+		{
+			"component_id": "visual",
+			"setting_key": "texture_path",
+			"display_name": "Текстура",
+			"value_type": "String",
+			"default_value": "",
+			"editor_hint": "texture",
+			"level": "Basic",
+			"group_name": "Изображение"
+		}
+	]
+	selection.set_component_setting("visual", "tint_color", "#ffffff")
+	selection.set_component_setting("visual", "palette_json", "{}")
+	selection.set_component_setting("visual", "texture_path", "")
+	view.call("configure", capability, selection, rich_descriptors)
+	var color_control := view.call("get_setting_control", "visual", "tint_color") as ColorPickerButton
+	var json_control := view.call("get_setting_control", "visual", "palette_json") as TextEdit
+	var texture_control := view.call("get_setting_control", "visual", "texture_path") as LineEdit
+	_expect(color_control != null and color_control.color == Color.WHITE, "color hint uses a native color picker while retaining string serialization")
+	_expect(json_control != null and json_control.text == "{}", "JSON hint uses a multiline editor")
+	_expect(texture_control != null, "texture paths retain a string value for the runtime component")
+	var texture_entry: Dictionary = view.call("get_setting_entry", "visual", "texture_path")
+	var texture_label_row := (texture_entry.get("row") as VBoxContainer).get_child(0) as HBoxContainer
+	_expect(texture_label_row.get_child_count() == 3, "texture path setting includes reset and resource browse actions")
+	json_control.text = "{"
+	view.call("_update_dirty_state")
+	_expect((view.get("_apply_button") as Button).disabled, "invalid JSON cannot be applied")
+	_expect((view.get("_change_summary") as Label).text.contains("JSON"), "invalid JSON reports the exact validation problem")
+	json_control.text = "{\"grass\":\"#00ff00\"}"
+	color_control.color = Color.RED
+	texture_control.text = "res://icon.svg"
+	view.call("_update_dirty_state")
+	_expect(not (view.get("_apply_button") as Button).disabled, "valid JSON, color and resource path edits can be applied")
+	var rich_values: Array[Dictionary] = view.call("get_changed_values")
+	_expect(rich_values.size() == 3, "rich editors return normalized String values to the existing component model")
+	var color_value := ""
+	for rich_entry in rich_values:
+		if str(rich_entry.get("setting_key", "")) == "tint_color":
+			color_value = str(rich_entry.get("value", ""))
+	_expect(color_value == "#ff0000", "color picker converts its value back to the component's expected HTML color string")
+
 	view.call("configure", capability, selection, [])
 	_expect(view.call("get_capability_id") == "has_health", "empty settings state retains the capability context")
 	_expect(view.call("get_setting_control_count") == 0, "empty schema clears the previous settings controls")
