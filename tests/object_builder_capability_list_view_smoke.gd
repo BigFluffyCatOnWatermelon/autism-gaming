@@ -275,7 +275,7 @@ func _run() -> void:
 		selection_events.back() == "true:can_dig",
 		"choosing a recommendation adds it to the global selection session instead of the object immediately"
 	)
-	view.call("set_recommended_entries", [])
+	view.call("set_recommended_entries", no_recommendations)
 	_expect(not recommendation_section.visible, "recommendation section hides when there are no compatible suggestions")
 
 	var preset_summaries: Array[Dictionary] = [{
