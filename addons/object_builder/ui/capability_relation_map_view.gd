@@ -387,12 +387,16 @@ func _rebuild_view() -> void:
 			_hint.text = "В центре — выбранная механика. Вокруг — прямые входящие и исходящие связи, включая связи с другими тематическими областями. Наведи курсор на узел, чтобы прочитать объяснение."
 			_build_local_from_catalog()
 		"dependencies":
-			var dependency_domain: Dictionary = _domains.get(_current_domain_id, {})
-			_breadcrumb.text = "Карта механик  /  Зависимости  /  " + str(dependency_domain.get("name", "Все области"))
 			_hint.text = "Показаны только обязательные зависимости и конфликты. Рекомендации и тематические связи не выдаются за обязательные требования."
-			_build_domain_toolbar()
-			_selected_relation_type = "requires"
-			_build_domain_graph()
+			if _current_domain_id.is_empty():
+				_breadcrumb.text = "Карта механик  /  Зависимости между областями"
+				_build_overview()
+			else:
+				var dependency_domain: Dictionary = _domains.get(_current_domain_id, {})
+				_breadcrumb.text = "Карта механик  /  Зависимости  /  " + str(dependency_domain.get("name", "Область"))
+				_build_domain_toolbar()
+				_selected_relation_type = "requires"
+				_build_domain_graph()
 
 
 func _add_toolbar_button(caption: String, callback: Callable, active: bool = false) -> void:
@@ -453,6 +457,9 @@ func _build_overview() -> void:
 		_graph.add_child(graph_node)
 	var aggregate: Dictionary = {}
 	for edge in _edges:
+		var relation_type := str(edge["type"])
+		if _current_mode == "dependencies" and relation_type != "requires" and relation_type != "conflicts":
+			continue
 		var source := str(edge["source_id"])
 		var target := str(edge["target_id"])
 		var source_def := _definitions.get(source) as ObjectCapabilityDefinition
@@ -880,10 +887,8 @@ func _show_local_focus() -> void:
 
 
 func _show_dependencies() -> void:
-	if _current_domain_id.is_empty():
-		_current_domain_id = "combat"
 	_current_mode = "dependencies"
-	_selected_relation_type = "requires"
+	_selected_relation_type = ""
 	_rebuild_view()
 
 
