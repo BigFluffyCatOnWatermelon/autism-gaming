@@ -137,6 +137,30 @@ func open_installed(host_control: Control, capability_ids: Array[String]) -> voi
 	_rebuild_view()
 
 
+func update_installed(capability_ids: Array[String]) -> void:
+	if _window == null or not is_instance_valid(_window) or _current_mode != "installed":
+		return
+	_installed_capability_ids.clear()
+	var seen: Dictionary = {}
+	for raw_id in capability_ids:
+		var capability_id := str(raw_id).strip_edges().to_lower()
+		if capability_id.is_empty() or seen.has(capability_id) or not _definitions.has(capability_id):
+			continue
+		seen[capability_id] = true
+		_installed_capability_ids.append(capability_id)
+	_installed_capability_ids.sort()
+	if not _selected_category_id.is_empty():
+		var category_still_exists := false
+		for capability_id in _installed_capability_ids:
+			var definition := _definitions.get(capability_id) as ObjectCapabilityDefinition
+			if definition != null and definition.category_id == _selected_category_id:
+				category_still_exists = true
+				break
+		if not category_still_exists:
+			_selected_category_id = ""
+	_rebuild_view()
+
+
 func _open_window(host_control: Control, title_text: String) -> void:
 	_close_window()
 	_window = Window.new()
