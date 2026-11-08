@@ -689,7 +689,7 @@ func _open_resource_picker(index: int) -> void:
 		_resource_dialog.title = "Выбрать текстуру"
 		_resource_dialog.add_filter("*.png, *.jpg, *.jpeg, *.webp, *.svg, *.bmp ; Изображения")
 	_resource_dialog.current_dir = "res://"
-	if DisplayServer.get_name() != "headless":
+	if Engine.is_editor_hint():
 		_resource_dialog.popup_centered(Vector2i(760, 520))
 
 
@@ -731,7 +731,7 @@ func _on_close_pressed() -> void:
 	if get_changed_values().is_empty():
 		close_requested.emit()
 		return
-	if DisplayServer.get_name() == "headless":
+	if not Engine.is_editor_hint():
 		close_requested.emit()
 		return
 	if _discard_dialog == null or not is_instance_valid(_discard_dialog):
