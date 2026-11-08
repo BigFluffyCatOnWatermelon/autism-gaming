@@ -744,6 +744,84 @@ func get_inventory() -> Array[Dictionary]:
 	return result
 
 
+func deposit_item_to_container(
+	container_root: Node,
+	item_id: String,
+	amount: int,
+	actor_id: String = "player",
+	faction_id: String = ""
+) -> Dictionary:
+	if container_root == null or not is_instance_valid(container_root) or amount <= 0:
+		return {"ok": false, "accepted": 0, "remainder": maxi(0, amount)}
+	var container := ObjectFactoryScript.get_component(container_root, "stores_items")
+	if container == null or not container.has_method("add_item"):
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var available := mini(amount, _get_item_count(item_id))
+	if available <= 0:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var item_data: Dictionary = config.items.get(item_id, {})
+	var max_stack := maxi(1, int(item_data.get("max_stack", config.inventory.max_stack)))
+	var item_weight := maxf(0.0, float(item_data.get("weight", 0.0)))
+	var item_tags: Array = item_data.get("tags", []) if item_data.get("tags", []) is Array else []
+	var previous_state: Dictionary = container.call("export_runtime_state") if container.has_method("export_runtime_state") else {}
+	var result_value: Variant = container.call(
+		"add_item",
+		item_id,
+		available,
+		max_stack,
+		item_weight,
+		item_tags,
+		actor_id,
+		faction_id
+	)
+	if not result_value is Dictionary:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var result: Dictionary = result_value
+	var accepted := clampi(int(result.get("accepted", 0)), 0, available)
+	if accepted <= 0:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	if not _consume_item(item_id, accepted):
+		if not previous_state.is_empty() and container.has_method("import_runtime_state"):
+			container.call("import_runtime_state", previous_state)
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	return {"ok": accepted == amount, "accepted": accepted, "remainder": amount - accepted}
+
+
+func withdraw_item_from_container(
+	container_root: Node,
+	item_id: String,
+	amount: int,
+	actor_id: String = "player",
+	faction_id: String = ""
+) -> Dictionary:
+	if container_root == null or not is_instance_valid(container_root) or amount <= 0:
+		return {"ok": false, "accepted": 0, "remainder": maxi(0, amount)}
+	var container := ObjectFactoryScript.get_component(container_root, "stores_items")
+	if container == null or not container.has_method("get_contents") or not container.has_method("remove_item"):
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var contents_value: Variant = container.call("get_contents", actor_id, faction_id)
+	if not contents_value is Array:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var available := 0
+	for entry in contents_value:
+		if entry is Dictionary and str(entry.get("item_id", "")) == item_id:
+			available += maxi(0, int(entry.get("amount", 0)))
+	available = mini(available, amount)
+	if available <= 0:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	var inventory_before := inventory.duplicate(true)
+	var remaining := _inventory_add(item_id, available)
+	var accepted := available - remaining
+	if accepted <= 0:
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	if not bool(container.call("remove_item", item_id, accepted, actor_id, faction_id)):
+		inventory = inventory_before
+		inventory_dirty = true
+		_update_resource_counts()
+		return {"ok": false, "accepted": 0, "remainder": amount}
+	return {"ok": accepted == amount, "accepted": accepted, "remainder": amount - accepted}
+
+
 func place_constructed_object(
 	definition: ObjectDefinition,
 	position: Vector2,
