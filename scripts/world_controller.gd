@@ -811,7 +811,14 @@ func _attack(secondary: bool) -> void:
 				continue
 			_damage_target(target, attack)
 			hit_count += 1
-	hit_count += _apply_harvesting_hits(weapon_id, attack_origin, aim_direction, attack_arc, attack)
+	hit_count += _apply_harvesting_hits(
+		weapon_id,
+		attack_origin,
+		aim_direction,
+		attack_arc,
+		attack,
+		_get_world_season(_world_time_day)
+	)
 	if hit_count == 0:
 		_log("Удар: %s" % weapon_id)
 
@@ -820,7 +827,8 @@ func _apply_harvesting_hits(
 	attack_origin: Vector2,
 	aim_direction: Vector2,
 	arc_degrees: float,
-	attack: Dictionary
+	attack: Dictionary,
+	season: String
 ) -> int:
 	var candidates := _get_world_components("can_be_harvested")
 	candidates.append_array(_get_world_components("can_be_mined"))
@@ -857,7 +865,7 @@ func _apply_harvesting_hits(
 			"advance_harvest",
 			work_step,
 			weapon_id,
-			""
+			season
 		)
 		if not result_value is Dictionary:
 			continue
