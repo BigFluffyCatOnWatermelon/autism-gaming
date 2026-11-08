@@ -238,8 +238,8 @@ func _run() -> void:
 			var scale_start_world: Vector2 = interaction.call("_screen_to_world", scale_handle)
 			var scale_end_world := preview_sprite.global_position + (scale_start_world - preview_sprite.global_position) * 1.5
 			var scale_end_viewport := viewport.get_canvas_transform() * scale_end_world
-			var scale_end_screen := scale_end_viewport * surface.size / Vector2(viewport.size)
-			interaction.call("_update_drag", scale_end_screen)
+			var single_scale_end_screen := scale_end_viewport * surface.size / Vector2(viewport.size)
+			interaction.call("_update_drag", single_scale_end_screen)
 			interaction.call("_finish_drag")
 			_expect(is_equal_approx(preview_sprite.scale.x, 1.5) and is_equal_approx(preview_sprite.scale.y, 1.5), "scale handle changes both sprite axes uniformly")
 			_expect(committed_transforms.size() == 2 and committed_transforms[1].get("property") == "scale", "scale drag commits one undoable scale change")
