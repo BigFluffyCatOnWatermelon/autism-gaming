@@ -148,8 +148,8 @@ func _run() -> void:
 		_expect(group_handles.has("scale") and group_handles.has("rotate") and group_handles.has("pivot"), "multi-selection exposes shared scale, rotate and pivot handles")
 		var group_pivot_world: Vector2 = interaction.call("_screen_to_world", group_handles["pivot"])
 		var scale_handle_world: Vector2 = interaction.call("_screen_to_world", group_handles["scale"])
-		var scale_end_world := group_pivot_world + (scale_handle_world - group_pivot_world) * 1.5
-		var scale_end_screen := (viewport.get_canvas_transform() * scale_end_world) * surface.size / Vector2(viewport.size)
+		var group_scale_end_world := group_pivot_world + (scale_handle_world - group_pivot_world) * 1.5
+		var scale_end_screen := (viewport.get_canvas_transform() * group_scale_end_world) * surface.size / Vector2(viewport.size)
 		interaction.call("_begin_selection", group_handles["scale"])
 		interaction.call("_update_drag", scale_end_screen)
 		interaction.call("_finish_drag")
