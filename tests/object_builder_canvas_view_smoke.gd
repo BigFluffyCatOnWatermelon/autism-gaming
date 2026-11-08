@@ -106,11 +106,10 @@ func _run() -> void:
 		canvas.call("set_locked_paths", no_locked_paths)
 		if context_menu != null:
 			context_menu.hide()
-		var drag_world_position: Vector2 = interaction.call("_screen_to_world", screen_position)
-		print("CANVAS_DEBUG before: screen=", screen_position, "world=", drag_world_position, "sprite=", preview_sprite.global_position, "hit=", CanvasGeometry.find_visual_at(preview_root, drag_world_position), "ctrl=", Input.is_key_pressed(KEY_CTRL), "shift=", Input.is_key_pressed(KEY_SHIFT), "pivot_mode=", interaction.get("_pivot_edit_mode"), "guides=", interaction.get("_guide_vertical"), "/", interaction.get("_guide_horizontal"), "guide_hit=", interaction.call("_get_guide_at_screen_position", screen_position), "selected_before=", interaction.call("_get_selected_node"))
 		interaction.call("_begin_selection", screen_position)
-		print("CANVAS_DEBUG after begin: selected=", interaction.get("_selected_paths"), "drag_nodes=", (interaction.get("_drag_group_nodes") as Array).size(), "drag_node=", interaction.get("_drag_node"))
 		_expect(not selected_paths.is_empty() and selected_paths[-1] == NodePath("Sprite"), "clicking the sprite emits its scene-relative path")
+		var selected_after_begin: Array[NodePath] = interaction.call("get_selected_paths")
+		_expect(selected_after_begin == [NodePath("Sprite")], "clicking an already-selected part preserves the selection")
 		var world_delta := Vector2(10.0, 0.0)
 		var viewport_delta := (viewport.get_canvas_transform() * world_delta) - (viewport.get_canvas_transform() * Vector2.ZERO)
 		var screen_delta := viewport_delta * surface.size / Vector2(viewport.size)

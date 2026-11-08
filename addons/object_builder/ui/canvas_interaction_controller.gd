@@ -142,8 +142,9 @@ func get_selected_paths() -> Array[NodePath]:
 
 
 func _set_selected_paths(paths: Array[NodePath], active_path: NodePath = NodePath("")) -> void:
+	var requested_paths: Array[NodePath] = paths.duplicate()
 	_selected_paths.clear()
-	for path in paths:
+	for path in requested_paths:
 		if not path.is_empty() and not _selected_paths.has(path):
 			_selected_paths.append(path)
 	_selected_path = active_path if not active_path.is_empty() else (
