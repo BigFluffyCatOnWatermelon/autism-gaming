@@ -1755,6 +1755,8 @@ func _try_interact_with_nearest() -> void:
 			nearest = interactable
 			nearest_distance = distance
 	if nearest == null:
+		if _try_interact_with_nearest_animal(actor_position):
+			return
 		_log("Рядом нет доступных объектов для взаимодействия.")
 		return
 	if nearest.try_interact(player):
@@ -1765,6 +1767,62 @@ func _try_interact_with_nearest() -> void:
 			_log("Взаимодействие: %s." % source.name)
 	else:
 		_log("Не удалось взаимодействовать с объектом.")
+
+
+func _try_interact_with_nearest_animal(actor_position: Vector2) -> bool:
+	var candidates := _get_world_components("can_be_fed")
+	candidates.append_array(_get_world_components("can_be_petted"))
+	var nearest_root: Node
+	var nearest_animal: ObjectComponent
+	var nearest_distance := 72.0
+	var visited: Dictionary = {}
+	for component in candidates:
+		if component == null or not is_instance_valid(component):
+			continue
+		var root := ObjectFactoryScript.get_object_root(component)
+		if root == null or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		var root_id := root.get_instance_id()
+		if visited.has(root_id):
+			continue
+		visited[root_id] = true
+		var animal_driver := ObjectFactoryScript.get_component(root, "can_be_fed")
+		if animal_driver == null:
+			animal_driver = ObjectFactoryScript.get_component(root, "can_be_petted")
+		if animal_driver == null:
+			continue
+		var distance := actor_position.distance_to(_get_component_world_position(animal_driver, root))
+		if distance <= nearest_distance:
+			nearest_root = root
+			nearest_animal = animal_driver
+			nearest_distance = distance
+	if nearest_root == null or nearest_animal == null:
+		return false
+
+	var selected_item := _get_selected_item_id()
+	var feeding_component := ObjectFactoryScript.get_component(nearest_root, "can_be_fed")
+	if feeding_component != null and not selected_item.is_empty():
+		var accepted_foods := str(feeding_component.get_setting("accepted_foods_csv", "")).to_lower().split(",", false)
+		if accepted_foods.has(selected_item.to_lower()) and _get_item_count(selected_item) > 0:
+			var inventory_before := inventory.duplicate(true)
+			if _consume_item(selected_item, 1):
+				if bool(nearest_animal.call("feed", selected_item)):
+					_trigger_object_mechanic(nearest_root, "plays_interaction_sound", "play_event", ["feed"])
+					_log("Животное накормлено: %s." % nearest_root.name)
+					return true
+				inventory = inventory_before
+				inventory_dirty = true
+				_update_resource_counts()
+
+	var pet_component := ObjectFactoryScript.get_component(nearest_root, "can_be_petted")
+	if pet_component != null and pet_component.has_method("pet"):
+		if bool(pet_component.call("pet", "player")):
+			_trigger_object_mechanic(nearest_root, "plays_interaction_sound", "play_event", ["pet"])
+			_log("Вы погладили: %s." % nearest_root.name)
+		else:
+			_log("Животное пока не готово к повторному контакту.")
+		return true
+	return false
 
 
 func _get_world_components(component_id: String) -> Array[ObjectComponent]:
