@@ -6,6 +6,50 @@ signal action_completed(result: Variant)
 signal action_failed(reason: String)
 
 var _runtime_options: Dictionary = {}
+var _bound_target: Node
+
+
+func bind_target(target: Node) -> bool:
+    if target == null or not is_instance_valid(target):
+        return fail("Не передан действительный целевой узел внешнего вида.")
+    _bound_target = target
+    return _apply_bound_target()
+
+
+func get_bound_target() -> Node:
+    return _bound_target if is_instance_valid(_bound_target) else null
+
+
+func _apply_bound_target() -> bool:
+    return true
+
+
+func find_sprite(root: Node = null) -> Sprite2D:
+    var search_root := root if root != null else get_bound_target()
+    if search_root == null or not is_instance_valid(search_root):
+        return null
+    if search_root is Sprite2D:
+        return search_root as Sprite2D
+    for child in search_root.get_children():
+        if child is Node:
+            var found := find_sprite(child as Node)
+            if found != null:
+                return found
+    return null
+
+
+func find_canvas_item(root: Node = null) -> CanvasItem:
+    var search_root := root if root != null else get_bound_target()
+    if search_root == null or not is_instance_valid(search_root):
+        return null
+    if search_root is CanvasItem:
+        return search_root as CanvasItem
+    for child in search_root.get_children():
+        if child is Node:
+            var found := find_canvas_item(child as Node)
+            if found != null:
+                return found
+    return null
 
 
 func _load_options(defaults: Dictionary) -> void:
@@ -27,6 +71,8 @@ func configure_mechanic(values: Dictionary) -> bool:
     for key in values:
         _runtime_options[str(key)] = values[key]
         state_changed.emit(str(key), values[key])
+    if get_bound_target() != null and not _apply_bound_target():
+        return false
     action_completed.emit(export_runtime_state())
     return true
 
