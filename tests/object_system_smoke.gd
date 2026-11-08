@@ -1715,6 +1715,8 @@ func _test_world_time_mechanics() -> void:
 	var trigger: Dictionary = time_component.call("receive_signal", "on_open", {"source":"test"})
 	_expect(bool(trigger.get("matched", false)) and str(trigger.get("action", {}).get("action", "")) == "play_sound", "signal triggers resolve configured actions")
 	_expect(time_component.call("get_scheduled_events", 1, 8.0).size() == 1, "event schedule matches the configured day and hour")
+	_expect(time_component.call("update_world_time", 1, 8.0).size() == 1, "world-time dispatches a scheduled event once")
+	_expect(time_component.call("update_world_time", 1, 8.0).is_empty(), "world-time does not dispatch the same event twice in one day")
 	var saved_state: Dictionary = time_component.call("export_runtime_state")
 	_expect(bool(time_component.call("import_runtime_state", saved_state)), "world-time runtime state can be restored")
 	instance.free()
