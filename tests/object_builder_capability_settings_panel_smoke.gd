@@ -103,11 +103,17 @@ func _run() -> void:
 	var health_label := health_label_row.get_child(0) as Label
 	_expect(health_label.text == "Максимальное здоровье · ед.", "parameter unit is displayed beside its label")
 	var reset_button := health_entry.get("reset_button") as Button
+	var range_slider := health_entry.get("range_slider") as HSlider
+	_expect(range_slider != null and is_equal_approx(range_slider.value, 50.0), "bounded numeric settings show a slider beside the exact value field")
+	range_slider.value = 75.0
+	_expect(is_equal_approx(health_spin.value, 75.0), "range slider updates the exact numeric field")
+	health_spin.value = 50.0
+	_expect(is_equal_approx(range_slider.value, 50.0), "exact numeric field updates the range slider")
 	reset_button.pressed.emit()
 	_expect(is_equal_approx(health_spin.value, 100.0), "per-setting reset restores its declared default value")
 	_expect(not (view.get("_apply_button") as Button).disabled, "changing a Vector2 value enables Apply")
 	_expect(not (view.get("_reset_all_button") as Button).disabled, "reset-all becomes available while edits are pending")
-	_expect((view.call("get_changed_values") as Array).size() == 1, "pending payload contains only values changed from the initial state")
+	_expect((view.call("get_changed_values") as Array).size() == 2, "pending payload contains only values changed from the initial state")
 
 	view.call("_on_level_filter_selected", 1)
 	_expect((view.call("get_visible_setting_keys") as PackedStringArray).size() == 3, "intermediate filter reveals basic and advanced settings without expert fields")
