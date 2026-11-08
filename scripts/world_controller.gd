@@ -764,7 +764,11 @@ func place_constructed_object(
 	if not bool(placement.call("can_be_placed", position, blockers, terrain_id)):
 		instance.free()
 		return null
-	var snapped_position: Vector2 = placement.call("snap_position", position)
+	var snapped_value: Variant = placement.call("snap_position", position)
+	if not snapped_value is Vector2:
+		instance.free()
+		return null
+	var snapped_position: Vector2 = snapped_value
 	var materials := ObjectFactoryScript.get_component(instance, "requires_build_materials")
 	if materials != null and materials.has_method("consume_build_materials"):
 		if not bool(materials.call("consume_build_materials", self)):
@@ -784,7 +788,8 @@ func upgrade_constructed_object(object_root: Node) -> Dictionary:
 	var construction := ObjectFactoryScript.get_component(object_root, "can_be_upgraded")
 	if construction == null or not construction.has_method("upgrade"):
 		return {"ok": false, "error": "У объекта не включены улучшения."}
-	return construction.call("upgrade", self)
+	var result_value: Variant = construction.call("upgrade", self)
+	return result_value if result_value is Dictionary else {"ok": false, "error": "Механика улучшения вернула некорректный результат."}
 
 
 func dismantle_constructed_object(object_root: Node) -> Dictionary:
