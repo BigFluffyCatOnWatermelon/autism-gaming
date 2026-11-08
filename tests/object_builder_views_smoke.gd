@@ -140,7 +140,8 @@ func _run() -> void:
 	_expect(configure_events == ["has_health"], "configure action targets the selected installed capability")
 	_expect(focus_events == ["has_health"], "catalog action targets the selected installed capability")
 	(installed_view.get("_search") as LineEdit).text_changed.emit("")
-	installed_view.call("set_entries", [], "Сначала выбери объект.")
+	var no_installed_entries: Array[Dictionary] = []
+	installed_view.call("set_entries", no_installed_entries, "Сначала выбери объект.")
 	_expect((installed_view.get("_empty_label") as Label).visible, "empty installed mechanics state is visible")
 	_expect(str((installed_view.get("_empty_label") as Label).text) == "Сначала выбери объект.", "empty state explains why no mechanics are listed")
 
