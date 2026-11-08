@@ -67,6 +67,7 @@ var _selected_category_id := ""
 var _selected_relation_type := ""
 var _selected_status := "all"
 var _installed_capability_ids: Array[String] = []
+var _installed_refresh_queued := false
 
 
 func open(host_control: Control, focused_definition: ObjectCapabilityDefinition, entries: Array[Dictionary]) -> void:
@@ -158,6 +159,20 @@ func update_installed(capability_ids: Array[String]) -> void:
 				break
 		if not category_still_exists:
 			_selected_category_id = ""
+	_queue_installed_refresh()
+
+
+func _queue_installed_refresh() -> void:
+	if _installed_refresh_queued:
+		return
+	_installed_refresh_queued = true
+	call_deferred("_apply_installed_refresh")
+
+
+func _apply_installed_refresh() -> void:
+	_installed_refresh_queued = false
+	if _window == null or not is_instance_valid(_window) or _current_mode != "installed":
+		return
 	_rebuild_view()
 
 
