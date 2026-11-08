@@ -10,7 +10,7 @@ static func domain_position(index: int) -> Vector2:
 
 static func mechanic_position(index: int, group_index: int) -> Vector2:
 	const GROUP_SPACING := 560.0
-	const NODE_SPACING := 168.0
+	const NODE_SPACING := 235.0
 	const COLUMNS := 3
 	return Vector2(
 		float(group_index) * GROUP_SPACING + float(index % COLUMNS) * 205.0,
@@ -21,5 +21,5 @@ static func local_position(index: int, count: int) -> Vector2:
 	if index == 0:
 		return Vector2(360, 250)
 	var angle := TAU * float(index - 1) / float(maxi(1, count - 1)) - PI * 0.5
-	var radius := 310.0 if count <= 8 else 390.0
+	var radius := 310.0 if count <= 8 else 450.0
 	return Vector2(360, 250) + Vector2(cos(angle), sin(angle)) * radius
