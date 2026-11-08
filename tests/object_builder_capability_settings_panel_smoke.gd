@@ -241,7 +241,8 @@ func _run() -> void:
 	_expect(color_value == "#ff0000", "color picker converts its value back to the component's expected HTML color string")
 	print("SETTINGS_SMOKE: rich editors complete")
 
-	view.call("configure", capability, selection, [])
+	var no_descriptors: Array[Dictionary] = []
+	view.call("configure", capability, selection, no_descriptors)
 	_expect(view.call("get_capability_id") == "has_health", "empty settings state retains the capability context")
 	_expect(view.call("get_setting_control_count") == 0, "empty schema clears the previous settings controls")
 	_expect((view.get("_apply_button") as Button).disabled, "apply is disabled when there are no editable settings")
