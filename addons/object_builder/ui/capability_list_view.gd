@@ -633,7 +633,7 @@ func set_entries(
 	total_count: int,
 	ready_count: int
 ) -> void:
-	_source_entries = entries.duplicate(true)
+	_source_entries = entries.duplicate()
 	_total_count = total_count
 	_ready_count = ready_count
 	_apply_view_filters()
@@ -653,7 +653,8 @@ func _apply_view_filters() -> void:
 		var selected := bool(entry.get("selected_in_catalog", false))
 		var ready := capability.is_ready()
 		var matches := true
-		match status_option.selected if status_option != null else 0:
+		var status_filter := status_option.selected if status_option != null else 0
+		match status_filter:
 			1:
 				matches = ready and not installed
 			2:
