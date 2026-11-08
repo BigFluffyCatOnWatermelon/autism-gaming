@@ -15,6 +15,20 @@ var _wander_target := Vector2.ZERO
 var _wander_remaining := 0.0
 
 
+func get_option(key: String, fallback: Variant = null) -> Variant:
+	return get_setting(key, fallback)
+
+
+func configure_mechanic(values: Dictionary) -> bool:
+	for raw_key in values:
+		var key := str(raw_key)
+		if not settings.has(key) or typeof(values[raw_key]) != typeof(settings[key]):
+			return _fail("Неизвестная настройка или неверный тип: " + key)
+	for raw_key in values:
+		settings[str(raw_key)] = values[raw_key]
+	return true
+
+
 func bind_target(target: Node2D) -> bool:
 	if target == null or not is_instance_valid(target):
 		return _fail("Для AI нужен действительный Node2D.")
@@ -52,7 +66,9 @@ func get_ai_intent(delta: float, candidates: Array = [], allies: Array = []) -> 
 		if _has_mechanic("can_chase") and distance <= float(_option("can_chase", "detection_radius", 160.0)):
 			return _intent("chase", _target.global_position, _target)
 		if _has_mechanic("can_follow_target"):
-			return _intent("follow", _target.global_position, _target)
+			var follow_distance := maxf(0.0, float(_option("can_follow_target", "follow_distance", 48.0)))
+			var follow_position := _actor.global_position if distance <= follow_distance else _target.global_position
+			return _intent("follow", follow_position, _target)
 
 	var ally := _find_ally_needing_help(allies)
 	if ally != null and _has_mechanic("can_assist"):
@@ -141,7 +157,7 @@ func _intent(state_id: String, target_position: Vector2, target_node: Node2D) ->
 
 
 func _find_target(candidates: Array) -> Node2D:
-	if not _has_mechanic("can_chase") and not _has_mechanic("can_follow_target") and not _has_mechanic("can_guard_area"):
+	if not _has_mechanic("can_chase") and not _has_mechanic("can_follow_target") and not _has_mechanic("can_guard_area") and not _has_mechanic("can_flee"):
 		return null
 	if not is_instance_valid(_actor):
 		return null
