@@ -1,3 +1,10 @@
+## Адаптер инвентаря игрока для Object Builder — 2026-11-08
+
+- `WorldController` предоставляет единый контракт `get_item_count/add_item/remove_item/get_inventory` поверх существующего массива инвентаря игрока.
+- Реализованы двусторонние transfer API между инвентарём игрока и объектными `InventoryMechanicComponent` с учётом частичного принятия и возврата остатка.
+- Игровой массив остаётся единственным источником истины; не создаётся параллельная копия player inventory.
+- UI экипировки/hotbar, crafting, filters и weight limits ещё не переведены на новые механики.
+
 ## Интеграция контейнеров с инвентарём игрока — 2026-11-08
 
 - Добавлены `deposit_item_to_container` и `withdraw_item_from_container` в `WorldController`.
