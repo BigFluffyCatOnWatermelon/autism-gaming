@@ -1728,10 +1728,10 @@ func _test_world_time_mechanics() -> void:
 	_expect(bool(time_component.call("import_runtime_state", saved_state)), "world-time runtime state can be restored")
 	time_component.settings["delay_seconds"] = 0.01
 	time_component.call("start_timed_activation")
-	add_child(instance)
+	root.add_child(instance)
 	await create_timer(0.05).timeout
 	_expect(bool(instance.get_meta("object_active", false)), "world-time activation timer advances automatically while the object is in the scene tree")
-	remove_child(instance)
+	root.remove_child(instance)
 	instance.free()
 
 
@@ -1833,10 +1833,10 @@ func _test_world_generation_mechanics() -> void:
 	var growth_component := ObjectFactory.get_component(instance, "can_grow")
 	growth_component.settings["growth_duration"] = 0.01
 	_expect(bool(growth_component.call("import_runtime_state", {"growth_elapsed":0.0,"growth_stage":0})), "world-generation growth can be reset before automatic tick test")
-	add_child(instance)
+	root.add_child(instance)
 	await create_timer(0.05).timeout
 	_expect(int(growth_component.call("get_growth_stage")) == 2, "world-generation growth advances automatically while the object is in the scene tree")
-	remove_child(instance)
+	root.remove_child(instance)
 	instance.free()
 
 
