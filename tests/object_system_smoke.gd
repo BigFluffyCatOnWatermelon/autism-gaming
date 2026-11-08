@@ -1680,7 +1680,7 @@ func _test_world_time_mechanics() -> void:
 			"supports_signal_triggers":
 				binding.component_definition.settings["event_rules_json"] = "{\"on_open\":{\"action\":\"play_sound\",\"value\":\"door\"}}"
 			"supports_event_schedule":
-				binding.component_definition.settings["events_json"] = "[{\"day\":1,\"hour\":8,\"event_id\":\"market\"}]"
+				binding.component_definition.settings["events_json"] = "[{\"day\":1,\"hour\":8,\"event_id\":\"market\"},{\"day\":-1,\"hour\":8,\"event_id\":\"daily\"}]"
 
 	var definition := ObjectDefinition.new()
 	definition.object_id = "world_time_mechanics_smoke_test"
@@ -1714,9 +1714,10 @@ func _test_world_time_mechanics() -> void:
 	_expect(int(output.get("output", {}).get("ore", 0)) == 6, "periodic output accounts for multiple elapsed cycles")
 	var trigger: Dictionary = time_component.call("receive_signal", "on_open", {"source":"test"})
 	_expect(bool(trigger.get("matched", false)) and str(trigger.get("action", {}).get("action", "")) == "play_sound", "signal triggers resolve configured actions")
-	_expect(time_component.call("get_scheduled_events", 1, 8.0).size() == 1, "event schedule matches the configured day and hour")
-	_expect(time_component.call("update_world_time", 1, 8.0).size() == 1, "world-time dispatches a scheduled event once")
+	_expect(time_component.call("get_scheduled_events", 1, 8.0).size() == 2, "event schedule matches the configured day and hour")
+	_expect(time_component.call("update_world_time", 1, 8.0).size() == 2, "world-time dispatches a scheduled event once")
 	_expect(time_component.call("update_world_time", 1, 8.0).is_empty(), "world-time does not dispatch the same event twice in one day")
+	_expect(time_component.call("update_world_time", 2, 8.0).size() == 1, "daily scheduled events become eligible on the next day")
 	var saved_state: Dictionary = time_component.call("export_runtime_state")
 	_expect(bool(time_component.call("import_runtime_state", saved_state)), "world-time runtime state can be restored")
 	instance.free()
