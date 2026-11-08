@@ -33,6 +33,9 @@ var _page_label: Label
 var _selection_bar: PanelContainer
 var _related_section: PanelContainer
 var _related_title: Label
+var _focused_description: Label
+var _focused_meta: Label
+var _focused_requirements: Label
 var _related_container: HFlowContainer
 var _related_map_button: Button
 var _related_entries: Array[Dictionary] = []
@@ -196,9 +199,24 @@ func _build_related_section() -> void:
 	_related_section.add_child(content)
 
 	_related_title = Label.new()
-	_related_title.text = "СВЯЗАННЫЕ ВОЗМОЖНОСТИ"
+	_related_title.text = "ПОДРОБНОСТИ МЕХАНИКИ"
 	_related_title.add_theme_font_size_override("font_size", 10)
 	content.add_child(_related_title)
+
+	_focused_description = Label.new()
+	_focused_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_focused_description.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.add_child(_focused_description)
+
+	_focused_meta = Label.new()
+	_focused_meta.add_theme_font_size_override("font_size", 10)
+	_focused_meta.modulate = Color(0.72, 0.76, 0.82)
+	content.add_child(_focused_meta)
+
+	_focused_requirements = Label.new()
+	_focused_requirements.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_focused_requirements.add_theme_font_size_override("font_size", 10)
+	content.add_child(_focused_requirements)
 
 	_related_container = HFlowContainer.new()
 	_related_container.add_theme_constant_override("h_separation", 5)
@@ -525,15 +543,47 @@ func set_related_entries(
 	_related_entries = entries.duplicate()
 	_related_focused_definition = focused_definition
 	UIFactory.clear_children(_related_container)
-	_related_section.visible = not entries.is_empty()
-	_related_map_button.visible = not entries.is_empty() and focused_definition != null
+	var has_focus := focused_definition != null
+	_related_section.visible = has_focus or not entries.is_empty()
+	_related_map_button.visible = not entries.is_empty() and has_focus
+	_focused_description.visible = has_focus
+	_focused_meta.visible = has_focus
+	_focused_requirements.visible = has_focus
+	if has_focus:
+		_related_title.text = "ПОДРОБНОСТИ: " + focused_name.to_upper()
+		_focused_description.text = focused_definition.description
+		_focused_meta.text = "%s · %s · %d связей" % [
+			"Готова к использованию" if focused_definition.is_ready() else "В разработке",
+			focused_definition.category_name,
+			focused_definition.relations.size()
+		]
+		var requirement_names := _get_capability_names(focused_definition.required_capability_ids)
+		var conflict_names := _get_capability_names(focused_definition.incompatible_capability_ids)
+		var relation_requirements := PackedStringArray()
+		var relation_conflicts := PackedStringArray()
+		for relation in focused_definition.relations:
+			var relation_type := str(relation.get("type", "")).to_lower()
+			var target_id := str(relation.get("target_id", ""))
+			if relation_type == "requires" and not relation_requirements.has(target_id):
+				relation_requirements.append(target_id)
+			elif relation_type == "conflicts" and not relation_conflicts.has(target_id):
+				relation_conflicts.append(target_id)
+		for name in _get_capability_names(relation_requirements):
+			if not requirement_names.has(name):
+				requirement_names.append(name)
+		for name in _get_capability_names(relation_conflicts):
+			if not conflict_names.has(name):
+				conflict_names.append(name)
+		var requirement_text := "Требуется: " + ", ".join(requirement_names) if not requirement_names.is_empty() else ""
+		var conflict_text := "Конфликтует: " + ", ".join(conflict_names) if not conflict_names.is_empty() else ""
+		_focused_requirements.text = "\n".join(PackedStringArray([requirement_text, conflict_text]).filter(func(value: String) -> bool: return not value.is_empty()))
+	else:
+		_related_title.text = "СВЯЗАННЫЕ ВОЗМОЖНОСТИ"
+		_focused_description.text = ""
+		_focused_meta.text = ""
+		_focused_requirements.text = ""
 	if entries.is_empty():
 		return
-	_related_title.text = (
-		"СВЯЗАНО С: " + focused_name.to_upper()
-		if not focused_name.is_empty()
-		else "СВЯЗАННЫЕ ВОЗМОЖНОСТИ"
-	)
 	for entry in entries:
 		var capability := entry.get("definition") as ObjectCapabilityDefinition
 		if capability == null:
@@ -554,6 +604,15 @@ func set_related_entries(
 		relation_button.tooltip_text = tooltip
 		relation_button.pressed.connect(_on_focus_requested.bind(capability.capability_id))
 		_related_container.add_child(relation_button)
+
+
+func _get_capability_names(capability_ids: PackedStringArray) -> PackedStringArray:
+	var result := PackedStringArray()
+	for capability_id in capability_ids:
+		var definition := ObjectCapabilityCatalog.get_definition_reference(str(capability_id))
+		if definition != null and not result.has(definition.display_name):
+			result.append(definition.display_name)
+	return result
 
 
 func get_related_button_count() -> int:
@@ -820,13 +879,13 @@ func _create_capability_card(
 	card_header.add_child(state_label)
 
 	var relations_button := Button.new()
-	relations_button.text = "Связи"
+	relations_button.text = "Подробнее"
 	var has_relations := bool(entry.get("has_relations", false))
-	relations_button.disabled = not has_relations
+	relations_button.disabled = false
 	relations_button.tooltip_text = (
-		"Показать обязательные, рекомендуемые и другие связанные возможности"
+		"Открыть описание, готовность, зависимости и связи механики"
 		if has_relations
-		else "Для этой возможности связи пока не заполнены."
+		else "Открыть описание и сведения о механике."
 	)
 	relations_button.pressed.connect(_on_focus_requested.bind(capability.capability_id))
 	card_header.add_child(relations_button)
