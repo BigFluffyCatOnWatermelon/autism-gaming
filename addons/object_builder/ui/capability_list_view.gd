@@ -1025,7 +1025,9 @@ func _on_preset_select_all_pressed() -> void:
 
 
 func _on_preset_management_action_pressed(action: String) -> void:
-	if action == "create" or not _active_preset_id.is_empty():
+	if action == "create":
+		preset_action_requested.emit(action, "")
+	elif not _active_preset_id.is_empty():
 		preset_action_requested.emit(action, _active_preset_id)
 
 
