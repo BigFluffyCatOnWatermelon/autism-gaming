@@ -425,25 +425,84 @@ func export_runtime_state() -> Dictionary:
 
 
 func import_runtime_state(state: Dictionary) -> bool:
-	if not state.get("slots", []) is Array:
+	var slots_value: Variant = state.get("slots", null)
+	var equipment_value: Variant = state.get("equipment", {})
+	var hotbar_value: Variant = state.get("hotbar", {})
+	if not slots_value is Array:
 		return _fail("Состояние инвентаря не содержит массив слотов.")
+	if not equipment_value is Dictionary or not hotbar_value is Dictionary:
+		return _fail("Экипировка и панель быстрого доступа должны быть словарями.")
 	var capacity := maxi(1, int(_option("has_inventory", "slot_capacity", 24)))
-	var slots: Array = state.get("slots", []).duplicate(true)
+	var slots: Array = slots_value.duplicate(true)
 	if slots.size() > capacity:
 		return _fail("Сохранённый инвентарь превышает вместимость.")
 	while slots.size() < capacity:
 		slots.append({})
 	for item in slots:
-		if not item is Dictionary:
+		if not item is Dictionary or not _is_valid_runtime_item(item):
 			return _fail("Слот инвентаря содержит некорректные данные.")
+
+	var equipment: Dictionary = equipment_value.duplicate(true)
+	for slot_id in equipment:
+		if str(slot_id).strip_edges().is_empty():
+			return _fail("Экипировка содержит пустой ID слота.")
+		var item: Variant = equipment[slot_id]
+		if not item is Dictionary or item.is_empty() or not _is_valid_runtime_item(item):
+			return _fail("Экипировка содержит некорректный предмет.")
+
+	var hotbar: Dictionary = {}
+	var hotbar_capacity := maxi(1, int(_option("supports_hotbar", "hotbar_slots", 9)))
+	for raw_hotbar_id in hotbar_value:
+		var hotbar_id := str(raw_hotbar_id)
+		if not hotbar_id.is_valid_int():
+			continue
+		var hotbar_index := int(hotbar_id)
+		var inventory_slot := int(hotbar_value[raw_hotbar_id])
+		if (
+			hotbar_index < 0
+			or hotbar_index >= hotbar_capacity
+			or inventory_slot < 0
+			or inventory_slot >= slots.size()
+			or (slots[inventory_slot] as Dictionary).is_empty()
+		):
+			continue
+		hotbar[str(hotbar_index)] = inventory_slot
+	var selected_hotbar := int(state.get("selected_hotbar", -1))
+	if selected_hotbar < 0 or not hotbar.has(str(selected_hotbar)):
+		selected_hotbar = -1
+
 	var normalized := {
 		"slots": slots,
-		"equipment": state.get("equipment", {}).duplicate(true),
-		"hotbar": state.get("hotbar", {}).duplicate(true),
-		"selected_hotbar": int(state.get("selected_hotbar", -1))
+		"equipment": equipment,
+		"hotbar": hotbar,
+		"selected_hotbar": selected_hotbar
 	}
+	if _has_mechanic("has_weight_capacity"):
+		var maximum_weight := maxf(0.0, float(_option("has_weight_capacity", "max_weight", 100.0)))
+		var total_weight := _weight_of_slots(slots) + _equipment_weight(normalized)
+		if total_weight > maximum_weight + 0.0001:
+			return _fail("Сохранённый инвентарь превышает допустимый вес.")
 	_save_state(normalized)
 	return true
+
+
+func _is_valid_runtime_item(item: Dictionary) -> bool:
+	if item.is_empty():
+		return true
+	var item_id := str(item.get("item_id", "")).strip_edges()
+	var amount := int(item.get("amount", 0))
+	var maximum_stack := int(item.get("max_stack", 1))
+	var weight := float(item.get("weight", 0.0))
+	var tags: Variant = item.get("tags", [])
+	return (
+		not item_id.is_empty()
+		and amount > 0
+		and maximum_stack > 0
+		and amount <= maximum_stack
+		and is_finite(weight)
+		and weight >= 0.0
+		and tags is Array
+	)
 
 
 func _get_state() -> Dictionary:
