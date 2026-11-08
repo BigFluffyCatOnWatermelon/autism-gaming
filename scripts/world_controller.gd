@@ -44,6 +44,8 @@ var debug_selected_inventory_slot := -1
 var debug_object_selection_enabled := true
 var debug_refresh_timer := 0.0
 var _pickup_scan_timer := 0.0
+var _mechanic_signal_scan_timer := 0.0
+var _camera_shake_strength_override := -1.0
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
@@ -219,6 +221,11 @@ func _process(delta: float) -> void:
 	_handle_held_combat()
 	_update_projectiles(delta)
 	_update_drops()
+	_update_animal_mechanics(delta)
+	_mechanic_signal_scan_timer -= delta
+	if _mechanic_signal_scan_timer <= 0.0:
+		_bind_world_mechanic_signals()
+		_mechanic_signal_scan_timer = 0.5
 	_pickup_scan_timer -= delta
 	if _pickup_scan_timer <= 0.0:
 		_update_component_pickups()
@@ -760,8 +767,70 @@ func _attack(secondary: bool) -> void:
 				continue
 			_damage_target(target, attack)
 			hit_count += 1
+	hit_count += _apply_harvesting_hits(weapon_id, attack_origin, aim_direction, attack_arc, attack)
 	if hit_count == 0:
 		_log("Удар: %s" % weapon_id)
+
+func _apply_harvesting_hits(
+	weapon_id: String,
+	attack_origin: Vector2,
+	aim_direction: Vector2,
+	arc_degrees: float,
+	attack: Dictionary
+) -> int:
+	var candidates := _get_world_components("can_be_harvested")
+	candidates.append_array(_get_world_components("can_be_mined"))
+	var visited_roots: Dictionary = {}
+	var completed_count := 0
+	var reach := maxf(0.0, float(attack.get("reach", 70.0)))
+	var hit_angle := aim_direction.angle()
+	var work_step := maxf(0.05, float(attack.get("cooldown", 0.4)))
+	for candidate in candidates:
+		if candidate == null or not is_instance_valid(candidate):
+			continue
+		var root := ObjectFactoryScript.get_object_root(candidate)
+		if root == null or root == player or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		var root_id := root.get_instance_id()
+		if visited_roots.has(root_id):
+			continue
+		visited_roots[root_id] = true
+		var harvesting := ObjectFactoryScript.get_component(root, "can_be_harvested")
+		if harvesting == null:
+			harvesting = ObjectFactoryScript.get_component(root, "can_be_mined")
+		if harvesting == null or not harvesting.has_method("advance_harvest"):
+			continue
+		var target_position := _get_component_world_position(harvesting, root)
+		if not CombatSystemScript.point_in_arc(
+			attack_origin,
+			target_position,
+			hit_angle,
+			reach + 16.0,
+			arc_degrees
+		):
+			continue
+		var result: Dictionary = harvesting.call(
+			"advance_harvest",
+			work_step,
+			weapon_id,
+			""
+		)
+		if not bool(result.get("ok", false)) or not bool(result.get("completed", false)):
+			continue
+		var yielded: Variant = result.get("resources", {})
+		if yielded is Dictionary:
+			for raw_item_id in yielded:
+				var item_id := str(raw_item_id).strip_edges()
+				var amount := maxi(0, int(yielded[raw_item_id]))
+				if not item_id.is_empty() and amount > 0:
+					_deliver_mechanic_output(item_id, amount, root)
+			_log("Добыча завершена: %s · качество %s." % [
+				str(root.name),
+				str(result.get("quality", "normal"))
+			])
+			completed_count += 1
+	return completed_count
+
 
 func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_degrees: float, effect_width: float) -> void:
 	if player == null:
@@ -999,6 +1068,108 @@ func _update_component_pickups() -> void:
 			pickup.try_pickup(self)
 
 
+func _update_animal_mechanics(delta: float) -> void:
+	if delta <= 0.0 or not is_finite(delta):
+		return
+	var candidates := _get_world_components("can_be_fed")
+	candidates.append_array(_get_world_components("can_be_tamed"))
+	candidates.append_array(_get_world_components("can_produce_resources"))
+	var visited_roots: Dictionary = {}
+	for component in candidates:
+		if component == null or not is_instance_valid(component):
+			continue
+		var root := ObjectFactoryScript.get_object_root(component)
+		if root == null or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		var root_id := root.get_instance_id()
+		if visited_roots.has(root_id):
+			continue
+		visited_roots[root_id] = true
+		var animal_driver := ObjectFactoryScript.get_component(root, "can_be_fed")
+		if animal_driver == null:
+			animal_driver = component
+		if animal_driver.has_method("advance_time"):
+			animal_driver.call("advance_time", delta)
+		if ObjectFactoryScript.get_component(root, "can_produce_resources") != null:
+			if animal_driver.has_method("advance_resource_production"):
+				animal_driver.call("advance_resource_production", delta)
+
+
+func _bind_world_mechanic_signals() -> void:
+	for component in _get_world_components("can_produce_resources"):
+		_connect_mechanic_signal(component, "resource_produced", "_on_mechanic_resource_produced")
+	for component in _get_world_components("has_periodic_output"):
+		_connect_mechanic_signal(component, "periodic_output", "_on_mechanic_resource_produced")
+	for component in _get_world_components("supports_screen_shake"):
+		_connect_mechanic_signal(component, "screen_shake_requested", "_on_mechanic_screen_shake_requested")
+
+
+func _connect_mechanic_signal(
+	component: ObjectComponent,
+	signal_name: String,
+	callback_method: String
+) -> void:
+	if component == null or not is_instance_valid(component) or not component.has_signal(signal_name):
+		return
+	var callback := Callable(self, callback_method).bind(component)
+	if not component.is_connected(signal_name, callback):
+		component.connect(signal_name, callback)
+
+
+func _on_mechanic_resource_produced(
+	item_id: String,
+	amount: int,
+	source_component: ObjectComponent
+) -> void:
+	if source_component == null or not is_instance_valid(source_component):
+		return
+	_deliver_mechanic_output(item_id, amount, ObjectFactoryScript.get_object_root(source_component))
+
+
+func _deliver_mechanic_output(item_id: String, amount: int, source: Node) -> void:
+	var normalized_id := item_id.strip_edges()
+	var remaining := maxi(0, amount)
+	if normalized_id.is_empty() or remaining <= 0:
+		return
+	var accepted_before := remaining
+	remaining = _inventory_add(normalized_id, remaining)
+	var accepted := accepted_before - remaining
+	if accepted > 0:
+		_log("Получено от механики: %s ×%d." % [
+			str(config.items.get(normalized_id, {}).get("label", normalized_id)),
+			accepted
+		])
+	if remaining <= 0:
+		return
+	var definition := config.item_definitions.get(normalized_id) as ItemDefinition
+	if definition == null or world_objects == null:
+		_log("Не удалось разместить остаток ресурса '%s' в мире." % normalized_id)
+		return
+	var drop := ResourceDropScript.new() as ResourceDrop
+	drop.name = "MechanicDrop_%s_%03d" % [normalized_id, drops.size() + 1]
+	drop.configure(normalized_id, remaining, Vector2.ZERO, config.drops, definition)
+	world_objects.add_child(drop)
+	var spawn_position := Vector2.ZERO
+	if source is Node2D:
+		spawn_position = (source as Node2D).global_position
+	drop.global_position = spawn_position
+	drops.append(drop)
+	_log("На земле осталось: %s ×%d." % [normalized_id, remaining])
+
+
+func _on_mechanic_screen_shake_requested(
+	intensity: float,
+	duration: float,
+	_source_component: ObjectComponent
+) -> void:
+	if not screen_shake_enabled or not is_finite(intensity) or not is_finite(duration):
+		return
+	if intensity <= 0.0 or duration <= 0.0:
+		return
+	_camera_shake_strength_override = maxf(_camera_shake_strength_override, intensity)
+	camera_shake_timer = maxf(camera_shake_timer, duration)
+
+
 func _try_interact_with_nearest() -> void:
 	if player == null:
 		return
@@ -1099,10 +1270,11 @@ func _update_camera(delta: float) -> void:
 	camera.zoom = camera.zoom.lerp(Vector2.ONE * target_zoom, amount)
 	if camera_shake_timer > 0.0:
 		camera_shake_timer -= delta
-		var strength := float(config.camera.shake_strength)
+		var strength := _camera_shake_strength_override if _camera_shake_strength_override >= 0.0 else float(config.camera.shake_strength)
 		camera.offset = Vector2(rng.randf_range(-strength, strength), rng.randf_range(-strength, strength))
 	else:
 		camera.offset = Vector2.ZERO
+		_camera_shake_strength_override = -1.0
 
 func _camera_shake() -> void:
 	if screen_shake_enabled:
