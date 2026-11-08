@@ -251,10 +251,10 @@ func _run() -> void:
 			_expect(str(interaction.get("_drag_mode")) == "rotate", "rotation handle starts a rotation drag")
 			var rotate_start_world: Vector2 = interaction.call("_screen_to_world", rotate_handle)
 			var rotate_vector := rotate_start_world - preview_sprite.global_position
-			var rotate_end_world := preview_sprite.global_position + rotate_vector.rotated(PI / 4.0)
-			var rotate_end_viewport := viewport.get_canvas_transform() * rotate_end_world
-			var rotate_end_screen := rotate_end_viewport * surface.size / Vector2(viewport.size)
-			interaction.call("_update_drag", rotate_end_screen)
+			var single_rotate_end_world := preview_sprite.global_position + rotate_vector.rotated(PI / 4.0)
+			var rotate_end_viewport := viewport.get_canvas_transform() * single_rotate_end_world
+			var single_rotate_end_screen := rotate_end_viewport * surface.size / Vector2(viewport.size)
+			interaction.call("_update_drag", single_rotate_end_screen)
 			interaction.call("_finish_drag")
 			_expect(is_equal_approx(preview_sprite.rotation_degrees, 45.0), "rotation handle rotates the selected part around its origin")
 			_expect(committed_transforms.size() == 3 and committed_transforms[2].get("property") == "rotation_degrees", "rotation drag commits one undoable rotation change")
