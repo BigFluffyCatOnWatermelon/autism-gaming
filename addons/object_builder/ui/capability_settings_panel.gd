@@ -455,7 +455,7 @@ func _update_filters() -> void:
 		if header != null:
 			header.visible = group_has_visible
 		if body != null:
-			body.visible = group_has_visible and not bool(header.button_pressed) if header != null else group_has_visible
+			body.visible = group_has_visible and bool(header.button_pressed) if header != null else group_has_visible
 
 	_empty_state.visible = visible_count == 0
 	if _setting_controls.is_empty():
