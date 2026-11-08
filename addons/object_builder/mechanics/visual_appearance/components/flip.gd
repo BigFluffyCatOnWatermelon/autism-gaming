@@ -6,6 +6,13 @@ func _on_configured() -> void:
     _load_options({"flip_horizontal": false, "flip_vertical": false})
 
 
+func _apply_bound_target() -> bool:
+    var sprite := find_sprite()
+    if sprite == null:
+        return fail("Для отражения нужен Sprite2D в целевой ветке.")
+    return apply_to(sprite)
+
+
 func apply_to(sprite: Sprite2D, horizontal: Variant = null, vertical: Variant = null) -> bool:
     if not is_instance_valid(sprite):
         return fail("Не передан действительный Sprite2D.")
