@@ -763,7 +763,8 @@ func deposit_item_to_container(
 	var max_stack := maxi(1, int(item_data.get("max_stack", config.inventory.max_stack)))
 	var item_weight := maxf(0.0, float(item_data.get("weight", 0.0)))
 	var item_tags: Array = item_data.get("tags", []) if item_data.get("tags", []) is Array else []
-	var previous_state: Dictionary = container.call("export_runtime_state") if container.has_method("export_runtime_state") else {}
+	var previous_state_value: Variant = container.call("export_runtime_state") if container.has_method("export_runtime_state") else {}
+	var previous_state: Dictionary = previous_state_value if previous_state_value is Dictionary else {}
 	var result_value: Variant = container.call(
 		"add_item",
 		item_id,
