@@ -55,10 +55,10 @@ func can_access(actor_id: String = "", faction_id: String = "") -> bool:
 	return _split_csv(str(_option("has_container_permissions", "allowed_factions_csv", ""))).has(faction_id.strip_edges().to_lower())
 
 
-func add_item(item_id: String, amount: int = 1, max_stack: int = 1, weight: float = 0.0, tags: Array = []) -> Dictionary:
+func add_item(item_id: String, amount: int = 1, max_stack: int = 1, weight: float = 0.0, tags: Array = [], actor_id: String = "", faction_id: String = "") -> Dictionary:
 	if not _has_mechanic("stores_items"):
 		return _failed_result("Контейнер не поддерживает хранение предметов.")
-	if not can_access():
+	if not can_access(actor_id, faction_id):
 		return _failed_result("Контейнер закрыт или недоступен.")
 	if item_id.strip_edges().is_empty() or amount <= 0 or max_stack <= 0 or not is_finite(weight) or weight < 0.0:
 		return _failed_result("Некорректные данные предмета.")
@@ -111,20 +111,20 @@ func remove_item(item_id: String, amount: int = 1, actor_id: String = "", factio
 	var state := _get_state()
 	var items: Array = state.get("items", [])
 	var remaining := amount
-	for index in range(items.size()):
+	var index := 0
+	while index < items.size() and remaining > 0:
 		var item: Dictionary = items[index]
 		if str(item.get("item_id", "")) != item_id:
+			index += 1
 			continue
 		var removed := mini(remaining, int(item.get("amount", 0)))
 		item["amount"] = int(item.get("amount", 0)) - removed
 		remaining -= removed
 		if int(item["amount"]) <= 0:
 			items.remove_at(index)
-			index -= 1
 		else:
 			items[index] = item
-		if remaining <= 0:
-			break
+			index += 1
 	if remaining > 0:
 		return _fail("В контейнере недостаточно предметов: " + item_id)
 	state["items"] = items
@@ -207,19 +207,32 @@ func link_container(target: Object) -> bool:
 	var own_root := get_object_root()
 	if target_root == null or own_root == null or target_root == own_root:
 		return _fail("Нельзя связать контейнер с самим собой.")
+	var own_state := _get_state()
+	var target_state: Dictionary = target.call("_get_state")
+	var merged_items: Array = target_state.get("items", []).duplicate(true)
+	for item in own_state.get("items", []):
+		merged_items.append(item.duplicate(true))
+	var own_capacity := maxi(1, int(_option("has_container_capacity", "max_slots", 24)))
+	var target_capacity := maxi(1, int(target.call("_option", "has_container_capacity", "max_slots", 24)))
+	if merged_items.size() > mini(own_capacity, target_capacity):
+		return _fail("Содержимое не помещается в общую вместимость контейнеров.")
+	var own_max_weight := float(_option("has_container_capacity", "max_weight", 0.0))
+	var target_max_weight := float(target.call("_option", "has_container_capacity", "max_weight", 0.0))
+	var merged_weight := 0.0
+	for item in merged_items:
+		merged_weight += float(item.get("weight", 0.0)) * float(item.get("amount", 0))
+	if (own_max_weight > 0.0 and merged_weight > own_max_weight) or (target_max_weight > 0.0 and merged_weight > target_max_weight):
+		return _fail("Содержимое превышает весовой лимит одного из контейнеров.")
 	var group_id := str(target_root.get_meta("object_builder_container_shared_group", ""))
 	if group_id.is_empty():
 		group_id = "container_group_" + str(Time.get_ticks_usec()) + "_" + str(randi())
-		var target_state: Dictionary = target.call("_get_state")
-		_shared_storage_states[group_id] = target_state.duplicate(true)
-		target_root.remove_meta("object_builder_container_force_local")
+	var merged_state := {"items": merged_items, "locked": bool(own_state.get("locked", false)) or bool(target_state.get("locked", false))}
+	_shared_storage_states[group_id] = merged_state.duplicate(true)
+	target_root.remove_meta("object_builder_container_force_local")
 	own_root.remove_meta("object_builder_container_force_local")
 	target_root.set_meta("object_builder_container_shared_group", group_id)
 	own_root.set_meta("object_builder_container_shared_group", group_id)
-	var merged := _get_state()
-	_shared_storage_states[group_id] = merged.duplicate(true)
 	return true
-
 
 func unlink_container() -> bool:
 	var root := get_object_root()
@@ -228,10 +241,11 @@ func unlink_container() -> bool:
 	var group_id := str(root.get_meta("object_builder_container_shared_group", ""))
 	if group_id.is_empty():
 		return false
+	var local_state := _get_state()
 	root.remove_meta("object_builder_container_shared_group")
-	root.set_meta("object_builder_container_state", _get_state())
+	root.set_meta("object_builder_container_force_local", true)
+	root.set_meta("object_builder_container_state", local_state)
 	return true
-
 
 func can_persist() -> bool:
 	return _has_mechanic("has_container_persistence") and bool(_option("has_container_persistence", "persistent", true))
