@@ -3,6 +3,7 @@ extends SceneTree
 const LibraryViewScript = preload("res://addons/object_builder/ui/library_view.gd")
 const EditorViewScript = preload("res://addons/object_builder/ui/object_editor_view.gd")
 const DefinitionScript = preload("res://scripts/object_system/object_definition.gd")
+const InstalledCapabilitiesViewScript = preload("res://addons/object_builder/ui/installed_capabilities_view.gd")
 
 var failures: Array[String] = []
 var search_events: Array[String] = []
@@ -117,6 +118,31 @@ func _run() -> void:
 	_expect(settings_content.get_parent() is ScrollContainer, "settings use their own scroll container")
 	_expect(advanced_content.get_parent() is ScrollContainer, "advanced mode uses its own scroll container")
 	_expect(editor.current_tab == 0, "new objects open on the appearance workspace")
+
+	var installed_view = InstalledCapabilitiesViewScript.new()
+	root.add_child(installed_view)
+	installed_view.call("build")
+	var configure_events: Array[String] = []
+	var focus_events: Array[String] = []
+	installed_view.connect("configure_requested", func(capability_id: String) -> void: configure_events.append(capability_id))
+	installed_view.connect("focus_requested", func(capability_id: String) -> void: focus_events.append(capability_id))
+	var installed_entries: Array[Dictionary] = [
+		{"capability_id": "has_health", "display_name": "Здоровье", "description": "Параметры здоровья", "category_id": "stats", "category_name": "Характеристики"},
+		{"capability_id": "damageable", "display_name": "Разрушаемость", "description": "Получение урона", "category_id": "destruction", "category_name": "Разрушение"}
+	]
+	installed_view.call("set_entries", installed_entries)
+	_expect(str((installed_view.get("_count_label") as Label).text) == "Включено: 2", "installed mechanics view reports the enabled count")
+	_expect((installed_view.get("_list") as VBoxContainer).get_child_count() == 2, "installed mechanics are grouped by category")
+	(installed_view.get("_search") as LineEdit).text_changed.emit("здоров")
+	_expect((installed_view.get("_list") as VBoxContainer).get_child_count() == 1, "installed mechanics search filters the grouped list")
+	installed_view.call("_on_configure_pressed", "has_health")
+	installed_view.call("_on_focus_pressed", "has_health")
+	_expect(configure_events == ["has_health"], "configure action targets the selected installed capability")
+	_expect(focus_events == ["has_health"], "catalog action targets the selected installed capability")
+	(installed_view.get("_search") as LineEdit).text_changed.emit("")
+	installed_view.call("set_entries", [], "Сначала выбери объект.")
+	_expect((installed_view.get("_empty_label") as Label).visible, "empty installed mechanics state is visible")
+	_expect(str((installed_view.get("_empty_label") as Label).text) == "Сначала выбери объект.", "empty state explains why no mechanics are listed")
 
 	root.remove_child(library)
 	library.free()
