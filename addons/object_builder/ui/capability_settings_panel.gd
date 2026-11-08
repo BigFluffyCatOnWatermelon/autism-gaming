@@ -184,6 +184,13 @@ func configure(
 			current_group_body = VBoxContainer.new()
 			current_group_body.add_theme_constant_override("separation", 7)
 			group_content.add_child(current_group_body)
+			var group_reset_button := Button.new()
+			group_reset_button.text = "Сбросить параметры группы"
+			group_reset_button.flat = true
+			group_reset_button.size_flags_horizontal = Control.SIZE_SHRINK_END
+			group_reset_button.tooltip_text = "Вернуть все параметры этой группы к значениям по умолчанию, включая скрытые уровни."
+			group_reset_button.pressed.connect(_reset_group.bind(current_group_key))
+			current_group_body.add_child(group_reset_button)
 			current_group_header.toggled.connect(_on_group_toggled.bind(current_group_body, current_group_key, group_name))
 			_group_bodies[current_group_key] = {"header": current_group_header, "body": current_group_body, "display_name": group_name}
 			previous_group = group_name
@@ -370,6 +377,8 @@ func _connect_control_changes(control: Control, value_type: String) -> void:
 func clear() -> void:
 	if _form == null:
 		return
+	if _discard_dialog != null and is_instance_valid(_discard_dialog):
+		_discard_dialog.hide()
 	_capability_id = ""
 	_title_label.text = "Выбери механику"
 	_subtitle_label.text = "Изменения не применяются, пока ты не нажмёшь «Применить»."
@@ -544,6 +553,13 @@ func _reset_setting(index: int) -> void:
 func _on_reset_all_pressed() -> void:
 	for entry in _setting_controls:
 		if _is_supported_type(str(entry.get("value_type", ""))):
+			_set_entry_value(entry, entry.get("default_value"))
+	_update_dirty_state()
+
+
+func _reset_group(group_key: String) -> void:
+	for entry in _setting_controls:
+		if str(entry.get("group_key", "")) == group_key and _is_supported_type(str(entry.get("value_type", ""))):
 			_set_entry_value(entry, entry.get("default_value"))
 	_update_dirty_state()
 
@@ -726,4 +742,6 @@ func _on_close_pressed() -> void:
 
 
 func _on_discard_confirmed() -> void:
+	if _discard_dialog != null and is_instance_valid(_discard_dialog):
+		_discard_dialog.hide()
 	close_requested.emit()

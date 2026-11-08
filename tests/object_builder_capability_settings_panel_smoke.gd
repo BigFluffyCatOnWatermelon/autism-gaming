@@ -119,6 +119,10 @@ func _run() -> void:
 	_expect(is_equal_approx(range_slider.value, 50.0), "exact numeric field updates the range slider")
 	reset_button.pressed.emit()
 	_expect(is_equal_approx(health_spin.value, 100.0), "per-setting reset restores its declared default value")
+	health_spin.value = 80.0
+	var group_reset_button := health_group_body.get_child(0) as Button
+	group_reset_button.pressed.emit()
+	_expect(is_equal_approx(health_spin.value, 100.0), "group reset restores all settings in that group to their defaults")
 	_expect(not (view.get("_apply_button") as Button).disabled, "changing a Vector2 value enables Apply")
 	_expect(not (view.get("_reset_all_button") as Button).disabled, "reset-all becomes available while edits are pending")
 	_expect((view.call("get_changed_values") as Array).size() == 2, "pending payload contains only values changed from the initial state")

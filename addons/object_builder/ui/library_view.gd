@@ -34,7 +34,7 @@ var _empty_message := "Объекты не найдены"
 func build() -> void:
 	if search_input != null:
 		return
-	custom_minimum_size = Vector2(170, 0)
+	custom_minimum_size = Vector2(210, 0)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_theme_constant_override("separation", 6)
