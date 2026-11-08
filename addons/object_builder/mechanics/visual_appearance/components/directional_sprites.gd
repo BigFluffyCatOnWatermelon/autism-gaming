@@ -6,6 +6,16 @@ func _on_configured() -> void:
     _load_options({"directions_json": "{}", "initial_direction": "down"})
 
 
+func _apply_bound_target() -> bool:
+    var sprite := find_sprite()
+    if sprite == null:
+        return fail("Для направленных спрайтов нужен Sprite2D в целевой ветке.")
+    var directions: Variant = JSON.parse_string(str(get_option("directions_json", "{}")))
+    if not directions is Dictionary or directions.is_empty():
+        return true
+    return set_direction(sprite, str(get_option("initial_direction", "down")))
+
+
 func set_direction(sprite: Sprite2D, direction: String) -> bool:
     if not is_instance_valid(sprite):
         return fail("Не передан действительный Sprite2D.")
