@@ -1173,6 +1173,51 @@ func _test_inventory_mechanics() -> void:
 		_expect(bool(inventory.call("equip_from_slot", helmet_slot, "head")), "inventory equips an item into a configured slot")
 		_expect(bool(inventory.call("unequip_to_inventory", "head")), "inventory returns equipped items to its slots")
 
+	# Regression: a partially accepted unequip must not remove an older stack
+	# with the same item ID while trying to roll back.
+	var rollback_definition := ObjectDefinition.new()
+	rollback_definition.object_id = "inventory_unequip_rollback_smoke_test"
+	rollback_definition.display_name = "Inventory Unequip Rollback Test"
+	rollback_definition.category = "Other"
+	var rollback_bindings: Array[ObjectComponentBinding] = []
+	for inventory_id in inventory_ids:
+		var rollback_binding := ObjectComponentCatalog.create_binding(inventory_id)
+		if rollback_binding == null:
+			_expect(false, "rollback inventory component is registered: " + inventory_id)
+			instance.free()
+			return
+		if inventory_id == "has_inventory":
+			rollback_binding.component_definition.settings["slot_capacity"] = 2
+		rollback_bindings.append(rollback_binding)
+	rollback_definition.component_bindings = rollback_bindings
+	var rollback_instance := ObjectFactory.instantiate(rollback_definition)
+	_expect(rollback_instance != null, "factory creates inventory for unequip rollback regression")
+	if rollback_instance != null:
+		var rollback_inventory := ObjectFactory.get_component(rollback_instance, "has_inventory")
+		var original_inventory_state := {
+			"slots": [
+				{"item_id":"ring","amount":1,"max_stack":2,"weight":0.0,"tags":["old"],"rarity":"rare","bound":true},
+				{"item_id":"filler","amount":1,"max_stack":1,"weight":0.0,"tags":[],"rarity":"common","bound":false}
+			],
+			"equipment": {
+				"head":{"item_id":"ring","amount":2,"max_stack":2,"weight":0.0,"tags":["equipped"],"rarity":"epic","bound":false}
+			},
+			"hotbar": {},
+			"selected_hotbar": -1
+		}
+		_expect(bool(rollback_inventory.call("import_runtime_state", original_inventory_state)), "rollback regression accepts a valid seeded inventory state")
+		_expect(not bool(rollback_inventory.call("unequip_to_inventory", "head")), "unequip rejects a stack that cannot fully fit")
+		var after_failed_unequip: Dictionary = rollback_inventory.call("export_runtime_state")
+		_expect(
+			after_failed_unequip.get("slots", [])[0] == original_inventory_state["slots"][0],
+			"failed unequip preserves the original bound stack and its metadata"
+		)
+		_expect(
+			after_failed_unequip.get("equipment", {}).get("head", {}).get("amount", 0) == 2,
+			"failed unequip restores the complete equipped stack"
+		)
+		rollback_instance.free()
+
 	var target_definition := ObjectDefinition.new()
 	target_definition.object_id = "inventory_transfer_target_smoke_test"
 	target_definition.display_name = "Inventory Transfer Target"
