@@ -77,13 +77,23 @@ func add_item(
 		return _failed_result("Вес предмета должен быть конечным и неотрицательным.")
 	if not _passes_item_filter(normalized_id, tags):
 		return _failed_result("Предмет отклонён фильтром инвентаря.")
+
+	var amount_allowed := amount
+	if _has_mechanic("has_weight_capacity") and weight_per_unit > 0.0:
+		var maximum_weight := maxf(0.0, float(_option("has_weight_capacity", "max_weight", 100.0)))
+		var available_weight := maxf(0.0, maximum_weight - get_inventory_weight())
+		amount_allowed = mini(amount, int(floor((available_weight + 0.0001) / weight_per_unit)))
+	var capacity_remainder := amount - amount_allowed
+
 	var state := _get_state()
 	var slots: Array = state.get("slots", [])
-	var remaining := amount
+	var remaining := amount_allowed
 	var can_stack := max_stack > 1
 	for index in range(slots.size()):
 		var current: Dictionary = slots[index]
 		if current.is_empty() or str(current.get("item_id", "")) != normalized_id or not can_stack:
+			continue
+		if not is_equal_approx(float(current.get("weight", 0.0)), weight_per_unit):
 			continue
 		var current_max := maxi(1, int(current.get("max_stack", max_stack)))
 		var accepted := mini(remaining, maxi(0, current_max - int(current.get("amount", 0))))
@@ -94,6 +104,7 @@ func add_item(
 		remaining -= accepted
 		if remaining <= 0:
 			break
+
 	while remaining > 0:
 		var empty_index := _find_empty_slot(slots)
 		if empty_index < 0:
@@ -109,23 +120,14 @@ func add_item(
 			"bound": false
 		}
 		remaining -= accepted_new
-	if _has_mechanic("has_weight_capacity"):
-		var maximum_weight := maxf(0.0, float(_option("has_weight_capacity", "max_weight", 100.0)))
-		while _weight_of_slots(slots) + _equipment_weight(state) > maximum_weight + 0.0001:
-			var last_index := _find_last_matching_slot(slots, normalized_id)
-			if last_index < 0:
-				break
-			var overflow: Dictionary = slots[last_index]
-			var overflow_amount := int(overflow.get("amount", 0))
-			remaining += overflow_amount
-			slots[last_index] = {}
+
 	state["slots"] = slots
 	_save_state(state)
-	var accepted_total := amount - remaining
+	var accepted_total := amount_allowed - remaining
+	var remainder := capacity_remainder + remaining
 	if accepted_total > 0:
 		item_added.emit(normalized_id, accepted_total)
-	return {"ok": remaining == 0, "accepted": accepted_total, "remainder": remaining}
-
+	return {"ok": remainder == 0, "accepted": accepted_total, "remainder": remainder}
 
 func remove_item(item_id: String, amount: int = 1, allow_bound: bool = false) -> bool:
 	if amount <= 0:
@@ -216,6 +218,9 @@ func unequip_to_inventory(equipment_slot: String) -> bool:
 	if not equipment.has(slot_id):
 		return _fail("Слот экипировки пуст.")
 	var item: Dictionary = equipment[slot_id]
+	equipment.erase(slot_id)
+	state["equipment"] = equipment
+	_save_state(state)
 	var add_result := add_item(
 		str(item.get("item_id", "")),
 		int(item.get("amount", 1)),
@@ -225,15 +230,14 @@ func unequip_to_inventory(equipment_slot: String) -> bool:
 		str(item.get("rarity", "common"))
 	)
 	if int(add_result.get("accepted", 0)) < int(item.get("amount", 1)):
+		state = _get_state()
+		equipment = state.get("equipment", {})
+		equipment[slot_id] = item
+		state["equipment"] = equipment
+		_save_state(state)
 		return _fail("В инвентаре недостаточно места для снятия экипировки.")
-	state = _get_state()
-	equipment = state.get("equipment", {})
-	equipment.erase(slot_id)
-	state["equipment"] = equipment
-	_save_state(state)
 	equipment_changed.emit(slot_id, {})
 	return true
-
 
 func assign_hotbar(hotbar_slot: int, inventory_slot: int) -> bool:
 	if not _has_mechanic("supports_hotbar"):
@@ -391,6 +395,9 @@ func craft(recipe_id: String) -> Dictionary:
 		str(output.get("rarity", "common"))
 	)
 	if int(result.get("accepted", 0)) < int(output.get("amount", 1)):
+		var partial_output := int(result.get("accepted", 0))
+		if partial_output > 0:
+			remove_item(str(output.get("item_id", "")), partial_output, true)
 		for rollback in removed:
 			add_item(str(rollback.item_id), int(rollback.amount), int(rollback.max_stack), float(rollback.weight), rollback.get("tags", []), str(rollback.get("rarity", "common")))
 		return _failed_result("Недостаточно места или веса для результата рецепта.")
