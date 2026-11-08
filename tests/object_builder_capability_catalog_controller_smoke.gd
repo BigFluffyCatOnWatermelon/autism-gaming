@@ -135,17 +135,18 @@ func _run_tests() -> void:
 	)
 
 	var focused_relations: Array[Dictionary] = controller.call("build_related_entries")
-	_expect(focused_relations.size() == 1, "focused capability produces a compact related-mechanics list")
-	if not focused_relations.is_empty():
-		_expect(
-			str(focused_relations[0].get("capability_id", "")) == DATA_ID
-			and str(focused_relations[0].get("relation_type", "")) == "related",
-			"related-mechanics list contains the target and typed relationship"
-		)
-		_expect(
-			str(focused_relations[0].get("explanation", "")).contains("данные"),
-			"related-mechanics list carries the relationship explanation"
-		)
+	_expect(focused_relations.size() == 2, "focused capability exposes both direct and recommended related mechanics")
+	var data_relation_found := false
+	var recommended_relation_found := false
+	for relation_entry in focused_relations:
+		var related_id := str(relation_entry.get("capability_id", ""))
+		if related_id == DATA_ID:
+			data_relation_found = str(relation_entry.get("relation_type", "")) == "related"
+			data_relation_found = data_relation_found and str(relation_entry.get("explanation", "")).contains("данные")
+		elif related_id == "smoke_catalog_controller_incompatible_candidate":
+			recommended_relation_found = str(relation_entry.get("relation_type", "")) == "recommends"
+	_expect(data_relation_found, "related-mechanics list contains the target and its user-facing explanation")
+	_expect(recommended_relation_found, "related-mechanics list retains explicit recommendations even when they may later fail compatibility checks")
 
 	controller.call("set_focused_capability", "plays_attack_animation")
 	var attack_suggestions: Array[Dictionary] = controller.call("build_related_entries")
