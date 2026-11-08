@@ -1,22 +1,14 @@
-## Реализация оставшихся 158 механик — 2026-11-08
+## Реализация оставшихся механик — 2026-11-08
 - [x] Добавить общий вызов публичного `bind_target()` в ObjectFactory для компонентов с таким контрактом.
 - [x] Автоматически связывать AnimationPlayer/AnimatedSprite2D с анимационными компонентами по целевой ветке сцены.
 - [x] Добавить smoke-сценарий, проверяющий движение назначенного дочернего узла через `can_move`.
+- [x] Создать отдельные модули и runtime-компоненты для 100 ранее отсутствовавших механик: harvesting, items, inventory, containers, construction, ai, animals, audio_effects, world_time, world_generation.
+- [ ] Пройти Godot CI для всех десяти новых пакетов, устранить ошибки импорта/типизации/smoke-тестов; только после этого повышать readiness.
+- [ ] Довести до готовности 58 существующих механик со статусом Planned, с отдельными тестами по категориям.
 - [ ] Интегрировать visual appearance и animation: привязка Sprite2D/AnimationPlayer/AnimatedSprite2D, безопасное применение и очистка временных узлов.
 - [ ] Подключить сохранение/восстановление runtime-состояния для object_identity и остальных stateful-компонентов.
-- [ ] Довести до готовности все 58 существующих механик с Planned-статусом, по категориям и с отдельными smoke-тестами.
-- [ ] Реализовать отсутствующий модуль для 10 механик: world_generation.
-- [ ] Подтвердить harvesting, items, inventory, containers, construction, ai, animals, audio_effects и world_time: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness девяноста записей.
-- [ ] Подтвердить harvesting, items, inventory, containers, construction, ai, animals и audio_effects: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness восьмидесяти записей.
-- [ ] Подтвердить harvesting, items, inventory, containers, construction, ai и animals: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness семидесяти записей.
-- [ ] Подтвердить harvesting, items, inventory, containers, construction и ai: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness шестидесяти записей.
-- [ ] Подтвердить harvesting, items, inventory, containers и construction: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness пятидесяти записей.
-- [ ] Подтвердить harvesting, items, inventory и containers: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness сорока записей.
-- [ ] Подтвердить harvesting, items и inventory: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness тридцати записей.
-- [ ] Подтвердить harvesting и items: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness двадцати записей.
-- [ ] Подтвердить harvesting-пакет: пройти Godot CI, устранить ошибки smoke-теста и только после этого повысить readiness десяти записей.
-- [ ] После каждого пакета пересчитать readiness по реальным тестам; не массово менять Planned на Implemented.
-- [ ] Проверить все 200 записей, зависимости, конфликты, настройки, сериализацию и полный Godot CI.
+- [ ] Проверить все 200 записей: зависимости, конфликты, настройки, сериализацию, поведение в сценах и полный Godot CI.
+- [ ] Провести ручную GUI-приёмку в Godot; headless smoke не считать заменой визуальной проверке.
 
 ## UI/UX — текущий пакет
 - [x] Убрать дублирующий внутренний заголовок сведений в инспекторе «Свойства».
