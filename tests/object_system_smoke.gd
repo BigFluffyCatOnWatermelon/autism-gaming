@@ -1262,15 +1262,29 @@ func _test_container_mechanics() -> void:
 		if binding == null:
 			return
 		target_bindings.append(binding)
+		match container_id:
+			"has_container_capacity":
+				binding.component_definition.settings["max_slots"] = 3
+				binding.component_definition.settings["max_weight"] = 5.0
+			"can_be_locked":
+				binding.component_definition.settings["lock_key_id"] = "brass_key"
+			"can_be_unlocked":
+				binding.component_definition.settings["requires_key"] = true
+				binding.component_definition.settings["unlock_key_id"] = "brass_key"
+			"has_container_permissions":
+				binding.component_definition.settings["owner_id"] = "alice"
+				binding.component_definition.settings["allowed_factions_csv"] = "guild"
+				binding.component_definition.settings["public_access"] = false
 	target_definition.component_bindings = target_bindings
 	var target_instance := ObjectFactory.instantiate(target_definition)
 	_expect(target_instance != null, "factory creates a second container for shared storage")
 	if target_instance != null:
 		var target_container := ObjectFactory.get_component(target_instance, "stores_items")
 		_expect(bool(container.call("link_container", target_container)), "containers can join a shared storage group")
-		var shared_add: Dictionary = target_container.call("add_item", "ore", 1, 10, 1.0, [], "", "")
+		var shared_add: Dictionary = target_container.call("add_item", "ore", 1, 10, 1.0, [], "alice", "")
 		_expect(int(shared_add.get("accepted", 0)) == 1, "linked container accepts a new shared item")
 		_expect(int(container.call("get_item_count", "ore")) == 1, "linked containers observe the same contents")
+		_expect(int(container.call("get_item_count", "wood")) == 2 and int(container.call("get_item_count", "stone")) == 2, "linking merges both containers without losing existing items")
 		var saved_state: Dictionary = container.call("export_runtime_state")
 		_expect(bool(container.call("import_runtime_state", saved_state)), "container runtime state can be restored")
 		_expect(bool(container.call("unlink_container")), "container can leave a shared storage group")
