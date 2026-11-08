@@ -725,6 +725,58 @@ func add_item(
 	return {"ok": remaining == 0, "accepted": requested - remaining, "remainder": remaining}
 
 
+func _has_mechanic(mechanic_id: String) -> bool:
+	return mechanic_id.strip_edges().to_lower() in ["has_inventory", "supports_quick_transfer"]
+
+
+func transfer_object_inventory_to_player(
+	source_root: Node,
+	item_id: String,
+	amount: int
+) -> Dictionary:
+	if source_root == null or not is_instance_valid(source_root):
+		return {"ok": false, "transferred": 0, "remainder": maxi(0, amount)}
+	var source_inventory := ObjectFactoryScript.get_component(source_root, "has_inventory")
+	if source_inventory == null or not source_inventory.has_method("transfer_to"):
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	return source_inventory.call("transfer_to", self, item_id, amount)
+
+
+func transfer_player_item_to_object_inventory(
+	target_root: Node,
+	item_id: String,
+	amount: int
+) -> Dictionary:
+	if target_root == null or not is_instance_valid(target_root) or amount <= 0:
+		return {"ok": false, "transferred": 0, "remainder": maxi(0, amount)}
+	var target_inventory := ObjectFactoryScript.get_component(target_root, "has_inventory")
+	if target_inventory == null or not target_inventory.has_method("add_item"):
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	var available := mini(amount, _get_item_count(item_id))
+	if available <= 0:
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	var item_data: Dictionary = config.items.get(item_id, {})
+	var added_value: Variant = target_inventory.call(
+		"add_item",
+		item_id,
+		available,
+		maxi(1, int(item_data.get("max_stack", config.inventory.max_stack))),
+		maxf(0.0, float(item_data.get("weight", 0.0))),
+		item_data.get("tags", []) if item_data.get("tags", []) is Array else [],
+		str(item_data.get("rarity", "common"))
+	)
+	if not added_value is Dictionary:
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	var accepted := clampi(int(added_value.get("accepted", 0)), 0, available)
+	if accepted <= 0:
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	if not _consume_item(item_id, accepted):
+		if target_inventory.has_method("remove_item"):
+			target_inventory.call("remove_item", item_id, accepted, true)
+		return {"ok": false, "transferred": 0, "remainder": amount}
+	return {"ok": accepted == amount, "transferred": accepted, "remainder": amount - accepted}
+
+
 func get_inventory() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
 	for slot in inventory:
