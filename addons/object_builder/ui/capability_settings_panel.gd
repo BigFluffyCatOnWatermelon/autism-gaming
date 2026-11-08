@@ -23,6 +23,8 @@ var _level_mode := 0
 var _search_query := ""
 var _editable_count := 0
 var _updating_controls := false
+var _resource_dialog: FileDialog
+var _resource_target_index := -1
 
 
 func build() -> void:
@@ -182,6 +184,7 @@ func configure(
 			previous_group = group_name
 
 		var value_type := str(descriptor.get("value_type", ""))
+		var editor_hint := str(descriptor.get("editor_hint", ""))
 		var component_settings := selection.get_component_settings(component_id)
 		var current_value: Variant = component_settings.get(setting_key, descriptor.get("default_value"))
 		var default_value: Variant = descriptor.get("default_value")
@@ -236,6 +239,12 @@ func configure(
 		reset_button.disabled = not _is_supported_type(value_type)
 		reset_button.pressed.connect(_reset_setting.bind(_setting_controls.size()))
 		label_row.add_child(reset_button)
+		if editor_hint == "texture":
+			var browse_button := Button.new()
+			browse_button.text = "Обзор…"
+			browse_button.tooltip_text = "Выбрать текстуру проекта."
+			browse_button.pressed.connect(_open_resource_picker.bind(_setting_controls.size()))
+			label_row.add_child(browse_button)
 
 		var level := str(descriptor.get("level", "Basic")).to_lower()
 		var searchable_text := (
@@ -246,6 +255,7 @@ func configure(
 			"component_id": component_id,
 			"setting_key": setting_key,
 			"value_type": value_type,
+			"editor_hint": editor_hint,
 			"level": level,
 			"control": control,
 			"range_slider": range_slider,
@@ -292,6 +302,20 @@ func _create_setting_control(value_type: String, value: Variant, descriptor: Dic
 			check.tooltip_text = str(descriptor.get("description", ""))
 			return check
 		"String":
+			var editor_hint := str(descriptor.get("editor_hint", ""))
+			if editor_hint == "color":
+				var color_picker := ColorPickerButton.new()
+				color_picker.color = Color.from_string(str(value), Color.WHITE)
+				color_picker.tooltip_text = str(descriptor.get("description", ""))
+				return color_picker
+			if editor_hint == "json":
+				var json_editor := TextEdit.new()
+				json_editor.text = str(value)
+				json_editor.custom_minimum_size.y = 112
+				json_editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				json_editor.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+				json_editor.tooltip_text = str(descriptor.get("description", ""))
+				return json_editor
 			var line := LineEdit.new()
 			line.text = str(value)
 			line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -321,6 +345,10 @@ func _connect_control_changes(control: Control, value_type: String) -> void:
 		(control as CheckBox).toggled.connect(_on_control_toggled)
 	elif control is LineEdit:
 		(control as LineEdit).text_changed.connect(_on_control_text_changed)
+	elif control is TextEdit:
+		(control as TextEdit).text_changed.connect(_on_text_edit_changed)
+	elif control is ColorPickerButton:
+		(control as ColorPickerButton).color_changed.connect(_on_color_changed)
 	elif value_type == "Vector2" and control is HBoxContainer:
 		for child in control.get_children():
 			if child is SpinBox:
@@ -426,6 +454,10 @@ func _read_entry_value(entry: Dictionary) -> Variant:
 		"Boolean":
 			return (control as CheckBox).button_pressed
 		"String":
+			if control is TextEdit:
+				return (control as TextEdit).text
+			if control is ColorPickerButton:
+				return (control as ColorPickerButton).color.to_html(false)
 			return (control as LineEdit).text
 		"Vector2":
 			var vector_row := control as HBoxContainer
@@ -516,7 +548,12 @@ func _set_entry_value(entry: Dictionary, value: Variant) -> void:
 		"Boolean":
 			(control as CheckBox).button_pressed = bool(value)
 		"String":
-			(control as LineEdit).text = str(value)
+			if control is TextEdit:
+				(control as TextEdit).text = str(value)
+			elif control is ColorPickerButton:
+				(control as ColorPickerButton).color = Color.from_string(str(value), Color.WHITE)
+			else:
+				(control as LineEdit).text = str(value)
 		"Vector2":
 			var vector_row := control as HBoxContainer
 			if vector_row != null and vector_row.get_child_count() == 2:
@@ -559,9 +596,15 @@ func _update_dirty_state() -> void:
 	for entry in _setting_controls:
 		if not bool(entry.get("required", false)):
 			continue
-		if str(entry.get("value_type", "")) == "String" and str(_read_entry_value(entry)).strip_edges().is_empty():
+		if str(entry.get("value_type", "")) == "String" and bool(entry.get("required", false)) and str(_read_entry_value(entry)).strip_edges().is_empty():
 			has_required_error = true
 			break
+		if str(entry.get("editor_hint", "")) == "json":
+			var json_parser := JSON.new()
+			if json_parser.parse(str(_read_entry_value(entry))) != OK:
+				has_required_error = true
+				_change_summary.text = "Проверь формат JSON: " + str(entry.get("setting_key", ""))
+				break
 	_apply_button.disabled = changed == 0 or has_required_error or _editable_count == 0
 	_reset_all_button.disabled = changed == 0
 	_change_summary.text = (
@@ -586,6 +629,49 @@ func _on_control_toggled(_value: bool) -> void:
 func _on_control_text_changed(_value: String) -> void:
 	if not _updating_controls:
 		_update_dirty_state()
+
+
+func _on_text_edit_changed() -> void:
+	if not _updating_controls:
+		_update_dirty_state()
+
+
+func _on_color_changed(_value: Color) -> void:
+	if not _updating_controls:
+		_update_dirty_state()
+
+
+func _open_resource_picker(index: int) -> void:
+	if index < 0 or index >= _setting_controls.size():
+		return
+	var entry: Dictionary = _setting_controls[index]
+	if str(entry.get("editor_hint", "")) != "texture":
+		return
+	var control := entry.get("control") as LineEdit
+	if control == null:
+		return
+	_resource_target_index = index
+	if _resource_dialog == null or not is_instance_valid(_resource_dialog):
+		_resource_dialog = FileDialog.new()
+		_resource_dialog.title = "Выбрать текстуру"
+		_resource_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+		_resource_dialog.access = FileDialog.ACCESS_RESOURCES
+		_resource_dialog.add_filter("*.png, *.jpg, *.jpeg, *.webp, *.svg, *.bmp ; Изображения")
+		_resource_dialog.file_selected.connect(_on_resource_file_selected)
+		add_child(_resource_dialog)
+	_resource_dialog.current_dir = "res://"
+	_resource_dialog.popup_centered(Vector2i(760, 520))
+
+
+func _on_resource_file_selected(path: String) -> void:
+	if _resource_target_index < 0 or _resource_target_index >= _setting_controls.size():
+		return
+	var entry: Dictionary = _setting_controls[_resource_target_index]
+	var control := entry.get("control") as LineEdit
+	if control != null:
+		control.text = path
+	_update_dirty_state()
+	_resource_target_index = -1
 
 
 func _is_supported_type(value_type: String) -> bool:
