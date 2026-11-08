@@ -41,10 +41,14 @@ func can_be_placed(position: Vector2, blockers: Array = [], terrain_id: String =
 		return false
 	var clearance := maxf(0.0, float(_option("can_be_placed", "placement_clearance", 0.0)))
 	for blocker in blockers:
-		if blocker is Rect2 and (blocker as Rect2).has_point(candidate):
-			return false
-		if blocker is Node2D and (blocker as Node2D).global_position.distance_to(candidate) < clearance:
-			return false
+		if blocker is Rect2:
+			var blocker_rect: Rect2 = blocker
+			if blocker_rect.has_point(candidate):
+				return false
+		if blocker is Node2D:
+			var blocker_node: Node2D = blocker
+			if blocker_node.global_position.distance_to(candidate) < clearance:
+				return false
 	return true
 
 
@@ -58,7 +62,7 @@ func rotate_placement(direction: int = 1) -> float:
 		return get_placement_rotation()
 	var step := maxf(1.0, float(_option("supports_rotation_placement", "rotation_step_degrees", 90.0)))
 	var state := _get_state()
-	state["rotation_degrees"] = fposmod(float(state.get("rotation_degrees", 0.0)) + step * float(signi(direction)), 360.0)
+	state["rotation_degrees"] = fposmod(float(state.get("rotation_degrees", 0.0)) + step * float(sign(direction)), 360.0)
 	_save_state(state)
 	placement_changed.emit(Vector2.ZERO, float(state["rotation_degrees"]))
 	return float(state["rotation_degrees"])
@@ -81,19 +85,13 @@ func can_afford(inventory: Object) -> bool:
 func consume_build_materials(inventory: Object) -> bool:
 	if not _has_mechanic("requires_build_materials"):
 		return _fail("Проверка материалов для строительства не включена.")
-	if inventory == null or not inventory.has_method("remove_item") or not can_afford(inventory):
+	if inventory == null or not inventory.has_method("remove_item") or not inventory.has_method("get_item_count"):
+		return _fail("Для строительства нужен доступный инвентарь.")
+	if not can_afford(inventory):
 		return _fail("Недостаточно материалов для строительства.")
-	var removed: Dictionary = {}
-	var costs := _get_material_costs()
-	for item_id in costs:
-		var amount := int(costs[item_id])
-		if not bool(inventory.call("remove_item", str(item_id), amount)):
-			for rollback_id in removed:
-				inventory.call("add_item", str(rollback_id), int(removed[rollback_id]), 999, 0.0, ["material"])
-			return _fail("Не удалось списать строительный материал: " + str(item_id))
-		removed[item_id] = amount
+	if not _consume_costs(inventory, _get_material_costs()):
+		return _fail("Не удалось списать строительные материалы.")
 	return true
-
 
 func get_upgrade_level() -> int:
 	return maxi(0, int(_get_state().get("upgrade_level", 0)))
@@ -110,22 +108,15 @@ func upgrade(inventory: Object = null) -> Dictionary:
 	if not costs.is_empty():
 		if inventory == null or not inventory.has_method("get_item_count") or not inventory.has_method("remove_item"):
 			return _failed_result("Для улучшения нужен доступный инвентарь.")
-		for item_id in costs:
-			if int(inventory.call("get_item_count", str(item_id))) < int(costs[item_id]):
-				return _failed_result("Недостаточно материалов для улучшения.")
-		var removed: Dictionary = {}
-		for item_id in costs:
-			if not bool(inventory.call("remove_item", str(item_id), int(costs[item_id]))):
-				for rollback_id in removed:
-					inventory.call("add_item", str(rollback_id), int(removed[rollback_id]), 999, 0.0, ["material"])
-				return _failed_result("Не удалось списать материал улучшения.")
-			removed[item_id] = int(costs[item_id])
+		if not can_afford(inventory):
+			return _failed_result("Недостаточно материалов для улучшения.")
+		if not _consume_costs(inventory, costs):
+			return _failed_result("Не удалось списать материал улучшения.")
 	var state := _get_state()
 	state["upgrade_level"] = current_level + 1
 	_save_state(state)
 	upgrade_completed.emit(current_level + 1)
 	return {"ok": true, "level": current_level + 1}
-
 
 func dismantle() -> Dictionary:
 	if not _has_mechanic("can_be_dismantled"):
@@ -233,6 +224,36 @@ func import_runtime_state(state: Dictionary) -> bool:
 	}
 	_save_state(normalized)
 	return true
+
+
+func _consume_costs(inventory: Object, costs: Dictionary) -> bool:
+	var removed: Array[Dictionary] = []
+	for item_id in costs:
+		var amount := int(costs[item_id])
+		var sample := _find_inventory_item(inventory, str(item_id))
+		if not bool(inventory.call("remove_item", str(item_id), amount)):
+			for item in removed:
+				inventory.call(
+					"add_item",
+					str(item.get("item_id", "")),
+					int(item.get("amount", 0)),
+					int(item.get("max_stack", 1)),
+					float(item.get("weight", 0.0)),
+					item.get("tags", []),
+					str(item.get("rarity", "common"))
+				)
+			return false
+		sample["amount"] = amount
+		removed.append(sample)
+	return true
+
+
+func _find_inventory_item(inventory: Object, item_id: String) -> Dictionary:
+	if inventory != null and inventory.has_method("get_inventory"):
+		for item in inventory.call("get_inventory"):
+			if item is Dictionary and str(item.get("item_id", "")) == item_id:
+				return item.duplicate(true)
+	return {"item_id": item_id, "amount": 0, "max_stack": 1, "weight": 0.0, "tags": [], "rarity": "common"}
 
 
 func _get_material_costs() -> Dictionary:
