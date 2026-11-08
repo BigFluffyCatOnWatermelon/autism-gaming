@@ -869,7 +869,7 @@ func _rebuild_capability_list() -> void:
 			"show_empty_state",
 			"Сначала создай объект или выбери его в библиотеке."
 		)
-		_refresh_installed_capabilities_view()
+		_schedule_installed_capabilities_view_refresh()
 		return
 
 	var category_id := str(_capability_view.call("get_selected_category"))
@@ -933,7 +933,15 @@ func _rebuild_capability_list() -> void:
 		_working_definition.capabilities
 	)
 	_capability_view.call("set_preset_data", preset_summaries, active_preset_details)
-	_refresh_installed_capabilities_view()
+	_schedule_installed_capabilities_view_refresh()
+
+
+func _schedule_installed_capabilities_view_refresh() -> void:
+	# The catalog can be rebuilt from a button signal emitted by the installed view.
+	# Defer its refresh so the currently emitting Button is not freed mid-signal.
+	if is_instance_valid(_installed_capabilities_view):
+		call_deferred("_refresh_installed_capabilities_view")
+
 
 func _on_capability_focus_requested(capability_id: String) -> void:
 	if _working_definition == null:

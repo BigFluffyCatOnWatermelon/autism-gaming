@@ -136,7 +136,16 @@ func _run() -> void:
 	(installed_view.get("_search") as LineEdit).text = "здоров"
 	(installed_view.get("_search") as LineEdit).text_changed.emit("здоров")
 	_expect((installed_view.get("_list") as VBoxContainer).get_child_count() == 1, "installed mechanics search filters the grouped list")
-	installed_view.call("_on_configure_pressed", "has_health")
+	var configure_button := (((installed_view.get("_list") as VBoxContainer).get_child(0) as VBoxContainer).get_child(1) as PanelContainer).get_child(0).get_child(2).get_child(0) as Button
+	var deferred_rebuild_requested := false
+	installed_view.connect("configure_requested", func(_capability_id: String) -> void:
+		deferred_rebuild_requested = true
+		installed_view.call_deferred("set_entries", installed_entries)
+	)
+	configure_button.pressed.emit()
+	_expect(is_instance_valid(configure_button), "configure button remains alive until its pressed signal finishes")
+	_expect(deferred_rebuild_requested, "configure action can schedule a list refresh without freeing its signal source")
+	await process_frame
 	installed_view.call("_on_focus_pressed", "has_health")
 	_expect(configure_events == ["has_health"], "configure action targets the selected installed capability")
 	_expect(focus_events == ["has_health"], "catalog action targets the selected installed capability")
