@@ -394,8 +394,8 @@ func _rebuild_view() -> void:
 			else:
 				var dependency_domain: Dictionary = _domains.get(_current_domain_id, {})
 				_breadcrumb.text = "Карта механик  /  Зависимости  /  " + str(dependency_domain.get("name", "Область"))
+				_selected_relation_type = ""
 				_build_domain_toolbar()
-				_selected_relation_type = "requires"
 				_build_domain_graph()
 
 
@@ -505,9 +505,11 @@ func _build_domain_toolbar() -> void:
 	_category_filter.item_selected.connect(_on_category_selected)
 	filters.add_child(_category_filter)
 	_relation_filter = OptionButton.new()
-	_relation_filter.add_item("Все связи")
+	_relation_filter.add_item("Все зависимости" if _current_mode == "dependencies" else "Все связи")
 	_relation_filter.set_item_metadata(0, "")
 	for relation_type in RELATION_TYPE_ORDER:
+		if _current_mode == "dependencies" and relation_type != "requires" and relation_type != "conflicts":
+			continue
 		_relation_filter.add_item(str(RELATION_TYPE_NAMES[relation_type]))
 		_relation_filter.set_item_metadata(_relation_filter.item_count - 1, str(relation_type))
 	_relation_filter.item_selected.connect(_on_relation_selected)
@@ -571,6 +573,8 @@ func _build_domain_graph() -> void:
 		if not _nodes_by_id.has(source) or not _nodes_by_id.has(target):
 			continue
 		var relation_type := str(edge["type"])
+		if _current_mode == "dependencies" and relation_type != "requires" and relation_type != "conflicts":
+			continue
 		if not _selected_relation_type.is_empty() and relation_type != _selected_relation_type:
 			continue
 		var type_id := _relation_type_id(relation_type)
