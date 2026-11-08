@@ -58,7 +58,7 @@ func build_capability_definitions() -> Array[ObjectCapabilityDefinition]:
 		definition.keywords = PackedStringArray([str(item.id).replace("_", " "), str(item.name), CATEGORY_NAME, "время", "событие"])
 		definition.component_ids = PackedStringArray([str(item.id)])
 		definition.available_in_simple_mode = true
-		definition.runtime_status = "Planned"
+		definition.runtime_status = "Implemented"
 		definition.implementation_note = STATE_NOTE
 		definition.version = 1
 		result.append(definition)
