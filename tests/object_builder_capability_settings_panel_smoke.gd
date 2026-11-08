@@ -99,6 +99,14 @@ func _run() -> void:
 	(offset_control.get_child(0) as SpinBox).value = 12.0
 	(offset_control.get_child(1) as SpinBox).value = 24.0
 	var health_entry: Dictionary = view.call("get_setting_entry", "health", "max_health")
+	var health_group_header := health_entry.get("group_header") as Button
+	var health_group_body := health_entry.get("group_body") as VBoxContainer
+	health_group_header.button_pressed = false
+	health_group_header.toggled.emit(false)
+	_expect(not health_group_body.visible, "settings groups can be collapsed independently")
+	health_group_header.button_pressed = true
+	health_group_header.toggled.emit(true)
+	_expect(health_group_body.visible, "settings groups can be expanded without losing their values")
 	var health_label_row := (health_entry.get("row") as VBoxContainer).get_child(0) as HBoxContainer
 	var health_label := health_label_row.get_child(0) as Label
 	_expect(health_label.text == "Максимальное здоровье · ед.", "parameter unit is displayed beside its label")
@@ -141,8 +149,15 @@ func _run() -> void:
 	var apply_button := footer.get_child(2) as Button
 	apply_button.pressed.emit()
 	cancel_button.pressed.emit()
+	var discard_dialog := view.get("_discard_dialog") as ConfirmationDialog
+	_expect(discard_dialog != null and discard_dialog.visible, "closing with pending edits asks before discarding them")
+	_expect(close_count == 0, "pending edits are not discarded before confirmation")
+	discard_dialog.get_cancel_button().pressed.emit()
+	_expect(close_count == 0, "choosing to continue editing keeps the panel open")
+	cancel_button.pressed.emit()
+	discard_dialog.confirmed.emit()
 	_expect(apply_count == 1, "apply button emits a single apply request")
-	_expect(close_count == 1, "cancel button emits a close request")
+	_expect(close_count == 1, "discard confirmation emits the close request")
 
 	var rich_descriptors: Array[Dictionary] = [
 		{
