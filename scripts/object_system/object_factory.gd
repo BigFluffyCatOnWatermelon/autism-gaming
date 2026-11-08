@@ -206,7 +206,7 @@ static func _attach_component(
 	# before the component enters the scene tree so it never operates on an implicit root.
 	if component_node.has_method("bind_target"):
 		var bind_result: Variant = component_node.call("bind_target", target_node)
-		if bind_result is bool and not bind_result:
+		if typeof(bind_result) == TYPE_BOOL and not bool(bind_result):
 			push_error(
 				"ObjectFactory: компонент '%s' отклонил целевой узел '%s'."
 				% [component_id, str(target_node_path)]
