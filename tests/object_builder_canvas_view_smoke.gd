@@ -337,6 +337,8 @@ func _run() -> void:
 	_expect(animated_preview.process_mode == Node.PROCESS_MODE_DISABLED, "pause disables animated sprite processing again")
 	canvas.call("clear_canvas", "No scene")
 	_expect((canvas.get("_animation_button") as Button).disabled, "clearing canvas disables animation preview controls")
+	_expect(not (canvas.get("_animation_range_row") as HBoxContainer).visible, "clearing canvas hides the frame range controls")
+	_expect(frames.get_frame_count(&"idle") == 5, "clearing the preview leaves the original SpriteFrames intact")
 	animated_scene.free()
 
 	canvas.call("clear_canvas", "No scene")
