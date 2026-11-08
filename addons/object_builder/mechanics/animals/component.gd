@@ -20,11 +20,13 @@ func configure_mechanic(values: Dictionary) -> bool:
 	return true
 
 
-func feed(food_id: String, nutrition: float = 10.0) -> bool:
+func feed(food_id: String, nutrition: float = -1.0) -> bool:
 	if not _has_mechanic("can_be_fed"):
 		return _fail("Животное нельзя кормить.")
 	if not _split_csv(str(_option("can_be_fed", "accepted_foods_csv", ""))).has(food_id.strip_edges().to_lower()):
 		return _fail("Этот корм животному не подходит.")
+	if nutrition < 0.0:
+		nutrition = float(_option("can_be_fed", "nutrition_per_feed", 20.0))
 	if not is_finite(nutrition) or nutrition <= 0.0:
 		return _fail("Питательность корма должна быть положительной.")
 	var state := _get_state()
@@ -82,7 +84,6 @@ func advance_time(delta: float) -> void:
 	var state := _get_state()
 	state["pet_cooldown"] = maxf(0.0, float(state.get("pet_cooldown", 0.0)) - delta)
 	state["breeding_cooldown"] = maxf(0.0, float(state.get("breeding_cooldown", 0.0)) - delta)
-	state["production_elapsed"] = float(state.get("production_elapsed", 0.0)) + delta
 	_save_state(state)
 
 
@@ -118,9 +119,10 @@ func get_routine_action(hour: float) -> String:
 			continue
 		var start_hour := float(entry.get("start", 0.0))
 		var end_hour := float(entry.get("end", 24.0))
-		var matches := hour >= start_hour and hour < end_hour
+		var normalized_hour := fposmod(hour, 24.0)
+		var matches := normalized_hour >= start_hour and normalized_hour < end_hour
 		if start_hour > end_hour:
-			matches = hour >= start_hour or hour < end_hour
+			matches = normalized_hour >= start_hour or normalized_hour < end_hour
 		if matches:
 			return str(entry.get("action", "idle"))
 	return str(_option("has_daily_routine", "default_action", "idle"))
