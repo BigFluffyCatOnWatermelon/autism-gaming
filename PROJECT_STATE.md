@@ -1,3 +1,8 @@
+## Пакет генерации мира — 2026-11-08
+- Создан `addons/object_builder/mechanics/world_generation` с десятью механиками генерации.
+- Поддержаны биомы и spawn conditions, region/density rules, weighted variants, deterministic layout по seed (scatter/grid/ring/cluster), spread, growth stages и environment adaptation.
+- Добавлен smoke-сценарий на детерминизм и ограничения спавна. Readiness остаётся `Planned` до прохождения CI и подключения к реальному world-generation pipeline.
+
 ## Пакет времени и событий — 2026-11-08
 - Создан `addons/object_builder/mechanics/world_time` с десятью механиками времени/событий.
 - Реализованы расписание суток, сезонные данные, таймер активации, cooldown, timed respawn, lifespan, погодные правила, периодический output, входящие сигналы и календарное расписание.
