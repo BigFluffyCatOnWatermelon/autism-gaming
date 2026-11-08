@@ -1126,13 +1126,13 @@ func _test_inventory_mechanics() -> void:
 		instance.free()
 		return
 
-	var added := inventory.call("add_item", "wood", 5, 99, 2.0, ["material"], "common")
+	var added: Dictionary = inventory.call("add_item", "wood", 5, 99, 2.0, ["material"], "common")
 	_expect(int(added.get("accepted", 0)) == 5, "inventory accepts items into available slots")
-	var rejected := inventory.call("add_item", "cursed", 1, 1, 1.0, ["material"], "common")
+	var rejected: Dictionary = inventory.call("add_item", "cursed", 1, 1, 1.0, ["material"], "common")
 	_expect(int(rejected.get("accepted", 0)) == 0, "inventory filters blocked item IDs")
-	var weighted := inventory.call("add_item", "stone", 10, 99, 2.0, ["material"], "common")
+	var weighted: Dictionary = inventory.call("add_item", "stone", 10, 99, 2.0, ["material"], "common")
 	_expect(int(weighted.get("accepted", 0)) == 5, "inventory respects its weight capacity")
-	var overflow := inventory.call("add_item", "stone", 1, 99, 2.0, ["material"], "common")
+	var overflow: Dictionary = inventory.call("add_item", "stone", 1, 99, 2.0, ["material"], "common")
 	_expect(int(overflow.get("accepted", 0)) == 0, "inventory rejects additions beyond weight capacity")
 	_expect(int(inventory.call("get_item_count", "wood")) == 5 and int(inventory.call("get_item_count", "stone")) == 5, "failed capacity checks preserve existing inventory contents")
 	_expect(is_equal_approx(float(inventory.call("get_inventory_weight")), 20.0), "inventory reports total carried weight")
