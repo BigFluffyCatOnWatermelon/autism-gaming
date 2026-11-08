@@ -176,7 +176,6 @@ func _run() -> void:
 			"display_name": "Карта палитры",
 			"value_type": "String",
 			"default_value": "{}",
-			"editor_hint": "json",
 			"level": "Advanced",
 			"group_name": "Палитра"
 		},
@@ -189,21 +188,43 @@ func _run() -> void:
 			"editor_hint": "texture",
 			"level": "Basic",
 			"group_name": "Изображение"
+		},
+		{
+			"component_id": "visual",
+			"setting_key": "debris_scene_path",
+			"display_name": "Сцена обломка",
+			"value_type": "String",
+			"default_value": "",
+			"level": "Expert",
+			"group_name": "Обломки"
 		}
 	]
 	selection.set_component_setting("visual", "tint_color", "#ffffff")
 	selection.set_component_setting("visual", "palette_json", "{}")
 	selection.set_component_setting("visual", "texture_path", "")
+	selection.set_component_setting("visual", "debris_scene_path", "")
 	view.call("configure", capability, selection, rich_descriptors)
 	var color_control := view.call("get_setting_control", "visual", "tint_color") as ColorPickerButton
 	var json_control := view.call("get_setting_control", "visual", "palette_json") as TextEdit
 	var texture_control := view.call("get_setting_control", "visual", "texture_path") as LineEdit
+	var scene_control := view.call("get_setting_control", "visual", "debris_scene_path") as LineEdit
 	_expect(color_control != null and color_control.color == Color.WHITE, "color hint uses a native color picker while retaining string serialization")
 	_expect(json_control != null and json_control.text == "{}", "JSON hint uses a multiline editor")
-	_expect(texture_control != null, "texture paths retain a string value for the runtime component")
+	_expect(texture_control != null and scene_control != null, "texture and scene paths retain string values for the runtime component")
 	var texture_entry: Dictionary = view.call("get_setting_entry", "visual", "texture_path")
 	var texture_label_row := (texture_entry.get("row") as VBoxContainer).get_child(0) as HBoxContainer
 	_expect(texture_label_row.get_child_count() == 3, "texture path setting includes reset and resource browse actions")
+	var scene_entry: Dictionary = view.call("get_setting_entry", "visual", "debris_scene_path")
+	var scene_label_row := (scene_entry.get("row") as VBoxContainer).get_child(0) as HBoxContainer
+	_expect(scene_label_row.get_child_count() == 3, "scene-path key automatically receives a project resource picker")
+	(scene_label_row.get_child(2) as Button).pressed.emit()
+	var resource_dialog := view.get("_resource_dialog") as FileDialog
+	_expect(resource_dialog != null and resource_dialog.title == "Выбрать сцену", "scene resource picker uses a scene-specific dialog")
+	_expect(resource_dialog.get_filters().size() == 1 and resource_dialog.get_filters()[0].contains("*.tscn"), "scene picker filters Godot scene resources")
+	resource_dialog.hide()
+	(texture_label_row.get_child(2) as Button).pressed.emit()
+	_expect(resource_dialog.title == "Выбрать текстуру" and resource_dialog.get_filters()[0].contains("*.png"), "texture picker switches to image filters")
+	resource_dialog.hide()
 	json_control.text = "{"
 	view.call("_update_dirty_state")
 	_expect((view.get("_apply_button") as Button).disabled, "invalid JSON cannot be applied")
