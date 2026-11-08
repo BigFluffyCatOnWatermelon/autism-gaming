@@ -215,11 +215,12 @@ func equip_from_slot(slot_index: int, equipment_slot: String) -> bool:
 
 func unequip_to_inventory(equipment_slot: String) -> bool:
 	var slot_id := equipment_slot.strip_edges().to_lower()
-	var state := _get_state()
+	var original_state := _get_state()
+	var state := original_state.duplicate(true)
 	var equipment: Dictionary = state.get("equipment", {})
 	if not equipment.has(slot_id):
 		return _fail("Слот экипировки пуст.")
-	var item: Dictionary = equipment[slot_id]
+	var item: Dictionary = equipment[slot_id].duplicate(true)
 	equipment.erase(slot_id)
 	state["equipment"] = equipment
 	_save_state(state)
@@ -232,14 +233,9 @@ func unequip_to_inventory(equipment_slot: String) -> bool:
 		str(item.get("rarity", "common"))
 	)
 	if int(add_result.get("accepted", 0)) < int(item.get("amount", 1)):
-		var accepted := int(add_result.get("accepted", 0))
-		if accepted > 0:
-			remove_item(str(item.get("item_id", "")), accepted, true)
-		state = _get_state()
-		equipment = state.get("equipment", {})
-		equipment[slot_id] = item
-		state["equipment"] = equipment
-		_save_state(state)
+		# Restoring by item ID is unsafe: a partial stack may have merged into an
+		# older stack with different binding/metadata. Restore the exact snapshot.
+		_save_state(original_state)
 		return _fail("В инвентаре недостаточно места для снятия экипировки.")
 	equipment_changed.emit(slot_id, {})
 	return true
@@ -333,7 +329,13 @@ func sort_inventory(mode: String = "") -> bool:
 
 
 func transfer_to(target: Object, item_id: String, amount: int) -> Dictionary:
-	if not _has_mechanic("supports_quick_transfer") or target == null or not target.has_method("add_item") or not target.has_method("remove_item"):
+	if (
+		not _has_mechanic("supports_quick_transfer")
+		or target == null
+		or target == self
+		or not target.has_method("add_item")
+		or not target.has_method("remove_item")
+	):
 		return _failed_result("Быстрое перемещение недоступно.")
 	if not target.has_method("_has_mechanic") or not bool(target.call("_has_mechanic", "supports_quick_transfer")):
 		return _failed_result("У принимающего инвентаря не включено быстрое перемещение.")
@@ -344,8 +346,12 @@ func transfer_to(target: Object, item_id: String, amount: int) -> Dictionary:
 	if bool(source_item.get("bound", false)) and _has_mechanic("supports_item_binding"):
 		return _failed_result("Закреплённый предмет нельзя переместить.")
 	var quantity := mini(amount, int(source_item.get("amount", 0)))
-	if quantity <= 0 or not remove_item(item_id, quantity):
-		return _failed_result("Не удалось изъять предмет из исходного инвентаря.")
+	if quantity <= 0:
+		return _failed_result("Количество для перемещения должно быть положительным.")
+
+	# Let the receiver calculate its real capacity first. The source is only
+	# changed after the accepted quantity is known, avoiding lossy re-insertion.
+	var target_state: Dictionary = target.call("export_runtime_state") if target.has_method("export_runtime_state") else {}
 	var added: Dictionary = target.call(
 		"add_item",
 		item_id,
@@ -355,16 +361,11 @@ func transfer_to(target: Object, item_id: String, amount: int) -> Dictionary:
 		source_item.get("tags", []),
 		str(source_item.get("rarity", "common"))
 	)
-	var accepted := int(added.get("accepted", 0))
-	if accepted < quantity:
-		add_item(
-			item_id,
-			quantity - accepted,
-			int(source_item.get("max_stack", 1)),
-			float(source_item.get("weight", 0.0)),
-			source_item.get("tags", []),
-			str(source_item.get("rarity", "common"))
-		)
+	var accepted := clampi(int(added.get("accepted", 0)), 0, quantity)
+	if accepted > 0 and not remove_item(item_id, accepted):
+		if not target_state.is_empty() and target.has_method("import_runtime_state"):
+			target.call("import_runtime_state", target_state)
+		return _failed_result("Не удалось изъять предмет из исходного инвентаря.")
 	return {"ok": accepted == quantity, "transferred": accepted, "remainder": quantity - accepted}
 
 
@@ -376,35 +377,28 @@ func craft(recipe_id: String) -> Dictionary:
 		return _failed_result("Рецепт не найден: " + recipe_id)
 	var recipe: Dictionary = recipes[recipe_id]
 	var ingredients: Dictionary = recipe.get("ingredients", {})
-	var removed: Array[Dictionary] = []
+	var original_state := _get_state()
 	for ingredient_id in ingredients:
 		var amount := int(ingredients[ingredient_id])
 		if amount <= 0 or get_item_count(str(ingredient_id)) < amount:
-			for rollback in removed:
-				add_item(str(rollback.item_id), int(rollback.amount), int(rollback.max_stack), float(rollback.weight), rollback.get("tags", []), str(rollback.get("rarity", "common")))
+			_save_state(original_state)
 			return _failed_result("Недостаточно ингредиентов для рецепта: " + str(ingredient_id))
-		var sample := _find_item(str(ingredient_id))
 		if not remove_item(str(ingredient_id), amount):
-			for rollback in removed:
-				add_item(str(rollback.item_id), int(rollback.amount), int(rollback.max_stack), float(rollback.weight), rollback.get("tags", []), str(rollback.get("rarity", "common")))
+			# A failed craft must restore exact slots, flags and item metadata.
+			_save_state(original_state)
 			return _failed_result("Не удалось списать ингредиент: " + str(ingredient_id))
-		sample["amount"] = amount
-		removed.append(sample)
 	var output: Dictionary = recipe.get("output", {})
+	var requested_output := int(output.get("amount", 1))
 	var result := add_item(
 		str(output.get("item_id", "")),
-		int(output.get("amount", 1)),
+		requested_output,
 		int(output.get("max_stack", 1)),
 		float(output.get("weight", 0.0)),
 		output.get("tags", []),
 		str(output.get("rarity", "common"))
 	)
-	if int(result.get("accepted", 0)) < int(output.get("amount", 1)):
-		var partial_output := int(result.get("accepted", 0))
-		if partial_output > 0:
-			remove_item(str(output.get("item_id", "")), partial_output, true)
-		for rollback in removed:
-			add_item(str(rollback.item_id), int(rollback.amount), int(rollback.max_stack), float(rollback.weight), rollback.get("tags", []), str(rollback.get("rarity", "common")))
+	if int(result.get("accepted", 0)) < requested_output:
+		_save_state(original_state)
 		return _failed_result("Недостаточно места или веса для результата рецепта.")
 	return {"ok": true, "recipe_id": recipe_id, "output": output.duplicate(true)}
 
