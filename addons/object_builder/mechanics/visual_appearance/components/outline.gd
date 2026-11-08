@@ -1,7 +1,7 @@
 @tool
 extends "res://addons/object_builder/mechanics/visual_appearance/components/mechanic_component.gd"
 
-var _previous_material: Material
+var _previous_materials: Dictionary = {}
 var _outline_material: ShaderMaterial
 
 
@@ -39,7 +39,9 @@ func apply_to(sprite: Sprite2D) -> bool:
         """
         _outline_material = ShaderMaterial.new()
         _outline_material.shader = shader
-        _previous_material = sprite.material
+    var sprite_id := sprite.get_instance_id()
+    if not _previous_materials.has(sprite_id):
+        _previous_materials[sprite_id] = sprite.material
     _outline_material.set_shader_parameter("outline_color", Color.from_string(raw_color, Color.WHITE))
     _outline_material.set_shader_parameter("outline_width", float(get_option("outline_width", 1.0)))
     sprite.material = _outline_material
@@ -50,6 +52,8 @@ func apply_to(sprite: Sprite2D) -> bool:
 func remove_from(sprite: Sprite2D) -> bool:
     if not is_instance_valid(sprite):
         return fail("Не передан действительный Sprite2D.")
-    if sprite.material == _outline_material:
-        sprite.material = _previous_material
+    var sprite_id := sprite.get_instance_id()
+    if sprite.material == _outline_material and _previous_materials.has(sprite_id):
+        sprite.material = _previous_materials[sprite_id]
+        _previous_materials.erase(sprite_id)
     return true
