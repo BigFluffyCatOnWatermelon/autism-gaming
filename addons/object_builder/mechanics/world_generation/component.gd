@@ -7,6 +7,18 @@ signal spread_completed(cells: Array[Vector2i])
 signal action_failed(reason: String)
 
 
+func _ready() -> void:
+	if not Engine.is_editor_hint() and _has_mechanic("can_grow"):
+		set_process(true)
+
+
+func _process(delta: float) -> void:
+	if Engine.is_editor_hint() or not is_inside_tree() or not _has_mechanic("can_grow"):
+		return
+	if is_finite(delta) and delta > 0.0:
+		advance_growth(delta)
+
+
 func set_world_seed(seed_value: int) -> bool:
 	if not _has_mechanic("supports_world_seed"):
 		return _fail("Фиксированный seed мира не включён.")
@@ -143,9 +155,9 @@ func get_spread_cells(origin: Vector2i, occupied: Array = []) -> Array[Vector2i]
 		for y in range(-radius, radius + 1):
 			if x == 0 and y == 0:
 				continue
-			if not diagonal and absi(x) + absi(y) != 1:
-				continue
 			if diagonal and maxi(absi(x), absi(y)) > radius:
+				continue
+			if not diagonal and absi(x) + absi(y) > radius:
 				continue
 			var cell := origin + Vector2i(x, y)
 			if occupied.has(cell):
