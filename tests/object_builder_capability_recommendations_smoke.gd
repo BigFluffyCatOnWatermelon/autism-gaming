@@ -186,6 +186,7 @@ func _test_query_and_tag_ranking() -> void:
 	)
 	var base_health := _find_recommendation(base, "has_health")
 	var contextual_health := _find_recommendation(contextual, "has_health")
+	print("RECOMMENDATION DEBUG contextual health: ", contextual_health)
 	_expect(not base_health.is_empty() and not contextual_health.is_empty(), "health remains recommended with or without an active query")
 	if not base_health.is_empty() and not contextual_health.is_empty():
 		_expect(
