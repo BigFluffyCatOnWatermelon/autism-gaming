@@ -1125,6 +1125,9 @@ func _test_inventory_mechanics() -> void:
 	_expect(int(rejected.get("accepted", 0)) == 0, "inventory filters blocked item IDs")
 	var weighted := inventory.call("add_item", "stone", 10, 99, 2.0, ["material"], "common")
 	_expect(int(weighted.get("accepted", 0)) == 5, "inventory respects its weight capacity")
+	var overflow := inventory.call("add_item", "stone", 1, 99, 2.0, ["material"], "common")
+	_expect(int(overflow.get("accepted", 0)) == 0, "inventory rejects additions beyond weight capacity")
+	_expect(int(inventory.call("get_item_count", "wood")) == 5 and int(inventory.call("get_item_count", "stone")) == 5, "failed capacity checks preserve existing inventory contents")
 	_expect(is_equal_approx(float(inventory.call("get_inventory_weight")), 20.0), "inventory reports total carried weight")
 
 	var slots: Array = inventory.call("get_inventory")
