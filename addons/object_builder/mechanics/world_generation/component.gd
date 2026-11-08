@@ -8,12 +8,12 @@ signal action_failed(reason: String)
 
 
 func _ready() -> void:
-	if not Engine.is_editor_hint() and _has_mechanic("can_grow"):
+	if not Engine.is_editor_hint() and component_id == "can_grow":
 		set_process(true)
 
 
 func _process(delta: float) -> void:
-	if Engine.is_editor_hint() or not is_inside_tree() or not _has_mechanic("can_grow"):
+	if Engine.is_editor_hint() or not is_inside_tree() or component_id != "can_grow":
 		return
 	if is_finite(delta) and delta > 0.0:
 		advance_growth(delta)
