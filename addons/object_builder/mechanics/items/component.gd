@@ -33,7 +33,7 @@ func configure_mechanic(values: Dictionary) -> bool:
 
 
 func is_pickup_allowed() -> bool:
-	return _has_mechanic("is_pickup_item") and bool(_option("is_pickup_item", "pickup_enabled", true)) and _get_count() > 0
+	return _has_mechanic("is_pickup_item") and bool(_option("is_pickup_item", "pickup_enabled", true)) and _get_count() > 0 and not is_picked_up()
 
 
 func mark_picked_up() -> bool:
@@ -99,9 +99,11 @@ func get_item_value() -> float:
 	return maxf(0.0, float(_option("has_item_value", "base_value", 0.0)))
 
 
-func consume(amount: int = 1) -> bool:
+func consume(amount: int = -1) -> bool:
 	if not _has_mechanic("is_consumable"):
 		return _fail("Предмет не является расходуемым.")
+	if amount < 0:
+		amount = maxi(1, int(_option("is_consumable", "consume_amount", 1)))
 	if amount <= 0 or amount > _get_count():
 		return _fail("Недопустимое количество для использования.")
 	var remaining := _set_count(_get_count() - amount)
@@ -168,7 +170,8 @@ func trade(quantity: int = 1, price_modifier: float = 1.0) -> Dictionary:
 		return _failed_result("Предмет нельзя обменять.")
 	if quantity <= 0 or quantity > _get_count() or not is_finite(price_modifier) or price_modifier < 0.0:
 		return _failed_result("Недопустимое количество или множитель цены.")
-	var total := get_item_value() * float(quantity) * price_modifier
+	var configured_modifier := maxf(0.0, float(_option("can_be_traded", "trade_price_multiplier", 1.0)))
+	var total := get_item_value() * float(quantity) * price_modifier * configured_modifier
 	_set_count(_get_count() - quantity)
 	item_traded.emit(quantity, total)
 	_emit_state()
@@ -246,7 +249,8 @@ func import_runtime_state(state: Dictionary) -> bool:
 
 
 func _get_count() -> int:
-	return maxi(0, int(_get_shared("object_builder_item_count", int(_option("is_stackable", "initial_count", 1)))))
+	var initial := int(_option("is_stackable", "initial_count", 1))
+	return mini(get_max_stack_size(), maxi(0, int(_get_shared("object_builder_item_count", initial))))
 
 
 func _set_count(value: int) -> int:
