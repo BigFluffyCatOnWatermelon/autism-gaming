@@ -1726,7 +1726,8 @@ func _test_world_time_mechanics() -> void:
 	_expect(time_component.call("update_world_time", 2, 8.0).size() == 1, "daily scheduled events become eligible on the next day")
 	var saved_state: Dictionary = time_component.call("export_runtime_state")
 	_expect(bool(time_component.call("import_runtime_state", saved_state)), "world-time runtime state can be restored")
-	time_component.settings["delay_seconds"] = 0.01
+	var activation_component := ObjectFactory.get_component(instance, "has_timed_activation")
+	activation_component.settings["delay_seconds"] = 0.01
 	time_component.call("start_timed_activation")
 	root.add_child(instance)
 	await create_timer(0.05).timeout
