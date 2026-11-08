@@ -11,5 +11,9 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 		return null
 	var preview := Label.new()
 	preview.text = "Переместить часть"
-	set_drag_preview(preview)
+	var viewport := get_viewport()
+	if viewport != null and viewport.gui_is_dragging():
+		set_drag_preview(preview)
+	else:
+		preview.free()
 	return {"part_path": str(part_path), "parent_path": str(parent_path)}

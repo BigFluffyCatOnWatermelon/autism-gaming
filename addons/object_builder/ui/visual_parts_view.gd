@@ -448,7 +448,9 @@ func _on_search_changed(_value: String) -> void:
 
 func _on_part_selected(path: NodePath) -> void:
 	_selected_path = path
-	_selected_paths = [path] if not path.is_empty() else []
+	_selected_paths.clear()
+	if not path.is_empty():
+		_selected_paths.append(path)
 	_update_row_selection()
 	part_selected.emit(path)
 
