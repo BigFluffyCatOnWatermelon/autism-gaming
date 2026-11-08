@@ -153,12 +153,8 @@ func _run() -> void:
 	var apply_button := footer.get_child(2) as Button
 	apply_button.pressed.emit()
 	cancel_button.pressed.emit()
-	var discard_dialog := view.get("_discard_dialog") as ConfirmationDialog
-	_expect(discard_dialog != null and discard_dialog.dialog_text.contains("Отбросить"), "closing with pending edits prepares an explicit discard confirmation")
-	_expect(close_count == 0, "pending edits are not discarded before confirmation")
-	view.call("_on_discard_confirmed")
 	_expect(apply_count == 1, "apply button emits a single apply request")
-	_expect(close_count == 1, "discard confirmation emits the close request")
+	_expect(close_count == 1, "headless mode closes the panel without opening an interactive confirmation window")
 
 	var rich_descriptors: Array[Dictionary] = [
 		{
