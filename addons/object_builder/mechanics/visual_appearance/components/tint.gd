@@ -6,6 +6,13 @@ func _on_configured() -> void:
     _load_options({"tint_color": "#ffffff"})
 
 
+func _apply_bound_target() -> bool:
+    var target := find_canvas_item()
+    if target == null:
+        return fail("Для оттенка нужен CanvasItem в целевой ветке.")
+    return apply_to(target)
+
+
 func apply_to(target: CanvasItem, color_override: String = "") -> bool:
     if not is_instance_valid(target):
         return fail("Не передан действительный CanvasItem.")
