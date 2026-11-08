@@ -212,7 +212,9 @@ func link_container(target: Object) -> bool:
 		group_id = "container_group_" + str(Time.get_ticks_usec()) + "_" + str(randi())
 		var target_state: Dictionary = target.call("_get_state")
 		_shared_storage_states[group_id] = target_state.duplicate(true)
-		target_root.set_meta("object_builder_container_shared_group", group_id)
+		target_root.remove_meta("object_builder_container_force_local")
+	own_root.remove_meta("object_builder_container_force_local")
+	target_root.set_meta("object_builder_container_shared_group", group_id)
 	own_root.set_meta("object_builder_container_shared_group", group_id)
 	var merged := _get_state()
 	_shared_storage_states[group_id] = merged.duplicate(true)
@@ -255,7 +257,7 @@ func _get_state() -> Dictionary:
 	if root == null:
 		return {"items": [], "locked": false}
 	var group_id := str(root.get_meta("object_builder_container_shared_group", ""))
-	if group_id.is_empty() and _has_mechanic("has_shared_storage"):
+	if group_id.is_empty() and not bool(root.get_meta("object_builder_container_force_local", false)) and _has_mechanic("has_shared_storage"):
 		group_id = str(_option("has_shared_storage", "shared_group_id", "")).strip_edges()
 	if not group_id.is_empty():
 		if not _shared_storage_states.has(group_id):
@@ -284,7 +286,7 @@ func _save_state(state: Dictionary) -> void:
 		return
 	var copied := state.duplicate(true)
 	var group_id := str(root.get_meta("object_builder_container_shared_group", ""))
-	if group_id.is_empty() and _has_mechanic("has_shared_storage"):
+	if group_id.is_empty() and not bool(root.get_meta("object_builder_container_force_local", false)) and _has_mechanic("has_shared_storage"):
 		group_id = str(_option("has_shared_storage", "shared_group_id", "")).strip_edges()
 	if not group_id.is_empty():
 		_shared_storage_states[group_id] = copied
