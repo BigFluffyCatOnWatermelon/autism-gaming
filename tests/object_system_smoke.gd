@@ -1760,9 +1760,9 @@ func _test_world_generation_mechanics() -> void:
 				binding.component_definition.settings["max_per_region"] = 2
 				binding.component_definition.settings["density_by_region_json"] = "{\"forest\":3}"
 			"can_spread":
-				binding.component_definition.settings["spread_radius"] = 1
-				binding.component_definition.settings["max_spread_cells"] = 2
-				binding.component_definition.settings["allow_diagonal"] = true
+				binding.component_definition.settings["spread_radius"] = 2
+				binding.component_definition.settings["max_spread_cells"] = 20
+				binding.component_definition.settings["allow_diagonal"] = false
 			"can_grow":
 				binding.component_definition.settings["growth_duration"] = 10.0
 				binding.component_definition.settings["growth_stages_json"] = "[0.5,1.0]"
@@ -1808,7 +1808,8 @@ func _test_world_generation_mechanics() -> void:
 	var second_layout: Array = generation.call("generate_layout", Rect2(Vector2.ZERO, Vector2(100.0, 100.0)), 123)
 	_expect(first_layout.size() == 5 and first_layout == second_layout, "procedural layouts are deterministic for the same seed")
 	var spread: Array = generation.call("get_spread_cells", Vector2i.ZERO, [Vector2i(1, 0)])
-	_expect(spread.size() == 2 and not spread.has(Vector2i(1, 0)), "spread selects free neighbouring cells")
+	_expect(spread.has(Vector2i(2, 0)) and not spread.has(Vector2i(1, 0)), "cardinal spread respects its configured radius and occupied cells")
+	_expect(not spread.has(Vector2i(2, 2)), "cardinal spread excludes diagonal cells when disabled")
 	var first_growth: Dictionary = generation.call("advance_growth", 5.0)
 	_expect(int(first_growth.get("stage", 0)) == 1, "world-generation advances to the first growth stage")
 	var final_growth: Dictionary = generation.call("advance_growth", 5.0)
