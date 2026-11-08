@@ -133,12 +133,14 @@ func _run() -> void:
 	installed_view.call("set_entries", installed_entries)
 	_expect(str((installed_view.get("_count_label") as Label).text) == "Включено: 2", "installed mechanics view reports the enabled count")
 	_expect((installed_view.get("_list") as VBoxContainer).get_child_count() == 2, "installed mechanics are grouped by category")
+	(installed_view.get("_search") as LineEdit).text = "здоров"
 	(installed_view.get("_search") as LineEdit).text_changed.emit("здоров")
 	_expect((installed_view.get("_list") as VBoxContainer).get_child_count() == 1, "installed mechanics search filters the grouped list")
 	installed_view.call("_on_configure_pressed", "has_health")
 	installed_view.call("_on_focus_pressed", "has_health")
 	_expect(configure_events == ["has_health"], "configure action targets the selected installed capability")
 	_expect(focus_events == ["has_health"], "catalog action targets the selected installed capability")
+	(installed_view.get("_search") as LineEdit).text = ""
 	(installed_view.get("_search") as LineEdit).text_changed.emit("")
 	var no_installed_entries: Array[Dictionary] = []
 	installed_view.call("set_entries", no_installed_entries, "Сначала выбери объект.")
