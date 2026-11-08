@@ -5,7 +5,8 @@
 - [ ] Интегрировать visual appearance и animation: привязка Sprite2D/AnimationPlayer/AnimatedSprite2D, безопасное применение и очистка временных узлов.
 - [ ] Подключить сохранение/восстановление runtime-состояния для object_identity и остальных stateful-компонентов.
 - [ ] Довести до готовности все 58 существующих механик с Planned-статусом, по категориям и с отдельными smoke-тестами.
-- [ ] Реализовать отсутствующие модули для 70 механик: containers, construction, ai, animals, audio_effects, world_time, world_generation.
+- [ ] Реализовать отсутствующие модули для 60 механик: construction, ai, animals, audio_effects, world_time, world_generation.
+- [ ] Подтвердить harvesting, items, inventory и containers: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness сорока записей.
 - [ ] Подтвердить harvesting, items и inventory: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness тридцати записей.
 - [ ] Подтвердить harvesting и items: пройти Godot CI, устранить ошибки smoke-тестов и только после этого повысить readiness двадцати записей.
 - [ ] Подтвердить harvesting-пакет: пройти Godot CI, устранить ошибки smoke-теста и только после этого повысить readiness десяти записей.
