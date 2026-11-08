@@ -52,6 +52,9 @@ func _run() -> void:
 	map.call("open_domain", "combat")
 	map.call("_show_dependencies")
 	_expect(int(map.call("get_visible_mechanic_count")) > 0, "dependency mode keeps the selected domain navigable")
+	map.call("_show_overview")
+	map.call("_show_dependencies")
+	_expect(int(map.call("get_node_count")) == 9, "global dependency overview aggregates mandatory links across all domains")
 
 	host_control.queue_free()
 	if failures.is_empty():
