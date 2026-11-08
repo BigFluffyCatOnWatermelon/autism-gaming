@@ -72,6 +72,7 @@ func start_cooldown(duration: float = -1.0) -> bool:
 		return _fail("Длительность перезарядки некорректна.")
 	var state := _get_state()
 	state["cooldown_remaining"] = resolved
+	state["cooldown_ready"] = false
 	_save_state(state)
 	return true
 
@@ -82,11 +83,13 @@ func advance_cooldown(delta: float) -> bool:
 	var state := _get_state()
 	var remaining := maxf(0.0, float(state.get("cooldown_remaining", 0.0)) - delta)
 	state["cooldown_remaining"] = remaining
-	_save_state(state)
+	var became_ready := remaining <= 0.0 and not bool(state.get("cooldown_ready", false))
 	if remaining <= 0.0:
+		state["cooldown_ready"] = true
+	_save_state(state)
+	if became_ready:
 		cooldown_ready.emit()
-		return true
-	return false
+	return remaining <= 0.0
 
 
 func get_cooldown_remaining() -> float:
@@ -228,6 +231,7 @@ func _get_state() -> Dictionary:
 		"activation_elapsed": 0.0,
 		"activated": false,
 		"cooldown_remaining": 0.0,
+		"cooldown_ready": false,
 		"alive": true,
 		"respawn_remaining": 0.0,
 		"lifespan_remaining": float(_option("has_lifespan", "lifespan_seconds", 60.0)),
