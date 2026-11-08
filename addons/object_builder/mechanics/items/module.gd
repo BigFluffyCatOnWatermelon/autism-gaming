@@ -48,6 +48,10 @@ func build_component_definitions() -> Array[ObjectComponentDefinition]:
 func build_capability_definitions() -> Array[ObjectCapabilityDefinition]:
 	var result: Array[ObjectCapabilityDefinition] = []
 	for item in DEFINITIONS:
+		# is_pickup_item is a reserved built-in capability backed by the core Pickup component.
+		# Keep the package component definition, but never attempt to replace the built-in card.
+		if str(item.id) == "is_pickup_item":
+			continue
 		var definition := ObjectCapabilityDefinition.new()
 		definition.capability_id = str(item.id)
 		definition.display_name = str(item.name)
