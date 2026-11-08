@@ -689,7 +689,8 @@ func _open_resource_picker(index: int) -> void:
 		_resource_dialog.title = "Выбрать текстуру"
 		_resource_dialog.add_filter("*.png, *.jpg, *.jpeg, *.webp, *.svg, *.bmp ; Изображения")
 	_resource_dialog.current_dir = "res://"
-	_resource_dialog.popup_centered(Vector2i(760, 520))
+	if DisplayServer.get_name() != "headless":
+		_resource_dialog.popup_centered(Vector2i(760, 520))
 
 
 func _on_resource_file_selected(path: String) -> void:
@@ -738,7 +739,8 @@ func _on_close_pressed() -> void:
 		_discard_dialog.get_cancel_button().text = "Продолжить редактирование"
 		_discard_dialog.confirmed.connect(_on_discard_confirmed)
 		add_child(_discard_dialog)
-	_discard_dialog.popup_centered(Vector2i(440, 180))
+	if DisplayServer.get_name() != "headless":
+		_discard_dialog.popup_centered(Vector2i(440, 180))
 
 
 func _on_discard_confirmed() -> void:
