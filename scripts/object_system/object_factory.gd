@@ -202,6 +202,17 @@ static func _attach_component(
 	component_node.component_id = component_id
 	component_node.configure_context(object_root, binding_id, target_node_path)
 	component_node.configure(component_settings)
+	# Mechanic packages expose explicit bind_target() contracts. Resolve the binding
+	# before the component enters the scene tree so it never operates on an implicit root.
+	if component_node.has_method("bind_target"):
+		var bind_result: Variant = component_node.call("bind_target", target_node)
+		if bind_result is bool and not bind_result:
+			push_error(
+				"ObjectFactory: компонент '%s' отклонил целевой узел '%s'."
+				% [component_id, str(target_node_path)]
+			)
+			component_node.free()
+			return false
 	target_node.add_child(component_node)
 	return true
 
