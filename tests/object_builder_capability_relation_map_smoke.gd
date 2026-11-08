@@ -64,6 +64,12 @@ func _run() -> void:
 	map.call("set_full_relation_filter", "recommends")
 	_expect(int(map.call("get_connection_count")) >= 1, "installed map relation filter preserves matching typed edges")
 	map.call("set_full_relation_filter", "")
+	map.call("update_installed", ["plays_attack_sound"])
+	_expect(int(map.call("get_installed_capability_count")) == 1, "open installed map refreshes when the object loses a mechanic")
+	_expect(int(map.call("get_node_count")) == 1, "installed map removes nodes no longer enabled on the object")
+	map.call("update_installed", installed_ids)
+	_expect(int(map.call("get_installed_capability_count")) == 2, "open installed map refreshes when the object gains a mechanic")
+	_expect(int(map.call("get_connection_count")) >= 1, "installed map restores relations after the object composition changes")
 
 	map.call("open_domain", "combat")
 	map.call("_show_dependencies")
