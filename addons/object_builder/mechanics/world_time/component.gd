@@ -119,6 +119,9 @@ func advance_timed_activation(delta: float) -> bool:
 	state["activated"] = activated
 	_save_state(state)
 	if activated:
+		var root := get_object_root()
+		if root != null:
+			root.set_meta("object_active", true)
 		timer_activated.emit()
 	return activated
 
