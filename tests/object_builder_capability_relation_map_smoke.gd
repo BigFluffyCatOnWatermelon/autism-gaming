@@ -49,6 +49,22 @@ func _run() -> void:
 	_expect(int(map.call("get_connection_count")) > 0, "local focus draws typed relations around the selected mechanic")
 	_expect(int(map.call("get_relation_type_count")) == 6, "all six relation kinds remain distinguishable")
 
+	var installed_ids: Array[String] = ["can_attack", "has_cooldown", "can_aim"]
+	map.call("open_installed", host_control, installed_ids)
+	_expect(int(map.call("get_installed_capability_count")) == 3, "installed map receives only the enabled capability IDs")
+	_expect(int(map.call("get_visible_mechanic_count")) == 3, "installed map shows every enabled mechanic")
+	_expect(int(map.call("get_node_count")) == 3, "installed map creates no nodes for disabled catalogue mechanics")
+	_expect(int(map.call("get_installed_edge_count")) >= 2, "installed map derives relations only between installed mechanics")
+	_expect(int(map.call("get_connection_count")) >= 2, "installed map draws the relations between its enabled mechanics")
+	_expect(bool(map.call("has_installed_capability", "can_attack")), "installed map keeps a stable ID lookup for enabled nodes")
+	_expect(not bool(map.call("has_installed_capability", "can_be_picked_up")), "installed map excludes mechanics absent from the object")
+	map.call("filter_full_map", "can_aim")
+	_expect(int(map.call("get_visible_mechanic_count")) == 1, "installed map search filters only its enabled nodes")
+	map.call("filter_full_map", "")
+	map.call("set_full_relation_filter", "recommends")
+	_expect(int(map.call("get_connection_count")) >= 2, "installed map relation filter preserves matching typed edges")
+	map.call("set_full_relation_filter", "")
+
 	map.call("open_domain", "combat")
 	map.call("_show_dependencies")
 	_expect(int(map.call("get_visible_mechanic_count")) > 0, "dependency mode keeps the selected domain navigable")

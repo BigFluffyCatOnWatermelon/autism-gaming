@@ -10,6 +10,7 @@ var search_events: Array[String] = []
 var filter_events: Array[int] = []
 var selection_events: Array[int] = []
 var action_events: Array[String] = []
+var installed_map_events: Array[String] = []
 var collection_management_events: Array[String] = []
 
 
@@ -126,12 +127,17 @@ func _run() -> void:
 	var focus_events: Array[String] = []
 	installed_view.connect("configure_requested", func(capability_id: String) -> void: configure_events.append(capability_id))
 	installed_view.connect("focus_requested", func(capability_id: String) -> void: focus_events.append(capability_id))
+	installed_view.connect("map_requested", func(capability_ids: Array[String]) -> void: installed_map_events.append_array(capability_ids))
 	var installed_entries: Array[Dictionary] = [
 		{"capability_id": "has_health", "display_name": "Здоровье", "description": "Параметры здоровья", "category_id": "stats", "category_name": "Характеристики"},
 		{"capability_id": "damageable", "display_name": "Разрушаемость", "description": "Получение урона", "category_id": "destruction", "category_name": "Разрушение"}
 	]
 	installed_view.call("set_entries", installed_entries)
 	_expect(str((installed_view.get("_count_label") as Label).text) == "Включено: 2", "installed mechanics view reports the enabled count")
+	var map_button := installed_view.get("_map_button") as Button
+	_expect(not map_button.disabled, "installed mechanics map is available when the object has enabled mechanics")
+	map_button.pressed.emit()
+	_expect(installed_map_events == ["has_health", "damageable"], "installed map action passes only the enabled mechanic IDs")
 	_expect((installed_view.get("_list") as VBoxContainer).get_child_count() == 2, "installed mechanics are grouped by category")
 	(installed_view.get("_search") as LineEdit).text = "здоров"
 	(installed_view.get("_search") as LineEdit).text_changed.emit("здоров")
@@ -153,6 +159,7 @@ func _run() -> void:
 	(installed_view.get("_search") as LineEdit).text_changed.emit("")
 	var no_installed_entries: Array[Dictionary] = []
 	installed_view.call("set_entries", no_installed_entries, "Сначала выбери объект.")
+	_expect((installed_view.get("_map_button") as Button).disabled, "installed mechanics map is disabled when the object has no enabled mechanics")
 	_expect((installed_view.get("_empty_label") as Label).visible, "empty installed mechanics state is visible")
 	_expect(str((installed_view.get("_empty_label") as Label).text) == "Сначала выбери объект.", "empty state explains why no mechanics are listed")
 

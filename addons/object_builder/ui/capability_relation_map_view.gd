@@ -5,6 +5,7 @@ class_name CapabilityRelationMapView
 ## The map is read-only: navigation changes catalogue focus but never enables a capability.
 
 signal focus_requested(capability_id: String)
+signal configure_requested(capability_id: String)
 
 const CapabilityIconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
 
@@ -65,6 +66,7 @@ var _search_query := ""
 var _selected_category_id := ""
 var _selected_relation_type := ""
 var _selected_status := "all"
+var _installed_capability_ids: Array[String] = []
 
 
 func open(host_control: Control, focused_definition: ObjectCapabilityDefinition, entries: Array[Dictionary]) -> void:
@@ -101,6 +103,33 @@ func open_full(host_control: Control, focused_capability_id: String = "") -> voi
 	_focused_capability_id = focused_capability_id
 	_current_mode = "overview"
 	_current_domain_id = ""
+	_search_query = ""
+	_selected_category_id = ""
+	_selected_relation_type = ""
+	_selected_status = "all"
+	_rebuild_view()
+
+
+func open_installed(host_control: Control, capability_ids: Array[String]) -> void:
+	if host_control == null:
+		return
+	_open_window(host_control, "Карта включённых механик · объект")
+	_catalog = CapabilityMapDataServiceScript.build_catalog()
+	_domains = _catalog["domains"]
+	_definitions = _catalog["definitions"]
+	_edges = CapabilityMapDataServiceScript.build_edges(_definitions)
+	_installed_capability_ids.clear()
+	var seen: Dictionary = {}
+	for raw_id in capability_ids:
+		var capability_id := str(raw_id).strip_edges().to_lower()
+		if capability_id.is_empty() or seen.has(capability_id) or not _definitions.has(capability_id):
+			continue
+		seen[capability_id] = true
+		_installed_capability_ids.append(capability_id)
+	_installed_capability_ids.sort()
+	_current_mode = "installed"
+	_current_domain_id = ""
+	_focused_capability_id = ""
 	_search_query = ""
 	_selected_category_id = ""
 	_selected_relation_type = ""
@@ -154,20 +183,27 @@ func _rebuild_view() -> void:
 	_breadcrumb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_breadcrumb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_toolbar.add_child(_breadcrumb)
-	_add_toolbar_button("Обзор", _show_overview, _current_mode == "overview")
-	if _current_mode != "overview":
-		_add_toolbar_button("Назад", _go_back)
-	if not _focused_capability_id.is_empty() and _current_mode != "local":
-		_add_toolbar_button("Связи", _show_local_focus)
-	_add_toolbar_button("Зависимости", _show_dependencies, _current_mode == "dependencies")
-	if not _current_domain_id.is_empty() and _current_mode != "domain":
-		_add_toolbar_button("Область", _show_current_domain)
+	if _current_mode == "installed":
+		_add_toolbar_button("Каталог механик", _show_overview)
+	else:
+		_add_toolbar_button("Обзор", _show_overview, _current_mode == "overview")
+		if _current_mode != "overview":
+			_add_toolbar_button("Назад", _go_back)
+		if not _focused_capability_id.is_empty() and _current_mode != "local":
+			_add_toolbar_button("Связи", _show_local_focus)
+		_add_toolbar_button("Зависимости", _show_dependencies, _current_mode == "dependencies")
+		if not _current_domain_id.is_empty() and _current_mode != "domain":
+			_add_toolbar_button("Область", _show_current_domain)
 	_add_toolbar_button("Закрыть", _close_window)
 	_hint = Label.new()
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_hint.add_theme_color_override("font_color", Color(0.72, 0.77, 0.84))
 	_layout.add_child(_hint)
 	match _current_mode:
+		"installed":
+			_breadcrumb.text = "Карта включённых механик  /  Объект"
+			_hint.text = "Только реально включённые механики этого объекта. Связи отображаются, только если оба конца связи входят в установленный состав. Просмотр карты ничего не включает и не отключает."
+			_build_installed_graph()
 		"overview":
 			_breadcrumb.text = "Карта механик  /  Обзор"
 			_hint.text = "Сначала выбери тематическую область. Здесь показаны только крупные направления и связи между ними — без перегружающих линий от каждой отдельной механики."
@@ -398,6 +434,203 @@ func _build_domain_graph() -> void:
 			continue
 		var type_id := _relation_type_id(relation_type)
 		_graph.connect_node(str(_node_names_by_id[source]), type_id - 1, str(_node_names_by_id[target]), type_id - 1)
+
+
+func _build_installed_graph() -> void:
+	var filters := HBoxContainer.new()
+	filters.add_theme_constant_override("separation", 5)
+	_layout.add_child(filters)
+	_search_input = LineEdit.new()
+	_search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_search_input.placeholder_text = "Найти включённую механику…"
+	_search_input.clear_button_enabled = true
+	_search_input.text = _search_query
+	_search_input.text_changed.connect(_on_search_changed)
+	filters.add_child(_search_input)
+
+	_category_filter = OptionButton.new()
+	_category_filter.add_item("Все категории")
+	_category_filter.set_item_metadata(0, "")
+	var category_names: Dictionary = {}
+	for capability_id in _installed_capability_ids:
+		var definition := _definitions.get(capability_id) as ObjectCapabilityDefinition
+		if definition != null:
+			category_names[definition.category_id] = definition.category_name
+	var category_ids: Array = category_names.keys()
+	category_ids.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return str(category_names[a]).naturalnocasecmp_to(str(category_names[b])) < 0
+	)
+	for category_id in category_ids:
+		_category_filter.add_item(str(category_names[category_id]))
+		_category_filter.set_item_metadata(_category_filter.item_count - 1, str(category_id))
+	_category_filter.item_selected.connect(_on_category_selected)
+	_category_filter.select(0)
+	filters.add_child(_category_filter)
+
+	_relation_filter = OptionButton.new()
+	_relation_filter.add_item("Все связи")
+	_relation_filter.set_item_metadata(0, "")
+	for relation_type in RELATION_TYPE_ORDER:
+		_relation_filter.add_item(_relation_caption(str(relation_type)))
+		_relation_filter.set_item_metadata(_relation_filter.item_count - 1, str(relation_type))
+	_relation_filter.item_selected.connect(_on_relation_selected)
+	_relation_filter.select(0)
+	filters.add_child(_relation_filter)
+	for index in range(_category_filter.item_count):
+		if str(_category_filter.get_item_metadata(index)) == _selected_category_id:
+			_category_filter.select(index)
+	for index in range(_relation_filter.item_count):
+		if str(_relation_filter.get_item_metadata(index)) == _selected_relation_type:
+			_relation_filter.select(index)
+
+	if _installed_capability_ids.is_empty():
+		var empty := Label.new()
+		empty.text = "У этого объекта пока нет включённых механик."
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		empty.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		empty.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		empty.add_theme_color_override("font_color", Color(0.72, 0.77, 0.84))
+		_layout.add_child(empty)
+		return
+
+	_graph = _create_graph()
+	_layout.add_child(_graph)
+	_nodes_by_id.clear()
+	_node_names_by_id.clear()
+	var grouped: Dictionary = {}
+	for capability_id in _installed_capability_ids:
+		var definition := _definitions.get(capability_id) as ObjectCapabilityDefinition
+		if definition == null or not _matches_filters(definition):
+			continue
+		var domain := CapabilityMapDataServiceScript.get_domain_for_category(definition.category_id)
+		var domain_id := str(domain.get("id", "other"))
+		if not grouped.has(domain_id):
+			grouped[domain_id] = {"name": str(domain.get("name", "Другие")), "ids": []}
+		(grouped[domain_id]["ids"] as Array).append(capability_id)
+
+	if grouped.is_empty():
+		var no_results := Label.new()
+		no_results.text = "Нет включённых механик, подходящих под текущие фильтры."
+		no_results.position = Vector2(260, 180)
+		no_results.custom_minimum_size = Vector2(420, 48)
+		no_results.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		no_results.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_graph.add_child(no_results)
+		return
+
+	var domain_ids: Array = grouped.keys()
+	domain_ids.sort_custom(func(a: String, b: String) -> bool:
+		return _domain_order(a) < _domain_order(b)
+	)
+	for domain_index in range(domain_ids.size()):
+		var domain_id := str(domain_ids[domain_index])
+		var group: Dictionary = grouped[domain_id]
+		var ids: Array = group["ids"]
+		ids.sort_custom(func(a: String, b: String) -> bool:
+			var a_def := _definitions.get(str(a)) as ObjectCapabilityDefinition
+			var b_def := _definitions.get(str(b)) as ObjectCapabilityDefinition
+			if a_def == null or b_def == null:
+				return str(a) < str(b)
+			return a_def.display_name.naturalnocasecmp_to(b_def.display_name) < 0
+		)
+		var base_x := float(domain_index % 3) * 760.0
+		var base_y := float(int(domain_index / 3)) * 680.0
+		var heading := Label.new()
+		heading.text = "%s  ·  %d" % [str(group["name"]), ids.size()]
+		heading.position = Vector2(base_x, base_y)
+		heading.custom_minimum_size = Vector2(650, 30)
+		heading.add_theme_font_size_override("font_size", 18)
+		heading.add_theme_color_override("font_color", Color(0.78, 0.84, 0.94))
+		heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_graph.add_child(heading)
+		for local_index in range(ids.size()):
+			var capability_id := str(ids[local_index])
+			var definition := _definitions.get(capability_id) as ObjectCapabilityDefinition
+			if definition == null:
+				continue
+			var node_name := "Installed_" + capability_id
+			var node := _create_installed_node(node_name, definition, str(group["name"]))
+			node.position_offset = Vector2(
+				base_x + float(local_index % 3) * 220.0,
+				base_y + 42.0 + float(int(local_index / 3)) * 210.0
+			)
+			_graph.add_child(node)
+			_nodes_by_id[capability_id] = node
+			_node_names_by_id[capability_id] = node_name
+
+	_graph.clear_connections()
+	for edge in _edges:
+		var source := str(edge.get("source_id", ""))
+		var target := str(edge.get("target_id", ""))
+		if not _nodes_by_id.has(source) or not _nodes_by_id.has(target):
+			continue
+		var relation_type := str(edge.get("type", "related"))
+		if not _selected_relation_type.is_empty() and relation_type != _selected_relation_type:
+			continue
+		var type_id := _relation_type_id(relation_type)
+		_graph.connect_node(str(_node_names_by_id[source]), type_id - 1, str(_node_names_by_id[target]), type_id - 1)
+		var explanation := str(edge.get("explanation", "Объяснение связи пока не добавлено."))
+		var summary := "%s: %s" % [_relation_caption(relation_type), explanation]
+		var source_definition := _definitions.get(source) as ObjectCapabilityDefinition
+		var target_definition := _definitions.get(target) as ObjectCapabilityDefinition
+		var source_node := _nodes_by_id.get(source) as GraphNode
+		var target_node := _nodes_by_id.get(target) as GraphNode
+		if source_node != null and target_definition != null:
+			source_node.tooltip_text += "\n→ %s: %s" % [target_definition.display_name, summary]
+		if target_node != null and source_definition != null:
+			target_node.tooltip_text += "\n← %s: %s" % [source_definition.display_name, summary]
+
+
+func _create_installed_node(node_name: String, definition: ObjectCapabilityDefinition, domain_name: String) -> GraphNode:
+	var node := GraphNode.new()
+	node.name = node_name
+	node.title = definition.display_name
+	node.custom_minimum_size = Vector2(205, 165)
+	node.resizable = false
+	for relation_type in RELATION_TYPE_ORDER:
+		var row := HBoxContainer.new()
+		var label := Label.new()
+		label.text = _relation_short_caption(str(relation_type))
+		label.tooltip_text = str(RELATION_TYPE_NAMES[relation_type])
+		label.add_theme_font_size_override("font_size", 9)
+		label.add_theme_color_override("font_color", RELATION_TYPE_COLORS[relation_type])
+		row.add_child(label)
+		node.add_child(row)
+		var slot_index := node.get_child_count() - 1
+		var type_id := _relation_type_id(str(relation_type))
+		var color: Color = RELATION_TYPE_COLORS[relation_type]
+		node.set_slot(slot_index, true, type_id, color, true, type_id, color)
+	var icon_row := HBoxContainer.new()
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = Vector2(30, 30)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture = CapabilityIconRegistryScript.get_icon(definition)
+	icon_row.add_child(icon_rect)
+	var status := Label.new()
+	status.text = "Включено · " + domain_name
+	status.add_theme_font_size_override("font_size", 9)
+	status.add_theme_color_override("font_color", Color(0.48, 0.84, 0.62))
+	icon_row.add_child(status)
+	node.add_child(icon_row)
+	var actions := HBoxContainer.new()
+	var configure_button := Button.new()
+	configure_button.text = "Настроить"
+	configure_button.pressed.connect(_on_configure_pressed.bind(definition.capability_id))
+	actions.add_child(configure_button)
+	var focus_button := Button.new()
+	focus_button.text = "Карточка"
+	focus_button.tooltip_text = "Перейти к механике в каталоге, не меняя её состояние."
+	focus_button.pressed.connect(_on_focus_pressed.bind(definition.capability_id))
+	actions.add_child(focus_button)
+	node.add_child(actions)
+	_focus_button_count += 1
+	return node
+
+
+func _on_configure_pressed(capability_id: String) -> void:
+	configure_requested.emit(capability_id)
+	_close_window()
 
 
 func _create_graph() -> GraphEdit:
@@ -712,7 +945,7 @@ func _on_status_selected(index: int) -> void:
 
 
 func _rebuild_domain_graph_only() -> void:
-	if _current_mode != "domain" and _current_mode != "dependencies":
+	if _current_mode != "domain" and _current_mode != "dependencies" and _current_mode != "installed":
 		return
 	var previous_search := _search_input.text if _search_input != null else _search_query
 	var previous_category := _selected_category_id
@@ -877,6 +1110,13 @@ func get_visible_node_count() -> int:
 
 
 func get_visible_mechanic_count() -> int:
+	if _current_mode == "installed":
+		var installed_count := 0
+		for capability_id in _installed_capability_ids:
+			var installed_definition := _definitions.get(capability_id) as ObjectCapabilityDefinition
+			if installed_definition != null and _matches_filters(installed_definition):
+				installed_count += 1
+		return installed_count
 	if _current_mode == "overview":
 		var count := 0
 		for domain in _domains.values():
@@ -905,6 +1145,25 @@ func get_node_count() -> int:
 
 func get_connection_count() -> int:
 	return _graph.get_connection_list().size() if _graph != null else 0
+
+
+func get_installed_capability_count() -> int:
+	return _installed_capability_ids.size()
+
+
+func get_installed_edge_count() -> int:
+	var installed: Dictionary = {}
+	for capability_id in _installed_capability_ids:
+		installed[capability_id] = true
+	var count := 0
+	for edge in _edges:
+		if installed.has(str(edge.get("source_id", ""))) and installed.has(str(edge.get("target_id", ""))):
+			count += 1
+	return count
+
+
+func has_installed_capability(capability_id: String) -> bool:
+	return _installed_capability_ids.has(capability_id)
 
 
 func get_focus_button_count() -> int:
@@ -950,6 +1209,7 @@ func _close_window() -> void:
 	_nodes_by_id.clear()
 	_node_names_by_id.clear()
 	_domain_node_names.clear()
+	_installed_capability_ids.clear()
 	_focus_button_count = 0
 	_search_query = ""
 	_selected_category_id = ""

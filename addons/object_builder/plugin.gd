@@ -17,6 +17,7 @@ const ObjectBuilderCapabilityListViewScript = preload("res://addons/object_build
 const ObjectBuilderCapabilityPresetDialogScript = preload("res://addons/object_builder/ui/capability_preset_dialog.gd")
 const ObjectBuilderCapabilitySettingsPanelScript = preload("res://addons/object_builder/ui/capability_settings_panel.gd")
 const ObjectBuilderInstalledCapabilitiesViewScript = preload("res://addons/object_builder/ui/installed_capabilities_view.gd")
+const ObjectBuilderCapabilityRelationMapViewScript = preload("res://addons/object_builder/ui/capability_relation_map_view.gd")
 const ObjectBuilderCapabilityIconRegistryScript = preload("res://addons/object_builder/services/capability_icon_registry.gd")
 const ObjectBuilderCapabilityCatalogControllerScript = preload("res://addons/object_builder/controllers/capability_catalog_controller.gd")
 const ObjectBuilderSceneTreeViewScript = preload("res://addons/object_builder/ui/scene_tree_view.gd")
@@ -97,6 +98,7 @@ var _pending_capability_preset_icon := "shapes"
 var _pending_capability_preset_capability_ids := PackedStringArray()
 var _capability_settings_panel: Control
 var _installed_capabilities_view: Control
+var _installed_capability_map_view: RefCounted
 var _editing_capability_selection: ObjectCapabilitySelection
 var _capability_change_dialog: AcceptDialog
 var _pending_capability_values: Array[ObjectCapabilitySelection] = []
@@ -568,6 +570,7 @@ func _build_installed_capabilities_view(parent: VBoxContainer) -> void:
 	_installed_capabilities_view.call("build")
 	_installed_capabilities_view.connect("configure_requested", Callable(self, "_on_capability_settings_pressed"))
 	_installed_capabilities_view.connect("focus_requested", Callable(self, "_on_installed_capability_focus_requested"))
+	_installed_capabilities_view.connect("map_requested", Callable(self, "_on_installed_capability_map_requested"))
 	parent.add_child(_installed_capabilities_view)
 	_refresh_installed_capabilities_view()
 
@@ -600,6 +603,23 @@ func _refresh_installed_capabilities_view() -> void:
 			entry["icon"] = ObjectBuilderCapabilityIconRegistryScript.get_icon(definition)
 		entries.append(entry)
 	_installed_capabilities_view.call("set_entries", entries)
+
+
+func _on_installed_capability_map_requested(capability_ids: Array[String]) -> void:
+	if capability_ids.is_empty():
+		return
+	if _installed_capability_map_view == null:
+		_installed_capability_map_view = ObjectBuilderCapabilityRelationMapViewScript.new()
+	var focus_callback := Callable(self, "_on_installed_capability_focus_requested")
+	var configure_callback := Callable(self, "_on_capability_settings_pressed")
+	if not _installed_capability_map_view.is_connected("focus_requested", focus_callback):
+		_installed_capability_map_view.connect("focus_requested", focus_callback)
+	if not _installed_capability_map_view.is_connected("configure_requested", configure_callback):
+		_installed_capability_map_view.connect("configure_requested", configure_callback)
+	var host_control := get_editor_interface().get_base_control()
+	if host_control == null:
+		host_control = _installed_capabilities_view
+	_installed_capability_map_view.call("open_installed", host_control, capability_ids)
 
 
 func _on_installed_capability_focus_requested(capability_id: String) -> void:

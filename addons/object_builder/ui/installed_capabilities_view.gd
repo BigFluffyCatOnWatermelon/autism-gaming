@@ -4,12 +4,14 @@ extends VBoxContainer
 
 signal configure_requested(capability_id: String)
 signal focus_requested(capability_id: String)
+signal map_requested(capability_ids: Array[String])
 
 const UIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 
 var _search: LineEdit
 var _category: OptionButton
 var _count_label: Label
+var _map_button: Button
 var _list: VBoxContainer
 var _empty_label: Label
 var _entries: Array[Dictionary] = []
@@ -47,9 +49,20 @@ func build() -> void:
 	_category.item_selected.connect(_on_filter_changed)
 	toolbar.add_child(_category)
 
+	var summary_row := HBoxContainer.new()
+	summary_row.add_theme_constant_override("separation", 8)
+	add_child(summary_row)
 	_count_label = Label.new()
+	_count_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_count_label.vertical_alignment = Control.VERTICAL_ALIGNMENT_CENTER
 	_count_label.modulate = Color(0.72, 0.77, 0.84)
-	add_child(_count_label)
+	summary_row.add_child(_count_label)
+	_map_button = Button.new()
+	_map_button.text = "Карта включённых"
+	_map_button.tooltip_text = "Открыть граф только тех механик, которые включены у текущего объекта."
+	_map_button.disabled = true
+	_map_button.pressed.connect(_on_map_pressed)
+	summary_row.add_child(_map_button)
 
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 8)
@@ -69,6 +82,7 @@ func set_entries(entries: Array[Dictionary], empty_message: String = "У объ�
 	build()
 	_entries = entries.duplicate()
 	_empty_message = empty_message
+	_map_button.disabled = _entries.is_empty()
 	_rebuild_category_options()
 	_rebuild_list()
 
@@ -209,6 +223,15 @@ func _add_capability_row(parent: Control, entry: Dictionary) -> void:
 
 func _on_filter_changed(_value: Variant = null) -> void:
 	_rebuild_list()
+
+
+func _on_map_pressed() -> void:
+	var capability_ids: Array[String] = []
+	for entry in _entries:
+		var capability_id := str(entry.get("capability_id", "")).strip_edges().to_lower()
+		if not capability_id.is_empty() and not capability_ids.has(capability_id):
+			capability_ids.append(capability_id)
+	map_requested.emit(capability_ids)
 
 
 func _on_configure_pressed(capability_id: String) -> void:
