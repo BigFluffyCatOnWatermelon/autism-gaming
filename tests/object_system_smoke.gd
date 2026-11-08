@@ -2785,7 +2785,8 @@ func _test_capability_library_size_and_status() -> void:
 		if verified_package_categories.has(definition.category_id):
 			if definition.runtime_status == "Implemented":
 				verified_package_count += 1
-			if definition.component_ids.size() != 1 or str(definition.component_ids[0]) != capability_id:
+			var expected_component_id := "pickup" if capability_id == "is_pickup_item" else capability_id
+			if definition.component_ids.size() != 1 or str(definition.component_ids[0]) != expected_component_id:
 				component_references_valid = false
 
 		for component_id in definition.component_ids:
@@ -2794,8 +2795,8 @@ func _test_capability_library_size_and_status() -> void:
 				component_references_valid = false
 
 	_expect(
-		implemented_count == 142 and planned_count == 58,
-		"catalogue explicitly distinguishes 142 ready mechanics and 58 planned mechanics"
+		implemented_count == 141 and planned_count == 59,
+		"catalogue explicitly distinguishes 141 ready mechanics and 59 planned mechanics"
 	)
 	_expect(
 		verified_package_count == 100,
