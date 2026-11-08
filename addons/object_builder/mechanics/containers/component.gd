@@ -287,7 +287,7 @@ func export_runtime_state() -> Dictionary:
 func import_runtime_state(state: Dictionary) -> bool:
 	if not state.get("items", []) is Array or not state.get("locked", false) is bool:
 		return _fail("Состояние контейнера имеет неверный формат.")
-	var normalized := {"items": state.get("items", []).duplicate(true), "locked": bool(state.get("locked", false))}
+	var normalized := {"items": state.get("items", []).duplicate(true), "locked": bool(state.get("locked", false)), "max_slots": int(state.get("max_slots", _option("has_container_capacity", "max_slots", 24))), "max_weight": float(state.get("max_weight", _option("has_container_capacity", "max_weight", 0.0)))}
 	for item in normalized.items:
 		if not item is Dictionary or str(item.get("item_id", "")).is_empty() or int(item.get("amount", 0)) <= 0:
 			return _fail("Состояние контейнера содержит некорректный предмет.")
