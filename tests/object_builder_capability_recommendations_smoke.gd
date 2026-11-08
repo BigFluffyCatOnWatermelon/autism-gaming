@@ -85,8 +85,6 @@ func _test_recommendations_for_empty_object() -> void:
 
 	var health_entry := _find_recommendation(recommendations, "has_health")
 	var damage_entry := _find_recommendation(recommendations, "can_receive_damage")
-	print("RECOMMENDATION DEBUG damageable: ", damage_entry)
-	print("RECOMMENDATION DEBUG ids: ", recommendations.map(func(entry: Dictionary) -> String: return str(entry.get("capability_id", ""))))
 	_expect(not health_entry.is_empty(), "resource profile recommends the Health capability")
 	_expect(not damage_entry.is_empty(), "resource profile recommends the Damageable capability")
 	if not health_entry.is_empty():
@@ -101,7 +99,7 @@ func _test_recommendations_for_empty_object() -> void:
 	if not damage_entry.is_empty():
 		var dependencies: PackedStringArray = damage_entry.get("automatic_dependencies", PackedStringArray())
 		_expect(
-			dependencies.has("Здоровье"),
+			dependencies.has("Есть здоровье"),
 			"recommendation preview names the automatic Health dependency"
 		)
 		_expect(
@@ -186,7 +184,6 @@ func _test_query_and_tag_ranking() -> void:
 	)
 	var base_health := _find_recommendation(base, "has_health")
 	var contextual_health := _find_recommendation(contextual, "has_health")
-	print("RECOMMENDATION DEBUG contextual health: ", contextual_health)
 	_expect(not base_health.is_empty() and not contextual_health.is_empty(), "health remains recommended with or without an active query")
 	if not base_health.is_empty() and not contextual_health.is_empty():
 		_expect(
@@ -194,7 +191,7 @@ func _test_query_and_tag_ranking() -> void:
 			"matching object tags and a natural-language query increase recommendation relevance"
 		)
 		_expect(
-			str(contextual_health.get("explanation", "")).contains("поисковому запросу"),
+			str(contextual_health.get("explanation", "")).contains("поисковый запрос"),
 			"recommendation explains when it matches the current search query"
 		)
 		_expect(
