@@ -62,6 +62,7 @@ func _run_tests() -> void:
 	_test_capability_schema_and_application_plan()
 	_test_capability_library_size_and_status()
 	await _test_component_node_bindings()
+	_test_mechanic_target_binding()
 	_test_declarative_scene_structure()
 	_test_creation_profile_registry()
 	await _test_extension_registries()
@@ -813,6 +814,51 @@ func _test_component_definition_validation() -> void:
 
 
 
+
+
+func _test_mechanic_target_binding() -> void:
+	var scene_root := Node2D.new()
+	scene_root.name = "MechanicBindingRoot"
+	var motion_target := Node2D.new()
+	motion_target.name = "MotionTarget"
+	scene_root.add_child(motion_target)
+	motion_target.owner = scene_root
+
+	var packed_scene := PackedScene.new()
+	_expect(packed_scene.pack(scene_root) == OK, "mechanic target scene can be packed")
+	scene_root.free()
+
+	var binding := ObjectComponentCatalog.create_binding("can_move", NodePath("MotionTarget"))
+	_expect(binding != null, "mechanic catalog creates a target-bound movement component")
+	if binding == null:
+		return
+
+	binding.binding_id = "movement_target_binding"
+	var definition := ObjectDefinition.new()
+	definition.object_id = "mechanic_target_binding_smoke_test"
+	definition.display_name = "Mechanic Target Binding Test"
+	definition.category = "Other"
+	definition.scene = packed_scene
+	definition.component_bindings = [binding]
+
+	var instance := ObjectFactory.instantiate(definition)
+	_expect(instance != null, "factory instantiates a target-bound mechanic")
+	if instance == null:
+		return
+
+	var target := instance.get_node("MotionTarget") as Node2D
+	var movement := ObjectFactory.get_component(instance, "can_move")
+	_expect(movement != null, "factory attaches the movement mechanic")
+	if movement != null:
+		_expect(
+			bool(movement.call("move_direction", Vector2.RIGHT, 1.0)),
+			"factory binds the movement mechanic to its assigned target"
+		)
+		_expect(
+			is_equal_approx(target.position.x, 120.0),
+			"bound movement mechanic changes the assigned node, not the object root"
+		)
+	instance.free()
 
 
 func _test_declarative_scene_structure() -> void:
