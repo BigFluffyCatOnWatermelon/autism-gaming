@@ -43,8 +43,12 @@ var _related_focused_definition: ObjectCapabilityDefinition
 var _active_relation_map: RefCounted
 var _recommendation_section: PanelContainer
 var _recommendation_title: Label
+var _recommendation_toggle: Button
+var _recommendation_body: VBoxContainer
 var _recommendation_container: HFlowContainer
 var _preset_section: PanelContainer
+var _preset_toggle: Button
+var _preset_body: VBoxContainer
 var _preset_container: HFlowContainer
 var _preset_detail_panel: PanelContainer
 var _preset_detail_title: Label
@@ -239,15 +243,28 @@ func _build_recommendation_section() -> void:
 	content.add_theme_constant_override("separation", 4)
 	_recommendation_section.add_child(content)
 
+	_recommendation_toggle = Button.new()
+	_recommendation_toggle.text = "Рекомендации"
+	_recommendation_toggle.toggle_mode = true
+	_recommendation_toggle.button_pressed = false
+	_recommendation_toggle.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_recommendation_toggle.toggled.connect(_on_recommendation_toggled)
+	content.add_child(_recommendation_toggle)
+
+	_recommendation_body = VBoxContainer.new()
+	_recommendation_body.visible = false
+	_recommendation_body.add_theme_constant_override("separation", 4)
+	content.add_child(_recommendation_body)
+
 	_recommendation_title = Label.new()
 	_recommendation_title.text = "ПОДХОДИТ ЭТОМУ ОБЪЕКТУ"
 	_recommendation_title.add_theme_font_size_override("font_size", 10)
-	content.add_child(_recommendation_title)
+	_recommendation_body.add_child(_recommendation_title)
 
 	_recommendation_container = HFlowContainer.new()
 	_recommendation_container.add_theme_constant_override("h_separation", 5)
 	_recommendation_container.add_theme_constant_override("v_separation", 4)
-	content.add_child(_recommendation_container)
+	_recommendation_body.add_child(_recommendation_container)
 
 
 func _build_preset_section() -> void:
@@ -259,32 +276,45 @@ func _build_preset_section() -> void:
 	content.add_theme_constant_override("separation", 5)
 	_preset_section.add_child(content)
 
+	_preset_toggle = Button.new()
+	_preset_toggle.text = "Наборы"
+	_preset_toggle.toggle_mode = true
+	_preset_toggle.button_pressed = false
+	_preset_toggle.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_preset_toggle.toggled.connect(_on_preset_section_toggled)
+	content.add_child(_preset_toggle)
+
+	_preset_body = VBoxContainer.new()
+	_preset_body.visible = false
+	_preset_body.add_theme_constant_override("separation", 5)
+	content.add_child(_preset_body)
+
 	var title := Label.new()
 	title.text = "ГОТОВЫЕ НАБОРЫ"
 	title.add_theme_font_size_override("font_size", 10)
-	content.add_child(title)
+	_preset_body.add_child(title)
 
 	var hint := Label.new()
 	hint.text = "Набор — это редактируемый список механик. Он ничего не добавляет в объект сам по себе."
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.add_theme_font_size_override("font_size", 10)
-	content.add_child(hint)
+	_preset_body.add_child(hint)
 
 	_preset_create_button = Button.new()
 	_preset_create_button.text = "Сохранить выбранное как набор"
 	_preset_create_button.tooltip_text = "Создать пользовательский набор из отмеченных в каталоге возможностей."
 	_preset_create_button.disabled = true
 	_preset_create_button.pressed.connect(_on_preset_management_action_pressed.bind("create"))
-	content.add_child(_preset_create_button)
+	_preset_body.add_child(_preset_create_button)
 
 	_preset_container = HFlowContainer.new()
 	_preset_container.add_theme_constant_override("h_separation", 5)
 	_preset_container.add_theme_constant_override("v_separation", 4)
-	content.add_child(_preset_container)
+	_preset_body.add_child(_preset_container)
 
 	_preset_detail_panel = PanelContainer.new()
 	_preset_detail_panel.visible = false
-	content.add_child(_preset_detail_panel)
+	_preset_body.add_child(_preset_detail_panel)
 
 	var detail_content := VBoxContainer.new()
 	detail_content.add_theme_constant_override("separation", 4)
@@ -343,6 +373,10 @@ func set_preset_data(
 		return
 	UIFactory.clear_children(_preset_container)
 	_preset_section.visible = not presets.is_empty()
+	_preset_toggle.text = "Наборы · %d" % presets.size()
+	if presets.is_empty():
+		_preset_toggle.button_pressed = false
+		_preset_body.visible = false
 	var active_id := str(active_preset.get("id", ""))
 	_active_preset_id = active_id
 	for preset in presets:
@@ -364,6 +398,9 @@ func set_preset_data(
 		_preset_container.add_child(preset_button)
 
 	_preset_detail_panel.visible = not active_preset.is_empty()
+	if not active_preset.is_empty():
+		_preset_toggle.button_pressed = true
+		_preset_body.visible = true
 	if active_preset.is_empty():
 		_active_preset_id = ""
 		UIFactory.clear_children(_preset_detail_items)
@@ -449,7 +486,10 @@ func set_recommended_entries(
 		return
 	UIFactory.clear_children(_recommendation_container)
 	_recommendation_section.visible = not entries.is_empty()
+	_recommendation_toggle.text = "Рекомендации · %d" % entries.size()
 	if entries.is_empty():
+		_recommendation_toggle.button_pressed = false
+		_recommendation_body.visible = false
 		return
 
 	_recommendation_title.text = (
@@ -517,6 +557,16 @@ func set_recommended_entries(
 		select_button.tooltip_text = explanation_label.text + "\nМеханика попадёт в общий список выбора, но не добавится в объект сразу."
 		select_button.pressed.connect(_on_selection_toggled.bind(true, capability.capability_id))
 		content.add_child(select_button)
+
+
+func _on_recommendation_toggled(expanded: bool) -> void:
+	if _recommendation_body != null:
+		_recommendation_body.visible = expanded
+
+
+func _on_preset_section_toggled(expanded: bool) -> void:
+	if _preset_body != null:
+		_preset_body.visible = expanded
 
 
 func get_recommendation_button_count() -> int:
@@ -761,7 +811,7 @@ func _on_sort_selected(_index: int) -> void:
 func _render_current_page() -> void:
 	UIFactory.clear_children(entries_container)
 	var summary := Label.new()
-	summary.text = "Механик в библиотеке: %d · доступно сейчас: %d" % [_total_count, _ready_count]
+	summary.text = "Механик в библиотеке: %d · доступно сейчас: %d · найдено: %d" % [_total_count, _ready_count, _entries.size()]
 	summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	entries_container.add_child(summary)
 
