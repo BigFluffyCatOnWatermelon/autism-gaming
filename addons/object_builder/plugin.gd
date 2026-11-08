@@ -1203,7 +1203,7 @@ func _on_capability_settings_panel_apply() -> void:
 		return
 
 	var updated := current_selection.duplicate(true) as ObjectCapabilitySelection
-	var setting_values: Array[Dictionary] = _capability_settings_panel.call("get_values")
+	var setting_values: Array[Dictionary] = _capability_settings_panel.call("get_changed_values")
 	for entry in setting_values:
 		updated.set_component_setting(
 			str(entry.get("component_id", "")),
