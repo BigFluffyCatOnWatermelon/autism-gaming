@@ -1,3 +1,10 @@
+## Runtime-интеграция времени и роста — 2026-11-08
+- `world_time`: компоненты активации, cooldown, respawn, lifespan и periodic output самостоятельно тикают в игровом процессе; каждая возможность обновляет только собственный таймер.
+- Расписание событий получает игровой день/час через публичный API `update_world_time(day, hour)`; повторы в пределах дня подавляются, ежедневные события снова доступны после смены дня, время сопоставляется циклически через полночь.
+- `world_generation`: рост автоматически обновляется компонентом `can_grow`; исправлен ортогональный spread — радиус теперь учитывает все клетки в пределах Manhattan distance.
+- Исправлена ошибка константного выражения в `audio_effects/module.gd`, из-за которой CI не мог импортировать проект.
+- Это первый вертикальный шаг runtime-интеграции, не завершение 158 Planned-механик. Общий источник игрового времени, фактическая выдача periodic output в инвентарь и полный world-generation pipeline ещё не подключены; статусы не повышены.
+
 ## Пакет генерации мира — 2026-11-08
 - Создан `addons/object_builder/mechanics/world_generation` с десятью механиками генерации.
 - Поддержаны биомы и spawn conditions, region/density rules, weighted variants, deterministic layout по seed (scatter/grid/ring/cluster), spread, growth stages и environment adaptation.
