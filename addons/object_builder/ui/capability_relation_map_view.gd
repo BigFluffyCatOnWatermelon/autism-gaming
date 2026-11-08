@@ -202,7 +202,7 @@ func _rebuild_view() -> void:
 	match _current_mode:
 		"installed":
 			_breadcrumb.text = "Карта включённых механик  /  Объект"
-			_hint.text = "Только реально включённые механики этого объекта. Связи отображаются, только если оба конца связи входят в установленный состав. Просмотр карты ничего не включает и не отключает."
+			_hint.text = "Включено: %d механик · внутренних связей: %d. Показаны только связи между механиками этого объекта." % [_installed_capability_ids.size(), get_installed_edge_count()]
 			_build_installed_graph()
 		"overview":
 			_breadcrumb.text = "Карта механик  /  Обзор"
@@ -522,6 +522,20 @@ func _build_installed_graph() -> void:
 	domain_ids.sort_custom(func(a: String, b: String) -> bool:
 		return _domain_order(a) < _domain_order(b)
 	)
+	var row_y_offsets: Dictionary = {}
+	var row_base_y := 0.0
+	for row_index in range(int((domain_ids.size() + 2) / 3)):
+		var max_rows := 1
+		for column_index in range(3):
+			var group_index := row_index * 3 + column_index
+			if group_index >= domain_ids.size():
+				continue
+			var row_group: Dictionary = grouped[str(domain_ids[group_index])]
+			var row_ids: Array = row_group["ids"]
+			max_rows = maxi(max_rows, int((row_ids.size() + 2) / 3))
+		row_y_offsets[row_index] = row_base_y
+		row_base_y += 90.0 + float(max_rows) * 210.0
+
 	for domain_index in range(domain_ids.size()):
 		var domain_id := str(domain_ids[domain_index])
 		var group: Dictionary = grouped[domain_id]
@@ -534,7 +548,7 @@ func _build_installed_graph() -> void:
 			return a_def.display_name.naturalnocasecmp_to(b_def.display_name) < 0
 		)
 		var base_x := float(domain_index % 3) * 760.0
-		var base_y := float(int(domain_index / 3)) * 680.0
+		var base_y := float(row_y_offsets.get(int(domain_index / 3), 0.0))
 		var heading := Label.new()
 		heading.text = "%s  ·  %d" % [str(group["name"]), ids.size()]
 		heading.position = Vector2(base_x, base_y)

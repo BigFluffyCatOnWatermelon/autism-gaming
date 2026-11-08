@@ -54,7 +54,7 @@ func build() -> void:
 	add_child(summary_row)
 	_count_label = Label.new()
 	_count_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_count_label.vertical_alignment = Control.VERTICAL_ALIGNMENT_CENTER
+	_count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_count_label.modulate = Color(0.72, 0.77, 0.84)
 	summary_row.add_child(_count_label)
 	_map_button = Button.new()
