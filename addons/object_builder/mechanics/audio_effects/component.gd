@@ -186,30 +186,44 @@ func _process(_delta: float) -> void:
 func _play_stream(stream_path: String, event_id: String) -> bool:
 	if stream_path.strip_edges().is_empty():
 		return _fail("Не задан путь к аудиофайлу.")
-	var stream_resource := ResourceLoader.load(stream_path)
-	if not stream_resource is AudioStream:
+	var loaded_resource := ResourceLoader.load(stream_path)
+	if not loaded_resource is AudioStream:
 		return _fail("Не удалось загрузить AudioStream: " + stream_path)
+	var stream := (loaded_resource as AudioStream).duplicate(true) as AudioStream
+	if event_id == "ambient" and bool(_option("ambient_loop", true)):
+		if stream is AudioStreamWAV:
+			(stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_FORWARD
+		elif stream is AudioStreamMP3:
+			(stream as AudioStreamMP3).loop = true
+		elif stream is AudioStreamOggVorbis:
+			(stream as AudioStreamOggVorbis).loop = true
 	if not is_instance_valid(_audio_player):
 		if _target is Node2D:
 			_audio_player = AudioStreamPlayer2D.new()
 			_audio_player.name = "ObjectBuilderAudio"
+			(_audio_player as AudioStreamPlayer2D).max_distance = maxf(1.0, float(_option("max_distance", 1200.0)))
+			(_audio_player as AudioStreamPlayer2D).attenuation = maxf(0.0, float(_option("attenuation", 1.0)))
 		else:
 			_audio_player = AudioStreamPlayer.new()
 			_audio_player.name = "ObjectBuilderAudio"
-			_target.add_child(_audio_player)
-		if _audio_player is AudioStreamPlayer2D:
-			(_audio_player as AudioStreamPlayer2D).max_distance = maxf(1.0, float(_option("max_distance", 1200.0)))
-			(_audio_player as AudioStreamPlayer2D).attenuation = maxf(0.0, float(_option("attenuation", 1.0)))
-			_target.add_child(_audio_player)
-	var player := _audio_player as AudioStreamPlayer
-	player.stream = stream_resource as AudioStream
-	player.volume_db = clampf(float(_option("volume_db", 0.0)), -80.0, 24.0)
-	player.pitch_scale = clampf(float(_option("pitch_scale", 1.0)), 0.01, 4.0)
-	player.bus = str(_option("bus", "Master"))
-	player.play()
+		_target.add_child(_audio_player)
+	var player: AudioStreamPlayer
+	if _audio_player is AudioStreamPlayer2D:
+		var player_2d := _audio_player as AudioStreamPlayer2D
+		player_2d.stream = stream
+		player_2d.volume_db = clampf(float(_option("volume_db", 0.0)), -80.0, 24.0)
+		player_2d.pitch_scale = clampf(float(_option("pitch_scale", 1.0)), 0.01, 4.0)
+		player_2d.bus = str(_option("bus", "Master"))
+		player_2d.play()
+	else:
+		player = _audio_player as AudioStreamPlayer
+		player.stream = stream
+		player.volume_db = clampf(float(_option("volume_db", 0.0)), -80.0, 24.0)
+		player.pitch_scale = clampf(float(_option("pitch_scale", 1.0)), 0.01, 4.0)
+		player.bus = str(_option("bus", "Master"))
+		player.play()
 	effect_emitted.emit("audio", {"event": event_id, "path": stream_path})
 	return true
-
 
 func _load_light_texture(path: String) -> Texture2D:
 	if not path.is_empty():
