@@ -7,6 +7,13 @@ func _on_configured() -> void:
     set_option("opacity", clampf(float(get_option("opacity", 1.0)), 0.0, 1.0))
 
 
+func _apply_bound_target() -> bool:
+    var target := find_canvas_item()
+    if target == null:
+        return fail("Для прозрачности нужен CanvasItem в целевой ветке.")
+    return apply_to(target)
+
+
 func apply_to(target: CanvasItem, value: float = -1.0) -> bool:
     if not is_instance_valid(target):
         return fail("Не передан действительный CanvasItem.")
