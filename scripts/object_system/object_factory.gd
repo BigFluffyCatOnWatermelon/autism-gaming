@@ -435,6 +435,8 @@ static func import_runtime_state(instance: Node, snapshot: Dictionary) -> bool:
 			_rollback_runtime_state(applied)
 			return false
 		if not bool(component.call("import_runtime_state", record.get("state", {}))):
+			# The rejecting component may have mutated itself before returning false.
+			component.call("import_runtime_state", previous)
 			_rollback_runtime_state(applied)
 			return false
 		applied.append({"component": component, "state": previous.duplicate(true)})
