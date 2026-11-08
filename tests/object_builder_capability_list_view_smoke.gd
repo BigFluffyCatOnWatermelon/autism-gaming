@@ -223,6 +223,8 @@ func _run() -> void:
 	view.call("set_related_entries", related_entries, "Атака", implemented)
 	_expect((view.get("_related_map_button") as Button).visible, "focused relationships expose the interactive graph map")
 	_expect((view.get("_related_section") as PanelContainer).visible, "related capabilities appear in a dedicated compact strip")
+	_expect((view.get("_focused_description") as Label).text == implemented.description, "focused mechanic shows its full user-facing description")
+	_expect((view.get("_focused_meta") as Label).text.contains("Готова к использованию"), "focused mechanic shows readiness and category context")
 	_expect(view.call("get_related_button_count") == 1, "related strip contains one button per connected capability")
 	var related_container := view.get("_related_container") as HFlowContainer
 	var related_button := related_container.get_child(0) as Button
@@ -437,6 +439,18 @@ func _run() -> void:
 	_expect((alphabetic_header.get_child(1) as CheckBox).text == "Атака", "alphabetical sorting changes presentation without mutating the source catalog")
 	sort_option.select(0)
 	sort_option.item_selected.emit(0)
+	var standalone := DefinitionScript.new()
+	standalone.capability_id = "can_sleep"
+	standalone.display_name = "Сон"
+	standalone.description = "Восстанавливает силы со временем."
+	standalone.runtime_status = "Implemented"
+	view.call("set_entries", [{"definition": standalone, "has_relations": false}], 200, 42)
+	var standalone_card := entries_container.get_child(1) as PanelContainer
+	var standalone_header := standalone_card.get_child(0).get_child(0) as HBoxContainer
+	var standalone_details_button := standalone_header.get_child(3) as Button
+	_expect(not standalone_details_button.disabled and standalone_details_button.text == "Подробнее", "mechanics without graph relationships still expose their details")
+	standalone_details_button.pressed.emit()
+	_expect(focus_events.back() == "can_sleep", "details action focuses a mechanic even when it has no relationships")
 
 	var empty_entries: Array[Dictionary] = []
 	view.call("set_entries", empty_entries, 200, 42)
