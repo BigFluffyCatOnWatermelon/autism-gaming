@@ -7,6 +7,7 @@ const InstalledCapabilitiesViewScript = preload("res://addons/object_builder/ui/
 
 var failures: Array[String] = []
 var search_events: Array[String] = []
+var refresh_events := {"count": 0}
 var filter_events: Array[int] = []
 var selection_events: Array[int] = []
 var action_events: Array[String] = []
@@ -28,12 +29,22 @@ func _run() -> void:
 	_expect((library.get("_cards_scroll") as ScrollContainer).custom_minimum_size.y >= 120.0, "card viewport keeps a usable minimum height when the panel is constrained")
 	_expect(str(library.call("get_selected_mode")) == "all", "library view starts in the all-objects filter")
 	library.connect("search_changed", Callable(self, "_on_search_changed"))
+	library.connect("refresh_requested", func() -> void: refresh_events["count"] += 1)
 	library.connect("filter_changed", Callable(self, "_on_filter_changed"))
 	library.connect("object_selected", Callable(self, "_on_object_selected"))
 	library.connect("entry_action_requested", Callable(self, "_on_entry_action_requested"))
 	library.connect("collection_management_requested", Callable(self, "_on_collection_management_requested"))
 
 	var search_input := library.get("search_input") as LineEdit
+	var refresh_button := library.get("_refresh_button") as Button
+	_expect(search_input.get_parent() is HBoxContainer, "search and refresh controls share one compact toolbar row")
+	_expect(refresh_button != null and refresh_button.text == "↻", "library exposes a dedicated refresh button")
+	_expect(refresh_button != null and not refresh_button.tooltip_text.is_empty(), "library refresh button explains what it reloads")
+	library.call("set_refreshing", true)
+	_expect(refresh_button != null and refresh_button.disabled and refresh_button.text == "…", "refresh button is disabled and marked while a scan is running")
+	library.call("set_refreshing", false)
+	refresh_button.pressed.emit()
+	_expect(int(refresh_events["count"]) == 1, "library refresh button emits one refresh request")
 	search_input.text_changed.emit("oak")
 	_expect(search_events.size() == 1 and search_events[0] == "oak", "search changes emit a single query signal")
 
@@ -70,6 +81,8 @@ func _run() -> void:
 	library.call("_on_card_pressed", 0)
 	_expect(selection_events.size() == 1 and selection_events[0] == 0, "card selection emits the matching object index")
 	_expect(int(library.call("get_selected_index")) == 0, "selected library entry remains available for actions")
+	library.call("set_entries", entries, "Nothing found")
+	_expect(int(library.call("get_selected_index")) == 0, "refreshing library entries preserves selection by stable object ID")
 	library.call("_on_entry_action_selected", 1)
 	_expect(action_events.size() == 1 and action_events[0] == "duplicate:0", "selected-entry action emits its stable action ID and index")
 	var custom_collection_options: Array[Dictionary] = [{"id": "collection_forest", "label": "Лес"}]

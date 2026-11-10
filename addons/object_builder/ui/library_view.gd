@@ -5,6 +5,7 @@ extends VBoxContainer
 const ObjectBuilderUIFactory = preload("res://addons/object_builder/ui/ui_factory.gd")
 
 signal search_changed(query: String)
+signal refresh_requested
 signal filter_changed(index: int)
 signal object_selected(index: int)
 signal entry_action_requested(action: String, index: int)
@@ -12,6 +13,7 @@ signal collection_create_requested
 signal collection_management_requested(action: String)
 
 var search_input: LineEdit
+var _refresh_button: Button
 var mode_filter: OptionButton
 var category_filter: OptionButton
 var tag_filter: OptionButton
@@ -38,11 +40,21 @@ func build() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_theme_constant_override("separation", 6)
+	var search_row := HBoxContainer.new()
+	search_row.add_theme_constant_override("separation", 4)
+	add_child(search_row)
 	search_input = LineEdit.new()
 	search_input.placeholder_text = "Найти объект…"
 	search_input.clear_button_enabled = true
+	search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	search_input.text_changed.connect(_on_search_changed)
-	add_child(search_input)
+	search_row.add_child(search_input)
+	_refresh_button = Button.new()
+	_refresh_button.text = "↻"
+	_refresh_button.tooltip_text = "Пересканировать файлы проекта Godot и перечитать библиотеку"
+	_refresh_button.custom_minimum_size = Vector2(34, 0)
+	_refresh_button.pressed.connect(_on_refresh_pressed)
+	search_row.add_child(_refresh_button)
 	mode_filter = OptionButton.new()
 	mode_filter.add_item("Все объекты")
 	mode_filter.set_item_metadata(0, "all")
@@ -68,6 +80,17 @@ func build() -> void:
 	set_display_mode("cards")
 	set_category_options([], "")
 	set_tag_options([], "")
+
+
+func set_refreshing(is_refreshing: bool) -> void:
+	if _refresh_button == null:
+		return
+	_refresh_button.disabled = is_refreshing
+	_refresh_button.text = "…" if is_refreshing else "↻"
+
+
+func _on_refresh_pressed() -> void:
+	refresh_requested.emit()
 
 
 func _build_view_mode_controls() -> void:

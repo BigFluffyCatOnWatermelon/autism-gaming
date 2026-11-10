@@ -270,7 +270,7 @@ static func _scan_directory(
 		if file_name.get_extension().to_lower() != "tres":
 			continue
 		var resource_path := directory_path.path_join(file_name)
-		var resource := ResourceLoader.load(resource_path, "", ResourceLoader.CACHE_MODE_REPLACE)
+		var resource := ResourceLoader.load(resource_path, "", ResourceLoader.CACHE_MODE_REPLACE_DEEP)
 		if resource == null:
 			push_warning("Object Builder: не удалось загрузить запись библиотеки: " + resource_path)
 			continue

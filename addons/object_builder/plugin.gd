@@ -114,6 +114,8 @@ var _sprite_quick_settings_view: Control
 var _sprite_frames_editor_dialog: ConfirmationDialog
 var _pending_sprite_frames_editor_path := NodePath("")
 var _status_label: Label
+var _toolbar_refresh_button: Button
+var _refresh_in_progress := false
 var _preview_view: Window
 var _open_scene_button: Button
 var _connected_scene_tree: SceneTree
@@ -393,7 +395,12 @@ func _build_workspace_toolbar(parent: HBoxContainer) -> void:
 	_undo_toolbar_button = ObjectBuilderUIFactory.add_action_button(parent, "↶", _on_undo_toolbar_pressed, "Отменить последнее действие")
 	_redo_toolbar_button = ObjectBuilderUIFactory.add_action_button(parent, "↷", _on_redo_toolbar_pressed, "Повторить отменённое действие")
 	ObjectBuilderUIFactory.add_action_button(parent, "Предпросмотр", _on_preview_pressed, "Показать текущий черновик без сохранения")
-	ObjectBuilderUIFactory.add_action_button(parent, "↻", _on_refresh_pressed, "Обновить библиотеку")
+	_toolbar_refresh_button = ObjectBuilderUIFactory.add_action_button(
+		parent,
+		"↻",
+		_on_refresh_pressed,
+		"Пересканировать файлы проекта Godot и перечитать библиотеку"
+	)
 	var undo_manager := EditorInterface.get_editor_undo_redo()
 	if not undo_manager.history_changed.is_connected(_refresh_undo_redo_toolbar):
 		undo_manager.history_changed.connect(_refresh_undo_redo_toolbar)
@@ -486,6 +493,7 @@ func _build_library_panel(parent: VBoxContainer) -> void:
 	parent.add_child(_library_view)
 	_library_view.call("build")
 	_library_view.connect("search_changed", Callable(self, "_on_search_changed"))
+	_library_view.connect("refresh_requested", Callable(self, "_on_refresh_pressed"))
 	_library_view.connect("filter_changed", Callable(self, "_on_filter_changed"))
 	_library_view.connect("object_selected", Callable(self, "_on_library_item_selected"))
 	_library_view.connect("entry_action_requested", Callable(self, "_on_library_entry_action_requested"))
@@ -1689,8 +1697,69 @@ func _refresh_library() -> void:
 		_set_status("Библиотека пока пуста. Создай первый объект.", false)
 
 func _on_refresh_pressed() -> void:
+	if _refresh_in_progress:
+		return
+
+	var filesystem := EditorInterface.get_resource_filesystem()
+	if filesystem.is_scanning() or filesystem.is_importing():
+		_set_status("Godot уже сканирует или импортирует ресурсы. Дождись завершения текущей операции.", false)
+		return
+
+	_refresh_in_progress = true
+	if _library_view != null:
+		_library_view.call("set_refreshing", true)
+	if _toolbar_refresh_button != null:
+		_toolbar_refresh_button.disabled = true
+		_toolbar_refresh_button.text = "…"
+	_set_status("Сканирование файлов проекта Godot…", false)
+	filesystem.scan()
+	call_deferred("_finish_refresh_after_scan")
+
+
+func _finish_refresh_after_scan() -> void:
+	var filesystem := EditorInterface.get_resource_filesystem()
+	# scan() is asynchronous. Wait for both filesystem scanning and resource imports
+	# before asking ResourceLoader and the library controller for fresh data.
+	await get_tree().process_frame
+	while filesystem.is_scanning() or filesystem.is_importing():
+		await get_tree().process_frame
+
+	var previous_object_id := _working_definition.object_id if _working_definition != null else ""
+	var keep_unsaved_draft := (
+		_working_definition != null
+		and (bool(_editor_session.call("is_dirty")) or bool(_editor_session.call("is_new")))
+	)
+
 	_refresh_library()
-	EditorInterface.get_resource_filesystem().scan()
+	_refresh_scene_tree()
+
+	if not previous_object_id.is_empty():
+		if keep_unsaved_draft:
+			# Never replace in-memory edits with an external version without asking.
+			_refresh_library_details(_working_definition)
+			_set_status("Библиотека обновлена. Несохранённый черновик оставлен без изменений.", false)
+		else:
+			var refreshed_definition := _library_controller.call(
+				"find_definition",
+				previous_object_id
+			) as ObjectDefinition
+			if refreshed_definition != null:
+				_load_definition(refreshed_definition)
+				_set_status("Обновление завершено. Сохранённые изменения Godot загружены.", false)
+			else:
+				_set_status(
+					"Библиотека обновлена. Открытый объект больше не найден в файлах; текущий документ оставлен открытым.",
+					true
+				)
+	else:
+		_set_status("Обновление завершено. Библиотека перечитана из файлов проекта Godot.", false)
+
+	_refresh_in_progress = false
+	if _library_view != null:
+		_library_view.call("set_refreshing", false)
+	if _toolbar_refresh_button != null:
+		_toolbar_refresh_button.disabled = false
+		_toolbar_refresh_button.text = "↻"
 
 
 func _rebuild_category_filter() -> void:
