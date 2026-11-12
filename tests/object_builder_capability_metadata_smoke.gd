@@ -79,7 +79,8 @@ func _run_tests() -> void:
 			_expect(int(pickup_item_descriptor.get("group_order", -1)) == 0, "group order defaults to first appearance")
 			_expect(str(pickup_item_descriptor.get("level", "")) == "Basic", "legacy settings default to Basic")
 			_expect(str(pickup_item_descriptor.get("visibility", "")) == "always", "settings default to always visible")
-			_expect(str(pickup_item_descriptor.get("editor", "")) == "unspecified", "untyped string settings are not silently treated as free text")
+			_expect(str(pickup_item_descriptor.get("editor", "")) == "catalog_reference", "pickup item is explicitly a catalogue reference")
+			_expect(str(pickup_item_descriptor.get("reference_type", "")) == "item", "pickup catalogue reference declares its item type")
 			_expect(bool(pickup_item_descriptor.get("required", false)), "required metadata remains available")
 			_expect(str(pickup_item_descriptor.get("default_value", "missing")) == "", "normalization does not alter the stored default")
 			var raw_pickup_item_descriptor: Dictionary = {}
