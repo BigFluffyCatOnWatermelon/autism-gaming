@@ -701,6 +701,17 @@ static func _validate_setting_metadata(
 					component_id
 				])
 
+	if editor == "catalog_reference" and str(descriptor.get("reference_type", "")).strip_edges().is_empty():
+		errors.append("У CatalogReference настройки '%s' компонента '%s' должен быть указан reference_type." % [
+			setting_key,
+			component_id
+		])
+	if editor in ["resource_reference", "gameplay_table"] and str(descriptor.get("resource_type", "")).strip_edges().is_empty():
+		errors.append("У ResourceReference настройки '%s' компонента '%s' должен быть указан resource_type." % [
+			setting_key,
+			component_id
+		])
+
 	if editor == "enum":
 		if option_values.is_empty():
 			errors.append("Enum-настройка '%s' компонента '%s' должна содержать options." % [
