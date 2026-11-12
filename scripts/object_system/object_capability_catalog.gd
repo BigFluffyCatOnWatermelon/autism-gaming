@@ -798,13 +798,15 @@ static func _validate_definition(
 				str(descriptor.get("_duplicate_schema_key", ""))
 			])
 			continue
-		var forbidden_override_keys: Variant = descriptor.get("_forbidden_overlay_keys", [])
-		if forbidden_override_keys is Array or forbidden_override_keys is PackedStringArray:
-			for forbidden_key in forbidden_override_keys:
-				errors.append(
-					"Capability overlay возможности '%s' не может переопределять каноническое поле '%s'. Перенеси его в ObjectComponentDefinition."
-					% [definition.capability_id, str(forbidden_key)]
-				)
+		var forbidden_override_keys: PackedStringArray = descriptor.get(
+			"_forbidden_overlay_keys",
+			PackedStringArray()
+		)
+		for forbidden_key in forbidden_override_keys:
+			errors.append(
+				"Capability overlay возможности '%s' не может переопределять каноническое поле '%s'. Перенеси его в ObjectComponentDefinition."
+				% [definition.capability_id, str(forbidden_key)]
+			)
 		var component_id := _normalize_id(str(descriptor.get("component_id", "")))
 		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
 		if component_id.is_empty() or setting_key.is_empty():
