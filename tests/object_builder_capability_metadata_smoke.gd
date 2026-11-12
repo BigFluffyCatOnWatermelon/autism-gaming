@@ -73,7 +73,7 @@ func _run_tests() -> void:
 				break
 		_expect(not pickup_item_descriptor.is_empty(), "pickup item setting is present")
 		if not pickup_item_descriptor.is_empty():
-			_expect(str(pickup_item_descriptor.get("display_name", "")) == "ID предмета", "legacy setting label is preserved")
+			_expect(str(pickup_item_descriptor.get("display_name", "")) == "Предмет", "pickup item has a user-facing label instead of an internal ID label")
 			_expect(str(pickup_item_descriptor.get("group_id", "")) == "предмет", "group ID is derived consistently from its visible name")
 			_expect(int(pickup_item_descriptor.get("order", -1)) == 0, "field order defaults to source declaration order")
 			_expect(int(pickup_item_descriptor.get("group_order", -1)) == 0, "group order defaults to first appearance")
