@@ -6,7 +6,7 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3b3fx"]
 size = Vector2(13.12, 7.68)
 
-[node name="crystal_teal" type="StaticBody2D" unique_id=23746908]
+[node name="crystal_teal" type="StaticBody2D" unique_id=1243651288]
 collision_layer = 2
 script = ExtResource("1_vc7mi")
 resource_type = "rock"
@@ -14,11 +14,11 @@ max_health = 110.0
 health = 110.0
 preserve_visual_texture = true
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=370947274]
+[node name="Visual" type="Sprite2D" parent="." unique_id=2143410019]
 texture_filter = 1
 position = Vector2(0, -8)
 texture = ExtResource("2_jch24")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=569924125]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1723049008]
 position = Vector2(0, -7.68)
 shape = SubResource("RectangleShape2D_3b3fx")

@@ -7,6 +7,7 @@ const PlayerControllerScript = preload("res://scripts/player_controller.gd")
 const ResourceDropScript = preload("res://scripts/resource_drop.gd")
 const ArrowProjectileScript = preload("res://scripts/arrow_projectile.gd")
 const ObjectFactoryScript = preload("res://scripts/object_system/object_factory.gd")
+const ItemStackServiceScript = preload("res://scripts/object_system/object_item_stack_service.gd")
 const ObjectsScene = preload("res://scenes/objects.tscn")
 const UIScene = preload("res://scenes/ui.tscn")
 
@@ -227,6 +228,29 @@ func _physics_process(delta: float) -> void:
 	_update_ai_mechanics(delta)
 
 
+func _update_health_regeneration(delta: float) -> void:
+	if delta <= 0.0 or not is_finite(delta):
+		return
+	for health_component in _get_world_components("health"):
+		if health_component != null and is_instance_valid(health_component) and health_component.has_method("tick_regeneration"):
+			health_component.call("tick_regeneration", delta)
+
+
+func _update_destruction_regrowth(delta: float) -> void:
+	if delta <= 0.0 or not is_finite(delta):
+		return
+	for regrowth_component in _get_world_components("can_regrow"):
+		if regrowth_component == null or not is_instance_valid(regrowth_component):
+			continue
+		var root := ObjectFactoryScript.get_object_root(regrowth_component)
+		if root == null or not is_instance_valid(root) or root.is_queued_for_deletion():
+			continue
+		if not bool(root.get_meta("object_destroyed", false)):
+			continue
+		if regrowth_component.has_method("tick_regrowth"):
+			regrowth_component.call("tick_regrowth", delta)
+
+
 func _update_ai_mechanics(delta: float) -> void:
 	for ai_component in _get_world_components("has_ai"):
 		if ai_component == null or not is_instance_valid(ai_component) or not ai_component.has_method("get_ai_intent"):
@@ -252,7 +276,10 @@ func _update_ai_mechanics(delta: float) -> void:
 			movement = ObjectFactoryScript.get_component(root, "can_walk")
 		if movement == null:
 			continue
-		if movement.has_method("move_direction"):
+		var preferred_speed := float(intent.get("preferred_speed", -1.0))
+		if preferred_speed >= 0.0 and movement.has_method("move_direction_with_speed"):
+			movement.call("move_direction_with_speed", direction, preferred_speed, delta)
+		elif movement.has_method("move_direction"):
 			movement.call("move_direction", direction, delta)
 		elif movement.has_method("walk"):
 			movement.call("walk", direction, delta)
@@ -264,6 +291,8 @@ func _process(delta: float) -> void:
 	_handle_held_combat()
 	_update_projectiles(delta)
 	_update_drops()
+	_update_health_regeneration(delta)
+	_update_destruction_regrowth(delta)
 	_update_animal_mechanics(delta)
 	_update_world_clock(delta)
 	_update_construction_mechanics(delta)
@@ -704,24 +733,71 @@ func _consume_item(item_id: String, quantity: int) -> bool:
 	return true
 
 ## Inventory adapter used by Object Builder construction and transfer mechanics.
+## Exposes the same item-stack data contract as object inventories and containers.
 func get_item_count(item_id: String) -> int:
 	return _get_item_count(item_id)
+
+
+func get_item_stacks(_options: Dictionary = {}) -> Array[Dictionary]:
+	return ItemStackServiceScript.normalize_items(get_inventory())
+
+
+func get_total_weight() -> float:
+	return ItemStackServiceScript.total_weight(get_inventory())
 
 
 func remove_item(item_id: String, amount: int = 1, _allow_bound: bool = false) -> bool:
 	return _consume_item(item_id, amount)
 
 
+func remove_item_data(item_id: String, amount: int = 1, _options: Dictionary = {}) -> Dictionary:
+	var remove_result := ItemStackServiceScript.remove_stack(
+		get_item_stacks(),
+		item_id,
+		amount,
+		false,
+		false
+	)
+	if not bool(remove_result.get("ok", false)):
+		return {"ok": false, "removed": 0, "remainder": maxi(0, amount), "items": []}
+	if not _consume_item(item_id, amount):
+		return {"ok": false, "removed": 0, "remainder": amount, "items": []}
+	return {
+		"ok": true,
+		"removed": int(remove_result.get("removed", amount)),
+		"remainder": 0,
+		"items": remove_result.get("removed_items", [])
+	}
+
+
 func add_item(
 	item_id: String,
 	amount: int = 1,
-	_max_stack: int = -1,
-	_weight: float = 0.0,
-	_tags: Array = [],
-	_rarity: String = "common"
+	max_stack: int = -1,
+	weight: float = 0.0,
+	tags: Array = [],
+	rarity: String = "common"
 ) -> Dictionary:
-	var requested := maxi(0, amount)
-	var remaining := _inventory_add(item_id, requested)
+	return add_item_data({
+		"item_id": item_id,
+		"amount": amount,
+		"max_stack": max_stack if max_stack > 0 else int(config.items.get(item_id, {}).get("max_stack", config.inventory.max_stack)),
+		"weight": weight,
+		"tags": tags,
+		"rarity": rarity
+	})
+
+
+func add_item_data(item_data: Dictionary, amount_override: int = -1, _options: Dictionary = {}) -> Dictionary:
+	var stack := ItemStackServiceScript.normalize_item(item_data, 1)
+	if stack.is_empty():
+		return {"ok": false, "accepted": 0, "remainder": maxi(0, int(item_data.get("amount", 0))), "error": "Некорректная запись предмета."}
+	if amount_override >= 0:
+		stack["amount"] = amount_override
+	var requested := int(stack.get("amount", 0))
+	if requested <= 0:
+		return {"ok": false, "accepted": 0, "remainder": maxi(0, requested), "error": "Количество предмета должно быть положительным."}
+	var remaining := _inventory_add(str(stack.get("item_id", "")), requested)
 	return {"ok": remaining == 0, "accepted": requested - remaining, "remainder": remaining}
 
 
@@ -751,28 +827,30 @@ func transfer_player_item_to_object_inventory(
 	if target_root == null or not is_instance_valid(target_root) or amount <= 0:
 		return {"ok": false, "transferred": 0, "remainder": maxi(0, amount)}
 	var target_inventory := ObjectFactoryScript.get_component(target_root, "has_inventory")
-	if target_inventory == null or not target_inventory.has_method("add_item"):
+	if target_inventory == null or not target_inventory.has_method("add_item_data"):
 		return {"ok": false, "transferred": 0, "remainder": amount}
 	var available := mini(amount, _get_item_count(item_id))
 	if available <= 0:
 		return {"ok": false, "transferred": 0, "remainder": amount}
-	var item_data: Dictionary = config.items.get(item_id, {})
-	var added_value: Variant = target_inventory.call(
-		"add_item",
-		item_id,
-		available,
-		maxi(1, int(item_data.get("max_stack", config.inventory.max_stack))),
-		maxf(0.0, float(item_data.get("weight", 0.0))),
-		item_data.get("tags", []) if item_data.get("tags", []) is Array else [],
-		str(item_data.get("rarity", "common"))
-	)
+	var item_settings: Dictionary = config.items.get(item_id, {})
+	var item_stack := {
+		"item_id": item_id,
+		"amount": available,
+		"max_stack": maxi(1, int(item_settings.get("max_stack", config.inventory.max_stack))),
+		"weight": maxf(0.0, float(item_settings.get("weight", 0.0))),
+		"tags": item_settings.get("tags", []).duplicate(true) if item_settings.get("tags", []) is Array else [],
+		"rarity": str(item_settings.get("rarity", "common"))
+	}
+	var added_value: Variant = target_inventory.call("add_item_data", item_stack, available)
 	if not added_value is Dictionary:
 		return {"ok": false, "transferred": 0, "remainder": amount}
 	var accepted := clampi(int(added_value.get("accepted", 0)), 0, available)
 	if accepted <= 0:
 		return {"ok": false, "transferred": 0, "remainder": amount}
 	if not _consume_item(item_id, accepted):
-		if target_inventory.has_method("remove_item"):
+		if target_inventory.has_method("remove_item_data"):
+			target_inventory.call("remove_item_data", item_id, accepted, {"allow_bound": true})
+		elif target_inventory.has_method("remove_item"):
 			target_inventory.call("remove_item", item_id, accepted, true)
 		return {"ok": false, "transferred": 0, "remainder": amount}
 	return {"ok": accepted == amount, "transferred": accepted, "remainder": amount - accepted}
@@ -807,26 +885,27 @@ func deposit_item_to_container(
 	if container_root == null or not is_instance_valid(container_root) or amount <= 0:
 		return {"ok": false, "accepted": 0, "remainder": maxi(0, amount)}
 	var container := ObjectFactoryScript.get_component(container_root, "stores_items")
-	if container == null or not container.has_method("add_item"):
+	if container == null or not container.has_method("add_item_data"):
 		return {"ok": false, "accepted": 0, "remainder": amount}
 	var available := mini(amount, _get_item_count(item_id))
 	if available <= 0:
 		return {"ok": false, "accepted": 0, "remainder": amount}
-	var item_data: Dictionary = config.items.get(item_id, {})
-	var max_stack := maxi(1, int(item_data.get("max_stack", config.inventory.max_stack)))
-	var item_weight := maxf(0.0, float(item_data.get("weight", 0.0)))
-	var item_tags: Array = item_data.get("tags", []) if item_data.get("tags", []) is Array else []
+	var item_settings: Dictionary = config.items.get(item_id, {})
+	var item_stack := {
+		"item_id": item_id,
+		"amount": available,
+		"max_stack": maxi(1, int(item_settings.get("max_stack", config.inventory.max_stack))),
+		"weight": maxf(0.0, float(item_settings.get("weight", 0.0))),
+		"tags": item_settings.get("tags", []).duplicate(true) if item_settings.get("tags", []) is Array else [],
+		"rarity": str(item_settings.get("rarity", "common"))
+	}
 	var previous_state_value: Variant = container.call("export_runtime_state") if container.has_method("export_runtime_state") else {}
 	var previous_state: Dictionary = previous_state_value if previous_state_value is Dictionary else {}
 	var result_value: Variant = container.call(
-		"add_item",
-		item_id,
+		"add_item_data",
+		item_stack,
 		available,
-		max_stack,
-		item_weight,
-		item_tags,
-		actor_id,
-		faction_id
+		{"actor_id": actor_id, "faction_id": faction_id}
 	)
 	if not result_value is Dictionary:
 		return {"ok": false, "accepted": 0, "remainder": amount}
@@ -851,15 +930,12 @@ func withdraw_item_from_container(
 	if container_root == null or not is_instance_valid(container_root) or amount <= 0:
 		return {"ok": false, "accepted": 0, "remainder": maxi(0, amount)}
 	var container := ObjectFactoryScript.get_component(container_root, "stores_items")
-	if container == null or not container.has_method("get_contents") or not container.has_method("remove_item"):
+	if container == null or not container.has_method("get_item_stacks") or not container.has_method("remove_item_data"):
 		return {"ok": false, "accepted": 0, "remainder": amount}
-	var contents_value: Variant = container.call("get_contents", actor_id, faction_id)
+	var contents_value: Variant = container.call("get_item_stacks", {"actor_id": actor_id, "faction_id": faction_id})
 	if not contents_value is Array:
 		return {"ok": false, "accepted": 0, "remainder": amount}
-	var available := 0
-	for entry in contents_value:
-		if entry is Dictionary and str(entry.get("item_id", "")) == item_id:
-			available += maxi(0, int(entry.get("amount", 0)))
+	var available := ItemStackServiceScript.count_items(contents_value, item_id)
 	available = mini(available, amount)
 	if available <= 0:
 		return {"ok": false, "accepted": 0, "remainder": amount}
@@ -868,7 +944,13 @@ func withdraw_item_from_container(
 	var accepted := available - remaining
 	if accepted <= 0:
 		return {"ok": false, "accepted": 0, "remainder": amount}
-	if not bool(container.call("remove_item", item_id, accepted, actor_id, faction_id)):
+	var remove_value: Variant = container.call(
+		"remove_item_data",
+		item_id,
+		accepted,
+		{"actor_id": actor_id, "faction_id": faction_id}
+	)
+	if not remove_value is Dictionary or not bool(remove_value.get("ok", false)):
 		inventory = inventory_before
 		inventory_dirty = true
 		_update_resource_counts()
@@ -1154,22 +1236,33 @@ func _attack(secondary: bool) -> void:
 	for target in resources.duplicate():
 		if not is_instance_valid(target) or target.destroying:
 			continue
-		var offset: Vector2 = target.global_position - attack_origin
+		var target_position: Vector2 = target.get_attack_target_position(attack_origin)
+		var offset: Vector2 = target_position - attack_origin
 		var distance: float = offset.length()
 		var reach := float(attack.get("reach", 70.0))
 		var is_hit := false
 		if mode == "slash" or mode == "swing":
-			is_hit = CombatSystemScript.point_in_arc(attack_origin, target.global_position, aim_angle, reach + target.hit_radius, attack_arc)
+			is_hit = CombatSystemScript.point_in_arc(
+				attack_origin,
+				target_position,
+				aim_angle,
+				reach + target.hit_radius,
+				attack_arc
+			)
 		else:
 			var start: Vector2 = attack_origin + aim_direction * 12.0
 			var finish: Vector2 = attack_origin + aim_direction * reach
 			var hit_width := float(attack.get("width", 22.0)) * skill_scale
-			is_hit = distance <= reach + target.hit_radius and CombatSystemScript.distance_to_segment(target.global_position, start, finish) <= hit_width + target.hit_radius * 0.35
+			is_hit = (
+				distance <= reach + target.hit_radius
+				and CombatSystemScript.distance_to_segment(target_position, start, finish)
+					<= hit_width + target.hit_radius * 0.35
+			)
 		if is_hit:
 			var material := "wood" if target.resource_type == "tree" else "stone"
 			if target.resource_type == "stump" or not CombatSystemScript.can_damage_resource(weapon_id, material):
 				continue
-			_damage_target(target, attack)
+			_damage_target(target, attack, target_position)
 			hit_count += 1
 	hit_count += _apply_harvesting_hits(
 		weapon_id,
@@ -1178,6 +1271,15 @@ func _attack(secondary: bool) -> void:
 		attack_arc,
 		attack,
 		_get_world_season(_world_time_day)
+	)
+	hit_count += _apply_component_damage_hits(
+		weapon_id,
+		attack_origin,
+		aim_direction,
+		attack_arc,
+		attack,
+		mode,
+		skill_scale
 	)
 	if hit_count == 0:
 		_log("Удар: %s" % weapon_id)
@@ -1212,7 +1314,7 @@ func _apply_harvesting_hits(
 			harvesting = ObjectFactoryScript.get_component(root, "can_be_mined")
 		if harvesting == null or not harvesting.has_method("advance_harvest"):
 			continue
-		var target_position := _get_component_world_position(harvesting, root)
+		var target_position := _get_object_attack_hit_position(root, attack_origin)
 		if not CombatSystemScript.point_in_arc(
 			attack_origin,
 			target_position,
@@ -1267,8 +1369,8 @@ func _trigger_object_mechanic(
 		return false
 	if method_name == "play_event" and str(component.get_setting("stream_path", "")).strip_edges().is_empty():
 		return false
-	component.callv(method_name, arguments)
-	return true
+	var result: Variant = component.callv(method_name, arguments)
+	return bool(result) if typeof(result) == TYPE_BOOL else true
 
 
 func _show_attack_effect(direction: Vector2, reach: float, mode: String, arc_degrees: float, effect_width: float) -> void:
@@ -1393,7 +1495,7 @@ func _embed_arrow(arrow: Node2D) -> void:
 		if is_instance_valid(oldest):
 			oldest.queue_free()
 
-func _damage_target(target: ResourceNode, attack: Dictionary) -> void:
+func _damage_target(target: ResourceNode, attack: Dictionary, hit_position: Vector2) -> void:
 	if not is_instance_valid(target) or target.destroying:
 		return
 	var material := "wood" if target.resource_type == "tree" else "stone"
@@ -1402,13 +1504,321 @@ func _damage_target(target: ResourceNode, attack: Dictionary) -> void:
 	if amount <= 0.0:
 		return
 	var destroyed := target.apply_damage(amount, damage_type)
-	_spawn_damage_number(target.global_position + Vector2(0, -28), amount, damage_type)
+	_spawn_damage_number(hit_position + Vector2(0, -28), amount, damage_type)
 	var type_info: Dictionary = DAMAGE_LABELS.get(damage_type, {"name": damage_type, "color": Color.WHITE})
 	_log("%s: -%.0f HP (%s)." % [str(target.resource_type).capitalize(), amount, str(type_info["name"])])
 	_camera_shake()
 	if destroyed:
 		target.begin_destroy()
 		_log("%s разрушено." % str(target.resource_type).capitalize())
+
+
+
+## Applies the same melee hit geometry to any Object Builder object that has
+## Health + Damageable. Legacy ResourceNode scenes keep their dedicated path above.
+func _apply_component_damage_hits(
+	weapon_id: String,
+	attack_origin: Vector2,
+	aim_direction: Vector2,
+	arc_degrees: float,
+	attack: Dictionary,
+	mode: String,
+	skill_scale: float
+) -> int:
+	var hit_count := 0
+	var visited_roots: Dictionary = {}
+	var reach := maxf(0.0, float(attack.get("reach", 70.0)))
+	var hit_angle := aim_direction.angle()
+	for damageable in _get_world_components("damageable"):
+		if damageable == null or not is_instance_valid(damageable) or not damageable.has_method("receive_damage"):
+			continue
+		var target_root := ObjectFactoryScript.get_object_root(damageable)
+		if (
+			target_root == null
+			or target_root == player
+			or not is_instance_valid(target_root)
+			or target_root.is_queued_for_deletion()
+			or target_root is ResourceNode
+		):
+			continue
+		var root_id := target_root.get_instance_id()
+		if visited_roots.has(root_id):
+			continue
+		visited_roots[root_id] = true
+
+		var health := ObjectFactoryScript.get_component(target_root, "health")
+		if health == null or not health.has_method("is_alive") or not bool(health.call("is_alive")):
+			continue
+		var material := _get_object_damage_material(target_root)
+		var required_tool := str(damageable.get_setting("required_tool_id", "")).strip_edges().to_lower()
+		if required_tool.is_empty():
+			# Backward compatibility for objects created before mechanics owned these fields.
+			required_tool = str(ObjectFactoryScript.get_custom_property(
+				target_root,
+				"required_tool_id",
+				ObjectFactoryScript.get_custom_property(target_root, "required_tool", "")
+			)).strip_edges().to_lower()
+		if required_tool.is_empty():
+			var tool_mechanic := ObjectFactoryScript.get_component(target_root, "requires_tool")
+			if tool_mechanic != null:
+				required_tool = str(tool_mechanic.get_setting("required_tool_id", "")).strip_edges().to_lower()
+		if required_tool.is_empty():
+			var mining_mechanic := ObjectFactoryScript.get_component(target_root, "can_be_mined")
+			if mining_mechanic != null:
+				required_tool = str(mining_mechanic.get_setting("required_tool_id", "")).strip_edges().to_lower()
+		if required_tool.is_empty():
+			if material == "wood" and weapon_id != "axe":
+				continue
+			if material == "stone" and weapon_id != "pickaxe":
+				continue
+		else:
+			var tool_matches := required_tool == "any"
+			for required_tool_value in required_tool.split(",", false):
+				if str(required_tool_value).strip_edges().to_lower() == weapon_id:
+					tool_matches = true
+					break
+			if not tool_matches:
+				continue
+
+		var target_position := _get_object_attack_hit_position(target_root, attack_origin)
+		var hit_radius := _get_object_hit_radius(target_root)
+		var offset: Vector2 = target_position - attack_origin
+		var distance := offset.length()
+		var is_hit := false
+		if mode == "slash" or mode == "swing":
+			is_hit = CombatSystemScript.point_in_arc(
+				attack_origin,
+				target_position,
+				hit_angle,
+				reach + hit_radius,
+				arc_degrees
+			)
+		else:
+			var start: Vector2 = attack_origin + aim_direction * 12.0
+			var finish: Vector2 = attack_origin + aim_direction * reach
+			var hit_width := float(attack.get("width", 22.0)) * skill_scale
+			is_hit = (
+				distance <= reach + hit_radius
+				and CombatSystemScript.distance_to_segment(target_position, start, finish)
+					<= hit_width + hit_radius * 0.35
+			)
+		if not is_hit:
+			continue
+
+		var damage_attack := attack.duplicate(true)
+		# Generic material responses do not use the legacy ResourceNode weapon gate.
+		damage_attack.erase("weapon_id")
+		var damage_type := str(attack.get("damage_type", "crushing"))
+		var amount := CombatSystemScript.calculate_damage(
+			damage_attack,
+			material,
+			float(config.player.strength),
+			config
+		)
+		if amount <= 0.0:
+			continue
+
+		# Run the short impact sway before applying damage. If this hit is lethal,
+		# DestructibleComponent replaces this tween with the full fall animation.
+		_play_object_hit_reaction(target_root, material)
+		var applied_damage := float(damageable.call("receive_damage", amount, player))
+		if applied_damage <= 0.0:
+			continue
+
+		_spawn_damage_number(target_position + Vector2(0.0, -28.0), applied_damage, damage_type)
+		_trigger_object_mechanic(target_root, "plays_damage_sound", "play_event", ["damage"])
+		if not _trigger_object_mechanic(target_root, "emits_particles", "emit_particles_at", [target_position]):
+			_spawn_object_hit_particles(target_root, target_position, material)
+		_camera_shake()
+		var type_info: Dictionary = DAMAGE_LABELS.get(damage_type, {"name": damage_type, "color": Color.WHITE})
+		_log("%s: -%.0f HP (%s)." % [
+			str(target_root.name),
+			applied_damage,
+			str(type_info["name"])
+		])
+		if not bool(health.call("is_alive")):
+			_handle_object_destroyed(target_root, target_position)
+		hit_count += 1
+	return hit_count
+
+
+func _get_object_damage_material(target_root: Node) -> String:
+	var damageable := ObjectFactoryScript.get_component(target_root, "damageable")
+	var material_value: Variant = damageable.get_setting("material_type", "") if damageable != null else ""
+	if str(material_value).strip_edges().is_empty():
+		material_value = ObjectFactoryScript.get_custom_property(target_root, "material_type", "")
+	var material := str(material_value).strip_edges().to_lower()
+	if material in ["wood", "stone", "flesh", "metal", "plant", "nature", "glass", "ice"]:
+		return material
+	var tags: Variant = target_root.get_meta("object_builder_tags", target_root.get_meta("object_tags", []))
+	if tags is Array or tags is PackedStringArray:
+		for tag_value in tags:
+			var tag := str(tag_value).to_lower()
+			if tag in ["tree", "wood", "wooden", "timber"]:
+				return "wood"
+			if tag in ["rock", "stone", "ore", "mineral"]:
+				return "stone"
+	return "flesh"
+
+
+func _get_object_hit_position(target_root: Node) -> Vector2:
+	if target_root is Node2D:
+		return (target_root as Node2D).global_position
+	return Vector2.ZERO
+
+
+## Finds the nearest point on any visible sprite belonging to an Object Builder object.
+## This makes tall trees and large rocks hittable by their artwork instead of their root pivot.
+func _get_object_attack_hit_position(target_root: Node, attacker_world_position: Vector2) -> Vector2:
+	if not target_root is Node2D:
+		return Vector2.ZERO
+	var root := target_root as Node2D
+	var best_position := root.global_position
+	var best_distance := attacker_world_position.distance_to(best_position)
+	var candidates: Array[Node] = []
+	if target_root is CanvasItem and target_root.has_method("get_rect"):
+		candidates.append(target_root)
+	candidates.append_array(target_root.find_children("*", "Sprite2D", true, false))
+	candidates.append_array(target_root.find_children("*", "AnimatedSprite2D", true, false))
+	for candidate in candidates:
+		if not candidate is Node2D or not candidate is CanvasItem:
+			continue
+		var visual := candidate as CanvasItem
+		if not visual.is_visible_in_tree() or not visual.has_method("get_rect"):
+			continue
+		var rect_value: Variant = visual.call("get_rect")
+		if not rect_value is Rect2:
+			continue
+		var bounds: Rect2 = rect_value
+		if bounds.size.x <= 0.0 or bounds.size.y <= 0.0:
+			continue
+		var visual_node := candidate as Node2D
+		var local_attacker := visual_node.to_local(attacker_world_position)
+		var local_target := bounds.get_center()
+		if not bounds.has_point(local_attacker):
+			local_target = Vector2(
+				clampf(local_attacker.x, bounds.position.x, bounds.end.x),
+				clampf(local_attacker.y, bounds.position.y, bounds.end.y)
+			)
+		var world_target := visual_node.to_global(local_target)
+		var distance := attacker_world_position.distance_to(world_target)
+		if distance < best_distance:
+			best_distance = distance
+			best_position = world_target
+	return best_position
+
+
+func _get_object_hit_radius(target_root: Node) -> float:
+	var damageable := ObjectFactoryScript.get_component(target_root, "damageable")
+	var radius_value: Variant = damageable.get_setting("hit_radius", 0.0) if damageable != null else 0.0
+	if typeof(radius_value) == TYPE_INT or typeof(radius_value) == TYPE_FLOAT:
+		if float(radius_value) > 0.0:
+			return clampf(float(radius_value), 4.0, 512.0)
+	# Keep old custom properties readable while older saved objects are migrated.
+	radius_value = ObjectFactoryScript.get_custom_property(target_root, "hit_radius", 0.0)
+	if typeof(radius_value) == TYPE_INT or typeof(radius_value) == TYPE_FLOAT:
+		if float(radius_value) > 0.0:
+			return clampf(float(radius_value), 4.0, 512.0)
+	return 18.0
+
+
+func _play_object_hit_reaction(target_root: Node, material: String) -> void:
+	if target_root == null or not is_instance_valid(target_root):
+		return
+	var fall_component := ObjectFactoryScript.get_component(target_root, "falls_when_destroyed")
+	if fall_component != null and fall_component.has_method("play_hit_reaction"):
+		if bool(fall_component.call("play_hit_reaction", material)):
+			return
+	if not target_root is Node2D:
+		return
+	var node := target_root as Node2D
+	var base_rotation := float(node.get_meta("object_builder_hit_base_rotation", node.rotation))
+	node.set_meta("object_builder_hit_base_rotation", base_rotation)
+	var previous_tween: Variant = node.get_meta("object_builder_hit_tween", null)
+	if previous_tween is Tween and (previous_tween as Tween).is_running():
+		(previous_tween as Tween).kill()
+	var strength := deg_to_rad(3.6) if material == "wood" else (deg_to_rad(1.5) if material == "stone" else deg_to_rad(2.0))
+	var direction := -1.0 if randf() < 0.5 else 1.0
+	var tween := node.create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.tween_property(node, "rotation", base_rotation + strength * direction, 0.055)
+	tween.tween_property(node, "rotation", base_rotation - strength * direction * 0.42, 0.10)
+	tween.tween_property(node, "rotation", base_rotation, 0.17)
+	node.set_meta("object_builder_hit_tween", tween)
+
+
+func _spawn_object_hit_particles(target_root: Node, world_position: Vector2, material: String) -> void:
+	if Engine.is_editor_hint() or not is_inside_tree():
+		return
+	var effects_root: Node = get_tree().current_scene
+	if effects_root == null:
+		effects_root = target_root.get_parent()
+	if effects_root == null:
+		return
+	var color := Color("#9d754c") if material == "wood" else (
+		Color("#89939b") if material == "stone" else Color("#d8d2c4")
+	)
+	var image := Image.create(3, 3, false, Image.FORMAT_RGBA8)
+	image.fill(Color.WHITE)
+	var particles := CPUParticles2D.new()
+	particles.name = "ObjectHitParticles"
+	particles.amount = 14 if material == "wood" else 10
+	particles.lifetime = 0.34
+	particles.one_shot = true
+	particles.explosiveness = 0.92
+	particles.direction = Vector2(0.0, -1.0)
+	particles.spread = 180.0
+	particles.initial_velocity_min = 28.0
+	particles.initial_velocity_max = 92.0
+	particles.gravity = Vector2(0.0, 190.0)
+	particles.scale_amount_min = 0.7
+	particles.scale_amount_max = 1.5
+	particles.color = color
+	particles.texture = ImageTexture.create_from_image(image)
+	particles.z_as_relative = false
+	particles.z_index = 4
+	effects_root.add_child(particles)
+	particles.global_position = world_position
+	particles.finished.connect(particles.queue_free)
+	particles.emitting = true
+
+
+func _handle_object_destroyed(target_root: Node, origin: Vector2) -> void:
+	if target_root.has_meta("object_builder_destruction_processed"):
+		return
+	target_root.set_meta("object_builder_destruction_processed", true)
+	_trigger_object_mechanic(target_root, "plays_destroy_sound", "play_event", ["destroy"])
+	var regrowth_component := ObjectFactoryScript.get_component(target_root, "can_regrow")
+	if regrowth_component != null and regrowth_component.has_method("start_regrowth"):
+		regrowth_component.call("start_regrowth")
+
+	var loot_component := ObjectFactoryScript.get_component(target_root, "drops_loot_on_destroy")
+	var delivered_loot := false
+	if loot_component != null and loot_component.has_method("roll_loot"):
+		var loot_value: Variant = loot_component.call("roll_loot", rng)
+		if loot_value is Array:
+			for loot_entry in loot_value:
+				if not loot_entry is Dictionary:
+					continue
+				var item_id := str(loot_entry.get("item_id", "")).strip_edges()
+				var amount := maxi(0, int(loot_entry.get("amount", 0)))
+				if not item_id.is_empty() and amount > 0:
+					_deliver_mechanic_output(item_id, amount, target_root)
+					delivered_loot = true
+
+	if not delivered_loot:
+		var item_id := str(ObjectFactoryScript.get_custom_property(target_root, "drop_item_id", "")).strip_edges()
+		var amount := maxi(0, int(ObjectFactoryScript.get_custom_property(target_root, "drop_amount", 0)))
+		if not item_id.is_empty() and amount > 0:
+			_deliver_mechanic_output(item_id, amount, target_root)
+
+	var debris_component := ObjectFactoryScript.get_component(target_root, "spawns_debris")
+	if debris_component != null and debris_component.has_method("spawn_debris"):
+		var debris_parent := world_objects if world_objects != null else target_root.get_parent()
+		if debris_parent != null:
+			debris_component.call("spawn_debris", debris_parent, origin)
+
+
 
 func _spawn_damage_number(world_position: Vector2, amount: float, damage_type: String) -> void:
 	var label := Label.new()
@@ -1428,15 +1838,18 @@ func _spawn_damage_number(world_position: Vector2, amount: float, damage_type: S
 	tween.tween_property(label, "modulate:a", 0.0, 0.62)
 	tween.chain().tween_callback(label.queue_free)
 
-func _on_resource_broken(kind: String, drop_position: Vector2, amount: int, resource: ResourceNode) -> void:
+func _on_resource_broken(item_id: String, drop_position: Vector2, amount: int, resource: ResourceNode) -> void:
 	resources.erase(resource)
-	var item_id := "wood" if kind == "wood" else "stone"
+	item_id = item_id.strip_edges()
+	var definition := ItemCatalogServiceScript.get_definition(item_id, {"definitions": config.item_definitions})
+	if item_id.is_empty() or definition == null:
+		_log("У ресурса '%s' указан неизвестный item_id: %s." % [resource.name if is_instance_valid(resource) else "?", item_id])
+		return
 	for index in range(maxi(1, amount)):
 		var direction := Vector2.from_angle(rng.randf_range(0.0, TAU))
 		var speed := rng.randf_range(float(config.drops.scatter_speed_min), float(config.drops.scatter_speed_max))
 		var drop := ResourceDropScript.new() as ResourceDrop
 		drop.name = "Drop_%s_%03d" % [item_id, drops.size() + 1]
-		var definition := config.item_definitions.get(item_id) as ItemDefinition
 		drop.configure(item_id, 1, direction * speed, config.drops, definition)
 		world_objects.add_child(drop)
 		drop.global_position = drop_position + Vector2(rng.randf_range(-7.0, 7.0), rng.randf_range(-7.0, 7.0))

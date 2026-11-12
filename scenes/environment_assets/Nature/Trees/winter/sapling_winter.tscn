@@ -6,16 +6,16 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_qu1rp"]
 size = Vector2(5, 7)
 
-[node name="sapling_winter" type="StaticBody2D" unique_id=141464072]
+[node name="sapling_winter" type="StaticBody2D" unique_id=672474452]
 collision_layer = 2
 script = ExtResource("1_7u43w")
 preserve_visual_texture = true
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=1607966526]
+[node name="Visual" type="Sprite2D" parent="." unique_id=637209922]
 texture_filter = 1
 position = Vector2(0, -8)
 texture = ExtResource("2_lqefr")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2014700723]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2082540349]
 position = Vector2(0, -3.5)
 shape = SubResource("RectangleShape2D_qu1rp")

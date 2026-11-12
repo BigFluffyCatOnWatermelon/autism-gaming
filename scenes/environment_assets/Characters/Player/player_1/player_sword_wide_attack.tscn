@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://dcds565ex20ha"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_w6xem"]
+[ext_resource type="Texture2D" uid="uid://cn2w5d05a7phj" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_sword_wide_attack.png" id="2_phgli"]
+
+[node name="player_sword_wide_attack" type="StaticBody2D" unique_id=1049290522]
+collision_layer = 2
+script = ExtResource("1_w6xem")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=108904804]
+texture_filter = 1
+position = Vector2(0, -53.5)
+texture = ExtResource("2_phgli")

@@ -34,7 +34,11 @@ static func load_all() -> Dictionary:
 				definition.stack_limit = 1
 			else:
 				definition.stack_limit = maxi(1, definition.stack_limit)
-			var item_id := definition.item_id
+			var item_id := definition.item_id.strip_edges()
+			if definitions.has(item_id):
+				push_error("Повторяющийся item_id '%s' в каталоге '%s'. Предмет пропущен; первое определение сохранено." % [item_id, catalog_path])
+				continue
+			definition.item_id = item_id
 			definitions[item_id] = definition
 			categories[item_id] = category
 			catalog_by_id[item_id] = catalog
@@ -73,3 +77,34 @@ static func rebuild_item_data(definition: ItemDefinition) -> Dictionary:
 	for property_key in definition.properties:
 		item_data[property_key] = definition.properties[property_key]
 	return item_data
+
+
+## Resolves an item through the shared catalog loaded by load_all().
+static func get_definition(item_id: String, catalog_data: Dictionary = {}) -> ItemDefinition:
+	var normalized_id := item_id.strip_edges()
+	if normalized_id.is_empty():
+		return null
+	var definitions_value: Variant = catalog_data.get("definitions", {})
+	var definitions: Dictionary = definitions_value if definitions_value is Dictionary else {}
+	if definitions.is_empty():
+		definitions = load_all().get("definitions", {})
+	return definitions.get(normalized_id) as ItemDefinition
+
+
+static func has_item_id(item_id: String, catalog_data: Dictionary = {}) -> bool:
+	return get_definition(item_id, catalog_data) != null
+
+
+static func validate_item_ids(item_ids: Array, catalog_data: Dictionary = {}) -> Dictionary:
+	var valid: Array[String] = []
+	var missing: Array[String] = []
+	for value in item_ids:
+		var item_id := str(value).strip_edges()
+		if item_id.is_empty():
+			continue
+		if has_item_id(item_id, catalog_data):
+			if item_id not in valid:
+				valid.append(item_id)
+		elif item_id not in missing:
+			missing.append(item_id)
+	return {"ok": missing.is_empty(), "valid": valid, "missing": missing}

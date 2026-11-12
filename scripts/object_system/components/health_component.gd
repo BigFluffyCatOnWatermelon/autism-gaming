@@ -66,6 +66,20 @@ func reset_health() -> void:
 	_set_current_health(minf(starting_health, max_health), true)
 
 
+func tick_regeneration(delta: float) -> float:
+	if delta <= 0.0 or not is_finite(delta):
+		return 0.0
+	if bool(get_setting("regeneration_enabled", false)):
+		var rate := maxf(0.0, float(get_setting("health_regeneration_per_second", 1.0)))
+		return heal(rate * delta)
+	# Preserve explicitly bound legacy regeneration components while old scenes
+	# and hand-authored advanced bindings are still in use.
+	var legacy_regeneration := ObjectFactory.get_component(get_object_root(), "regenerates_health")
+	if legacy_regeneration != null and legacy_regeneration.has_method("regenerate_health"):
+		return float(legacy_regeneration.call("regenerate_health", delta, self))
+	return 0.0
+
+
 func is_alive() -> bool:
 	return current_health > 0.0
 

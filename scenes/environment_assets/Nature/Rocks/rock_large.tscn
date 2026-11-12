@@ -4,11 +4,9 @@
 [ext_resource type="Texture2D" uid="uid://dw3k57k4pmf8n" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_large.png" id="2_dlbcq"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_if4mh"]
-size = Vector2(19.84, 13.400001)
+size = Vector2(19.68, 9.6)
 
-[node name="rock_large" type="StaticBody2D" unique_id=1445062381]
-z_index = 2049
-z_as_relative = false
+[node name="rock_large" type="StaticBody2D" unique_id=896129455]
 collision_layer = 2
 script = ExtResource("1_bvjai")
 resource_type = "rock"
@@ -16,12 +14,11 @@ max_health = 110.0
 health = 110.0
 preserve_visual_texture = true
 
-[node name="Visual" type="Sprite2D" parent="." unique_id=1867778488]
-z_index = -1
+[node name="Visual" type="Sprite2D" parent="." unique_id=1938490325]
 texture_filter = 1
 position = Vector2(0, -10)
 texture = ExtResource("2_dlbcq")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=435258373]
-position = Vector2(1, -9)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1047046226]
+position = Vector2(0, -9.6)
 shape = SubResource("RectangleShape2D_if4mh")

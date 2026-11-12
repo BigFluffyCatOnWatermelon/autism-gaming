@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://lcfvo33jpnl8"]
+
+[ext_resource type="Script" uid="uid://cg8cjcacw133" path="res://scripts/placeable_art.gd" id="1_nnihj"]
+[ext_resource type="Texture2D" uid="uid://bh7galq3go578" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_run.png" id="2_i0eln"]
+
+[node name="player_run" type="StaticBody2D" unique_id=1669378526]
+collision_layer = 2
+script = ExtResource("1_nnihj")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1441906703]
+texture_filter = 1
+position = Vector2(0, -64)
+texture = ExtResource("2_i0eln")

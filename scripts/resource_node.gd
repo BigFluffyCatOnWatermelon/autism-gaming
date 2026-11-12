@@ -4,7 +4,7 @@ class_name ResourceNode
 
 const WORLD_Z_SORT_OFFSET := 2048
 
-signal resource_broken(kind: String, drop_position: Vector2, amount: int)
+signal resource_broken(item_id: String, drop_position: Vector2, amount: int)
 
 @export_enum("tree", "rock", "stump") var resource_type := "tree":
 	set(value):
@@ -15,7 +15,9 @@ signal resource_broken(kind: String, drop_position: Vector2, amount: int)
 
 @export var max_health := 90.0
 @export var health := 90.0
+@export var wood_drop_item_id := "wood"
 @export var wood_drop_amount := 5
+@export var stone_drop_item_id := "stone"
 @export var stone_drop_amount := 4
 @export var hit_radius := 29.0
 @export var swing_strength := 1.0
@@ -106,6 +108,25 @@ func _ready() -> void:
 		collision_layer = 2
 		collision_mask = 0
 	queue_redraw()
+
+
+## Returns the closest visible point on the resource sprite to a melee attacker.
+## The resource root is usually at the trunk/rock base, not at the visible artwork.
+func get_attack_target_position(attacker_world_position: Vector2) -> Vector2:
+	if visual == null or visual.texture == null or not visual.is_visible_in_tree():
+		return global_position
+	var bounds := visual.get_rect()
+	if bounds.size.x <= 0.0 or bounds.size.y <= 0.0:
+		return global_position
+	var local_attacker := visual.to_local(attacker_world_position)
+	var local_target := bounds.get_center()
+	if not bounds.has_point(local_attacker):
+		local_target = Vector2(
+			clampf(local_attacker.x, bounds.position.x, bounds.end.x),
+			clampf(local_attacker.y, bounds.position.y, bounds.end.y)
+		)
+	return visual.to_global(local_target)
+
 
 func _update_visual() -> void:
 	if visual == null:
@@ -228,7 +249,7 @@ func begin_destroy() -> void:
 		tween.chain().tween_callback(_finish_rock_break)
 
 func _finish_tree_fall() -> void:
-	resource_broken.emit("wood", global_position + Vector2(0, -12), maxi(1, wood_drop_amount))
+	resource_broken.emit(wood_drop_item_id.strip_edges(), global_position + Vector2(0, -12), maxi(1, wood_drop_amount))
 	resource_type = "stump"
 	health = 0.0
 	rotation = 0.0
@@ -240,7 +261,7 @@ func _finish_tree_fall() -> void:
 	queue_redraw()
 
 func _finish_rock_break() -> void:
-	resource_broken.emit("stone", global_position, maxi(1, stone_drop_amount))
+	resource_broken.emit(stone_drop_item_id.strip_edges(), global_position, maxi(1, stone_drop_amount))
 	queue_free()
 
 func _get_stump_bottom_local_y() -> float:
