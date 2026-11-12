@@ -86,7 +86,13 @@ func _generate_all() -> void:
 		_scan_placeables(str(mapping.source), str(mapping.destination))
 	_configure_ground_collision()
 	print("Cozy Village & Farm: добавлено атласов TileSet: ", _generated_tiles, "; создано сцен объектов: ", _generated_scenes)
-	if _generated_scenes > 0 or _generated_tiles > 0:
+	# In the GUI editor the FileSystem dock must index generated resources.
+	# Headless import/test jobs close immediately after plugin startup, so a
+	# background scan would be aborted during shutdown and produce false errors.
+	if (
+		(_generated_scenes > 0 or _generated_tiles > 0)
+		and DisplayServer.get_name() != "headless"
+	):
 		filesystem.scan()
 
 func _generate_catalog(catalog: Dictionary) -> void:
