@@ -425,7 +425,7 @@ static func _make_setting_group_id(group_name: String) -> String:
 	var result := ""
 	var previous_separator := false
 	for character in group_name.strip_edges().to_lower():
-		if character in [" ", "-", "/", "\\\\", "."]:
+		if character in [" ", "-", "/", "."]:
 			if not result.is_empty() and not previous_separator:
 				result += "_"
 			previous_separator = true
