@@ -177,7 +177,8 @@ UI продолжает отправлять типизированные изм
 - Старые `group_name` и порядок объявления используются как fallback; package-модули пока не требуют массового переписывания.
 - Исходные `setting_definitions`, defaults и сериализованные значения не мутируются.
 - Для строкового типа без явной метаинформации редактора выставляется `editor = unspecified`, потому что `String` не позволяет отличить обычный текст от ID, enum или resource path.
-- `ObjectComponentCatalog` проверяет базовые типы метаданных, уровни, поддерживаемые редакторы, структуру options, default enum и положительный конечный step.
+- `ObjectComponentCatalog` проверяет базовые типы метаданных, уровни, поддерживаемые редакторы, структуру options, default enum, положительный конечный step и наличие типа у catalog/resource references.
+- Встроенное поле `pickup.item_id` размечено как `catalog_reference` с `reference_type = item`; визуальный picker ещё не подключён.
 - `ObjectCapabilityCatalog` разрешает overlay менять только presentation metadata. Попытка переопределить тип, default, диапазон, единицы, required, options или другое каноническое поле фиксируется и отклоняется при регистрации.
 - Встроенное требование `pickup.item_id` оставлено только в `ObjectComponentDefinition`; дублирующий признак удалён из capability overlay.
 - `tests/object_builder_capability_metadata_smoke.gd` дополнен проверками нормализации, отрицательным тестом canonical default override, неизвестного editor и Enum без options.
