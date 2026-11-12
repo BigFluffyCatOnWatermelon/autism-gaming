@@ -158,12 +158,13 @@
 - [x] Нормализация выполняется на глубокой копии; `default_value`, исходные `setting_definitions` и сериализованные значения не переписываются.
 - [x] Строковые поля без явного типа редактора получают `editor = "unspecified"`: по одному `String` нельзя определить, это текст, ID каталога, enum или путь ресурса.
 - [ ] Запустить `object_builder_capability_metadata_smoke.gd` в настольном Godot и подтвердить работу без ошибок. Не заменять это GitHub Actions или headless-проверкой.
-- [ ] Добавить проверку типов и допустимых значений presentation metadata в регистрации `ObjectComponentDefinition`.
+- [x] Добавить проверку типов и допустимых значений presentation metadata в регистрации `ObjectComponentDefinition`.
 - [x] Ограничить capability overlay белым списком presentation metadata; неизвестные и канонические ключи отклоняются при регистрации.
+- [x] Проверять структуру presentation metadata: level/editor/options/visibility/unit/nullable/required/editor_config и положительный конечный step.
 - [x] Удалить дублирующий `required` из встроенного pickup overlay; обязательность `pickup.item_id` остаётся в component descriptor.
 - [ ] Добавить полную валидацию editor/options/units/visibility и проверить все расширения на совместимость.
 
-**Ограничение:** smoke-тест дополнен проверками нормализации и запрета canonical overrides, но в этой сессии Godot не запускался. Изменения проверены статически по исходникам; runtime/GUI-статус не заявляется.
+**Ограничение:** smoke-тест дополнен проверками нормализации, запрета canonical overrides и валидации editor/options. В этой сессии Godot не запускался. Изменения проверены статически по исходникам; runtime/GUI-статус не заявляется.
 
 **Статус:** начата кодовая реализация этапа 2. Добавлена только совместимая нормализация presentation metadata; универсальный renderer, typed references, визуальные редакторы и правила overlay ещё не реализованы.
 
