@@ -159,6 +159,39 @@ func _run_tests() -> void:
 			break
 	_expect(incomplete_enum_rejected, "enum settings require explicit labelled options")
 
+	var incompatible_editor_descriptor := pickup_item_descriptor.duplicate(true)
+	incompatible_editor_descriptor["editor"] = "number"
+	var incompatible_editor_errors := ObjectComponentCatalog._validate_setting_metadata(
+		incompatible_editor_descriptor,
+		"item_id",
+		"pickup"
+	)
+	var incompatible_editor_rejected := false
+	for error_message in incompatible_editor_errors:
+		if str(error_message).contains("несовместим с типом"):
+			incompatible_editor_rejected = true
+			break
+	_expect(incompatible_editor_rejected, "editor type must match the setting value type")
+
+	var invalid_default_range_descriptor := pickup_item_descriptor.duplicate(true)
+	invalid_default_range_descriptor["value_type"] = "Float"
+	invalid_default_range_descriptor["editor"] = "number"
+	invalid_default_range_descriptor["default_value"] = 2.0
+	invalid_default_range_descriptor["has_range"] = true
+	invalid_default_range_descriptor["minimum"] = 0.0
+	invalid_default_range_descriptor["maximum"] = 1.0
+	var invalid_default_range_errors := ObjectComponentCatalog._validate_setting_metadata(
+		invalid_default_range_descriptor,
+		"item_id",
+		"pickup"
+	)
+	var invalid_default_range_rejected := false
+	for error_message in invalid_default_range_errors:
+		if str(error_message).contains("выходит за заданный диапазон"):
+			invalid_default_range_rejected = true
+			break
+	_expect(invalid_default_range_rejected, "numeric default must stay inside its declared range")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
