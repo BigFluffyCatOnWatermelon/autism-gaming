@@ -178,10 +178,12 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 	if normalized_id == "pickup":
 		result.append({
 			"key": "item_id",
-			"display_name": "ID предмета",
+			"display_name": "Предмет",
 			"value_type": "String",
 			"default_value": "",
 			"group_name": "Предмет",
+			"editor": "catalog_reference",
+			"reference_type": "item",
 			"required": true
 		})
 		result.append({
