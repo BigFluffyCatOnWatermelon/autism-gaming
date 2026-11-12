@@ -5,6 +5,21 @@ class_name ObjectCapabilityCatalog
 
 const CAPABILITY_LIBRARY_DATA = preload("res://scripts/object_system/object_capability_library_data.gd")
 
+const SETTING_PRESENTATION_OVERRIDE_KEYS := [
+	"display_name",
+	"description",
+	"group_id",
+	"group_name",
+	"group_order",
+	"order",
+	"level",
+	"advanced",
+	"visibility",
+	"editor",
+	"editor_config"
+]
+const SETTING_SCHEMA_REFERENCE_KEYS := ["component_id", "setting_key", "key"]
+
 const BUILTIN_CATEGORIES := [
 	{"id": "general", "display_name": "Основное и данные", "order": 0},
 	{"id": "visual", "display_name": "Внешний вид", "order": 10},
@@ -423,8 +438,17 @@ static func _resolve_settings_schema(definition: ObjectCapabilityDefinition) -> 
 			resolved["component_id"] = component_id
 			resolved["setting_key"] = setting_key
 			var override: Dictionary = explicit_by_key.get(schema_key, {})
+			var forbidden_override_keys := PackedStringArray()
 			for override_key in override:
-				resolved[str(override_key)] = override[override_key]
+				var normalized_override_key := str(override_key)
+				if SETTING_SCHEMA_REFERENCE_KEYS.has(normalized_override_key):
+					continue
+				if SETTING_PRESENTATION_OVERRIDE_KEYS.has(normalized_override_key):
+					resolved[normalized_override_key] = override[override_key]
+				else:
+					forbidden_override_keys.append(normalized_override_key)
+			if not forbidden_override_keys.is_empty():
+				resolved["_forbidden_overlay_keys"] = forbidden_override_keys
 			var raw_level := str(resolved.get("level", "")).strip_edges().to_lower()
 			if raw_level.is_empty() or raw_level in ["basic", "advanced", "expert"]:
 				resolved["level"] = _normalize_setting_level(raw_level, bool(resolved.get("advanced", false)))
@@ -662,7 +686,7 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 	pickup.version = 1
 	pickup.definition_schema_version = 1
 	pickup.settings_schema = [
-		{"setting_key": "item_id", "level": "Basic", "required": true},
+		{"setting_key": "item_id", "level": "Basic"},
 		{"setting_key": "quantity", "level": "Basic"},
 		{"setting_key": "pickup_radius", "level": "Advanced"},
 		{"setting_key": "can_be_picked_up", "level": "Advanced"},
@@ -774,6 +798,13 @@ static func _validate_definition(
 				str(descriptor.get("_duplicate_schema_key", ""))
 			])
 			continue
+		var forbidden_override_keys: Variant = descriptor.get("_forbidden_overlay_keys", [])
+		if forbidden_override_keys is Array or forbidden_override_keys is PackedStringArray:
+			for forbidden_key in forbidden_override_keys:
+				errors.append(
+					"Capability overlay возможности '%s' не может переопределять каноническое поле '%s'. Перенеси его в ObjectComponentDefinition."
+					% [definition.capability_id, str(forbidden_key)]
+				)
 		var component_id := _normalize_id(str(descriptor.get("component_id", "")))
 		var setting_key := str(descriptor.get("setting_key", descriptor.get("key", ""))).strip_edges()
 		if component_id.is_empty() or setting_key.is_empty():
