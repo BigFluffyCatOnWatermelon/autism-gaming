@@ -89,6 +89,46 @@ func _run_tests() -> void:
 					break
 			_expect(not raw_pickup_item_descriptor.has("group_id"), "normalization does not mutate the source descriptor")
 
+	var pickup_capability := ObjectCapabilityCatalog.get_definition_reference("is_pickup_item")
+	_expect(pickup_capability != null, "built-in pickup capability remains registered")
+	if pickup_capability != null:
+		var pickup_schema_item: Dictionary = {}
+		for descriptor in pickup_capability.settings_schema:
+			if str(descriptor.get("setting_key", "")) == "item_id":
+				pickup_schema_item = descriptor
+				break
+		_expect(not pickup_schema_item.is_empty(), "pickup item setting resolves through its capability")
+		if not pickup_schema_item.is_empty():
+			_expect(bool(pickup_schema_item.get("required", false)), "required is inherited from the canonical component descriptor")
+			_expect(str(pickup_schema_item.get("value_type", "")) == "String", "capability presentation keeps the canonical value type")
+			_expect(str(pickup_schema_item.get("default_value", "missing")) == "", "capability presentation keeps the canonical default")
+			_expect(not pickup_schema_item.has("_forbidden_overlay_keys"), "valid presentation metadata has no forbidden override marker")
+
+	var forbidden_overlay := CapabilityDefinitionScript.new()
+	forbidden_overlay.capability_id = "smoke_forbidden_setting_override"
+	forbidden_overlay.display_name = "Проверка запрещённого переопределения"
+	forbidden_overlay.description = "Не должна менять канонический default компонента."
+	forbidden_overlay.category_id = "stats"
+	forbidden_overlay.category_name = "Характеристики"
+	forbidden_overlay.kind_id = "attributes"
+	forbidden_overlay.execution_scope = "runtime"
+	forbidden_overlay.implementation_type = "component"
+	forbidden_overlay.readiness_status = "ready"
+	forbidden_overlay.component_ids = PackedStringArray(["health"])
+	forbidden_overlay.settings_schema = [
+		{"setting_key": "max_health", "default_value": 55.0}
+	]
+	var forbidden_overlay_errors := ObjectCapabilityCatalog.register_definitions(
+		[forbidden_overlay],
+		"schema_contract_smoke"
+	)
+	var default_override_rejected := false
+	for error_message in forbidden_overlay_errors:
+		if str(error_message).contains("default_value"):
+			default_override_rejected = true
+			break
+	_expect(default_override_rejected, "capability overlay cannot replace a component default")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
