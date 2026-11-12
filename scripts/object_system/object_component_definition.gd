@@ -330,10 +330,109 @@ func get_setting_definitions() -> Array[Dictionary]:
 	var source := setting_definitions
 	if source.is_empty():
 		source = get_builtin_setting_definitions(component_id)
+
 	var result: Array[Dictionary] = []
-	for descriptor in source:
-		result.append(descriptor.duplicate(true))
+	var group_order_by_id: Dictionary = {}
+	for index in range(source.size()):
+		var source_descriptor: Dictionary = source[index]
+		var group_name := str(source_descriptor.get("group_name", "Основное")).strip_edges()
+		if group_name.is_empty():
+			group_name = "Основное"
+		var group_id := str(source_descriptor.get("group_id", "")).strip_edges()
+		if group_id.is_empty():
+			group_id = _make_setting_group_id(group_name)
+		if not group_order_by_id.has(group_id):
+			group_order_by_id[group_id] = group_order_by_id.size()
+		result.append(_normalize_setting_definition(
+			source_descriptor,
+			index,
+			int(group_order_by_id[group_id])
+		))
 	return result
+
+
+## Returns a presentation-ready copy without modifying the serialized source descriptor.
+## Component values/defaults remain authoritative; this method only supplies missing metadata.
+static func _normalize_setting_definition(
+	source: Dictionary,
+	source_order: int,
+	fallback_group_order: int
+) -> Dictionary:
+	var result := source.duplicate(true)
+	var key := str(result.get("key", "")).strip_edges()
+	if str(result.get("display_name", "")).strip_edges().is_empty():
+		result["display_name"] = key
+	if not result.has("description"):
+		result["description"] = ""
+
+	var group_name := str(result.get("group_name", "Основное")).strip_edges()
+	if group_name.is_empty():
+		group_name = "Основное"
+	result["group_name"] = group_name
+	var group_id := str(result.get("group_id", "")).strip_edges()
+	if group_id.is_empty():
+		group_id = _make_setting_group_id(group_name)
+	result["group_id"] = group_id
+	result["group_order"] = int(result.get("group_order", fallback_group_order))
+	result["order"] = int(result.get("order", source_order))
+
+	var level := str(result.get("level", "")).strip_edges().to_lower()
+	if level.is_empty():
+		level = "advanced" if bool(result.get("advanced", false)) else "basic"
+	if level in ["basic", "advanced", "expert"]:
+		result["level"] = level.capitalize()
+	else:
+		# Keep invalid declarations intact so registry validation can report them.
+		result["level"] = level
+	result["advanced"] = level != "basic"
+
+	if not result.has("visibility"):
+		result["visibility"] = "always"
+	if not result.has("unit"):
+		result["unit"] = ""
+	if not result.has("nullable"):
+		result["nullable"] = false
+	if not result.has("required"):
+		result["required"] = false
+	if not result.has("options"):
+		result["options"] = []
+	if not result.has("editor_config"):
+		result["editor_config"] = {}
+	if not result.has("editor"):
+		result["editor"] = _default_editor_for_value_type(
+			str(result.get("value_type", ""))
+		)
+	return result
+
+
+static func _default_editor_for_value_type(value_type: String) -> String:
+	match value_type:
+		"Boolean":
+			return "switch"
+		"Integer", "Float":
+			return "number"
+		"Vector2":
+			return "vector2"
+		"Color":
+			return "color"
+		"String":
+			# String alone cannot identify text, enum, catalogue ID or a resource path.
+			return "unspecified"
+	return "unspecified"
+
+
+static func _make_setting_group_id(group_name: String) -> String:
+	var result := ""
+	var previous_separator := false
+	for character in group_name.strip_edges().to_lower():
+		if character in [" ", "-", "/", "\\\\", "."]:
+			if not result.is_empty() and not previous_separator:
+				result += "_"
+			previous_separator = true
+		else:
+			result += character
+			previous_separator = false
+	return result.trim_prefix("_").trim_suffix("_")
 
 
 func get_inspector_property_name_for_setting(key: String) -> String:
