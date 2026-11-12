@@ -533,9 +533,6 @@ static func _validate_definition(
 			continue
 		setting_ids[key] = true
 		errors.append_array(_validate_setting_metadata(descriptor, key, definition.component_id))
-		if bool(descriptor.get("has_range", false)) and float(descriptor.get("minimum", 0.0)) > float(descriptor.get("maximum", 0.0)):
-			errors.append("У настройки '%s' компонента '%s' перепутаны границы." % [key, definition.component_id])
-			continue
 		if not probe.set_setting(key, descriptor.get("default_value")):
 			errors.append("У настройки '%s' компонента '%s' некорректное значение по умолчанию." % [key, definition.component_id])
 
@@ -628,6 +625,29 @@ static func _validate_setting_metadata(
 			setting_key,
 			component_id,
 			editor
+		])
+
+	var value_type := str(descriptor.get("value_type", ""))
+	var compatible_value_types := {
+		"switch": ["Boolean"],
+		"number": ["Integer", "Float"],
+		"slider": ["Integer", "Float"],
+		"range": ["Integer", "Float"],
+		"text": ["String"],
+		"multiline_text": ["String"],
+		"vector2": ["Vector2"],
+		"color": ["Color"],
+		"enum": ["String", "Integer", "Float", "Boolean"],
+		"catalog_reference": ["String"],
+		"resource_reference": ["String"],
+		"gameplay_table": ["String"]
+	}
+	if compatible_value_types.has(editor) and not compatible_value_types[editor].has(value_type):
+		errors.append("Editor '%s' несовместим с типом '%s' у настройки '%s' компонента '%s'." % [
+			editor,
+			value_type,
+			setting_key,
+			component_id
 		])
 
 	var visibility: Variant = descriptor.get("visibility", "always")
@@ -724,8 +744,54 @@ static func _validate_setting_metadata(
 				component_id
 			])
 
+	var raw_has_range: Variant = descriptor.get("has_range", false)
+	if typeof(raw_has_range) != TYPE_BOOL:
+		errors.append("has_range настройки '%s' компонента '%s' должна быть Boolean." % [
+			setting_key,
+			component_id
+		])
+	elif bool(raw_has_range):
+		if value_type not in ["Integer", "Float"]:
+			errors.append("Числовой диапазон настройки '%s' компонента '%s' допустим только для Integer и Float." % [
+				setting_key,
+				component_id
+			])
+		var minimum_value: Variant = descriptor.get("minimum")
+		var maximum_value: Variant = descriptor.get("maximum")
+		if typeof(minimum_value) not in [TYPE_INT, TYPE_FLOAT] or typeof(maximum_value) not in [TYPE_INT, TYPE_FLOAT]:
+			errors.append("Настройка '%s' компонента '%s' должна иметь числовые minimum и maximum." % [
+				setting_key,
+				component_id
+			])
+		else:
+			var minimum := float(minimum_value)
+			var maximum := float(maximum_value)
+			if is_nan(minimum) or is_inf(minimum) or is_nan(maximum) or is_inf(maximum) or minimum > maximum:
+				errors.append("Диапазон настройки '%s' компонента '%s' должен иметь конечные границы и minimum <= maximum." % [
+					setting_key,
+					component_id
+				])
+			var default_value: Variant = descriptor.get("default_value")
+			if typeof(default_value) in [TYPE_INT, TYPE_FLOAT]:
+				var numeric_default := float(default_value)
+				if is_nan(numeric_default) or is_inf(numeric_default) or numeric_default < minimum or numeric_default > maximum:
+					errors.append("Default настройки '%s' компонента '%s' выходит за заданный диапазон." % [
+						setting_key,
+						component_id
+					])
+			else:
+				errors.append("Default настройки '%s' компонента '%s' должен быть числом для заданного диапазона." % [
+					setting_key,
+					component_id
+				])
+
 	if descriptor.has("step"):
 		var step_value: Variant = descriptor.get("step")
+		if value_type not in ["Integer", "Float"]:
+			errors.append("step настройки '%s' компонента '%s' поддерживается только для Integer и Float." % [
+				setting_key,
+				component_id
+			])
 		if typeof(step_value) not in [TYPE_INT, TYPE_FLOAT]:
 			errors.append("step настройки '%s' компонента '%s' должен быть числом." % [
 				setting_key,
