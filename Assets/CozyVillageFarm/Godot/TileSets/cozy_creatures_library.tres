@@ -11,21 +11,36 @@
 [ext_resource type="Texture2D" uid="uid://bhyp3son13f3p" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/shopkeeper/shopkeeper_walk_right.png" id="9_sfskc"]
 [ext_resource type="Texture2D" uid="uid://bardkhbpygy73" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/shopkeeper/shopkeeper_walk_up.png" id="10_hkgyd"]
 [ext_resource type="Texture2D" uid="uid://be6xl2w5wgsnd" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_action_hoe.png" id="11_0cp7i"]
+[ext_resource type="Texture2D" uid="uid://cf3iu5e2be4qi" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/idle_512x256.png" id="11_qa5et"]
 [ext_resource type="Texture2D" uid="uid://dbdhu8l8rgoa1" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png" id="12_gu8dl"]
+[ext_resource type="Texture2D" uid="uid://dynm6416bedxw" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player-idle.png" id="12_n6nnu"]
+[ext_resource type="Texture2D" uid="uid://k1ogd6uoltoq" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_idle (1).png" id="13_dlvr8"]
 [ext_resource type="Texture2D" uid="uid://ds1qvdrnjxk5a" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_action_water.png" id="13_eneri"]
 [ext_resource type="Texture2D" uid="uid://b3x4ksjnfpuoc" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl/player_girl_idle_down.png" id="14_c8slp"]
 [ext_resource type="Texture2D" uid="uid://bs5uxboolqo01" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl/player_girl_idle_left.png" id="15_gqmrl"]
+[ext_resource type="Texture2D" uid="uid://dc43evqoavac5" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_idle (2).png" id="15_ootd0"]
+[ext_resource type="Texture2D" uid="uid://b7cwie1vgkosh" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_idle.png" id="16_pjss4"]
 [ext_resource type="Texture2D" uid="uid://bfa3oo4d82r8x" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl/player_girl_idle_right.png" id="16_qa5et"]
 [ext_resource type="Texture2D" uid="uid://brm48dg45rsf" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl/player_girl_idle_up.png" id="17_n6nnu"]
+[ext_resource type="Texture2D" uid="uid://4pye8oxwp5mq" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_pickaxe.png" id="17_ulmq3"]
+[ext_resource type="Texture2D" uid="uid://bh7galq3go578" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_run.png" id="18_bw3w2"]
 [ext_resource type="Texture2D" uid="uid://ckj2ub4h08anj" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl/player_girl_walk_down.png" id="18_dlvr8"]
 [ext_resource type="Texture2D" uid="uid://dlf5dgw6ehhrn" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl/player_girl_walk_left.png" id="19_ootd0"]
+[ext_resource type="Texture2D" uid="uid://bra5ck0gy8ige" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_sword_attack.png" id="19_ugh51"]
+[ext_resource type="Texture2D" uid="uid://cn2w5d05a7phj" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_sword_wide_attack.png" id="20_kvpi0"]
 [ext_resource type="Texture2D" uid="uid://dedp325aqrsk1" path="res://Assets/CozyVillageFarm/08_Characters/Player/player/player_idle_left.png" id="20_pjss4"]
+[ext_resource type="Texture2D" uid="uid://3mplpdsreea2" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_walk.png" id="21_ev5dg"]
 [ext_resource type="Texture2D" uid="uid://co1pmd0gaart" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl/player_girl_walk_right.png" id="21_ulmq3"]
 [ext_resource type="Texture2D" uid="uid://u7gtnrx3dsvj" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl/player_girl_walk_up.png" id="22_bw3w2"]
+[ext_resource type="Texture2D" uid="uid://clx78cyu1fkug" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/run_512x256.png" id="22_pwbyu"]
+[ext_resource type="Texture2D" uid="uid://b6adesarfcjmo" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/run_8x4_512x256.png" id="23_7jpmq"]
 [ext_resource type="Texture2D" uid="uid://d0eqv7anirrrf" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl_action_axe.png" id="23_ugh51"]
+[ext_resource type="Texture2D" uid="uid://dt8cl1u26flnd" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/run_8x4_512x256_transparent.png" id="24_cyt0m"]
 [ext_resource type="Texture2D" uid="uid://dvkjhq53mrwnv" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl_action_fish.png" id="24_kvpi0"]
 [ext_resource type="Texture2D" uid="uid://bccbpftg658r3" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl_action_hoe.png" id="25_ev5dg"]
+[ext_resource type="Texture2D" uid="uid://cwohasmtuoyh8" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/walk.png" id="26_8cjxi"]
 [ext_resource type="Texture2D" uid="uid://dfut7r16s07pf" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl_action_pickaxe.png" id="26_pwbyu"]
+[ext_resource type="Texture2D" uid="uid://fdaqcip4skr1" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_1/walk_512x256.png" id="27_0v8oi"]
 [ext_resource type="Texture2D" uid="uid://ckgp715snpjim" path="res://Assets/CozyVillageFarm/08_Characters/Player/player_girl_action_water.png" id="27_7jpmq"]
 [ext_resource type="Texture2D" uid="uid://bnyikhmc33ibf" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/blacksmith/blacksmith_idle_down.png" id="28_cyt0m"]
 [ext_resource type="Texture2D" uid="uid://bm6rwivn3g12l" path="res://Assets/CozyVillageFarm/08_Characters/Villagers/blacksmith/blacksmith_idle_left.png" id="29_8cjxi"]
@@ -180,6 +195,27 @@ texture = ExtResource("10_hkgyd")
 0:0/0 = 0
 0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-23.04, -7.68, 23.04, -7.68, 23.04, 0, -23.04, 0)
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_70k4h"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/idle_512x256.png"
+texture = ExtResource("11_qa5et")
+0:0/size_in_atlas = Vector2i(32, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-184.32, -61.44, 184.32, -61.44, 184.32, 0, -184.32, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_g0nas"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player-idle.png"
+texture = ExtResource("12_n6nnu")
+0:0/size_in_atlas = Vector2i(32, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-184.32, -61.44, 184.32, -61.44, 184.32, 0, -184.32, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_4xyjk"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_idle (1).png"
+texture = ExtResource("13_dlvr8")
+0:0/size_in_atlas = Vector2i(12, 8)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-69.12, -30.72, 69.12, -30.72, 69.12, 0, -69.12, 0)
+
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_7002y"]
 resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_hoe.png"
 texture = ExtResource("11_0cp7i")
@@ -187,12 +223,96 @@ texture = ExtResource("11_0cp7i")
 0:0/0 = 0
 0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-34.56, -30.72, 34.56, -30.72, 34.56, 0, -34.56, 0)
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qdvxq"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_idle (2).png"
+texture = ExtResource("15_ootd0")
+texture_region_size = Vector2i(256, 171)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-92.16, -41.04, 92.16, -41.04, 92.16, 0, -92.16, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kiq5a"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_idle.png"
+texture = ExtResource("16_pjss4")
+0:0/size_in_atlas = Vector2i(96, 64)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-552.96, -245.76, 552.96, -245.76, 552.96, 0, -552.96, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_loe6b"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_pickaxe.png"
+texture = ExtResource("17_ulmq3")
+texture_region_size = Vector2i(160, 107)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-57.6, -25.68, 57.6, -25.68, 57.6, 0, -57.6, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_613bc"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_run.png"
+texture = ExtResource("18_bw3w2")
+0:0/size_in_atlas = Vector2i(12, 8)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-69.12, -30.72, 69.12, -30.72, 69.12, 0, -69.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_o0nrd"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_sword_attack.png"
+texture = ExtResource("19_ugh51")
+texture_region_size = Vector2i(160, 107)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-57.6, -25.68, 57.6, -25.68, 57.6, 0, -57.6, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_cl67v"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_sword_wide_attack.png"
+texture = ExtResource("20_kvpi0")
+texture_region_size = Vector2i(160, 107)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-57.6, -25.68, 57.6, -25.68, 57.6, 0, -57.6, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fr3vc"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/player_walk.png"
+texture = ExtResource("21_ev5dg")
+0:0/size_in_atlas = Vector2i(12, 8)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-69.12, -30.72, 69.12, -30.72, 69.12, 0, -69.12, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_6m5qu"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/run_512x256.png"
+texture = ExtResource("22_pwbyu")
+0:0/size_in_atlas = Vector2i(32, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-184.32, -61.44, 184.32, -61.44, 184.32, 0, -184.32, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_hl8aj"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/run_8x4_512x256.png"
+texture = ExtResource("23_7jpmq")
+0:0/size_in_atlas = Vector2i(32, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-184.32, -61.44, 184.32, -61.44, 184.32, 0, -184.32, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iddo5"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/run_8x4_512x256_transparent.png"
+texture = ExtResource("24_cyt0m")
+0:0/size_in_atlas = Vector2i(32, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-184.32, -61.44, 184.32, -61.44, 184.32, 0, -184.32, 0)
+
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_84gf8"]
 resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_pickaxe.png"
 texture = ExtResource("12_gu8dl")
 0:0/size_in_atlas = Vector2i(6, 8)
 0:0/0 = 0
 0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-34.56, -30.72, 34.56, -30.72, 34.56, 0, -34.56, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_8ec72"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/walk.png"
+texture = ExtResource("26_8cjxi")
+0:0/size_in_atlas = Vector2i(32, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-184.32, -61.44, 184.32, -61.44, 184.32, 0, -184.32, 0)
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_oas7e"]
+resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_1/walk_512x256.png"
+texture = ExtResource("27_0v8oi")
+0:0/size_in_atlas = Vector2i(32, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-184.32, -61.44, 184.32, -61.44, 184.32, 0, -184.32, 0)
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_u7rcl"]
 resource_name = "res://Assets/CozyVillageFarm/08_Characters/Player/player_action_water.png"
@@ -969,3 +1089,18 @@ sources/103 = SubResource("TileSetAtlasSource_nqtej")
 sources/104 = SubResource("TileSetAtlasSource_d6y8a")
 sources/105 = SubResource("TileSetAtlasSource_j5g0f")
 sources/106 = SubResource("TileSetAtlasSource_t8ksm")
+sources/107 = SubResource("TileSetAtlasSource_70k4h")
+sources/108 = SubResource("TileSetAtlasSource_g0nas")
+sources/109 = SubResource("TileSetAtlasSource_4xyjk")
+sources/110 = SubResource("TileSetAtlasSource_qdvxq")
+sources/111 = SubResource("TileSetAtlasSource_kiq5a")
+sources/112 = SubResource("TileSetAtlasSource_loe6b")
+sources/113 = SubResource("TileSetAtlasSource_613bc")
+sources/114 = SubResource("TileSetAtlasSource_o0nrd")
+sources/115 = SubResource("TileSetAtlasSource_cl67v")
+sources/116 = SubResource("TileSetAtlasSource_fr3vc")
+sources/117 = SubResource("TileSetAtlasSource_6m5qu")
+sources/118 = SubResource("TileSetAtlasSource_hl8aj")
+sources/119 = SubResource("TileSetAtlasSource_iddo5")
+sources/120 = SubResource("TileSetAtlasSource_8ec72")
+sources/121 = SubResource("TileSetAtlasSource_oas7e")
