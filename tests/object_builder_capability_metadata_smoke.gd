@@ -75,11 +75,19 @@ func _run_tests() -> void:
 		if not pickup_item_descriptor.is_empty():
 			_expect(str(pickup_item_descriptor.get("display_name", "")) == "ID предмета", "legacy setting label is preserved")
 			_expect(str(pickup_item_descriptor.get("group_id", "")) == "предмет", "group ID is derived consistently from its visible name")
+			_expect(int(pickup_item_descriptor.get("order", -1)) == 0, "field order defaults to source declaration order")
+			_expect(int(pickup_item_descriptor.get("group_order", -1)) == 0, "group order defaults to first appearance")
 			_expect(str(pickup_item_descriptor.get("level", "")) == "Basic", "legacy settings default to Basic")
 			_expect(str(pickup_item_descriptor.get("visibility", "")) == "always", "settings default to always visible")
 			_expect(str(pickup_item_descriptor.get("editor", "")) == "unspecified", "untyped string settings are not silently treated as free text")
 			_expect(bool(pickup_item_descriptor.get("required", false)), "required metadata remains available")
 			_expect(str(pickup_item_descriptor.get("default_value", "missing")) == "", "normalization does not alter the stored default")
+			var raw_pickup_item_descriptor: Dictionary = {}
+			for descriptor in pickup_component.setting_definitions:
+				if str(descriptor.get("key", "")) == "item_id":
+					raw_pickup_item_descriptor = descriptor
+					break
+			_expect(not raw_pickup_item_descriptor.has("group_id"), "normalization does not mutate the source descriptor")
 
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
