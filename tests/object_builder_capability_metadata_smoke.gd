@@ -63,6 +63,24 @@ func _run_tests() -> void:
 		"explicit readiness metadata takes precedence over the legacy runtime flag"
 	)
 
+	var pickup_component := ObjectComponentCatalog.create_definition("pickup")
+	_expect(pickup_component != null, "built-in pickup component is available for schema metadata")
+	if pickup_component != null:
+		var pickup_item_descriptor: Dictionary = {}
+		for descriptor in pickup_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "item_id":
+				pickup_item_descriptor = descriptor
+				break
+		_expect(not pickup_item_descriptor.is_empty(), "pickup item setting is present")
+		if not pickup_item_descriptor.is_empty():
+			_expect(str(pickup_item_descriptor.get("display_name", "")) == "ID предмета", "legacy setting label is preserved")
+			_expect(str(pickup_item_descriptor.get("group_id", "")) == "предмет", "group ID is derived consistently from its visible name")
+			_expect(str(pickup_item_descriptor.get("level", "")) == "Basic", "legacy settings default to Basic")
+			_expect(str(pickup_item_descriptor.get("visibility", "")) == "always", "settings default to always visible")
+			_expect(str(pickup_item_descriptor.get("editor", "")) == "unspecified", "untyped string settings are not silently treated as free text")
+			_expect(bool(pickup_item_descriptor.get("required", false)), "required metadata remains available")
+			_expect(str(pickup_item_descriptor.get("default_value", "missing")) == "", "normalization does not alter the stored default")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
