@@ -129,6 +129,35 @@ func _run_tests() -> void:
 			break
 	_expect(default_override_rejected, "capability overlay cannot replace a component default")
 
+	var invalid_editor_descriptor := pickup_item_descriptor.duplicate(true)
+	invalid_editor_descriptor["editor"] = "made_up_editor"
+	var invalid_editor_errors := ObjectComponentCatalog._validate_setting_metadata(
+		invalid_editor_descriptor,
+		"item_id",
+		"pickup"
+	)
+	var invalid_editor_rejected := false
+	for error_message in invalid_editor_errors:
+		if str(error_message).contains("неизвестный editor"):
+			invalid_editor_rejected = true
+			break
+	_expect(invalid_editor_rejected, "unknown setting editors are rejected by component metadata validation")
+
+	var incomplete_enum_descriptor := pickup_item_descriptor.duplicate(true)
+	incomplete_enum_descriptor["editor"] = "enum"
+	incomplete_enum_descriptor["options"] = []
+	var incomplete_enum_errors := ObjectComponentCatalog._validate_setting_metadata(
+		incomplete_enum_descriptor,
+		"item_id",
+		"pickup"
+	)
+	var incomplete_enum_rejected := false
+	for error_message in incomplete_enum_errors:
+		if str(error_message).contains("должна содержать options"):
+			incomplete_enum_rejected = true
+			break
+	_expect(incomplete_enum_rejected, "enum settings require explicit labelled options")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
