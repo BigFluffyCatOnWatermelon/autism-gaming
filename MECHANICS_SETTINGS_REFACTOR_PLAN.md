@@ -144,7 +144,7 @@
 - [ ] Реализовать типизированные ссылки на предметы, объекты, ресурсы и таблицы.
 - [ ] Реализовать метаданные специализированных редакторов для списков и составных данных.
 - [ ] Разделить пользовательскую схему настройки и внутренний формат сериализации на уровне кода.
-- [ ] Запретить capability overlay переопределять тип/default/range канонического component descriptor; разрешены только presentation metadata. `required` переносится в component descriptor.
+- [x] Запретить capability overlay переопределять тип/default/range канонического component descriptor; разрешены только presentation metadata. `required` хранится в component descriptor.
 - [ ] Реализовать обратную совместимость старых схем и сохранение неизвестных полей.
 - [ ] Запретить дублирование type/default/range в capability overlay при наличии канонического component descriptor.
 
@@ -159,9 +159,11 @@
 - [x] Строковые поля без явного типа редактора получают `editor = "unspecified"`: по одному `String` нельзя определить, это текст, ID каталога, enum или путь ресурса.
 - [ ] Запустить `object_builder_capability_metadata_smoke.gd` в настольном Godot и подтвердить работу без ошибок. Не заменять это GitHub Actions или headless-проверкой.
 - [ ] Добавить проверку типов и допустимых значений presentation metadata в регистрации `ObjectComponentDefinition`.
-- [ ] Завершить канонизацию capability overlay и проверку дублирующихся `type/default/range/options`.
+- [x] Ограничить capability overlay белым списком presentation metadata; неизвестные и канонические ключи отклоняются при регистрации.
+- [x] Удалить дублирующий `required` из встроенного pickup overlay; обязательность `pickup.item_id` остаётся в component descriptor.
+- [ ] Добавить полную валидацию editor/options/units/visibility и проверить все расширения на совместимость.
 
-**Ограничение:** smoke-тест дополнен проверками нормализации, но в этой сессии Godot не запускался. Изменение проверено статически по исходникам; runtime/GUI-статус не заявляется.
+**Ограничение:** smoke-тест дополнен проверками нормализации и запрета canonical overrides, но в этой сессии Godot не запускался. Изменения проверены статически по исходникам; runtime/GUI-статус не заявляется.
 
 **Статус:** начата кодовая реализация этапа 2. Добавлена только совместимая нормализация presentation metadata; универсальный renderer, typed references, визуальные редакторы и правила overlay ещё не реализованы.
 
