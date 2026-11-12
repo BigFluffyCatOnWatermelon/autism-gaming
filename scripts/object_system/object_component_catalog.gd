@@ -532,6 +532,7 @@ static func _validate_definition(
 			errors.append("У компонента '%s' повторяется настройка '%s'." % [definition.component_id, key])
 			continue
 		setting_ids[key] = true
+		errors.append_array(_validate_setting_metadata(descriptor, key, definition.component_id))
 		if bool(descriptor.get("has_range", false)) and float(descriptor.get("minimum", 0.0)) > float(descriptor.get("maximum", 0.0)):
 			errors.append("У настройки '%s' компонента '%s' перепутаны границы." % [key, definition.component_id])
 			continue
@@ -569,6 +570,161 @@ static func _validate_definition(
 				"Конфликт между компонентами '%s' и '%s' должен быть указан с обеих сторон."
 				% [definition.component_id, incompatible_id]
 			)
+	return errors
+
+
+static func _validate_setting_metadata(
+	descriptor: Dictionary,
+	setting_key: String,
+	component_id: String
+) -> PackedStringArray:
+	var errors := PackedStringArray()
+	var display_name := str(descriptor.get("display_name", "")).strip_edges()
+	if display_name.is_empty():
+		errors.append("У настройки '%s' компонента '%s' отсутствует пользовательское название." % [
+			setting_key,
+			component_id
+		])
+
+	if str(descriptor.get("group_id", "")).strip_edges().is_empty():
+		errors.append("У настройки '%s' компонента '%s' отсутствует group_id." % [
+			setting_key,
+			component_id
+		])
+	if str(descriptor.get("group_name", "")).strip_edges().is_empty():
+		errors.append("У настройки '%s' компонента '%s' отсутствует название группы." % [
+			setting_key,
+			component_id
+		])
+
+	var level := str(descriptor.get("level", "")).strip_edges().to_lower()
+	if level not in ["basic", "advanced", "expert"]:
+		errors.append("У настройки '%s' компонента '%s' неизвестный уровень: %s." % [
+			setting_key,
+			component_id,
+			level
+		])
+
+	var supported_editors := [
+		"unspecified",
+		"switch",
+		"number",
+		"slider",
+		"range",
+		"text",
+		"multiline_text",
+		"vector2",
+		"color",
+		"enum",
+		"catalog_reference",
+		"resource_reference",
+		"gameplay_table",
+		"structured_list",
+		"structured_object"
+	]
+	var editor := str(descriptor.get("editor", "")).strip_edges().to_lower()
+	if not supported_editors.has(editor):
+		errors.append("У настройки '%s' компонента '%s' неизвестный editor: %s." % [
+			setting_key,
+			component_id,
+			editor
+		])
+
+	var visibility: Variant = descriptor.get("visibility", "always")
+	if typeof(visibility) != TYPE_STRING and typeof(visibility) != TYPE_DICTIONARY:
+		errors.append("У настройки '%s' компонента '%s' visibility должна быть строкой или Dictionary." % [
+			setting_key,
+			component_id
+		])
+	elif typeof(visibility) == TYPE_STRING and str(visibility).strip_edges().is_empty():
+		errors.append("У настройки '%s' компонента '%s' visibility не может быть пустой." % [
+			setting_key,
+			component_id
+		])
+
+	if typeof(descriptor.get("unit", "")) != TYPE_STRING:
+		errors.append("Единица измерения настройки '%s' компонента '%s' должна быть строкой." % [
+			setting_key,
+			component_id
+		])
+	if typeof(descriptor.get("nullable", false)) != TYPE_BOOL:
+		errors.append("nullable настройки '%s' компонента '%s' должна быть Boolean." % [
+			setting_key,
+			component_id
+		])
+	if typeof(descriptor.get("required", false)) != TYPE_BOOL:
+		errors.append("required настройки '%s' компонента '%s' должна быть Boolean." % [
+			setting_key,
+			component_id
+		])
+	if typeof(descriptor.get("editor_config", {})) != TYPE_DICTIONARY:
+		errors.append("editor_config настройки '%s' компонента '%s' должна быть Dictionary." % [
+			setting_key,
+			component_id
+		])
+
+	var options_value: Variant = descriptor.get("options", [])
+	var option_values: Array = []
+	if typeof(options_value) != TYPE_ARRAY:
+		errors.append("options настройки '%s' компонента '%s' должен быть Array." % [
+			setting_key,
+			component_id
+		])
+	else:
+		var seen_options: Dictionary = {}
+		for option_value in options_value:
+			if not option_value is Dictionary:
+				errors.append("Каждый вариант настройки '%s' компонента '%s' должен быть Dictionary с value и label." % [
+					setting_key,
+					component_id
+				])
+				continue
+			var option: Dictionary = option_value
+			if not option.has("value") or typeof(option.get("value")) not in [TYPE_STRING, TYPE_INT, TYPE_FLOAT, TYPE_BOOL]:
+				errors.append("Вариант настройки '%s' компонента '%s' должен иметь скалярное value." % [
+					setting_key,
+					component_id
+				])
+				continue
+			var option_key := "%s:%s" % [str(typeof(option.get("value"))), str(option.get("value"))]
+			if seen_options.has(option_key):
+				errors.append("У настройки '%s' компонента '%s' повторяется вариант '%s'." % [
+					setting_key,
+					component_id,
+					str(option.get("value"))
+				])
+			seen_options[option_key] = true
+			option_values.append(option.get("value"))
+			if str(option.get("label", "")).strip_edges().is_empty():
+				errors.append("У варианта настройки '%s' компонента '%s' отсутствует label." % [
+					setting_key,
+					component_id
+				])
+
+	if editor == "enum":
+		if option_values.is_empty():
+			errors.append("Enum-настройка '%s' компонента '%s' должна содержать options." % [
+				setting_key,
+				component_id
+			])
+		elif not option_values.has(descriptor.get("default_value")):
+			errors.append("Default настройки '%s' компонента '%s' отсутствует среди options." % [
+				setting_key,
+				component_id
+			])
+
+	if descriptor.has("step"):
+		var step_value: Variant = descriptor.get("step")
+		if typeof(step_value) not in [TYPE_INT, TYPE_FLOAT]:
+			errors.append("step настройки '%s' компонента '%s' должен быть числом." % [
+				setting_key,
+				component_id
+			])
+		elif is_nan(float(step_value)) or is_inf(float(step_value)) or float(step_value) <= 0.0:
+			errors.append("step настройки '%s' компонента '%s' должен быть конечным числом больше нуля." % [
+				setting_key,
+				component_id
+			])
 	return errors
 
 
