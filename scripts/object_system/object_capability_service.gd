@@ -3,6 +3,132 @@ class_name ObjectCapabilityService
 
 ## Converts friendly capability choices into validated, dependency-complete component bindings.
 
+## Folds deprecated standalone capabilities into parent selections while preserving settings.
+## The source selections are never modified. Missing parents keep their legacy records.
+static func migrate_merged_selections(selections: Array[ObjectCapabilitySelection]) -> Dictionary:
+	var result: Array[ObjectCapabilitySelection] = []
+	var indexes_by_id: Dictionary = {}
+	var changed := false
+
+	# Visible parents first: explicitly configured parent values remain authoritative.
+	for selection in selections:
+		if selection == null:
+			continue
+		var copied := selection.duplicate(true) as ObjectCapabilitySelection
+		var capability_id := copied.capability_id.strip_edges().to_lower()
+		var definition := ObjectCapabilityCatalog.get_definition_reference(capability_id)
+		if definition != null and not definition.merged_into_capability_id.strip_edges().is_empty():
+			continue
+		if not indexes_by_id.has(capability_id):
+			indexes_by_id[capability_id] = result.size()
+			result.append(copied)
+
+	for selection in selections:
+		if selection == null:
+			continue
+		var child_id := selection.capability_id.strip_edges().to_lower()
+		var child_definition := ObjectCapabilityCatalog.get_definition_reference(child_id)
+		if child_definition == null or child_definition.merged_into_capability_id.strip_edges().is_empty():
+			continue
+		changed = true
+		if not selection.enabled:
+			continue
+		var parent_id := ObjectCapabilityCatalog.get_canonical_capability_id(child_id)
+		var parent_definition := ObjectCapabilityCatalog.get_definition_reference(parent_id)
+		if parent_definition == null:
+			var preserved := selection.duplicate(true) as ObjectCapabilitySelection
+			if not indexes_by_id.has(child_id):
+				indexes_by_id[child_id] = result.size()
+				result.append(preserved)
+			continue
+
+		var parent_index := int(indexes_by_id.get(parent_id, -1))
+		var parent_selection: ObjectCapabilitySelection
+		var parent_was_created := parent_index < 0
+		if parent_index >= 0:
+			parent_selection = result[parent_index]
+			if str(parent_selection.target_node_path) != str(selection.target_node_path):
+				# Different targets cannot share one selection without changing semantics.
+				result.append(selection.duplicate(true) as ObjectCapabilitySelection)
+				continue
+		else:
+			parent_selection = ObjectCapabilityCatalog.create_selection(parent_id)
+			if parent_selection == null:
+				result.append(selection.duplicate(true) as ObjectCapabilitySelection)
+				continue
+			parent_selection.target_node_path = selection.target_node_path
+			indexes_by_id[parent_id] = result.size()
+			result.append(parent_selection)
+
+		parent_selection.enabled = true
+		parent_selection.automatically_added = false
+		var destination_component := child_definition.merged_component_id.strip_edges().to_lower()
+		var key_map: Dictionary = child_definition.merged_setting_key_map
+		for source_component_value in child_definition.component_ids:
+			var source_component := str(source_component_value).strip_edges().to_lower()
+			var target_component := destination_component if not destination_component.is_empty() else source_component
+			if not parent_definition.component_ids.has(target_component):
+				continue
+			var source_settings: Dictionary = {}
+			var source_component_definition := ObjectComponentCatalog.create_definition(source_component)
+			if source_component_definition != null:
+				source_settings = source_component_definition.get_settings()
+			var selection_settings := selection.get_component_settings(source_component)
+			for setting_key in selection_settings:
+				source_settings[str(setting_key)] = selection_settings[setting_key]
+			var destination_settings := parent_selection.get_component_settings(target_component)
+			for source_key in source_settings:
+				var target_key := str(key_map.get(str(source_key), str(source_key)))
+				if not destination_settings.has(target_key):
+					destination_settings[target_key] = source_settings[source_key]
+			var enable_setting_keys := child_definition.merged_enable_setting_keys.duplicate()
+			if not child_definition.merged_enable_setting_key.strip_edges().is_empty():
+				if not enable_setting_keys.has(child_definition.merged_enable_setting_key):
+					enable_setting_keys.append(child_definition.merged_enable_setting_key)
+			for enable_setting_key in enable_setting_keys:
+				var normalized_enable_key := str(enable_setting_key).strip_edges()
+				if not normalized_enable_key.is_empty():
+					destination_settings[normalized_enable_key] = true
+			if parent_was_created:
+				for default_key in child_definition.merged_parent_default_settings:
+					var normalized_default_key := str(default_key).strip_edges()
+					if not normalized_default_key.is_empty() and not destination_settings.has(normalized_default_key):
+						destination_settings[normalized_default_key] = child_definition.merged_parent_default_settings[default_key]
+			if not destination_settings.is_empty():
+				parent_selection.settings_by_component[target_component] = destination_settings
+
+	changed = _migrate_legacy_shared_weight_capacity(result) or changed
+	return {"selections": result, "changed": changed}
+
+
+## Older storage selections used has_container_capacity.max_weight for both
+## container storage and character inventory. Preserve the previous inventory
+## limit when converting an already-merged parent selection to separate scopes.
+static func _migrate_legacy_shared_weight_capacity(
+	selections: Array[ObjectCapabilitySelection]
+) -> bool:
+	var changed := false
+	for selection in selections:
+		if selection == null or selection.capability_id.strip_edges().to_lower() != "stores_items":
+			continue
+		# An existing value (including an explicit disabled value) belongs to the new schema.
+		if selection.settings_by_component.has("has_weight_capacity"):
+			continue
+		var inventory_settings := selection.get_component_settings("has_inventory")
+		var container_capacity_settings := selection.get_component_settings("has_container_capacity")
+		if not bool(inventory_settings.get("enabled", false)):
+			continue
+		if not bool(container_capacity_settings.get("enabled", false)):
+			continue
+		var weight_settings := {
+			"enabled": true,
+			"max_weight": float(container_capacity_settings.get("max_weight", 0.0))
+		}
+		selection.settings_by_component["has_weight_capacity"] = weight_settings
+		changed = true
+	return changed
+
+
 ## Builds a complete selection change before the editor mutates the ObjectDefinition.
 ## Required capabilities are added automatically; orphaned automatic dependencies are disabled.
 static func plan_selection_change(

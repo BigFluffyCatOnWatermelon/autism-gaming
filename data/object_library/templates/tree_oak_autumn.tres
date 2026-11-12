@@ -1,0 +1,99 @@
+[gd_resource type="Resource" script_class="ObjectDefinition" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://scripts/object_system/object_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Trees/autumn/oak_autumn.png" id="3"]
+[ext_resource type="Script" path="res://scripts/object_system/object_capability_selection.gd" id="4"]
+
+[sub_resource type="Resource" id="cap_health"]
+script = ExtResource("4")
+capability_id = "has_health"
+settings_by_component = {
+"health": {
+"max_health": 90.0,
+"starting_health": 90.0
+}
+}
+
+[sub_resource type="Resource" id="can_receive_damage"]
+script = ExtResource("4")
+capability_id = "can_receive_damage"
+settings_by_component = {
+"damageable": {
+"material_type": "wood",
+"required_tool_id": "axe",
+"hit_radius": 29.0
+}
+}
+
+[sub_resource type="Resource" id="breaks_when_health_empty"]
+script = ExtResource("4")
+capability_id = "breaks_when_health_empty"
+
+[sub_resource type="Resource" id="falls_when_destroyed"]
+script = ExtResource("4")
+capability_id = "falls_when_destroyed"
+settings_by_component = {
+"falls_when_destroyed": {
+"fall_angle_degrees": 78.0,
+"fall_duration": 0.48
+}
+}
+
+[sub_resource type="Resource" id="leaves_remains"]
+script = ExtResource("4")
+capability_id = "leaves_remains"
+
+[sub_resource type="Resource" id="drops_loot_on_destroy"]
+script = ExtResource("4")
+capability_id = "drops_loot_on_destroy"
+settings_by_component = {
+"drops_loot_on_destroy": {
+"loot_table_json": "[{\"item_id\":\"wood\",\"chance\":1.0,\"minimum\":5,\"maximum\":5}]"
+}
+}
+
+[sub_resource type="Resource" id="emits_particles"]
+script = ExtResource("4")
+capability_id = "emits_particles"
+settings_by_component = {
+"emits_particles": {
+"particle_amount": 20,
+"particle_lifetime": 0.55,
+"particle_one_shot": true,
+"particle_spread": 150.0,
+"particle_velocity_min": 30.0,
+"particle_velocity_max": 105.0,
+"particle_color": "#b98252"
+}
+}
+
+[sub_resource type="Resource" id="plays_damage_sound"]
+script = ExtResource("4")
+capability_id = "plays_damage_sound"
+
+[sub_resource type="Resource" id="plays_destroy_sound"]
+script = ExtResource("4")
+capability_id = "plays_destroy_sound"
+
+[resource]
+script = ExtResource("1")
+schema_version = 11
+object_id = "template_tree_oak_autumn"
+display_name = "Дуб — осенний"
+description = "Готовое рубимое осеннее дерево: удар топором вызывает покачивание и частицы, обнуление здоровья запускает падение и оставляет пень."
+category = "Nature"
+object_type = "resource"
+tags = PackedStringArray("tree", "wood", "oak", "autumn", "nature")
+root_type = "StaticBody2D"
+preview_texture = ExtResource("3")
+object_size = Vector2(32, 32)
+preview_sprite_offset = Vector2(0, -20)
+collision_enabled = true
+collision_mode = "solid"
+collision_shape = "rectangle"
+collision_size = Vector2(7.68, 8.8)
+collision_offset = Vector2(0, -4.4)
+collision_layer = 2
+collision_mask = 1
+is_template = true
+capabilities = Array[ExtResource("4")]([SubResource("cap_health"), SubResource("can_receive_damage"), SubResource("breaks_when_health_empty"), SubResource("falls_when_destroyed"), SubResource("leaves_remains"), SubResource("drops_loot_on_destroy"), SubResource("emits_particles"), SubResource("plays_damage_sound"), SubResource("plays_destroy_sound")])

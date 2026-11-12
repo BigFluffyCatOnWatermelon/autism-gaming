@@ -3,6 +3,7 @@ extends SceneTree
 const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 const WorldControllerScript = preload("res://scripts/world_controller.gd")
 const GameConfigScript = preload("res://scripts/game_config.gd")
+const ObjectBuilderReferenceScript = preload("res://scripts/object_system/object_builder_reference.gd")
 
 class InteractableTestTarget extends Node2D:
 	var interaction_count: int = 0
@@ -30,6 +31,22 @@ class PickupTestReceiver:
 		return accepted
 
 
+class CombatTestWorldController:
+	extends "res://scripts/world_controller.gd"
+
+	func _ready() -> void:
+		pass
+
+	func _process(_delta: float) -> void:
+		pass
+
+	func _physics_process(_delta: float) -> void:
+		pass
+
+	func _unhandled_input(_event: InputEvent) -> void:
+		pass
+
+
 var failures := PackedStringArray()
 var health_died_signal_received := false
 var destructible_destroyed_received := false
@@ -44,6 +61,7 @@ func _run_tests() -> void:
 	for error_message in module_errors:
 		failures.append("mechanic module loader: " + error_message)
 	_test_mechanic_modules_registered()
+	_test_merged_capability_selection_migration()
 	_test_runtime_property_values()
 	_test_definition_range_validation()
 	_test_object_type_default()
@@ -54,6 +72,9 @@ func _run_tests() -> void:
 	await _test_destructible_component()
 	await _test_pickup_component()
 	_test_world_inventory_pickup_adapter()
+	await _test_object_builder_melee_damage()
+	await _test_visual_hit_geometry()
+	await _test_object_builder_reference_runtime_binding()
 	await _test_interactable_component()
 	_test_component_definition_inspector_settings()
 	_test_component_definition_validation()
@@ -153,7 +174,7 @@ func _test_runtime_property_values() -> void:
 	if attached_health_definition != null:
 		_expect(attached_health_definition.default_value == 100, "attached property definition keeps its default value")
 
-	var property_data := instance.get_node_or_null("ObjectProperties") as ObjectPropertyData
+	var property_data := instance.get_node_or_null("Свойства объекта") as ObjectPropertyData
 	_expect(property_data != null, "factory attaches a serialized property data node")
 	if property_data != null:
 		var inspector_has_health := false
@@ -216,7 +237,7 @@ func _test_serialized_property_data() -> void:
 	var root := Node2D.new()
 	root.name = "PropertyDataSmokeTest"
 	var property_data := ObjectPropertyData.new()
-	property_data.name = "ObjectProperties"
+	property_data.name = "Свойства объекта"
 	root.add_child(property_data)
 	property_data.owner = root
 	property_data.configure([health], {"health_points": 145}, false)
@@ -235,7 +256,7 @@ func _test_serialized_property_data() -> void:
 	var restored_root := packed.instantiate()
 	_expect(restored_root != null, "packed object scene can be instantiated")
 	if restored_root != null:
-		var restored_data := restored_root.get_node_or_null("ObjectProperties") as ObjectPropertyData
+		var restored_data := restored_root.get_node_or_null("Свойства объекта") as ObjectPropertyData
 		_expect(restored_data != null, "packed scene keeps the property data node")
 		if restored_data != null:
 			_expect(restored_data.get_custom_property("health_points") == 175, "custom values survive scene pack and instantiate")
@@ -481,6 +502,7 @@ func _test_destructible_component() -> void:
 		ObjectComponentCatalog.get_component_ids("Destruction").has("destructible"),
 		"Destructible appears in the Destruction category"
 	)
+	_expect(bool(component_definition.settings.get("hide_on_destroy", false)), "new Destructible components hide objects when no remains are configured")
 	_expect(component_definition.set_setting("hide_on_destroy", true), "Destructible accepts a typed Inspector setting")
 	_expect(not component_definition.set_setting("hide_on_destroy", 1), "Destructible rejects a setting with the wrong type")
 
@@ -682,6 +704,266 @@ func _test_world_inventory_pickup_adapter() -> void:
 		"Pickup transfers items into the existing game inventory and keeps the unaccepted remainder"
 	)
 	controller.free()
+
+
+func _test_object_builder_melee_damage() -> void:
+	var controller := CombatTestWorldController.new()
+	controller.config = GameConfigScript.make_default()
+	controller.backpack_slots = int(controller.config.inventory.base_backpack_slots)
+	var test_world := Node2D.new()
+	root.add_child(test_world)
+	test_world.add_child(controller)
+
+	var objects := Node2D.new()
+	objects.name = "Objects"
+	controller.add_child(objects)
+	controller.world_objects = objects
+	var actor := Node2D.new()
+	actor.name = "Player"
+	controller.add_child(actor)
+	controller.player = actor
+
+	var tree_definition := ObjectDefinition.new()
+	tree_definition.object_id = "tree_combat_smoke_test"
+	tree_definition.display_name = "Tree Combat Smoke Test"
+	tree_definition.category = "Nature"
+	tree_definition.root_type = "StaticBody2D"
+	tree_definition.custom_properties = []
+	var tree_damage_selection := ObjectCapabilityCatalog.create_selection("can_receive_damage")
+	tree_damage_selection.set_component_setting("damageable", "material_type", "wood")
+	tree_damage_selection.set_component_setting("damageable", "required_tool_id", "axe")
+	tree_damage_selection.set_component_setting("damageable", "hit_radius", 28.0)
+	var tree_loot := ObjectCapabilityCatalog.create_selection("drops_loot_on_destroy")
+	tree_loot.set_component_setting(
+		"drops_loot_on_destroy",
+		"loot_table_json",
+		JSON.stringify([{"item_id": "wood", "chance": 1.0, "minimum": 3, "maximum": 3}])
+	)
+	var tree_health := ObjectCapabilityCatalog.create_selection("has_health")
+	tree_health.set_component_setting("health", "max_health", 100.0)
+	tree_health.set_component_setting("health", "starting_health", 100.0)
+	var tree_capabilities: Array[ObjectCapabilitySelection] = [
+		tree_health,
+		tree_damage_selection,
+		ObjectCapabilityCatalog.create_selection("breaks_when_health_empty"),
+		tree_loot,
+		ObjectCapabilityCatalog.create_selection("falls_when_destroyed"),
+		ObjectCapabilityCatalog.create_selection("emits_particles")
+	]
+	tree_definition.capabilities = tree_capabilities
+	var tree := ObjectFactory.instantiate(tree_definition)
+	_expect(tree != null, "Object Builder creates a tree with damage, fall and particle mechanics")
+	if tree == null:
+		controller.free()
+		test_world.free()
+		return
+	objects.add_child(tree)
+	(tree as Node2D).global_position = Vector2(80.0, 0.0)
+	var visuals := Node2D.new()
+	visuals.name = "Визуальные элементы"
+	tree.add_child(visuals)
+	visuals.owner = tree
+	var tree_image := Image.create(16, 24, false, Image.FORMAT_RGBA8)
+	tree_image.fill(Color("#4f8b45"))
+	var tree_sprite := Sprite2D.new()
+	tree_sprite.name = "Основной спрайт"
+	tree_sprite.texture = ImageTexture.create_from_image(tree_image)
+	tree_sprite.centered = true
+	tree_sprite.position = Vector2(-24.0, -16.0)
+	tree_sprite.set_meta("object_builder_sprite", true)
+	visuals.add_child(tree_sprite)
+	tree_sprite.owner = tree
+
+	var tree_damage := ObjectFactory.get_component(tree, "damageable") as DamageableComponent
+	var tree_health_component := ObjectFactory.get_component(tree, "health") as HealthComponent
+	var tree_destructible := ObjectFactory.get_component(tree, "destructible") as DestructibleComponent
+	_expect(tree_damage != null and tree_health_component != null, "tree template attaches Health and Damageable")
+	_expect(ObjectFactory.get_component(tree, "falls_when_destroyed") != null, "tree template attaches the fall mechanic")
+	var attack := {
+		"weapon_id": "axe",
+		"damage": 12.0,
+		"damage_type": "cutting",
+		"reach": 40.0,
+		"width": 20.0
+	}
+	var hit_count := int(controller.call(
+		"_apply_component_damage_hits",
+		"axe",
+		Vector2.ZERO,
+		Vector2.RIGHT,
+		120.0,
+		attack,
+		"swing",
+		1.0
+	))
+	_expect(hit_count == 1, "axe attack finds and hits an Object Builder tree")
+	if tree_health_component != null:
+		_expect(tree_health_component.current_health < 100.0, "Object Builder tree loses health after a hit")
+	_expect(tree.has_meta("object_builder_hit_base_rotation"), "tree hit response stores a stable sway pivot")
+
+	var lethal_attack := attack.duplicate(true)
+	lethal_attack["damage"] = 200.0
+	controller.call(
+		"_apply_component_damage_hits",
+		"axe",
+		Vector2.ZERO,
+		Vector2.RIGHT,
+		120.0,
+		lethal_attack,
+		"swing",
+		1.0
+	)
+	_expect(tree_destructible != null and tree_destructible.is_destroyed(), "lethal tree hit starts the destruction sequence")
+	_expect(tree.has_meta("object_builder_fall_base_rotation"), "lethal tree hit starts its fall animation")
+	_expect(tree.has_meta("object_builder_fall_pivot"), "tree fall pivots around the bottom of its sprite group")
+	await create_timer(0.6).timeout
+	var stump := tree.find_child("ProceduralStump", true, false) as Sprite2D
+	_expect(stump != null and stump.visible, "tree fall leaves a visible procedural pixel stump")
+	_expect(not tree_sprite.visible, "tree canopy is hidden after the fall")
+	if tree_destructible != null:
+		_expect(tree_destructible.repair(), "fallen tree can be repaired")
+		_expect(stump == null or not stump.visible, "repair hides the stump again")
+		_expect(tree_sprite.visible, "repair restores the original tree sprite")
+	(tree as Node2D).global_position = Vector2(500.0, 0.0)
+
+	var rock_definition := ObjectDefinition.new()
+	rock_definition.object_id = "rock_combat_smoke_test"
+	rock_definition.display_name = "Rock Combat Smoke Test"
+	rock_definition.category = "Nature"
+	rock_definition.root_type = "StaticBody2D"
+	rock_definition.custom_properties = []
+	var rock_damage := ObjectCapabilityCatalog.create_selection("can_receive_damage")
+	rock_damage.set_component_setting("damageable", "material_type", "stone")
+	rock_damage.set_component_setting("damageable", "required_tool_id", "pickaxe")
+	rock_damage.set_component_setting("damageable", "hit_radius", 24.0)
+	var rock_health := ObjectCapabilityCatalog.create_selection("has_health")
+	rock_health.set_component_setting("health", "max_health", 80.0)
+	rock_health.set_component_setting("health", "starting_health", 80.0)
+	rock_definition.capabilities = [
+		rock_health,
+		rock_damage,
+		ObjectCapabilityCatalog.create_selection("breaks_when_health_empty")
+	]
+	var rock := ObjectFactory.instantiate(rock_definition)
+	_expect(rock != null, "Object Builder creates a damageable stone resource")
+	if rock != null:
+		objects.add_child(rock)
+		(rock as Node2D).global_position = Vector2(80.0, 0.0)
+		var rock_visuals := Node2D.new()
+		rock_visuals.name = "Визуальные элементы"
+		rock.add_child(rock_visuals)
+		rock_visuals.owner = rock
+		var rock_image := Image.create(20, 14, false, Image.FORMAT_RGBA8)
+		rock_image.fill(Color("#858b91"))
+		var rock_sprite := Sprite2D.new()
+		rock_sprite.name = "Основной спрайт"
+		rock_sprite.texture = ImageTexture.create_from_image(rock_image)
+		rock_sprite.position = Vector2(-24.0, 0.0)
+		rock_sprite.set_meta("object_builder_sprite", true)
+		rock_visuals.add_child(rock_sprite)
+		rock_sprite.owner = rock
+		var rock_health_component := ObjectFactory.get_component(rock, "health") as HealthComponent
+		var axe_hit := int(controller.call(
+			"_apply_component_damage_hits",
+			"axe",
+			Vector2.ZERO,
+			Vector2.RIGHT,
+			120.0,
+			attack,
+			"swing",
+			1.0
+		))
+		_expect(axe_hit == 0, "axe does not damage a stone object that requires a pickaxe")
+		var pickaxe_attack := attack.duplicate(true)
+		pickaxe_attack["weapon_id"] = "pickaxe"
+		var pickaxe_hit := int(controller.call(
+			"_apply_component_damage_hits",
+			"pickaxe",
+			Vector2.ZERO,
+			Vector2.RIGHT,
+			120.0,
+			pickaxe_attack,
+			"swing",
+			1.0
+		))
+		_expect(pickaxe_hit == 1, "pickaxe damages a stone object through the shared combat path")
+		if rock_health_component != null:
+			_expect(rock_health_component.current_health < 80.0, "stone object loses health after a valid pickaxe hit")
+		var lethal_pickaxe_attack := pickaxe_attack.duplicate(true)
+		lethal_pickaxe_attack["damage"] = 200.0
+		var rock_killed := int(controller.call(
+			"_apply_component_damage_hits",
+			"pickaxe",
+			Vector2.ZERO,
+			Vector2.RIGHT,
+			120.0,
+			lethal_pickaxe_attack,
+			"swing",
+			1.0
+		))
+		_expect(rock_killed == 1, "lethal pickaxe hit destroys the stone object")
+		_expect(not rock_sprite.visible, "stone object visuals are hidden when no remains are configured")
+		var rock_destructible := ObjectFactory.get_component(rock, "destructible") as DestructibleComponent
+		_expect(rock_destructible != null and rock_destructible.repair(), "destroyed stone object can be repaired")
+		_expect(rock_sprite.visible, "repair restores the stone sprite that was hidden on destruction")
+
+	controller.free()
+	test_world.free()
+
+
+func _test_object_builder_reference_runtime_binding() -> void:
+	var definition_path := "res://data/object_library/templates/tree_oak_summer.tres"
+	var definition := ResourceLoader.load(
+		definition_path,
+		"",
+		ResourceLoader.CACHE_MODE_IGNORE
+	) as ObjectDefinition
+	_expect(definition != null, "direct scene runtime test loads the oak tree template")
+	if definition == null:
+		return
+
+	# Simulate a PackedScene instance dragged into a World scene in the editor.
+	# It has the durable ObjectBuilderReference but has not passed through Factory.
+	var direct_root := StaticBody2D.new()
+	direct_root.name = "EditorPlacedOak"
+	var visuals := Node2D.new()
+	visuals.name = "Визуальные элементы"
+	direct_root.add_child(visuals)
+	var sprite := Sprite2D.new()
+	sprite.name = "Основной спрайт"
+	sprite.texture = definition.preview_texture
+	sprite.position = definition.preview_sprite_offset
+	visuals.add_child(sprite)
+
+	var reference := ObjectBuilderReferenceScript.new()
+	reference.configure(
+		definition.object_id,
+		definition.display_name,
+		definition.category,
+		definition_path
+	)
+	reference.name = "Идентификатор объекта"
+	direct_root.add_child(reference)
+	root.add_child(direct_root)
+	await process_frame
+
+	_expect(
+		bool(direct_root.get_meta("object_builder_runtime_components_ready", false)),
+		"ObjectBuilderReference initializes a directly placed scene at runtime"
+	)
+	_expect(
+		ObjectFactory.get_component(direct_root, "health") != null
+		and ObjectFactory.get_component(direct_root, "damageable") != null
+		and ObjectFactory.get_component(direct_root, "destructible") != null
+		and ObjectFactory.get_component(direct_root, "falls_when_destroyed") != null,
+		"directly placed tree receives its Health, Damageable, Destructible and Fall components"
+	)
+	_expect(
+		ObjectFactory.get_component(direct_root, "emits_particles") != null,
+		"directly placed tree receives its hit-particle component"
+	)
+	direct_root.queue_free()
+	await process_frame
 
 
 func _test_interactable_component() -> void:
@@ -1631,6 +1913,18 @@ func _test_audio_effects_mechanics() -> void:
 	_expect(not bool(footsteps.call("play_for_surface", "grass")), "footsteps reject an unmapped surface")
 	_expect(bool(particles.call("emit_particles", 8)), "particle mechanic creates an effect node")
 	_expect(instance.get_node_or_null("ObjectBuilderParticles") != null, "particle node is attached to the object")
+	var previous_child_count := instance.get_child_count()
+	_expect(
+		bool(particles.call("emit_particles_at", Vector2(123.0, 45.0), 8)),
+		"particle mechanic accepts a world-space impact position"
+	)
+	var positioned_particles := instance.get_child(instance.get_child_count() - 1) as Node2D
+	_expect(
+		instance.get_child_count() == previous_child_count + 1
+		and positioned_particles != null
+		and positioned_particles.global_position.is_equal_approx(Vector2(123.0, 45.0)),
+		"particle node is placed at the actual hit position"
+	)
 	_expect(bool(trail.call("start_trail")), "trail mechanic creates a Line2D")
 	_expect(trail.call("get_effect_nodes").get("trail") != null, "trail node is exposed to the host")
 	_expect(bool(light.call("enable_light")), "light mechanic creates a PointLight2D")
@@ -2061,9 +2355,55 @@ func _test_declarative_scene_structure() -> void:
 	signal_root.free()
 
 
+func _test_visual_hit_geometry() -> void:
+	var test_root := Node2D.new()
+	root.add_child(test_root)
+
+	var resource := ResourceNode.new()
+	resource.position = Vector2(80.0, 0.0)
+	resource.preserve_visual_texture = true
+	var resource_visual := Sprite2D.new()
+	resource_visual.name = "Visual"
+	resource_visual.texture = ImageTexture.create_from_image(
+		Image.create(32, 64, false, Image.FORMAT_RGBA8)
+	)
+	resource_visual.position = Vector2(0.0, -24.0)
+	resource.add_child(resource_visual)
+	test_root.add_child(resource)
+
+	var object_root := Node2D.new()
+	object_root.position = Vector2(80.0, 0.0)
+	var object_visual := Sprite2D.new()
+	object_visual.texture = ImageTexture.create_from_image(
+		Image.create(32, 64, false, Image.FORMAT_RGBA8)
+	)
+	object_visual.position = Vector2(0.0, -24.0)
+	object_root.add_child(object_visual)
+	test_root.add_child(object_root)
+
+	var world_controller := CombatTestWorldController.new()
+	test_root.add_child(world_controller)
+	await process_frame
+
+	var attacker_position := Vector2.ZERO
+	var resource_hit_position := resource.get_attack_target_position(attacker_position)
+	_expect(
+		resource_hit_position.distance_to(attacker_position) < resource.global_position.distance_to(attacker_position),
+		"legacy resource melee geometry uses the visible sprite bounds instead of the root pivot"
+	)
+	var object_hit_position := world_controller._get_object_attack_hit_position(object_root, attacker_position)
+	_expect(
+		object_hit_position.distance_to(attacker_position) < object_root.global_position.distance_to(attacker_position),
+		"Object Builder melee geometry uses visible nested sprite bounds instead of the root pivot"
+	)
+
+	test_root.queue_free()
+	await process_frame
+
+
 func _test_creation_profile_registry() -> void:
 	var profile_ids := ObjectCreationProfileRegistry.get_profile_ids()
-	_expect(profile_ids.size() == 12, "all twelve built-in creation profiles are registered")
+	_expect(profile_ids.size() == 14, "all fourteen built-in creation profiles are registered")
 	_expect(
 		profile_ids.has("npc") and profile_ids.has("resource") and profile_ids.has("weapon")
 		and profile_ids.has("other"),
@@ -2107,6 +2447,128 @@ func _test_creation_profile_registry() -> void:
 			second_copy.suggested_properties[0].display_name != "Изменено только в копии",
 			"editing a retrieved profile copy does not mutate the registry"
 		)
+
+	var damageable_setting_ids := PackedStringArray()
+	for setting_definition in ObjectComponentDefinition.get_builtin_setting_definitions("damageable"):
+		damageable_setting_ids.append(str(setting_definition.get("key", "")))
+	_expect(
+		damageable_setting_ids.has("material_type")
+		and damageable_setting_ids.has("required_tool_id")
+		and damageable_setting_ids.has("hit_radius"),
+		"Damageable exposes material, required tool and attack radius as mechanic settings"
+	)
+
+	var tree := ObjectCreationProfileRegistry.get_definition("tree")
+	_expect(tree != null, "tree profile can be loaded")
+	if tree != null:
+		_expect(
+			tree.suggested_root_type == "StaticBody2D"
+			and tree.suggested_capability_ids.has("can_receive_damage")
+			and tree.suggested_capability_ids.has("breaks_when_health_empty")
+			and tree.suggested_capability_ids.has("falls_when_destroyed")
+			and tree.suggested_capability_ids.has("emits_particles"),
+			"tree profile includes damage, fall and hit-effect mechanics"
+		)
+		_expect(
+			tree.suggested_properties.is_empty(),
+			"tree profile no longer duplicates mechanic settings as custom properties"
+		)
+
+	var rock := ObjectCreationProfileRegistry.get_definition("rock")
+	_expect(rock != null, "rock profile can be loaded")
+	if rock != null:
+		_expect(
+			rock.suggested_properties.is_empty(),
+			"rock profile no longer duplicates mechanic settings as custom properties"
+		)
+
+	var loaded_templates := ObjectLibraryService.load_templates()
+	var templates_by_id: Dictionary = {}
+	for template_definition in loaded_templates:
+		if template_definition != null:
+			templates_by_id[template_definition.object_id] = template_definition
+	var expected_templates := [
+		"template_tree_oak_summer",
+		"template_tree_pine_summer",
+		"template_tree_oak_autumn",
+		"template_tree_pine_autumn",
+		"template_rock_large"
+	]
+	for template_id in expected_templates:
+		_expect(templates_by_id.has(template_id), "gameplay template loads from the library: " + template_id)
+		var template_definition := templates_by_id.get(template_id) as ObjectDefinition
+		if template_definition == null:
+			continue
+		_expect(
+			template_definition.is_template
+			and template_definition.root_type == "StaticBody2D"
+			and template_definition.preview_texture != null
+			and template_definition.collision_enabled,
+			"resource template has a preview texture, static root and collision: " + template_id
+		)
+		_expect(
+			template_definition.custom_properties.is_empty(),
+			"gameplay template keeps mechanics out of generic custom properties: " + template_id
+		)
+		var material_value := ""
+		var tool_value := ""
+		var hit_radius_value := 0.0
+		var drop_item_value := ""
+		var drop_amount_value := 0
+		for selection in template_definition.capabilities:
+			if selection == null or not selection.enabled:
+				continue
+			if selection.capability_id == "can_receive_damage":
+				var damage_settings := selection.get_component_settings("damageable")
+				material_value = str(damage_settings.get("material_type", ""))
+				tool_value = str(damage_settings.get("required_tool_id", ""))
+				hit_radius_value = float(damage_settings.get("hit_radius", 0.0))
+			elif selection.capability_id == "drops_loot_on_destroy":
+				var loot_settings := selection.get_component_settings("drops_loot_on_destroy")
+				var loot_entries: Variant = JSON.parse_string(str(loot_settings.get("loot_table_json", "[]")))
+				if loot_entries is Array and not loot_entries.is_empty() and loot_entries[0] is Dictionary:
+					drop_item_value = str(loot_entries[0].get("item_id", ""))
+					drop_amount_value = int(loot_entries[0].get("minimum", 0))
+		_expect(
+			(not template_id.begins_with("template_tree_") or (material_value == "wood" and tool_value == "axe" and drop_item_value == "wood" and drop_amount_value == 5))
+			and (not template_id.begins_with("template_rock") or (material_value == "stone" and tool_value == "pickaxe" and drop_item_value == "stone" and drop_amount_value == 4)),
+			"resource template stores material, tool and loot in mechanic settings: " + template_id
+		)
+		_expect(
+			hit_radius_value > 0.0,
+			"resource template configures attack radius through Damageable: " + template_id
+		)
+		var template_errors := ObjectLibraryService.validate_definition(template_definition)
+		_expect(
+			template_errors.is_empty(),
+			"resource template passes ObjectLibraryService validation: %s (%s)" % [
+				template_id,
+				"; ".join(template_errors)
+			]
+		)
+		_expect(drop_amount_value > 0, "resource template has a positive drop amount: " + template_id)
+		var enabled_capabilities := PackedStringArray()
+		for selection in template_definition.capabilities:
+			if selection != null and selection.enabled:
+				enabled_capabilities.append(selection.capability_id)
+		_expect(
+			enabled_capabilities.has("has_health")
+			and enabled_capabilities.has("can_receive_damage")
+			and enabled_capabilities.has("breaks_when_health_empty")
+			and enabled_capabilities.has("emits_particles"),
+			"resource template has health, damage, destruction and hit particles: " + template_id
+		)
+		if template_id.begins_with("template_tree_"):
+			_expect(
+				enabled_capabilities.has("falls_when_destroyed")
+				and enabled_capabilities.has("leaves_remains"),
+				"tree template falls and leaves a stump: " + template_id
+			)
+		else:
+			_expect(
+				not enabled_capabilities.has("falls_when_destroyed"),
+				"rock template does not use the tree falling behavior"
+			)
 
 	var custom_profile := ObjectCreationProfileDefinition.new()
 	custom_profile.profile_id = "smoke_custom_profile"
@@ -2749,9 +3211,13 @@ func _test_capability_library_size_and_status() -> void:
 		"built-in mechanics library exposes exactly 200 entries"
 	)
 	_expect(
-		simple_ids.size() == 200,
-		"all 200 mechanics are searchable in the simple-mode catalogue"
+		simple_ids.size() < all_ids.size() and simple_ids.size() > 0,
+		"merged child mechanics remain registered but are hidden from standalone simple-mode cards"
 	)
+	for hidden_id in ["requires_tool", "has_damage_resistance", "can_walk", "plays_walk_animation", "has_trail_effect", "has_inventory", "supports_hotbar"]:
+		var hidden_definition := ObjectCapabilityCatalog.get_definition(hidden_id)
+		_expect(hidden_definition != null and hidden_definition.editor_hidden, "merged child is retained as a hidden compatibility definition: " + hidden_id)
+		_expect(not simple_ids.has(hidden_id), "merged child is not exposed as a standalone card: " + hidden_id)
 
 	var seen_ids: Dictionary = {}
 	var category_counts: Dictionary = {}
@@ -2760,8 +3226,8 @@ func _test_capability_library_size_and_status() -> void:
 	var verified_package_count := 0
 	var component_references_valid: bool = true
 	var verified_package_categories := [
-		"harvesting", "items", "inventory", "containers", "construction",
-		"ai", "animals", "audio_effects", "world_time", "world_generation"
+		"harvesting", "items_storage", "construction_generation",
+		"behavior_animals", "sound_effects", "world_time"
 	]
 
 	for capability_id in all_ids:
@@ -2806,14 +3272,30 @@ func _test_capability_library_size_and_status() -> void:
 		component_references_valid,
 		"every capability component reference resolves to a registered runtime script"
 	)
+	var expected_category_counts := {
+		"general": 10,
+		"visual": 10,
+		"animation": 10,
+		"physics_movement": 20,
+		"interaction": 10,
+		"stats": 10,
+		"combat_defense": 20,
+		"destruction": 10,
+		"harvesting": 10,
+		"items_storage": 30,
+		"behavior_animals": 20,
+		"sound_effects": 10,
+		"world_time": 10,
+		"construction_generation": 20
+	}
 	_expect(
-		category_counts.size() == 20,
-		"mechanics catalogue exposes twenty distinct categories"
+		category_counts.size() == 14,
+		"mechanics catalogue exposes fourteen user-facing categories"
 	)
-	for category_id in category_counts:
+	for category_id in expected_category_counts:
 		_expect(
-			int(category_counts[category_id]) == 10,
-			"category '%s' contains exactly ten mechanics" % str(category_id)
+			int(category_counts.get(category_id, -1)) == int(expected_category_counts[category_id]),
+			"category '%s' contains the expected number of stable mechanics" % str(category_id)
 		)
 
 	var movement_capability := ObjectCapabilityCatalog.get_definition("can_move")
@@ -3154,7 +3636,74 @@ func _test_component_node_bindings() -> void:
 
 
 
+func _test_merged_capability_selection_migration() -> void:
+	var old_tool := ObjectCapabilityCatalog.create_selection("requires_tool")
+	var old_mining := ObjectCapabilityCatalog.create_selection("can_be_mined")
+	var old_progress := ObjectCapabilityCatalog.create_selection("has_harvest_progress")
+	_expect(old_tool != null and old_mining != null and old_progress != null, "legacy harvest selections exist before migration")
+	if old_tool == null or old_mining == null or old_progress == null:
+		return
+	old_tool.set_component_setting("requires_tool", "required_tool_id", "axe")
+	old_mining.set_component_setting("can_be_mined", "minimum_mining_power", 2.0)
+	old_progress.set_component_setting("has_harvest_progress", "harvest_duration", 3.5)
+	var migrated := ObjectCapabilityService.migrate_merged_selections([old_tool, old_mining, old_progress])
+	var normalized: Array[ObjectCapabilitySelection] = migrated.get("selections", [])
+	_expect(bool(migrated.get("changed", false)), "legacy harvest capabilities are recognized as merge aliases")
+	_expect(normalized.size() == 1 and normalized[0].capability_id == "can_be_harvested", "legacy harvesting mechanics collapse into one visible selection")
+	if normalized.size() == 1:
+		var tool_settings := normalized[0].get_component_settings("requires_tool")
+		var harvest_settings := normalized[0].get_component_settings("can_be_harvested")
+		_expect(str(tool_settings.get("required_tool_id", "")) == "axe", "legacy tool ID migrates into the parent settings")
+		_expect(bool(tool_settings.get("enabled", false)), "legacy tool requirement is enabled during migration")
+		_expect(float(tool_settings.get("minimum_mining_power", 0.0)) == 2.0, "legacy mining power migrates into the shared tool settings")
+		_expect(float(harvest_settings.get("harvest_time_seconds", 0.0)) == 3.5, "legacy harvest duration migrates into the unified duration setting")
+	_expect(ObjectCapabilityCatalog.get_definition("requires_tool").editor_hidden, "merged harvesting child is hidden from the standalone catalog")
+
+	var old_inventory := ObjectCapabilityCatalog.create_selection("has_inventory")
+	_expect(old_inventory != null, "legacy inventory selection is available for migration")
+	if old_inventory != null:
+		old_inventory.set_component_setting("has_inventory", "slot_capacity", 36)
+		var migrated_inventory := ObjectCapabilityService.migrate_merged_selections([old_inventory])
+		var storage_selections: Array[ObjectCapabilitySelection] = migrated_inventory.get("selections", [])
+		_expect(
+			storage_selections.size() == 1 and storage_selections[0].capability_id == "stores_items",
+			"legacy inventory selection migrates into the shared storage card"
+		)
+		if storage_selections.size() == 1:
+			var inventory_settings := storage_selections[0].get_component_settings("has_inventory")
+			_expect(bool(inventory_settings.get("enabled", false)), "legacy inventory is enabled after migration")
+			_expect(int(inventory_settings.get("slot_capacity", 0)) == 36, "legacy inventory capacity survives storage migration")
+
+
 func _test_mechanic_modules_registered() -> void:
+	for merged_component_id in ["can_walk", "can_run", "plays_walk_animation", "plays_attack_sound", "has_trail_effect", "has_inventory", "supports_hotbar", "has_weight_capacity"]:
+		var merged_component := ObjectComponentCatalog.create_definition(merged_component_id)
+		_expect(merged_component != null, "merged child component remains registered: " + merged_component_id)
+		if merged_component == null:
+			continue
+		_expect(
+			bool(merged_component.settings.get("enabled", false)) == false,
+			"merged child feature is disabled by default: " + merged_component_id
+		)
+	for merged_capability_id in ["can_walk", "can_run", "plays_walk_animation", "plays_attack_sound", "has_trail_effect"]:
+		var merged_capability := ObjectCapabilityCatalog.get_definition(merged_capability_id)
+		_expect(
+			merged_capability != null and merged_capability.editor_hidden,
+			"merged child capability is hidden but retained: " + merged_capability_id
+		)
+	var move_parent := ObjectCapabilityCatalog.get_definition("can_move")
+	_expect(
+		move_parent != null and move_parent.component_ids.has("can_walk") and move_parent.component_ids.has("can_run"),
+		"walk and run components are included in the parent movement capability"
+	)
+	var storage_parent := ObjectCapabilityCatalog.get_definition("stores_items")
+	_expect(
+		storage_parent != null and storage_parent.component_ids.has("has_inventory")
+		and storage_parent.component_ids.has("supports_hotbar")
+		and storage_parent.component_ids.has("has_weight_capacity"),
+		"inventory features are included in the shared storage capability"
+	)
+
 	var expected_modules := PackedStringArray([
 		"animation",
 		"characteristics",
@@ -3171,7 +3720,20 @@ func _test_mechanic_modules_registered() -> void:
 	for module_id in expected_modules:
 		_expect(loaded_modules.has(module_id), "mechanic package is registered: " + module_id)
 
+	var loot_settings_schema := ObjectCapabilityCatalog.get_settings_schema("drops_loot_on_destroy")
+	var has_loot_table_editor_setting := false
+	for descriptor in loot_settings_schema:
+		if str(descriptor.get("setting_key", "")) == "loot_table_json":
+			has_loot_table_editor_setting = (
+				str(descriptor.get("component_id", "")) == "drops_loot_on_destroy"
+			)
+	_expect(
+		has_loot_table_editor_setting,
+		"loot table mechanic exposes its JSON editor setting to the settings dialog"
+	)
+
 	var expected_capabilities := PackedStringArray([
+		"drops_loot_on_destroy",
 		"plays_idle_animation",
 		"has_stamina",
 		"can_block",

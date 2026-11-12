@@ -31,6 +31,30 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 			"group_name": "Защита"
 		})
 		result.append({
+			"key": "material_type",
+			"display_name": "Материал",
+			"value_type": "String",
+			"default_value": "",
+			"group_name": "Добыча"
+		})
+		result.append({
+			"key": "required_tool_id",
+			"display_name": "Требуемый инструмент",
+			"value_type": "String",
+			"default_value": "",
+			"group_name": "Инструмент"
+		})
+		result.append({
+			"key": "hit_radius",
+			"display_name": "Радиус попадания",
+			"value_type": "Float",
+			"default_value": 18.0,
+			"group_name": "Попадание",
+			"has_range": true,
+			"minimum": 1.0,
+			"maximum": 512.0
+		})
+		result.append({
 			"key": "damage_multiplier",
 			"display_name": "Множитель входящего урона",
 			"value_type": "Float",
@@ -123,7 +147,7 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 			"key": "hide_on_destroy",
 			"display_name": "Скрывать объект",
 			"value_type": "Boolean",
-			"default_value": false,
+			"default_value": true,
 			"group_name": "После разрушения"
 		})
 		result.append({
@@ -281,6 +305,23 @@ static func get_builtin_setting_definitions(id: String) -> Array[Dictionary]:
 		"value_type": "Boolean",
 		"default_value": true,
 		"group_name": "Восстановление"
+	})
+	result.append({
+		"key": "regeneration_enabled",
+		"display_name": "Автоматическая регенерация",
+		"value_type": "Boolean",
+		"default_value": false,
+		"group_name": "Восстановление"
+	})
+	result.append({
+		"key": "health_regeneration_per_second",
+		"display_name": "Здоровье в секунду",
+		"value_type": "Float",
+		"default_value": 1.0,
+		"group_name": "Восстановление",
+		"has_range": true,
+		"minimum": 0.0,
+		"maximum": 100000.0
 	})
 	return result
 

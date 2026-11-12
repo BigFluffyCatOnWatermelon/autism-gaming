@@ -6,7 +6,7 @@ class_name MechanicModuleLoader
 ## Module scripts are trusted project code, not sandboxed extensions.
 
 const MODULE_API_VERSION := 1
-const DEFAULT_MODULES_DIRECTORY := "res://addons/object_builder/mechanics"
+const DEFAULT_MODULES_DIRECTORY := "res://addons/web_object_builder/mechanics"
 
 static var _registered_modules: Dictionary = {}
 static var _scanned_directories: Dictionary = {}
@@ -99,6 +99,9 @@ static func register_module(module_directory: String) -> PackedStringArray:
 	var module_script := ResourceLoader.load(script_path) as Script
 	if module_script == null:
 		return PackedStringArray(["Не удалось загрузить GDScript модуля: " + script_path])
+
+	if not module_script.can_instantiate():
+		return PackedStringArray(["Скрипт entrypoint не компилируется и не может быть создан: " + script_path])
 
 	var module_instance: Object = module_script.new()
 	if not module_instance is RefCounted:

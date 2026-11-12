@@ -6,26 +6,20 @@ class_name ObjectCapabilityCatalog
 const CAPABILITY_LIBRARY_DATA = preload("res://scripts/object_system/object_capability_library_data.gd")
 
 const BUILTIN_CATEGORIES := [
-	{"id": "general", "display_name": "Основное", "order": 0},
+	{"id": "general", "display_name": "Основное и данные", "order": 0},
 	{"id": "visual", "display_name": "Внешний вид", "order": 10},
-	{"id": "animation", "display_name": "Анимация", "order": 20},
-	{"id": "movement", "display_name": "Движение", "order": 30},
-	{"id": "physics", "display_name": "Физика", "order": 40},
-	{"id": "interaction", "display_name": "Взаимодействие", "order": 50},
-	{"id": "stats", "display_name": "Характеристики", "order": 60},
-	{"id": "combat", "display_name": "Бой", "order": 70},
-	{"id": "defense", "display_name": "Защита", "order": 80},
-	{"id": "destruction", "display_name": "Разрушение", "order": 90},
-	{"id": "harvesting", "display_name": "Добыча и сбор", "order": 100},
-	{"id": "items", "display_name": "Предметы", "order": 110},
-	{"id": "inventory", "display_name": "Инвентарь", "order": 120},
-	{"id": "containers", "display_name": "Контейнеры", "order": 130},
-	{"id": "construction", "display_name": "Строительство", "order": 140},
-	{"id": "ai", "display_name": "Поведение и AI", "order": 150},
-	{"id": "animals", "display_name": "Животные", "order": 160},
-	{"id": "audio_effects", "display_name": "Звук и эффекты", "order": 170},
-	{"id": "world_time", "display_name": "Время и события", "order": 180},
-	{"id": "world_generation", "display_name": "Генерация мира", "order": 190}
+	{"id": "animation", "display_name": "Анимации", "order": 20},
+	{"id": "physics_movement", "display_name": "Физика и движение", "order": 30},
+	{"id": "interaction", "display_name": "Взаимодействие", "order": 40},
+	{"id": "stats", "display_name": "Характеристики", "order": 50},
+	{"id": "combat_defense", "display_name": "Бой и защита", "order": 60},
+	{"id": "destruction", "display_name": "Разрушение и восстановление", "order": 70},
+	{"id": "harvesting", "display_name": "Добыча и производство", "order": 80},
+	{"id": "items_storage", "display_name": "Предметы и хранилища", "order": 90},
+	{"id": "behavior_animals", "display_name": "Поведение и животные", "order": 100},
+	{"id": "sound_effects", "display_name": "Звук и эффекты", "order": 110},
+	{"id": "world_time", "display_name": "Время и события", "order": 120},
+	{"id": "construction_generation", "display_name": "Строительство и генерация", "order": 130}
 ]
 
 static var _definitions: Dictionary = {}
@@ -106,9 +100,23 @@ static func register_definitions(
 	for capability_id in incoming:
 		candidate[capability_id] = incoming[capability_id]
 
+	# Resolve merge declarations only after this batch has entered the candidate.
+	# Parent definitions can be built-ins or may register in a later package.
+	var affected_parent_ids := _apply_merged_component_links(candidate)
+	for parent_id in affected_parent_ids:
+		var parent_definition := candidate.get(parent_id) as ObjectCapabilityDefinition
+		if parent_definition != null:
+			_prepare_settings_schema(parent_definition)
+
 	for capability_id in incoming:
 		var definition := candidate[capability_id] as ObjectCapabilityDefinition
 		errors.append_array(_validate_definition(definition, candidate))
+	for parent_id in affected_parent_ids:
+		if incoming.has(parent_id):
+			continue
+		var parent_definition := candidate.get(parent_id) as ObjectCapabilityDefinition
+		if parent_definition != null:
+			errors.append_array(_validate_definition(parent_definition, candidate))
 
 	if errors.is_empty():
 		errors.append_array(_validate_dependency_graph(candidate))
@@ -116,9 +124,62 @@ static func register_definitions(
 		return errors
 
 	for capability_id in incoming:
-		_definitions[capability_id] = incoming[capability_id]
+		_definitions[capability_id] = candidate[capability_id]
 		_sources[capability_id] = normalized_source
+	for parent_id in affected_parent_ids:
+		if not incoming.has(parent_id):
+			_definitions[parent_id] = candidate[parent_id]
 	return errors
+
+
+static func get_canonical_capability_id(capability_id: String) -> String:
+	_ensure_initialized()
+	var current := _normalize_id(capability_id)
+	var visited: Dictionary = {}
+	while not current.is_empty() and not visited.has(current):
+		visited[current] = true
+		var definition := _definitions.get(current) as ObjectCapabilityDefinition
+		if definition == null:
+			break
+		var parent_id := _normalize_id(definition.merged_into_capability_id)
+		if parent_id.is_empty():
+			break
+		current = parent_id
+	return current
+
+
+static func _apply_merged_component_links(candidate: Dictionary) -> PackedStringArray:
+	var affected_parent_ids := PackedStringArray()
+	for child_id_value in candidate.keys():
+		var child_id := str(child_id_value)
+		var child := candidate.get(child_id) as ObjectCapabilityDefinition
+		if child == null:
+			continue
+		var parent_id := _normalize_id(child.merged_into_capability_id)
+		if parent_id.is_empty():
+			continue
+		child.editor_hidden = true
+		if not candidate.has(parent_id) or parent_id == child_id:
+			continue
+		var parent := candidate.get(parent_id) as ObjectCapabilityDefinition
+		if parent == null:
+			continue
+		var updated := parent.duplicate(true) as ObjectCapabilityDefinition
+		var destination_component := _normalize_id(child.merged_component_id)
+		for component_id_value in child.component_ids:
+			var source_component_id := _normalize_id(str(component_id_value))
+			var target_component_id := destination_component if not destination_component.is_empty() else source_component_id
+			if target_component_id.is_empty():
+				continue
+			if not updated.component_ids.has(target_component_id):
+				updated.component_ids.append(target_component_id)
+			if child.hide_merged_settings and not updated.hidden_component_ids.has(target_component_id):
+				updated.hidden_component_ids.append(target_component_id)
+		candidate[parent_id] = updated
+		if not affected_parent_ids.has(parent_id):
+			affected_parent_ids.append(parent_id)
+	affected_parent_ids.sort()
+	return affected_parent_ids
 
 
 static func unregister_source(source_id: String) -> PackedStringArray:
@@ -164,6 +225,10 @@ static func validate_registry() -> PackedStringArray:
 	var errors := PackedStringArray()
 	for capability_id in _definitions:
 		var definition := _definitions[capability_id] as ObjectCapabilityDefinition
+		if definition != null and not definition.merged_into_capability_id.strip_edges().is_empty():
+			var canonical_id := get_canonical_capability_id(capability_id)
+			if canonical_id == capability_id or not _definitions.has(canonical_id):
+				errors.append("Для объединённой возможности '%s' не найден корректный родитель: '%s'." % [capability_id, definition.merged_into_capability_id])
 		errors.append_array(_validate_definition(definition, _definitions))
 	if errors.is_empty():
 		errors.append_array(_validate_dependency_graph(_definitions))
@@ -214,7 +279,7 @@ static func get_capability_ids(
 	var result: Array[String] = []
 	for capability_id in _definitions:
 		var definition := _definitions[capability_id] as ObjectCapabilityDefinition
-		if definition == null:
+		if definition == null or (simple_only and definition.editor_hidden):
 			continue
 		if not category_id.is_empty() and definition.category_id != category_id:
 			continue
@@ -288,8 +353,38 @@ static func _ensure_initialized() -> void:
 static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> void:
 	if definition == null:
 		return
+	_normalize_category_metadata(definition)
+	_resolve_settings_schema(definition)
 	_apply_default_catalog_metadata(definition)
 
+
+## Map legacy package categories into the compact user-facing taxonomy.
+## Capability IDs and runtime component IDs are intentionally unchanged.
+static func _normalize_category_metadata(definition: ObjectCapabilityDefinition) -> void:
+	var category_map := {
+		"movement": ["physics_movement", "Физика и движение"],
+		"physics": ["physics_movement", "Физика и движение"],
+		"combat": ["combat_defense", "Бой и защита"],
+		"defense": ["combat_defense", "Бой и защита"],
+		"items": ["items_storage", "Предметы и хранилища"],
+		"inventory": ["items_storage", "Предметы и хранилища"],
+		"containers": ["items_storage", "Предметы и хранилища"],
+		"ai": ["behavior_animals", "Поведение и животные"],
+		"animals": ["behavior_animals", "Поведение и животные"],
+		"audio_effects": ["sound_effects", "Звук и эффекты"],
+		"construction": ["construction_generation", "Строительство и генерация"],
+		"world_generation": ["construction_generation", "Строительство и генерация"]
+	}
+	var legacy_id := definition.category_id.strip_edges().to_lower()
+	if category_map.has(legacy_id):
+		var normalized: Array = category_map[legacy_id]
+		definition.category_id = str(normalized[0])
+		definition.category_name = str(normalized[1])
+
+
+## Resolve user-facing settings from the actual registered component definitions.
+## This must run for every category; category normalization is unrelated to settings.
+static func _resolve_settings_schema(definition: ObjectCapabilityDefinition) -> void:
 	var explicit_by_key: Dictionary = {}
 	var invalid_schema_index := 0
 	for descriptor in definition.settings_schema:
@@ -314,6 +409,8 @@ static func _prepare_settings_schema(definition: ObjectCapabilityDefinition) -> 
 	var consumed: Dictionary = {}
 	for component_id_value in definition.component_ids:
 		var component_id := _normalize_id(str(component_id_value))
+		if definition.hidden_component_ids.has(component_id):
+			continue
 		var component_definition := ObjectComponentCatalog.create_definition(component_id)
 		if component_definition == null:
 			continue
@@ -495,8 +592,8 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 
 	var destructible := ObjectCapabilityDefinition.new()
 	destructible.capability_id = "breaks_when_health_empty"
-	destructible.display_name = "Разрушается при потере здоровья"
-	destructible.description = "Когда здоровье закончится, объект перейдёт в разрушенное состояние. Здоровье добавится автоматически."
+	destructible.display_name = "Разрушается"
+	destructible.description = "Объект может быть разрушен. Стадии, обломки, добыча, остатки, падение и взрыв настраиваются внутри этой механики."
 	destructible.category_id = "destruction"
 	destructible.category_name = "Разрушение"
 	destructible.icon = "hammer"
@@ -512,6 +609,9 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 		{"setting_key": "invulnerable", "level": "Expert"}
 	]
 	damageable.settings_schema = [
+		{"setting_key": "material_type", "level": "Basic"},
+		{"setting_key": "required_tool_id", "level": "Basic"},
+		{"setting_key": "hit_radius", "level": "Basic"},
 		{"setting_key": "flat_reduction", "level": "Advanced"}
 	]
 	attack.settings_schema = [
@@ -528,8 +628,8 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 
 	var interactable := ObjectCapabilityDefinition.new()
 	interactable.capability_id = "can_interact"
-	interactable.display_name = "Можно взаимодействовать"
-	interactable.description = "Игрок может вызвать действие объекта клавишей E в заданном радиусе."
+	interactable.display_name = "Взаимодействие"
+	interactable.description = "Объект реагирует на запрос игрока или другого инициатора. Дополнительные действия и их условия находятся внутри этой механики."
 	interactable.category_id = "interaction"
 	interactable.category_name = "Взаимодействие"
 	interactable.icon = "hand"
@@ -550,8 +650,8 @@ static func _make_builtin_definitions() -> Array[ObjectCapabilityDefinition]:
 
 	var pickup := ObjectCapabilityDefinition.new()
 	pickup.capability_id = "is_pickup_item"
-	pickup.display_name = "Подбираемый предмет"
-	pickup.description = "Игрок может подобрать предмет в инвентарь, включая частичный подбор стопки."
+	pickup.display_name = "Можно подобрать"
+	pickup.description = "Предмет можно подобрать в инвентарь с учётом количества, радиуса и правил удаления после подбора."
 	pickup.category_id = "items"
 	pickup.category_name = "Предметы"
 	pickup.icon = "package"

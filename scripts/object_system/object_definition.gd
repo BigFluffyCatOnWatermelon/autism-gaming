@@ -2,19 +2,49 @@
 extends Resource
 class_name ObjectDefinition
 
-const CURRENT_SCHEMA_VERSION := 5
+const CURRENT_SCHEMA_VERSION := 11
 
 @export var schema_version: int = CURRENT_SCHEMA_VERSION
 @export var object_id: String = ""
 @export var display_name: String = ""
 @export_multiline var description: String = ""
 @export var category: String = "Nature"
+@export var subcategory: String = ""
 @export var object_type: String = "other"
 @export var tags: PackedStringArray = PackedStringArray()
 @export var root_type: String = "Node2D"
 @export var scene: PackedScene
 @export var scene_path: String = ""
 @export var preview_texture: Texture2D
+## Temporary visual placeholder shown until a real sprite/preview texture is assigned.
+@export var preview_emoji: String = ""
+@export_storage var preview_hash: String = ""
+## Logical world-space footprint. Kept independent from texture dimensions and sprite scale.
+@export var object_size: Vector2 = Vector2(32.0, 32.0)
+@export var preview_sprite_scale: Vector2 = Vector2.ONE
+@export var preview_sprite_offset: Vector2 = Vector2.ZERO
+@export_range(-36000.0, 36000.0, 0.1) var preview_sprite_rotation_degrees: float = 0.0
+@export_range(-4096, 4096, 1) var preview_sprite_z_index: int = 0
+
+## User-facing 2D collision profile. The scene draft service builds managed physics nodes from it.
+@export var collision_enabled: bool = false
+@export var collision_mode: String = "solid" # solid blocks movement; area detects overlaps.
+@export var collision_shape: String = "rectangle" # rectangle, circle, capsule.
+@export var collision_size: Vector2 = Vector2(32.0, 32.0)
+@export var collision_radius: float = 16.0
+@export var collision_height: float = 32.0
+@export var collision_offset: Vector2 = Vector2.ZERO
+@export_flags_2d_physics var collision_layer: int = 2
+@export_flags_2d_physics var collision_mask: int = 1
+
+## Optional sprite sheet and row-based animation definitions used to build AnimatedSprite2D.
+@export var sprite_sheet_texture: Texture2D
+@export_storage var sprite_sheet_hash: String = ""
+@export_storage var sprite_animations: Array[Dictionary] = []
+
+## Additional visual layers edited in the integrated sprite workspace.
+@export_storage var sprite_layers: Array[Dictionary] = []
+
 @export var is_template: bool = false
 @export var template_id: String = ""
 @export var custom_properties: Array[ObjectPropertyDefinition] = []
@@ -33,3 +63,6 @@ const CURRENT_SCHEMA_VERSION := 5
 
 ## Declarative signal connections between root/generated nodes.
 @export var signal_connections: Array[ObjectSignalConnectionDefinition] = []
+
+## Object-level references used by the integrated visual editor. These never own or delete targets.
+@export_storage var relations: Array[Dictionary] = []

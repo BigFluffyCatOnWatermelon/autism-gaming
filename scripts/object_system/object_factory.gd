@@ -45,7 +45,7 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	var property_data := _get_property_data(instance)
 	if property_data == null:
 		property_data = ObjectPropertyData.new()
-		property_data.name = "ObjectProperties"
+		property_data.name = "Свойства объекта"
 		instance.add_child(property_data)
 		property_data.owner = instance
 	property_data.configure(definition.custom_properties, property_overrides, true)
@@ -75,9 +75,12 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	instance.set_meta("object_custom_properties", values)
 	instance.set_meta("object_custom_property_definitions", property_definitions)
 
+	# Fold deprecated standalone selections into their visible parent before runtime binding.
+	var merge_result := ObjectCapabilityService.migrate_merged_selections(definition.capabilities)
+	var runtime_capabilities: Array[ObjectCapabilitySelection] = merge_result.get("selections", [])
 	# Validate friendly capability choices before building the component plan.
 	var capability_errors := ObjectCapabilityService.validate_selections(
-		definition.capabilities,
+		runtime_capabilities,
 		instance
 	)
 	if not capability_errors.is_empty():
@@ -89,14 +92,21 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	# Normalize the legacy root-level component array into the same binding model.
 	var all_bindings: Array[ObjectComponentBinding] = []
 	var attached_legacy_component_ids: Dictionary = {}
+	var legacy_component_definitions_by_id: Dictionary = {}
 	for component_definition in definition.components:
-		if component_definition == null or not component_definition.enabled:
+		if component_definition == null:
 			continue
 		var component_id := component_definition.component_id.strip_edges().to_lower()
 		if component_id.is_empty():
-			push_error("ObjectFactory: у legacy-компонента отсутствует ID.")
-			instance.free()
-			return null
+			if component_definition.enabled:
+				push_error("ObjectFactory: у legacy-компонента отсутствует ID.")
+				instance.free()
+				return null
+			continue
+		if not legacy_component_definitions_by_id.has(component_id) or component_definition.enabled:
+			legacy_component_definitions_by_id[component_id] = component_definition
+		if not component_definition.enabled:
+			continue
 		if attached_legacy_component_ids.has(component_id):
 			push_warning("ObjectFactory: повторный legacy-компонент '%s' пропущен." % component_id)
 			continue
@@ -111,8 +121,55 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 	# Explicit advanced bindings plus automatically resolved simple capabilities.
 	for binding in definition.component_bindings:
 		all_bindings.append(binding)
-	for generated_binding in ObjectCapabilityService.build_component_bindings(definition.capabilities):
+	for generated_binding in ObjectCapabilityService.build_component_bindings(runtime_capabilities):
 		all_bindings.append(generated_binding)
+
+	# Older definitions stored inventory and container components in the legacy
+	# root array. They used has_container_capacity.max_weight for both systems.
+	# Add the new inventory-only component without mutating the saved definition.
+	var legacy_inventory := legacy_component_definitions_by_id.get("has_inventory") as ObjectComponentDefinition
+	var legacy_container_capacity := legacy_component_definitions_by_id.get("has_container_capacity") as ObjectComponentDefinition
+	var legacy_weight_capacity := legacy_component_definitions_by_id.get("has_weight_capacity") as ObjectComponentDefinition
+	if (
+		legacy_inventory != null
+		and legacy_inventory.enabled
+		and legacy_container_capacity != null
+		and legacy_container_capacity.enabled
+		and legacy_weight_capacity == null
+	):
+		var has_explicit_weight_setting := false
+		for selection in runtime_capabilities:
+			if selection != null and str(selection.target_node_path) == "." and selection.settings_by_component.has("has_weight_capacity"):
+				has_explicit_weight_setting = true
+				break
+		var explicit_weight_binding := false
+		var generated_weight_binding: ObjectComponentBinding = null
+		for binding in all_bindings:
+			if binding == null or binding.component_definition == null:
+				continue
+			if binding.component_definition.component_id.strip_edges().to_lower() != "has_weight_capacity" or binding.target_node_path != NodePath("."):
+				continue
+			if str(binding.binding_id).begins_with("capability_"):
+				generated_weight_binding = binding
+			else:
+				explicit_weight_binding = true
+				break
+		if not has_explicit_weight_setting and not explicit_weight_binding:
+			if generated_weight_binding == null:
+				generated_weight_binding = ObjectComponentCatalog.create_binding(
+					"has_weight_capacity",
+					NodePath(".")
+				)
+				if generated_weight_binding != null:
+					generated_weight_binding.binding_id = "legacy_migrated:has_weight_capacity"
+					all_bindings.append(generated_weight_binding)
+			if generated_weight_binding != null:
+				var legacy_capacity_settings := legacy_container_capacity.get_settings()
+				generated_weight_binding.component_definition.set_setting("enabled", true)
+				generated_weight_binding.component_definition.set_setting(
+					"max_weight",
+					float(legacy_capacity_settings.get("max_weight", 0.0))
+				)
 
 	# Resolve every target, supported node type, dependency and conflict before attaching
 	# the first component. A failed plan never returns a partially assembled object.
@@ -150,7 +207,163 @@ static func instantiate(definition: ObjectDefinition, property_overrides: Dictio
 			instance.free()
 			return null
 
+	instance.set_meta("object_builder_runtime_components_ready", true)
 	return instance
+
+
+## Attaches the definition's runtime components to an existing scene instance.
+## Object Builder scenes are often dragged directly into the Godot editor and
+## therefore do not pass through instantiate() at runtime. The reference node
+## uses this bridge to keep both creation paths behaviorally identical.
+static func initialize_existing_instance(
+	definition: ObjectDefinition,
+	existing_root: Node
+) -> bool:
+	if definition == null or existing_root == null or not is_instance_valid(existing_root):
+		return false
+	if bool(existing_root.get_meta("object_builder_runtime_components_ready", false)):
+		return true
+
+	# Build a temporary Factory instance so the normal validation and component
+	# configuration path remains the single source of truth.
+	var prototype := instantiate(definition)
+	if prototype == null:
+		return false
+
+	existing_root.set_meta("object_definition_id", definition.object_id)
+	existing_root.set_meta("object_definition_version", definition.schema_version)
+	existing_root.set_meta("object_builder_id", definition.object_id)
+	existing_root.set_meta(
+		"object_builder_uri",
+		"objectbuilder://object/" + definition.object_id.uri_encode()
+	)
+	existing_root.set_meta("object_builder_name", definition.display_name)
+	existing_root.set_meta("object_category", definition.category)
+	existing_root.set_meta("object_builder_relations", definition.relations.duplicate(true))
+	var definition_resource_path := ObjectLibraryService.get_definition_path_for_definition(definition)
+	if not definition_resource_path.is_empty():
+		existing_root.set_meta("object_builder_resource_path", definition_resource_path)
+
+	var structure_result := OBJECT_SCENE_STRUCTURE_SERVICE.apply_structure(definition, existing_root)
+	if not bool(structure_result.get("ok", false)):
+		var structure_errors: PackedStringArray = structure_result.get("errors", PackedStringArray())
+		for error_message in structure_errors:
+			push_error("ObjectFactory: " + error_message)
+		prototype.free()
+		return false
+
+	var property_data := _get_property_data(existing_root)
+	if property_data == null:
+		property_data = ObjectPropertyData.new()
+		property_data.name = "Свойства объекта"
+		existing_root.add_child(property_data)
+		property_data.owner = existing_root
+	property_data.configure(definition.custom_properties, {}, true)
+	var property_definitions: Dictionary = {}
+	for property_definition in property_data.property_definitions:
+		if property_definition == null or property_definition.property_id.is_empty():
+			continue
+		property_definitions[property_definition.property_id] = property_definition
+	existing_root.set_meta("object_custom_properties", property_data.get_values())
+	existing_root.set_meta("object_custom_property_definitions", property_definitions)
+
+	var existing_bindings: Dictionary = {}
+	for existing_component in get_components(existing_root):
+		existing_bindings[
+			"%s@%s@%s" % [
+				existing_component.component_id,
+				existing_component.binding_id,
+				str(existing_component.target_node_path)
+			]
+		] = true
+
+	var transfer_plan: Array[Dictionary] = []
+	for component in get_components(prototype):
+		var binding_key := "%s@%s@%s" % [
+			component.component_id,
+			component.binding_id,
+			str(component.target_node_path)
+		]
+		if existing_bindings.has(binding_key):
+			continue
+		var target_path: NodePath = component.target_node_path
+		var target_node: Node
+		if target_path.is_empty() or str(target_path) == ".":
+			target_node = existing_root
+		else:
+			target_node = existing_root.get_node_or_null(target_path)
+		if target_node == null:
+			push_error(
+				"ObjectFactory: для прямого экземпляра не найден узел привязки '%s'."
+				% str(target_path)
+			)
+			prototype.free()
+			return false
+		if component.has_method("bind_animation_player") and _find_animation_player(target_node) == null:
+			push_error("ObjectFactory: для компонента '%s' не найден AnimationPlayer." % component.component_id)
+			prototype.free()
+			return false
+		if component.has_method("bind_animated_sprite") and _find_animated_sprite(target_node) == null:
+			push_error("ObjectFactory: для компонента '%s' не найден AnimatedSprite2D." % component.component_id)
+			prototype.free()
+			return false
+		transfer_plan.append({"component": component, "target": target_node})
+
+	var transferred: Array[ObjectComponent] = []
+	for entry in transfer_plan:
+		var component := entry.get("component") as ObjectComponent
+		var target_node := entry.get("target") as Node
+		var old_parent := component.get_parent()
+		if old_parent != null:
+			old_parent.remove_child(component)
+		component.configure_context(existing_root, component.binding_id, component.target_node_path)
+
+		if component.has_method("bind_target"):
+			var bind_result: Variant = component.call("bind_target", target_node)
+			if typeof(bind_result) == TYPE_BOOL and not bool(bind_result):
+				component.free()
+				for attached_component in transferred:
+					var attached_parent := attached_component.get_parent()
+					if attached_parent != null:
+						attached_parent.remove_child(attached_component)
+					attached_component.free()
+				prototype.free()
+				return false
+		if component.has_method("bind_animation_player"):
+			var animation_bind_result: Variant = component.call(
+				"bind_animation_player",
+				_find_animation_player(target_node)
+			)
+			if typeof(animation_bind_result) == TYPE_BOOL and not bool(animation_bind_result):
+				component.free()
+				for attached_component in transferred:
+					var attached_parent := attached_component.get_parent()
+					if attached_parent != null:
+						attached_parent.remove_child(attached_component)
+					attached_component.free()
+				prototype.free()
+				return false
+		if component.has_method("bind_animated_sprite"):
+			var sprite_bind_result: Variant = component.call(
+				"bind_animated_sprite",
+				_find_animated_sprite(target_node)
+			)
+			if typeof(sprite_bind_result) == TYPE_BOOL and not bool(sprite_bind_result):
+				component.free()
+				for attached_component in transferred:
+					var attached_parent := attached_component.get_parent()
+					if attached_parent != null:
+						attached_parent.remove_child(attached_component)
+					attached_component.free()
+				prototype.free()
+				return false
+
+		target_node.add_child(component)
+		transferred.append(component)
+
+	prototype.free()
+	existing_root.set_meta("object_builder_runtime_components_ready", true)
+	return true
 
 
 static func _attach_component(
@@ -427,7 +640,23 @@ static func set_custom_property(instance: Node, property_id: String, value: Vari
 static func _get_property_data(instance: Node) -> ObjectPropertyData:
 	if instance == null:
 		return null
-	return instance.get_node_or_null("ObjectProperties") as ObjectPropertyData
+	var property_data := _find_property_data_recursive(instance)
+	if property_data != null:
+		property_data.name = "Свойства объекта"
+	return property_data
+
+
+static func _find_property_data_recursive(node: Node) -> ObjectPropertyData:
+	if node == null:
+		return null
+	if node is ObjectPropertyData:
+		return node as ObjectPropertyData
+	for child in node.get_children():
+		if child is Node:
+			var found := _find_property_data_recursive(child as Node)
+			if found != null:
+				return found
+	return null
 
 
 static func normalize_custom_property_value(

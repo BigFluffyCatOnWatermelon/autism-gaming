@@ -1,0 +1,89 @@
+[gd_resource type="Resource" script_class="ObjectDefinition" load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/object_system/object_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://Assets/CozyVillageFarm/02_Nature/Rocks/rock_large.png" id="3"]
+[ext_resource type="Script" path="res://scripts/object_system/object_capability_selection.gd" id="4"]
+
+[sub_resource type="Resource" id="cap_health"]
+script = ExtResource("4")
+capability_id = "has_health"
+settings_by_component = {
+"health": {
+"max_health": 110.0,
+"starting_health": 110.0
+}
+}
+
+[sub_resource type="Resource" id="can_receive_damage"]
+script = ExtResource("4")
+capability_id = "can_receive_damage"
+settings_by_component = {
+"damageable": {
+"material_type": "stone",
+"required_tool_id": "pickaxe",
+"hit_radius": 23.0
+}
+}
+
+[sub_resource type="Resource" id="breaks_when_health_empty"]
+script = ExtResource("4")
+capability_id = "breaks_when_health_empty"
+
+[sub_resource type="Resource" id="leaves_remains"]
+script = ExtResource("4")
+capability_id = "leaves_remains"
+
+[sub_resource type="Resource" id="drops_loot_on_destroy"]
+script = ExtResource("4")
+capability_id = "drops_loot_on_destroy"
+settings_by_component = {
+"drops_loot_on_destroy": {
+"loot_table_json": "[{\"item_id\":\"stone\",\"chance\":1.0,\"minimum\":4,\"maximum\":4}]"
+}
+}
+
+[sub_resource type="Resource" id="emits_particles"]
+script = ExtResource("4")
+capability_id = "emits_particles"
+settings_by_component = {
+"emits_particles": {
+"particle_amount": 16,
+"particle_lifetime": 0.45,
+"particle_one_shot": true,
+"particle_spread": 170.0,
+"particle_velocity_min": 28.0,
+"particle_velocity_max": 95.0,
+"particle_color": "#9ca6b1"
+}
+}
+
+[sub_resource type="Resource" id="plays_damage_sound"]
+script = ExtResource("4")
+capability_id = "plays_damage_sound"
+
+[sub_resource type="Resource" id="plays_destroy_sound"]
+script = ExtResource("4")
+capability_id = "plays_destroy_sound"
+
+[resource]
+script = ExtResource("1")
+schema_version = 11
+object_id = "template_rock_large"
+display_name = "Большой камень"
+description = "Готовый разрушаемый камень: принимает урон от кирки, выбрасывает каменную крошку, скрывается после разрушения и восстанавливается при ремонте."
+category = "Nature"
+object_type = "resource"
+tags = PackedStringArray("rock", "stone", "ore", "nature")
+root_type = "StaticBody2D"
+preview_texture = ExtResource("3")
+object_size = Vector2(32, 32)
+preview_sprite_offset = Vector2(0, -10)
+collision_enabled = true
+collision_mode = "solid"
+collision_shape = "rectangle"
+collision_size = Vector2(19.68, 9.6)
+collision_offset = Vector2(0, -9.6)
+collision_layer = 2
+collision_mask = 1
+is_template = true
+capabilities = Array[ExtResource("4")]([SubResource("cap_health"), SubResource("can_receive_damage"), SubResource("breaks_when_health_empty"), SubResource("leaves_remains"), SubResource("drops_loot_on_destroy"), SubResource("emits_particles"), SubResource("plays_damage_sound"), SubResource("plays_destroy_sound")])

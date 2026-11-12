@@ -429,7 +429,7 @@ static func _validate_target_node_type(
 
 
 static func _script_creates_object_component(script: Script) -> bool:
-	if script == null:
+	if script == null or not script.can_instantiate():
 		return false
 	var instance: Object = script.new()
 	var is_component := instance is ObjectComponent
@@ -500,6 +500,8 @@ static func _validate_definition(
 
 	if definition.component_script == null:
 		errors.append("У компонента '%s' не назначен скрипт." % definition.component_id)
+	elif not definition.component_script.can_instantiate():
+		errors.append("Скрипт компонента '%s' не компилируется и не может быть создан." % definition.component_id)
 	else:
 		var instance: Object = definition.component_script.new()
 		if not instance is ObjectComponent:

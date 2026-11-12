@@ -15,6 +15,24 @@ class_name ObjectCapabilityDefinition
 @export var incompatible_capability_ids: PackedStringArray = PackedStringArray()
 @export var component_ids: PackedStringArray = PackedStringArray()
 @export var available_in_simple_mode: bool = true
+## Internal implementation helper. It is registered but not shown as a standalone mechanic.
+@export var editor_hidden: bool = false
+@export var hidden_component_ids: PackedStringArray = PackedStringArray()
+
+## Deprecated standalone capability folded into a visible parent capability.
+@export var merged_into_capability_id: String = ""
+## Optional component ID inside the parent that receives this capability settings.
+@export var merged_component_id: String = ""
+## Optional source-setting key -> parent-setting key mapping used during migration.
+@export_storage var merged_setting_key_map: Dictionary = {}
+## Hide the merged component settings when they duplicate parent controls.
+@export var hide_merged_settings: bool = false
+## Force-enable one optional merged child feature when migrating an old selected card.
+@export var merged_enable_setting_key: String = ""
+## Force-enable multiple target settings when a legacy capability maps to one composite component.
+@export var merged_enable_setting_keys: PackedStringArray = PackedStringArray()
+## Defaults applied to the parent component only when this legacy child creates the parent selection.
+@export_storage var merged_parent_default_settings: Dictionary = {}
 
 ## Catalog classification is independent from the implementation and readiness.
 @export_group("Catalog metadata")

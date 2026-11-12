@@ -20,16 +20,27 @@ const BUILTIN_PROFILE_DATA := {
 	},
 	"resource": {
 		"label": "Ресурс",
-		"description": "Добываемый объект: прочность, нужный инструмент, предмет и время восстановления.",
+		"description": "Добываемый объект с прочностью, инструментом, добычей и эффектами. Все игровые параметры задаются через подключённые механики.",
 		"category": "Nature",
 		"root_type": "StaticBody2D",
-		"suggested_capabilities": ["has_health", "can_receive_damage", "breaks_when_health_empty", "drops_loot_on_destroy", "can_regrow", "can_be_repaired", "spawns_debris"],
-		"properties": [
-			{"id": "health", "name": "Прочность", "type": "Integer", "default": 20, "group": "Добыча", "min": 1, "max": 9999},
-			{"id": "required_tool", "name": "Нужный инструмент", "type": "String", "default": "axe", "group": "Добыча"},
-			{"id": "drop_item_id", "name": "ID выпадающего предмета", "type": "String", "default": "", "group": "Добыча"},
-			{"id": "respawn_time", "name": "Время восстановления", "type": "Float", "default": 0.0, "group": "Поведение", "min": 0.0, "max": 86400.0}
-		]
+		"suggested_capabilities": ["has_health", "can_receive_damage", "breaks_when_health_empty", "drops_loot_on_destroy", "can_regrow", "can_be_repaired", "spawns_debris", "emits_particles", "plays_damage_sound", "plays_destroy_sound"],
+		"properties": []
+	},
+	"tree": {
+		"label": "Дерево",
+		"description": "Рубимое дерево с прочностью, материалом, требуемым инструментом, падением и добычей через механики.",
+		"category": "Nature",
+		"root_type": "StaticBody2D",
+		"suggested_capabilities": ["has_health", "can_receive_damage", "breaks_when_health_empty", "falls_when_destroyed", "leaves_remains", "drops_loot_on_destroy", "spawns_debris", "emits_particles", "plays_damage_sound", "plays_destroy_sound"],
+		"properties": []
+	},
+	"rock": {
+		"label": "Камень / руда",
+		"description": "Разрушаемый камень с прочностью, инструментом добычи, эффектами и таблицей добычи через механики.",
+		"category": "Nature",
+		"root_type": "StaticBody2D",
+		"suggested_capabilities": ["has_health", "can_receive_damage", "breaks_when_health_empty", "leaves_remains", "drops_loot_on_destroy", "spawns_debris", "emits_particles", "plays_damage_sound", "plays_destroy_sound"],
+		"properties": []
 	},
 	"construction": {
 		"label": "Конструкция / постройка",

@@ -4,6 +4,7 @@ class_name ObjectSceneStructureService
 
 const ROOT_NODE_ID := "root"
 const NODE_ID_META := "object_builder_node_id"
+const NODE_ID_GROUP_PREFIX := "object_builder_node_id__"
 const APPLIED_PROPERTIES_META := "object_builder_applied_properties"
 const ALLOWED_CONNECTION_FLAGS := (
 	Object.CONNECT_DEFERRED
@@ -174,7 +175,11 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 				parent_id = ROOT_NODE_ID
 			parent = nodes_by_id.get(parent_id) as Node
 
-		var existing_node := _find_generated_node(scene_root, node_definition.node_id)
+		var existing_node := _find_generated_node(
+			scene_root,
+			node_definition,
+			parent
+		)
 		if existing_node != null:
 			if parent == null or existing_node.get_parent() != parent:
 				_rollback_reconciled_nodes(reconciled_nodes)
@@ -184,6 +189,10 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 				_rollback_reconciled_nodes(reconciled_nodes)
 				_rollback_created_nodes(created_nodes)
 				return _failed_plan(["Существующий узел '%s' имеет несовместимый тип." % node_definition.node_id])
+			# Keep a persistent group in addition to metadata. It survives a
+			# PackedScene round-trip and provides a second durable identity path.
+			existing_node.set_meta(NODE_ID_META, node_definition.node_id)
+			existing_node.add_to_group(node_id_group_name(node_definition.node_id), true)
 			var reconciliation := _reconcile_node_properties(existing_node, node_definition)
 			if not bool(reconciliation.get("ok", false)):
 				_rollback_reconciled_nodes(reconciled_nodes)
@@ -214,6 +223,7 @@ static func apply_structure(definition: ObjectDefinition, scene_root: Node) -> D
 		parent.add_child(node)
 		node.owner = scene_root
 		node.set_meta(NODE_ID_META, node_definition.node_id)
+		node.add_to_group(node_id_group_name(node_definition.node_id), true)
 		for group_name in node_definition.groups:
 			if not group_name.strip_edges().is_empty():
 				node.add_to_group(group_name.strip_edges(), true)
@@ -368,13 +378,46 @@ static func _apply_node_properties(node: Node, properties: Dictionary) -> bool:
 	return true
 
 
-static func _find_generated_node(scene_root: Node, node_id: String) -> Node:
-	if scene_root == null or node_id.is_empty():
+static func node_id_group_name(node_id: String) -> String:
+	return NODE_ID_GROUP_PREFIX + node_id
+
+
+static func _find_generated_node(
+	scene_root: Node,
+	node_definition: ObjectNodeDefinition,
+	expected_parent: Node
+) -> Node:
+	if scene_root == null or node_definition == null:
 		return null
+	var node_id := node_definition.node_id.strip_edges()
+	if node_id.is_empty():
+		return null
+	var identity_group := node_id_group_name(node_id)
+	var identity_matches: Array[Node] = []
+	var legacy_name_matches: Array[Node] = []
 	for node in scene_root.find_children("*", "", true, false):
-		if node.has_meta(NODE_ID_META) and str(node.get_meta(NODE_ID_META)) == node_id:
-			return node
-	return null
+		if node.owner != scene_root:
+			continue
+		if (
+			(node.has_meta(NODE_ID_META) and str(node.get_meta(NODE_ID_META)) == node_id)
+			or node.is_in_group(identity_group)
+		):
+			identity_matches.append(node)
+			continue
+		if (
+			expected_parent != null
+			and node.get_parent() == expected_parent
+			and node.name == node_definition.node_name
+			and ClassDB.is_parent_class(node.get_class(), node_definition.node_type)
+		):
+			legacy_name_matches.append(node)
+	if identity_matches.size() == 1:
+		return identity_matches[0]
+	if identity_matches.size() > 1:
+		return null
+	# Legacy scenes may predate persistent node IDs. Adopt only a unique node
+	# with the exact expected parent, node name and compatible class.
+	return legacy_name_matches[0] if legacy_name_matches.size() == 1 else null
 
 
 static func _resolve_node(scene_root: Node, node_id: String, nodes_by_id: Dictionary) -> Node:
