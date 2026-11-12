@@ -160,12 +160,13 @@
 - [ ] Запустить `object_builder_capability_metadata_smoke.gd` в настольном Godot и подтвердить работу без ошибок. Не заменять это GitHub Actions или headless-проверкой.
 - [x] Добавить проверку типов и допустимых значений presentation metadata в регистрации `ObjectComponentDefinition`.
 - [x] Ограничить capability overlay белым списком presentation metadata; неизвестные и канонические ключи отклоняются при регистрации.
-- [x] Проверять структуру presentation metadata: level/editor/options/visibility/unit/nullable/required/editor_config и положительный конечный step.
+- [x] Проверять структуру presentation metadata: level/editor/options/visibility/unit/nullable/required/editor_config, соответствие editor типу значения, reference/resource types и числовые диапазоны/defaults.
 - [x] Добавить типизированный descriptor для `pickup.item_id` (`catalog_reference`, `reference_type: item`) вместо подписи с внутренним ID.
+- [ ] Разметить остальные item/tool/object/resource/table references по фактическому владельцу и подключить их picker UI.
 - [x] Удалить дублирующий `required` из встроенного pickup overlay; обязательность `pickup.item_id` остаётся в component descriptor.
 - [ ] Добавить полную валидацию editor/options/units/visibility и проверить все расширения на совместимость.
 
-**Ограничение:** smoke-тест дополнен проверками нормализации, запрета canonical overrides, editor/options и typed reference. В этой сессии Godot не запускался. Изменения проверены статически по исходникам; runtime/GUI-статус не заявляется.
+**Ограничение:** smoke-тест дополнен проверками нормализации, запрета canonical overrides, editor/options, typed reference, совместимости редактора с типом и числовых defaults. В этой сессии Godot не запускался. Изменения проверены статически по исходникам; runtime/GUI-статус не заявляется.
 
 **Статус:** начата кодовая реализация этапа 2. Добавлена только совместимая нормализация presentation metadata; универсальный renderer, typed references, визуальные редакторы и правила overlay ещё не реализованы.
 
