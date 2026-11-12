@@ -474,7 +474,7 @@
 | destructible | remove_on_destroy | Удалять объект | Boolean | false | — | — | После разрушения | — |
 | destructible | destroy_delay | Задержка удаления | Float | 0.0 | 0.0 | 300.0 | После разрушения | — |
 | destructible | restore_health_on_repair | Восстанавливать здоровье при починке | Boolean | true | — | — | Восстановление | — |
-| pickup | item_id | ID предмета | String | "" | — | — | Предмет | **true** |
+| pickup | item_id | Предмет | String | "" | — | — | Предмет | **true** |
 | pickup | quantity | Количество | Integer | 1 | 1 | 99999 | Предмет | — |
 | pickup | pickup_radius | Радиус подбора | Float | 24.0 | 1.0 | 512.0 | Доступность | — |
 | pickup | can_be_picked_up | Разрешить подбор | Boolean | true | — | — | Доступность | — |
@@ -508,7 +508,7 @@
 | has_mood | 0.0 | -100.0 | 100.0 |
 | has_reputation | 0.0 | -100.0 | 100.0 |
 
-**Обязательность:** среди встроенных полей только `pickup.item_id` явно помечено `required: true`. В package-декларациях обязательность практически нигде не задана; пустой default не означает required.
+**Обязательность:** среди встроенных полей только `pickup.item_id` явно помечено `required: true`. Для этого поля задан presentation editor `catalog_reference` с `reference_type = item`; фактический Web picker ещё не реализован. В package-декларациях обязательность практически нигде не задана; пустой default не означает required.
 
 
 ## Уровни сложности полей (Basic / Advanced / Expert)
