@@ -937,3 +937,7 @@ button:disabled,.btn:disabled,.toolbtn:disabled{cursor:not-allowed!important;opa
   .setting-resource-row{flex-wrap:wrap}
   .setting-resource-row>input{flex-basis:100%}
 }
+
+.setting-color-row{display:flex;align-items:center;gap:10px;min-height:38px;padding:6px 8px;border:1px solid var(--line2);border-radius:7px;background:#0c1117}
+.setting-color-row input[type=color]{width:42px;height:28px;min-width:42px;padding:2px;border:1px solid var(--line);border-radius:5px;background:var(--panel2);cursor:pointer}
+.setting-color-row span{color:var(--muted);font:10px 'DM Mono'}
