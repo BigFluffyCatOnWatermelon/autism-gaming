@@ -2532,44 +2532,85 @@ function openCapabilitySettingsDialog(capabilityId) {
   const capability = CATALOG.find(item => item.id === capabilityId);
   if (!capability || !state) return;
   const schema = capability.settingsSchema || [];
+  const tableTypes = {
+    resource_table_path: "yield",
+    loot_table_path: "loot",
+    recipes_table_path: "recipe",
+    production_table_path: "production"
+  };
+  const legacyKeys = {
+    resource_table_path: "resource_table_json",
+    loot_table_path: "loot_table_json",
+    recipes_table_path: "recipes_json",
+    production_table_path: "production"
+  };
   const fields = schema.map((descriptor, index) => {
     const key = String(descriptor.setting_key || descriptor.key || "");
-    const tableTypes = {
-      resource_table_path: "yield",
-      loot_table_path: "loot",
-      recipes_table_path: "recipe",
-      production_table_path: "production"
-    };
-    const legacyKeys = {
-      resource_table_path: "resource_table_json",
-      loot_table_path: "loot_table_json",
-      recipes_table_path: "recipes_json",
-      production_table_path: "production"
-    };
-    const type = tableTypes[key]
-      ? "resource_path"
-      : (descriptor.value_type === "String" && /_json$/i.test(key) ? "textarea" : fieldType(descriptor.value_type));
+    const editor = String(descriptor.editor || "").toLowerCase();
+    const referenceOptions = Array.isArray(descriptor.reference_options) ? descriptor.reference_options : [];
+    let type = "unavailable";
+    let unavailableMessage = "Для этого параметра ещё не подключён подходящий визуальный редактор.";
+    if (tableTypes[key]) {
+      type = "resource_path";
+    } else {
+      switch (editor) {
+        case "switch": type = "checkbox"; break;
+        case "number": type = "number"; break;
+        case "slider":
+        case "range": type = "slider"; break;
+        case "text": type = "text"; break;
+        case "multiline_text": type = "textarea"; break;
+        case "vector2": type = "vector2"; break;
+        case "enum": type = "select"; break;
+        case "catalog_reference":
+          if (referenceOptions.length) type = "catalog_reference";
+          else unavailableMessage = "Каталог «" + String(descriptor.reference_type || "неизвестный тип") + "» пока не содержит доступных элементов.";
+          break;
+        case "resource_reference":
+        case "gameplay_table":
+          unavailableMessage = "Для этого типа ресурса ещё не подключён визуальный выбор.";
+          break;
+        case "structured_list":
+        case "structured_object":
+          unavailableMessage = "Составная структура будет доступна после подключения специализированного редактора.";
+          break;
+        default:
+          unavailableMessage = "Техническое или legacy-поле скрыто до появления подходящего визуального редактора.";
+          break;
+      }
+    }
+    const visibility = descriptor.visibility === undefined ? "always" : descriptor.visibility;
+    const isVisible = visibility === "always";
+    if (!isVisible) {
+      type = "unavailable";
+      unavailableMessage = "Поле зависит от условия отображения, которое ещё не подключено в редакторе.";
+    }
+    const raw = valueForSetting(capability.id, descriptor);
     return {
       key: "mechanic-setting-" + index,
       label: descriptor.display_name || descriptor.label || key,
-      value: (() => {
-        const raw = valueForSetting(capability.id, descriptor);
-        if (descriptor.value_type === "Vector2" && raw && typeof raw === "object") {
-          return String(Number(raw.x) || 0) + ", " + String(Number(raw.y) || 0);
-        }
-        return raw;
-      })(),
+      value: raw,
       type,
+      editable: type !== "unavailable" && isVisible,
+      unavailableMessage,
+      options: editor === "catalog_reference" ? referenceOptions : (Array.isArray(descriptor.options) ? descriptor.options : []),
+      searchable: editor === "catalog_reference",
+      placeholder: editor === "catalog_reference" ? "Выбери предмет…" : "",
       tableType: tableTypes[key] || "",
       legacyKey: legacyKeys[key] || "",
       min: descriptor.has_range ? descriptor.minimum : undefined,
       max: descriptor.has_range ? descriptor.maximum : undefined,
-      step: descriptor.value_type === "Integer" ? 1 : (descriptor.value_type === "Float" ? 0.1 : undefined),
-      description: descriptor.description || (
-        key === "loot_table_json"
-          ? "JSON-массив предметов: item_id, chance (0–1), minimum и maximum. Оставь [] если добычи нет."
-          : ""
-      )
+      step: descriptor.step !== undefined
+        ? descriptor.step
+        : (descriptor.value_type === "Integer" ? 1 : (descriptor.value_type === "Float" ? 0.1 : undefined)),
+      unit: descriptor.unit || "",
+      required: !!descriptor.required,
+      groupId: descriptor.group_id || descriptor.group_name || "settings",
+      groupName: descriptor.group_name || "Основные настройки",
+      groupOrder: Number(descriptor.group_order || 0),
+      order: Number(descriptor.order ?? index),
+      level: descriptor.level || "Basic",
+      description: descriptor.description || ""
     };
   });
   if (!fields.length) {
@@ -2586,6 +2627,7 @@ function openCapabilitySettingsDialog(capabilityId) {
     title: capability.name,
     description: capability.description || "Параметры выбранного поведения объекта.",
     fields,
+    groupedSettings: true,
     extraMarkup: mechanicRelationMarkup(capability),
     onOpen: root => {
       bindMechanicRelationControls(root);
@@ -2632,10 +2674,13 @@ function openCapabilitySettingsDialog(capabilityId) {
           } else {
             const legacyIndex = schema.findIndex(item => String(item.setting_key || item.key || "") === legacyKey);
             const legacyInput = legacyIndex >= 0 ? root.querySelector('[data-dialog-field="mechanic-setting-' + legacyIndex + '"]') : null;
-            legacyJson = legacyInput ? legacyInput.value : "";
+            const legacyDescriptor = legacyIndex >= 0 ? schema[legacyIndex] : null;
+            legacyJson = legacyInput
+              ? legacyInput.value
+              : (legacyDescriptor ? String(valueForSetting(capability.id, legacyDescriptor) ?? "") : "");
           }
           if (!String(legacyJson).trim()) {
-            toast("Сначала заполни старую JSON-таблицу или параметры производства.");
+            toast("Для старых данных нет сохранённого значения для переноса.");
             return;
           }
           try {
@@ -2659,6 +2704,7 @@ function openCapabilitySettingsDialog(capabilityId) {
     onSubmit: async values => {
       if (!schema.length) return true;
       const updates = schema.map((descriptor, index) => {
+        if (!fields[index]?.editable) return null;
         let value = values["mechanic-setting-" + index];
         if (descriptor.value_type === "Integer") {
           value = Number.parseInt(value, 10);
@@ -2668,44 +2714,19 @@ function openCapabilitySettingsDialog(capabilityId) {
           if (!Number.isFinite(value)) throw new Error("Проверь числовое значение: " + (descriptor.display_name || descriptor.key));
         } else if (descriptor.value_type === "Vector2") {
           value = parseVector2Value(value);
-        } else if (descriptor.value_type === "String" && /_json$/i.test(String(descriptor.setting_key || descriptor.key || ""))) {
-          const settingKey = String(descriptor.setting_key || descriptor.key || "");
-          let parsedJson;
-          try {
-            parsedJson = JSON.parse(String(value ?? ""));
-          } catch (error) {
-            throw new Error("Некорректный JSON в настройке «" + (descriptor.display_name || settingKey) + "»: " + error.message);
-          }
-          if (settingKey === "loot_table_json") {
-            if (!Array.isArray(parsedJson)) {
-              throw new Error("Таблица добычи должна быть JSON-массивом записей.");
-            }
-            parsedJson = parsedJson.map((entry, entryIndex) => {
-              if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
-                throw new Error("Запись добычи №" + (entryIndex + 1) + " должна быть объектом.");
-              }
-              const itemId = String(entry.item_id || "").trim();
-              const chance = Number(entry.chance ?? 1);
-              const minimum = Number(entry.minimum ?? 1);
-              const maximum = Number(entry.maximum ?? minimum);
-              if (!itemId) throw new Error("В записи добычи №" + (entryIndex + 1) + " не указан item_id.");
-              if (!Number.isFinite(chance) || chance < 0 || chance > 1) {
-                throw new Error("Шанс выпадения в записи №" + (entryIndex + 1) + " должен быть от 0 до 1.");
-              }
-              if (!Number.isInteger(minimum) || !Number.isInteger(maximum) || minimum < 0 || maximum < minimum) {
-                throw new Error("Количество в записи №" + (entryIndex + 1) + " должно быть целым, неотрицательным, а maximum не меньше minimum.");
-              }
-              return {...entry, item_id:itemId, chance, minimum, maximum};
-            });
-          }
-          value = JSON.stringify(parsedJson);
+        } else if (descriptor.value_type === "String") {
+          value = String(value ?? "");
         }
         return {
           componentId: descriptor.component_id,
           key: descriptor.setting_key || descriptor.key,
           value
         };
-      });
+      }).filter(Boolean);
+      if (!updates.length) {
+        toast("У этой механики пока нет доступных для редактирования параметров.");
+        return false;
+      }
       return await saveCapabilitySettings(capability.id, updates);
     }
   });
