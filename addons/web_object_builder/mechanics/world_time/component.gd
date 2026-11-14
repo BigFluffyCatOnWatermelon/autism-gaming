@@ -256,7 +256,8 @@ func advance_periodic_output(delta: float) -> Dictionary:
 	var outputs := GameplayTables.load_production_table(
 		str(_option("has_periodic_output", "production_table_path", "")),
 		_option("has_periodic_output", "output_item_id", "resource"),
-		maxi(1, int(_option("has_periodic_output", "amount_per_cycle", 1)))
+		maxi(1, int(_option("has_periodic_output", "amount_per_cycle", 1))),
+		_option("has_periodic_output", "production_table_json", "[]")
 	)
 	if outputs.is_empty():
 		return _failed_result("Для периодического производства не задан корректный item_id.")
