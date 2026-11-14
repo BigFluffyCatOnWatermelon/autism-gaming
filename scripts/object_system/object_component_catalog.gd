@@ -683,6 +683,40 @@ static func _validate_setting_metadata(
 			component_id
 		])
 
+	var editor_config_value: Variant = descriptor.get("editor_config", {})
+	if typeof(editor_config_value) == TYPE_DICTIONARY:
+		var editor_config: Dictionary = editor_config_value
+		if editor == "structured_list":
+			var structure_type := str(editor_config.get("structure_type", "")).strip_edges().to_lower()
+			if structure_type.is_empty():
+				errors.append("StructuredList настройки '%s' компонента '%s' должна объявлять structure_type." % [
+					setting_key,
+					component_id
+				])
+			if structure_type == "loot_table":
+				if value_type != "String":
+					errors.append("Legacy loot table '%s' компонента '%s' должна сериализоваться как String до миграции." % [
+						setting_key,
+						component_id
+					])
+				if str(editor_config.get("reference_type", "")).strip_edges().to_lower() != "item":
+					errors.append("Loot table '%s' компонента '%s' должна ссылаться на каталог предметов." % [
+						setting_key,
+						component_id
+					])
+			elif structure_type not in ["loot_table"]:
+				errors.append("У настройки '%s' компонента '%s' неизвестный StructuredList type: %s." % [
+					setting_key,
+					component_id,
+					structure_type
+				])
+		elif editor == "structured_object":
+			if str(editor_config.get("structure_type", "")).strip_edges().is_empty():
+				errors.append("StructuredObject настройки '%s' компонента '%s' должна объявлять structure_type." % [
+					setting_key,
+					component_id
+				])
+
 	var options_value: Variant = descriptor.get("options", [])
 	var option_values: Array = []
 	if typeof(options_value) != TYPE_ARRAY:
