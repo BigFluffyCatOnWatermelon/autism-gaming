@@ -34,6 +34,13 @@ func _settings_for(item: Dictionary) -> Array[Dictionary]:
 			descriptor["has_range"] = true
 			descriptor["minimum"] = float(field[5])
 			descriptor["maximum"] = float(field[6])
+		if str(field[0]) == "loot_table_json":
+			descriptor["display_name"] = "Резервная таблица добычи"
+			descriptor["editor"] = "structured_list"
+			descriptor["editor_config"] = {
+				"structure_type": "loot_table",
+				"reference_type": "item"
+			}
 		result.append(descriptor)
 	return result
 
