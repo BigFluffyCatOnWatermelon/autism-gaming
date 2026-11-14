@@ -3515,6 +3515,7 @@ func _get_physics_layer_names() -> Array[String]:
 func _get_capabilities() -> Dictionary:
 	var items: Array[Dictionary] = []
 	var category_names: Dictionary = {}
+	var reference_options_by_type: Dictionary = {}
 	for category in ObjectCapabilityCatalog.get_categories():
 		category_names[str(category.get("id", ""))] = str(category.get("display_name", ""))
 	for capability_id in ObjectCapabilityCatalog.get_capability_ids("", false):
@@ -3522,7 +3523,6 @@ func _get_capabilities() -> Dictionary:
 		if capability == null or capability.editor_hidden:
 			continue
 		var schema: Array[Dictionary] = []
-		var reference_options_by_type: Dictionary = {}
 		for setting in ObjectCapabilityCatalog.get_settings_schema(capability_id):
 			var serialized_setting: Dictionary = _to_json(setting)
 			if str(setting.get("editor", "")) == "catalog_reference":
@@ -3571,13 +3571,20 @@ func _get_setting_reference_options(reference_type: String) -> Array[Dictionary]
 				var category := str(definition.category).strip_edges().to_lower()
 				if reference_type == "tool" and category != "tools":
 					continue
+				var category_label := category
+				match category:
+					"tools": category_label = "Инструменты"
+					"weapons": category_label = "Оружие"
+					"food": category_label = "Еда"
+					"materials": category_label = "Материалы"
+					"ammunition": category_label = "Боеприпасы"
 				var display_name := definition.display_name.strip_edges()
 				if display_name.is_empty():
 					display_name = item_id
-			result.append({
+				result.append({
 					"value": item_id,
 					"label": display_name,
-					"category": category,
+					"category": category_label,
 					"description": definition.description
 				})
 	return result
