@@ -941,3 +941,18 @@ button:disabled,.btn:disabled,.toolbtn:disabled{cursor:not-allowed!important;opa
 .setting-color-row{display:flex;align-items:center;gap:10px;min-height:38px;padding:6px 8px;border:1px solid var(--line2);border-radius:7px;background:#0c1117}
 .setting-color-row input[type=color]{width:42px;height:28px;min-width:42px;padding:2px;border:1px solid var(--line);border-radius:5px;background:var(--panel2);cursor:pointer}
 .setting-color-row span{color:var(--muted);font:10px 'DM Mono'}
+
+/* Structured loot table editor */
+.structured-list-field{min-width:0}
+.structured-list-help{margin:5px 0 9px;color:var(--muted);font-size:9px;line-height:1.5}
+.structured-loot-list{display:flex;flex-direction:column;gap:7px}
+.structured-loot-row{display:grid;grid-template-columns:minmax(150px,2fr) repeat(3,minmax(58px,.7fr)) 30px;gap:6px;align-items:end;padding:8px;border:1px solid var(--line);border-radius:8px;background:#0d141b}
+.structured-loot-row label{display:flex;flex-direction:column;gap:5px;min-width:0;color:var(--muted);font-size:9px}
+.structured-loot-row input,.structured-loot-row select{width:100%;min-width:0;padding:7px 6px;border:1px solid var(--line2);border-radius:6px;background:#111923;color:var(--text);font-size:10px}
+.structured-loot-row .structured-loot-remove{height:31px;padding:0;font-size:15px}
+.structured-loot-add{align-self:flex-start;margin-top:2px}
+@media(max-width:620px){
+  .structured-loot-row{grid-template-columns:minmax(0,1fr) 1fr 1fr;gap:7px}
+  .structured-loot-item{grid-column:1/-1}
+  .structured-loot-row .structured-loot-remove{grid-column:3;justify-self:end;width:32px}
+}
