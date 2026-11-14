@@ -715,6 +715,12 @@ static func _validate_setting_metadata(
 						setting_key,
 						component_id
 					])
+			elif structure_type in ["daily_routine", "day_phase_schedule"]:
+				if value_type != "String":
+					errors.append("Legacy schedule '%s' компонента '%s' должна сериализоваться как String до миграции." % [
+						setting_key,
+						component_id
+					])
 			elif structure_type not in ["loot_table", "production_table"]:
 				errors.append("У настройки '%s' компонента '%s' неизвестный StructuredList type: %s." % [
 					setting_key,
