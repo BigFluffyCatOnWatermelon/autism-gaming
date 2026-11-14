@@ -169,13 +169,14 @@
 
 **Ограничение:** smoke-тест дополнен проверками нормализации, запрета canonical overrides, editor/options, typed reference, совместимости редактора с типом и числовых defaults. В этой сессии Godot не запускался. Изменения проверены статически по исходникам; runtime/GUI-статус не заявляется.
 
-**Статус на 2026-11-14:** базовый descriptor, его валидация и ограничение overlay реализованы в исходниках; item references и metadata-driven Web renderer реализованы частично. Из структурированных редакторов реализованы legacy loot table (StructuredList), legacy recipe table (StructuredObject) и legacy production table (StructuredList); другие таблицы и object/resource pickers ещё не завершены. Runtime/GUI-приёмка и полная миграция остаются открытыми.
+**Статус на 2026-11-14:** базовый descriptor, его валидация и ограничение overlay реализованы в исходниках; item references и metadata-driven Web renderer реализованы частично. Из структурированных редакторов реализованы legacy loot table (StructuredList), legacy recipe table (StructuredObject), legacy production table (StructuredList), ежедневный распорядок и фазы дня/ночи; другие таблицы и object/resource pickers ещё не завершены. Runtime/GUI-приёмка и полная миграция остаются открытыми.
 
 ### Этап 3. Универсальный редактор
 
 - [x] Реализовать общий metadata-driven renderer групп и полей по схеме.
 - [x] Подключить единые контролы переключателей, чисел, текста, слайдера/диапазона, Enum, Vector2, Color и typed item references.
-- [ ] Подключить typed object/resource/table references и продолжить визуальные редакторы составных данных (routes, schedules, conditions и другие структуры).
+- [ ] Подключить typed object/resource/table references и продолжить визуальные редакторы составных данных (routes, event schedules, conditions и другие структуры).
+- [x] Добавить визуальные интервальные редакторы для `has_daily_routine.schedule_json` (`start/end/action`) и `has_day_night_schedule.schedule_json` (`start/end/phase`) с учётом перехода через полночь и сохранением порядка.
 - [x] Подключить визуальную legacy-таблицу production для `can_produce_resources` и `has_periodic_output`, сохранив старые поля предмета/количества как fallback.
 - [x] Подключить специализированный визуальный редактор legacy recipe table для `supports_item_crafting.recipes_json`.
 - [ ] Реализовать общую валидацию значений и понятные сообщения об ошибках до сохранения.
@@ -185,7 +186,7 @@
 - [ ] Добавить состояния загрузки, пустых данных, отсутствующих ресурсов и недоступных ссылок.
 - [ ] Провести ручную GUI-приёмку всех типов контролов в настольном Godot.
 
-**Результат:** новый поддерживаемый тип поля реализуется один раз и доступен всем механикам. Стандартные контролы, loot table, legacy recipe table и legacy production table подключены к схеме; остальные составные редакторы и GUI-приёмка остаются открытыми.
+**Результат:** новый поддерживаемый тип поля реализуется один раз и доступен всем механикам. Стандартные контролы, loot table, legacy recipe table, legacy production table и интервальные расписания подключены к схеме; остальные составные редакторы и GUI-приёмка остаются открытыми.
 
 ### Продолжение реализации — 2026-11-14
 
@@ -210,6 +211,14 @@
 - [x] Поддержать импорт нескольких legacy-результатов в `GameplayTableDefinition` типа `production`.
 - [x] Оставить таблицу в Expert: она дополняет существующие простые настройки и не заменяет основной `.tres` ресурс.
 
+**Четвёртый и пятый составные редакторы — расписания:**
+- [x] Разметить ежедневный распорядок животных как `StructuredList: daily_routine` с полями `start`, `end`, `action`.
+- [x] Разметить фазы дня/ночи как `StructuredList: day_phase_schedule` с полями `start`, `end`, `phase`.
+- [x] Добавить визуальные контролы времени и текстового action/phase без выдумывания ограниченного набора значений, которого runtime не задаёт.
+- [x] Поддержать интервалы через полночь (`start > end`) и перестановку строк вверх/вниз, поскольку runtime использует первое совпадение.
+- [x] Сохранять неизвестные дополнительные ключи каждой строки и блокировать сохранение пустых action/phase или часов вне диапазона 0–24.
+- [x] Оставить оба legacy JSON-поля в Expert; `default_action` и `default_phase` остаются отдельными обычными настройками.
+
 **Web renderer и typed item picker:**
 - [x] Передавать в Web schema typed item options из общего ItemCatalogService; значения сохраняются как стабильные ID, интерфейс показывает человекочитаемые названия.
 - [x] Подключить item picker для pickup.item_id, animals.resource_item_id и world_time.output_item_id.
@@ -220,8 +229,8 @@
 - [x] Для legacy JSON полей сохранить только программный перенос в GameplayTableDefinition; raw textarea больше не является обычным способом настройки.
 - [x] Поддержать Color в component value validation и backend JSON transport.
 - [ ] Подключить picker для tool/object/resource references и typed resource/table selection.
-- [x] Реализовать StructuredList editors для legacy loot table (предмет/chance/min/max) и production table (предмет/количество за цикл).
-- [ ] Расширить StructuredList/StructuredObject editors на loot conditions, resistances, weak points, routes, schedules и другие составные данные.
+- [x] Реализовать StructuredList editors для loot table, production table, daily routine и day/night schedule.
+- [ ] Расширить StructuredList/StructuredObject editors на loot conditions, resistances, weak points, routes, event schedules и другие составные данные.
 
 **Статическая проверка:** исходники повторно прочитаны из ветки после записи. Godot не установлен в доступной среде; smoke-тесты не запускались. GitHub Actions/workflow для Godot не создавались и не запускались. GUI/runtime статус остаётся неподтверждённым.
 ### Этап 4. Визуальные редакторы составных данных
@@ -230,6 +239,8 @@
 - [ ] Добавить условия выдачи и дополнительную проверку существования item ID для старых записей.
 - [x] Заменить JSON-редактирование legacy рецептов карточками, вложенными списками ингредиентов и выходными предметами; сохранить старый словарь для runtime и импорта в `.tres`.
 - [x] Добавить визуальный список результатов production (item + amount per cycle) для animal/world-time output; старые простые item/amount поля сохранены как fallback, общий interval продолжает задаваться отдельным числовым полем.
+- [x] Заменить JSON-редактирование daily routine и day/night schedule визуальными интервалами с переупорядочиванием и поддержкой перехода через полночь.
+- [ ] Добавить визуальный редактор event schedule с полями дня/часа и сохранением дополнительных event payload.
 - [ ] Заменить JSON-редактирование маршрутов списком точек с добавлением и перестановкой.
 - [ ] Заменить текстовые списки ID каталогами с поиском.
 - [ ] Создать визуальный редактор условий и правил там, где данные имеют повторяемую структуру.
