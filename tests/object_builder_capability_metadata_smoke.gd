@@ -378,6 +378,45 @@ func _run_tests() -> void:
 		var backend_production_options: Array = backend_production_config.get("reference_options", [])
 		_expect(not backend_production_options.is_empty(), "Web production editor receives item catalog options from backend")
 
+	var animal_routine_component := ObjectComponentCatalog.create_definition("has_daily_routine")
+	_expect(animal_routine_component != null, "animal daily routine component is registered")
+	var routine_descriptor: Dictionary = {}
+	if animal_routine_component != null:
+		for descriptor in animal_routine_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "schedule_json":
+				routine_descriptor = descriptor
+				break
+	_expect(not routine_descriptor.is_empty(), "daily routine schedule descriptor is present")
+	if not routine_descriptor.is_empty():
+		_expect(str(routine_descriptor.get("editor", "")) == "structured_list", "daily routine uses a visual StructuredList editor")
+		_expect(str(routine_descriptor.get("level", "")) == "Expert", "daily routine table stays in Expert settings")
+		var routine_config: Dictionary = routine_descriptor.get("editor_config", {})
+		_expect(str(routine_config.get("structure_type", "")) == "daily_routine", "daily routine declares its data shape")
+		var routine_errors := ObjectComponentCatalog._validate_setting_metadata(routine_descriptor, "schedule_json", "has_daily_routine")
+		_expect(routine_errors.is_empty(), "daily routine editor metadata passes validation")
+
+	var day_phase_component := ObjectComponentCatalog.create_definition("has_day_night_schedule")
+	_expect(day_phase_component != null, "day/night schedule component is registered")
+	var day_phase_descriptor: Dictionary = {}
+	if day_phase_component != null:
+		for descriptor in day_phase_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "schedule_json":
+				day_phase_descriptor = descriptor
+				break
+	_expect(not day_phase_descriptor.is_empty(), "day/night schedule descriptor is present")
+	if not day_phase_descriptor.is_empty():
+		var day_phase_config: Dictionary = day_phase_descriptor.get("editor_config", {})
+		_expect(str(day_phase_config.get("structure_type", "")) == "day_phase_schedule", "day/night schedule declares its data shape")
+		var day_phase_errors := ObjectComponentCatalog._validate_setting_metadata(day_phase_descriptor, "schedule_json", "has_day_night_schedule")
+		_expect(day_phase_errors.is_empty(), "day/night editor metadata passes validation")
+
+	var midnight_schedule := GameplayTables.normalize_schedule([
+		{"start":18,"end":6,"phase":"night","custom_flag":true}
+	])
+	_expect(midnight_schedule.size() == 1, "schedule normalizer accepts midnight-crossing intervals")
+	_expect(float(midnight_schedule[0].get("start", -1)) == 18.0 and float(midnight_schedule[0].get("end", -1)) == 6.0, "schedule normalizer keeps interval boundaries")
+	_expect(bool(midnight_schedule[0].get("custom_flag", false)), "schedule normalizer preserves custom event fields")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
