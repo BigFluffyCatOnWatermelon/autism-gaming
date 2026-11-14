@@ -203,7 +203,8 @@
 - [x] Для legacy JSON полей сохранить только программный перенос в GameplayTableDefinition; raw textarea больше не является обычным способом настройки.
 - [x] Поддержать Color в component value validation и backend JSON transport.
 - [ ] Подключить picker для tool/object/resource references и typed resource/table selection.
-- [ ] Реализовать StructuredList/StructuredObject editors для loot, recipes, production, resistances, routes, schedules и других составных данных.
+- [x] Реализовать первый StructuredList editor для legacy loot table: предмет, шанс и диапазон количества.
+- [ ] Расширить StructuredList/StructuredObject editors на loot conditions, recipes, production, resistances, weak points, routes, schedules и другие составные данные.
 
 **Статическая проверка:** исходники повторно прочитаны из ветки после записи. Godot не установлен в доступной среде; smoke-тесты не запускались. GitHub Actions/workflow для Godot не создавались и не запускались. GUI/runtime статус остаётся неподтверждённым.
 ### Этап 4. Визуальные редакторы составных данных
