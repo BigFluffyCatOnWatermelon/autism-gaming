@@ -176,7 +176,7 @@
 | destruction | spawns_debris | debris_scene_path | Сцена обломка | String | "" | — | — | Обломки | — |
 | destruction | spawns_debris | debris_count | Количество | Integer | 4 | 0 | 256 | Обломки | — |
 | destruction | drops_loot_on_destroy | loot_table_path | Путь к ресурсу таблицы добычи | String | "" | — | — | Добыча | — |
-| destruction | drops_loot_on_destroy | loot_table_json | Старая таблица добычи JSON (резерв) | String | "[]" | — | — | Добыча | — |
+| destruction | drops_loot_on_destroy | loot_table_json | Резервная таблица добычи (визуальный список; legacy JSON) | String | "[]" | — | — | Добыча | — |
 | destruction | plays_destroy_animation | animation_player_path | Путь к AnimationPlayer | String | "AnimationPlayer" | — | — | Анимация | — |
 | destruction | plays_destroy_animation | destroy_animation | Название анимации | String | "destroy" | — | — | Анимация | — |
 | destruction | leaves_remains | remains_scene_path | Сцена остатков (если не встроена) | String | "" | — | — | Остатки | — |
