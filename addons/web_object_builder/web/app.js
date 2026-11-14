@@ -977,8 +977,10 @@ function parseStructuredListValue(value, structureType) {
     const minimum = Number(entry.min ?? entry.minimum ?? 1);
     const maximum = Number(entry.max ?? entry.maximum ?? minimum);
     const chance = Number(entry.chance ?? 1);
+    if (!String(entry.item_id ?? "").trim() || !Number.isFinite(chance) ||
+        !Number.isFinite(minimum) || !Number.isFinite(maximum)) return null;
     rows.push({
-      item_id: String(entry.item_id ?? "").trim(),
+      item_id: String(entry.item_id).trim(),
       chance,
       min: minimum,
       max: maximum
@@ -2706,9 +2708,13 @@ function openCapabilitySettingsDialog(capabilityId) {
           unavailableMessage = "Для этого типа ресурса ещё не подключён визуальный выбор.";
           break;
         case "structured_list": {
-          const editorConfig = descriptor.editor_config && typeof descriptor.editor_config === "object" ? descriptor.editor_config : {};
-          if (String(editorConfig.structure_type || "") === "loot_table" && Array.isArray(editorConfig.reference_options) && editorConfig.reference_options.length) {
-            type = "structured_list";
+          const structureType = String(editorConfig.structure_type || "");
+          if (structureType === "loot_table" && Array.isArray(structuredOptions) && structuredOptions.length) {
+            if (parseStructuredListValue(raw, structureType) !== null) {
+              type = "structured_list";
+            } else {
+              unavailableMessage = "Сохранённая таблица добычи не соответствует ожидаемому формату. Исходные данные сохранены без изменений.";
+            }
           } else {
             unavailableMessage = "Для этой составной структуры ещё не подключён подходящий каталог или редактор.";
           }
@@ -2870,6 +2876,9 @@ function openCapabilitySettingsDialog(capabilityId) {
               throw new Error("Запись добычи №" + (rowIndex + 1) + " имеет неверный формат.");
             }
             const itemId = String(entry.item_id || "").trim();
+            if (entry.chance === null || entry.min === null || entry.max === null) {
+              throw new Error("Заполни шанс и количество в записи №" + (rowIndex + 1) + ".");
+            }
             const chance = Number(entry.chance);
             const minimum = Number(entry.min);
             const maximum = Number(entry.max);
