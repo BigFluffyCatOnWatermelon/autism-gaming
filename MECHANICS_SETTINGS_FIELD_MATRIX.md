@@ -42,7 +42,7 @@
 | animals | can_breed | offspring_object_id | ID потомства | String | "animal_offspring" | — | — | Размножение | — |
 | animals | can_breed | breeding_cooldown_seconds | Период восстановления | Float | 86400.0 | 0.0 | 31536000.0 | Размножение | — |
 | animals | can_produce_resources | production_table_path | Путь к ресурсу производства | String | "" | — | — | Производство | — |
-| animals | can_produce_resources | resource_item_id | ID ресурса (резерв) | String | "milk" | — | — | Производство | — |
+| animals | can_produce_resources | resource_item_id | Предмет | String | "milk" | — | — | Производство | — |
 | animals | can_produce_resources | production_interval | Интервал производства | Float | 3600.0 | 0.1 | 31536000.0 | Производство | — |
 | animals | can_produce_resources | amount_per_cycle | Количество за цикл | Integer | 1 | 1 | 999999 | Производство | — |
 | animals | has_habitat | allowed_biomes_csv | Допустимые биомы | String | "plains,forest" | — | — | Среда | — |
@@ -362,7 +362,7 @@
 | world_time | reacts_to_weather | allowed_weather_csv | Допустимая погода | String | "" | — | — | Погода | — |
 | world_time | reacts_to_weather | weather_effects_json | Эффекты погоды JSON | String | "{}" | — | — | Погода | — |
 | world_time | has_periodic_output | production_table_path | Путь к ресурсу производства | String | "" | — | — | Производство | — |
-| world_time | has_periodic_output | output_item_id | ID ресурса (резерв) | String | "resource" | — | — | Производство | — |
+| world_time | has_periodic_output | output_item_id | Предмет | String | "resource" | — | — | Производство | — |
 | world_time | has_periodic_output | output_interval | Интервал | Float | 60.0 | 0.1 | 31536000.0 | Производство | — |
 | world_time | has_periodic_output | amount_per_cycle | Количество за цикл | Integer | 1 | 1 | 999999 | Производство | — |
 | world_time | supports_signal_triggers | event_rules_json | Правила событий JSON | String | "{}" | — | — | Сигналы | — |
@@ -508,7 +508,7 @@
 | has_mood | 0.0 | -100.0 | 100.0 |
 | has_reputation | 0.0 | -100.0 | 100.0 |
 
-**Обязательность:** среди встроенных полей только `pickup.item_id` явно помечено `required: true`. Для этого поля задан presentation editor `catalog_reference` с `reference_type = item`; фактический Web picker ещё не реализован. В package-декларациях обязательность практически нигде не задана; пустой default не означает required.
+**Обязательность:** среди встроенных полей только `pickup.item_id` явно помечено `required: true`. Поля `pickup.item_id`, `animals.resource_item_id` и `world_time.output_item_id` используют typed `catalog_reference` редактор с `reference_type = item`; остальные ID-поля ещё требуют классификации. Для этого поля задан presentation editor `catalog_reference` с `reference_type = item`; фактический Web picker ещё не реализован. В package-декларациях обязательность практически нигде не задана; пустой default не означает required.
 
 
 ## Уровни сложности полей (Basic / Advanced / Expert)
