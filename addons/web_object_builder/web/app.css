@@ -978,3 +978,14 @@ button:disabled,.btn:disabled,.toolbtn:disabled{cursor:not-allowed!important;opa
   .structured-recipe-output-fields{grid-template-columns:minmax(0,1fr) 78px}
   .structured-recipe-ingredient{grid-template-columns:minmax(0,1fr) 78px 30px}
 }
+
+ 
+/* Structured production table editor */
+.structured-production-list{display:flex;flex-direction:column;gap:7px}
+.structured-production-row{display:grid;grid-template-columns:minmax(150px,2fr) minmax(90px,.9fr) 30px;gap:7px;align-items:end;padding:8px;border:1px solid var(--line);border-radius:8px;background:#0d141b}
+.structured-production-row label{display:flex;flex-direction:column;gap:5px;min-width:0;color:var(--muted);font-size:9px}
+.structured-production-row input,.structured-production-row select{width:100%;min-width:0;padding:7px 6px;border:1px solid var(--line2);border-radius:6px;background:#111923;color:var(--text);font-size:10px}
+.structured-production-row .structured-production-remove{height:31px;padding:0;font-size:15px}
+@media(max-width:620px){
+  .structured-production-row{grid-template-columns:minmax(0,1fr) 78px 30px}
+}
