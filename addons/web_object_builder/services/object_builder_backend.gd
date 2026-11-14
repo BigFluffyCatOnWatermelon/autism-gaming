@@ -12,6 +12,7 @@ const NodeDefinitionScript = preload("res://scripts/object_system/object_node_de
 const DefinitionScript = preload("res://scripts/object_system/object_definition.gd")
 const ObjectSceneStructureServiceScript = preload("res://scripts/object_system/object_scene_structure_service.gd")
 const BuiltinTemplateCatalogScript = preload("res://scripts/object_system/object_builtin_template_catalog.gd")
+const ItemCatalogServiceScript = preload("res://scripts/item_catalog_service.gd")
 
 const METADATA_SECTION := "ObjectBuilder"
 const RECENT_LIMIT := 20
@@ -3521,8 +3522,15 @@ func _get_capabilities() -> Dictionary:
 		if capability == null or capability.editor_hidden:
 			continue
 		var schema: Array[Dictionary] = []
+		var reference_options_by_type: Dictionary = {}
 		for setting in ObjectCapabilityCatalog.get_settings_schema(capability_id):
-			schema.append(_to_json(setting))
+			var serialized_setting: Dictionary = _to_json(setting)
+			if str(setting.get("editor", "")) == "catalog_reference":
+				var reference_type := str(setting.get("reference_type", "")).strip_edges().to_lower()
+				if not reference_options_by_type.has(reference_type):
+					reference_options_by_type[reference_type] = _get_setting_reference_options(reference_type)
+				serialized_setting["reference_options"] = reference_options_by_type[reference_type]
+			schema.append(serialized_setting)
 		items.append({
 			"id": capability_id,
 			"name": capability.display_name,
@@ -3542,6 +3550,37 @@ func _get_capabilities() -> Dictionary:
 		})
 	return {"items": items, "categories": ObjectCapabilityCatalog.get_categories()}
 
+
+
+func _get_setting_reference_options(reference_type: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	match reference_type:
+		"item", "tool":
+			var catalog_data := ItemCatalogServiceScript.load_all()
+			var definitions_value: Variant = catalog_data.get("definitions", {})
+			if not definitions_value is Dictionary:
+				return result
+			var definitions: Dictionary = definitions_value
+			var item_ids := definitions.keys()
+			item_ids.sort()
+			for item_id_value in item_ids:
+				var item_id := str(item_id_value)
+				var definition := definitions.get(item_id) as ItemDefinition
+				if definition == null:
+					continue
+				var category := str(definition.category).strip_edges().to_lower()
+				if reference_type == "tool" and category != "tools":
+					continue
+				var display_name := definition.display_name.strip_edges()
+				if display_name.is_empty():
+					display_name = item_id
+			result.append({
+					"value": item_id,
+					"label": display_name,
+					"category": category,
+					"description": definition.description
+				})
+	return result
 
 
 func _get_components() -> Dictionary:
