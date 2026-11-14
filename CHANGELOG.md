@@ -1,3 +1,13 @@
+## 2026-11-14 — Web Object Builder: схема и редактор настроек механик
+
+- Введена нормализация presentation metadata настроек на копии component descriptors: группы, порядок, Basic/Advanced/Expert, единицы, required, visibility и тип редактора; сохранённые defaults и исходные определения не переписываются.
+- Реестр компонентов проверяет поддерживаемые editor-типы, их совместимость с value type, options Enum, typed reference/resource metadata и числовые ограничения. Capability overlay не может переопределять канонические type/default/range/required/options.
+- Добавлен metadata-driven Web renderer: группировка полей, свёрнутые Advanced/Expert, Switch, Number, Slider/Range, Text, Multiline Text, Enum, Vector2 и Color.
+- Для `pickup.item_id`, `animals.resource_item_id` и `world_time.output_item_id` подключён поисковый выбор предмета из общего `ItemCatalogService`. В объект сохраняется стабильный item ID; в интерфейсе показывается название предмета.
+- Сырые JSON/CSV и неразмеченные ID не выводятся как свободные текстовые поля в основном инспекторе механик. Для legacy GameplayTable JSON оставлен программный импорт в `.tres`.
+- Сохранение настроек использует существующий `capability_settings_save` / `ObjectCapabilitySelection`; отдельный JavaScript источник состояния не добавлялся.
+- Добавлены smoke-проверки метаданных, overlay, editor compatibility, числовых defaults, Color и каталожных item options. Тесты не запускались: Godot недоступен в рабочей среде; GUI/runtime приёмка остаётся открытой.
+
 ## 2026-11-08 — Проверка и открытие 100 пакетных механик
 
 - Проверены все 100 записей десяти пакетных категорий: 99 новых возможностей и ранее доступный `is_pickup_item`. Проверены индивидуальные ID, настройки, компонентные регистрации и runtime-скрипты на базе ObjectComponent.
