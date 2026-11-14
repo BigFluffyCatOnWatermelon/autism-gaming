@@ -1097,6 +1097,11 @@ function openForm(options) {
     ? renderGroupedMechanicFields(options.fields || [])
     : (options.fields || []).map(dialogFieldMarkup).join("")) + (options.extraMarkup || "");
   if (typeof options.onOpen === "function") options.onOpen(fieldsHost);
+  fieldsHost.querySelectorAll('input[type="color"][data-dialog-field]').forEach(input => {
+    const output = input.parentElement?.querySelector("span");
+    if (!output) return;
+    input.addEventListener("input", () => { output.textContent = input.value.toUpperCase(); });
+  });
   fieldsHost.querySelectorAll("[data-dialog-search-for]").forEach(search => {
     search.addEventListener("input", () => {
       const targetKey = search.dataset.dialogSearchFor;
