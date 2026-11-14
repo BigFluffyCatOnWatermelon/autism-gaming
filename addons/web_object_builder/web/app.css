@@ -989,3 +989,17 @@ button:disabled,.btn:disabled,.toolbtn:disabled{cursor:not-allowed!important;opa
 @media(max-width:620px){
   .structured-production-row{grid-template-columns:minmax(0,1fr) 78px 30px}
 }
+
+
+/* Structured schedule editor */
+.structured-schedule-list{display:flex;flex-direction:column;gap:7px}
+.structured-schedule-row{display:grid;grid-template-columns:minmax(70px,.7fr) minmax(70px,.7fr) minmax(120px,1.4fr) auto;gap:7px;align-items:end;padding:8px;border:1px solid var(--line);border-radius:8px;background:#0d141b}
+.structured-schedule-row label{display:flex;flex-direction:column;gap:5px;min-width:0;color:var(--muted);font-size:9px}
+.structured-schedule-row input{width:100%;min-width:0;padding:7px 6px;border:1px solid var(--line2);border-radius:6px;background:#111923;color:var(--text);font-size:10px}
+.structured-schedule-actions{display:flex;gap:3px;align-items:center}
+.structured-schedule-actions button{height:31px;min-width:27px;padding:0 5px;font-size:12px}
+@media(max-width:620px){
+  .structured-schedule-row{grid-template-columns:1fr 1fr}
+  .structured-schedule-row .structured-schedule-value{grid-column:1/-1}
+  .structured-schedule-actions{grid-column:1/-1;justify-content:flex-end}
+}
