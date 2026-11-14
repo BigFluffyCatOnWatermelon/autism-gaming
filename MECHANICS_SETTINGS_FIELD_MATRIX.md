@@ -244,7 +244,7 @@
 | inventory | supports_quick_transfer | transfer_mode | Режим переноса | String | "all" | — | — | Перемещение | — |
 | inventory | has_weight_capacity | max_weight | Максимальный переносимый вес (0 — без лимита) | Float | 100.0 | 0.0 | 1000000.0 | Вес инвентаря | — |
 | inventory | supports_item_crafting | recipes_table_path | Путь к ресурсу рецептов | String | "" | — | — | Рецепты | — |
-| inventory | supports_item_crafting | recipes_json | Старая таблица рецептов JSON (резерв) | String | "{}" | — | — | Рецепты | — |
+| inventory | supports_item_crafting | recipes_json | Таблица рецептов (резерв) | String | "{}" | — | — | Рецепты | — |
 | inventory | supports_item_binding | allow_binding | Разрешить закрепление | Boolean | true | — | — | Закрепление | — |
 | inventory | supports_item_binding | enabled | Включено | Boolean | false | — | — | Дополнительные функции хранилища | — |
 | items | is_pickup_item | pickup_enabled | Разрешить подбор | Boolean | true | — | — | Подбор | — |
