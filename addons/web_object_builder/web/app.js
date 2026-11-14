@@ -965,7 +965,7 @@ function fieldMarkup(label, key, value, type = "text", extra = "") {
   return '<div class="field"><label>' + esc(label) + '</label><input data-field="' + esc(key) + '" type="' + type + '" value="' + esc(value) + '" ' + extra + '></div>';
 }
 function parseStructuredListValue(value, structureType) {
-  if (structureType !== "loot_table") return null;
+  if (!["loot_table", "production_table"].includes(structureType)) return null;
   let parsed = value;
   if (typeof parsed === "string") {
     try { parsed = JSON.parse(parsed || "[]"); } catch (_error) { return null; }
@@ -974,18 +974,19 @@ function parseStructuredListValue(value, structureType) {
   const rows = [];
   for (const entry of parsed) {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) return null;
+    const itemId = String(entry.item_id ?? entry.id ?? "").trim();
+    if (!itemId) return null;
+    if (structureType === "production_table") {
+      const amount = Number(entry.amount_per_cycle ?? entry.amount ?? 1);
+      if (!Number.isInteger(amount) || amount <= 0) return null;
+      rows.push({...entry, item_id:itemId, amount_per_cycle:amount});
+      continue;
+    }
     const minimum = Number(entry.min ?? entry.minimum ?? 1);
     const maximum = Number(entry.max ?? entry.maximum ?? minimum);
     const chance = Number(entry.chance ?? 1);
-    if (!String(entry.item_id ?? "").trim() || !Number.isFinite(chance) ||
-        !Number.isFinite(minimum) || !Number.isFinite(maximum)) return null;
-    rows.push({
-      ...entry,
-      item_id: String(entry.item_id).trim(),
-      chance,
-      min: minimum,
-      max: maximum
-    });
+    if (!Number.isFinite(chance) || !Number.isFinite(minimum) || !Number.isFinite(maximum)) return null;
+    rows.push({...entry, item_id:itemId, chance, min:minimum, max:maximum});
   }
   return rows;
 }
@@ -1009,6 +1010,14 @@ function structuredLootRowMarkup(field, entry, index) {
     '<label><span>Макс.</span><input type="number" data-structured-key="max" min="0" max="999999" step="1" value="' + esc(entry.max ?? entry.min ?? 1) + '"></label>' +
     '<button type="button" class="btn small danger structured-loot-remove" data-structured-remove aria-label="Удалить запись">×</button>' +
     '</div>';
+}
+function structuredProductionRowMarkup(field, entry, index) {
+  return '<div class="structured-production-row" data-structured-row data-row-index="' + index + '" data-structured-original="' + esc(JSON.stringify(entry)) + '">' +
+    '<label class="structured-production-item"><span>Результат</span>' +
+      structuredRecipeItemSelectMarkup(field, entry.item_id, 'data-structured-key="item_id"') + '</label>' +
+    '<label><span>Количество за цикл</span><input type="number" data-structured-key="amount_per_cycle" min="1" max="999999" step="1" value="' + esc(entry.amount_per_cycle ?? 1) + '"></label>' +
+    '<button type="button" class="btn small danger structured-production-remove" data-structured-remove aria-label="Удалить результат">×</button>' +
+  '</div>';
 }
 function parseStructuredObjectValue(value, structureType) {
   if (structureType !== "recipe_table") return null;
@@ -1166,12 +1175,19 @@ function dialogFieldMarkup(field) {
       return '<div class="field setting-unavailable-field"><label>' + label + requiredMark + '</label>' +
         '<div class="setting-unavailable">Сохранённые данные таблицы имеют неподдерживаемый формат. Исходное значение не будет перезаписано.</div>' + help + '</div>';
     }
+    const isProduction = structureType === "production_table";
+    const listClass = isProduction ? "structured-production-list" : "structured-loot-list";
+    const rowMarkup = isProduction ? structuredProductionRowMarkup : structuredLootRowMarkup;
+    const helpText = isProduction
+      ? "Укажи все предметы, которые объект выдаёт за один цикл, и количество каждого."
+      : "Каждая запись задаёт предмет, шанс выпадения и диапазон количества.";
+    const addLabel = isProduction ? "＋ Добавить результат" : "＋ Добавить предмет";
     return '<div class="field structured-list-field"><label>' + label + requiredMark + unitMark + '</label>' +
-      '<p class="structured-list-help">Каждая запись задаёт предмет, шанс выпадения и диапазон количества.</p>' +
-      '<div class="structured-loot-list" data-structured-list="' + esc(key) + '" data-structure-type="' + esc(structureType) + '">' +
+      '<p class="structured-list-help">' + helpText + '</p>' +
+      '<div class="' + listClass + '" data-structured-list="' + esc(key) + '" data-structure-type="' + esc(structureType) + '">' +
       '<input type="hidden" data-dialog-field="' + esc(key) + '" value="' + esc(JSON.stringify(rows)) + '">' +
-      rows.map((entry, index) => structuredLootRowMarkup(field, entry, index)).join("") +
-      '<button type="button" class="btn small structured-loot-add" data-structured-add>＋ Добавить предмет</button>' +
+      rows.map((entry, index) => rowMarkup(field, entry, index)).join("") +
+      '<button type="button" class="btn small structured-loot-add" data-structured-add>' + addLabel + '</button>' +
       '</div>' + help + '</div>';
   }
   if (field.type === "structured_object") {
@@ -1292,12 +1308,25 @@ function openForm(options) {
     const field = (options.fields || []).find(item => String(item.key || "") === key);
     const hidden = editor.querySelector('[data-dialog-field="' + key + '"]');
     if (!field || !hidden) return;
+    const structureType = editor.dataset.structureType || "";
     const sync = () => {
-      const entries = [...editor.querySelectorAll("[data-structured-row]")].map(row => {
+      const errors = [];
+      const entries = [...editor.querySelectorAll("[data-structured-row]")].map((row, index) => {
         const value = name => row.querySelector('[data-structured-key="' + name + '"]')?.value ?? "";
         const numeric = name => String(value(name)).trim() === "" ? null : Number(value(name));
         let original = {};
         try { original = JSON.parse(row.dataset.structuredOriginal || "{}"); } catch (_error) {}
+        if (structureType === "production_table") {
+          const itemId = String(value("item_id")).trim();
+          const amount = numeric("amount_per_cycle");
+          if (!itemId) errors.push("Выбери предмет-результат в строке №" + (index + 1) + ".");
+          if (amount === null || !Number.isInteger(amount) || amount <= 0) {
+            errors.push("Количество за цикл в строке №" + (index + 1) + " должно быть целым числом больше нуля.");
+          }
+          const entry = {...original, item_id:itemId, amount_per_cycle:amount};
+          row.dataset.structuredOriginal = JSON.stringify(entry);
+          return entry;
+        }
         const entry = {
           ...original,
           item_id: String(value("item_id")).trim(),
@@ -1309,6 +1338,7 @@ function openForm(options) {
         return entry;
       });
       hidden.value = JSON.stringify(entries);
+      editor.dataset.validationMessage = errors[0] || "";
     };
     editor.addEventListener("input", sync);
     editor.addEventListener("change", sync);
@@ -1323,12 +1353,19 @@ function openForm(options) {
       if (add) {
         const firstItem = Array.isArray(field.options) && field.options.length ? String(field.options[0].value) : "";
         const nextIndex = editor.querySelectorAll("[data-structured-row]").length;
-        editor.insertAdjacentHTML("beforeend", structuredLootRowMarkup(field, {
-          item_id: firstItem,
-          chance: 1,
-          min: 1,
-          max: 1
-        }, nextIndex));
+        if (structureType === "production_table") {
+          editor.insertAdjacentHTML("beforeend", structuredProductionRowMarkup(field, {
+            item_id:firstItem,
+            amount_per_cycle:1
+          }, nextIndex));
+        } else {
+          editor.insertAdjacentHTML("beforeend", structuredLootRowMarkup(field, {
+            item_id:firstItem,
+            chance: 1,
+            min: 1,
+            max: 1
+          }, nextIndex));
+        }
         sync();
       }
     });
@@ -1455,9 +1492,9 @@ function openForm(options) {
   form.onsubmit = async event => {
     event.preventDefault();
     if (!pendingFormCallback) return;
-    const invalidRecipeEditor = [...fieldsHost.querySelectorAll("[data-structured-recipe-table]")].find(editor => editor.dataset.validationMessage);
-    if (invalidRecipeEditor) {
-      toast(invalidRecipeEditor.dataset.validationMessage, true);
+    const invalidStructuredEditor = [...fieldsHost.querySelectorAll("[data-structured-recipe-table], [data-structured-list]")].find(editor => editor.dataset.validationMessage);
+    if (invalidStructuredEditor) {
+      toast(invalidStructuredEditor.dataset.validationMessage, true);
       return;
     }
     const values = {};
@@ -2937,11 +2974,13 @@ function openCapabilitySettingsDialog(capabilityId) {
           break;
         case "structured_list": {
           const structureType = String(editorConfig.structure_type || "");
-          if (structureType === "loot_table" && Array.isArray(structuredOptions) && structuredOptions.length) {
+          if (["loot_table", "production_table"].includes(structureType) && Array.isArray(structuredOptions) && structuredOptions.length) {
             if (parseStructuredListValue(raw, structureType) !== null) {
               type = "structured_list";
             } else {
-              unavailableMessage = "Сохранённая таблица добычи не соответствует ожидаемому формату. Исходные данные сохранены без изменений.";
+              unavailableMessage = structureType === "production_table"
+                ? "Сохранённая таблица производства не соответствует ожидаемому формату. Исходные данные сохранены без изменений."
+                : "Сохранённая таблица добычи не соответствует ожидаемому формату. Исходные данные сохранены без изменений.";
             }
           } else {
             unavailableMessage = "Для этой составной структуры ещё не подключён подходящий каталог или редактор.";
@@ -3039,9 +3078,9 @@ function openCapabilitySettingsDialog(capabilityId) {
       });
       root.querySelectorAll("[data-create-table-path]").forEach(button => {
         button.onclick = async () => {
-          const structuredRecipeEditor = root.querySelector("[data-structured-recipe-table]");
-          if (structuredRecipeEditor?.dataset.validationMessage) {
-            toast(structuredRecipeEditor.dataset.validationMessage, true);
+          const invalidStructuredEditor = [...root.querySelectorAll("[data-structured-recipe-table], [data-structured-list]")].find(editor => editor.dataset.validationMessage);
+          if (invalidStructuredEditor) {
+            toast(invalidStructuredEditor.dataset.validationMessage, true);
             return;
           }
           const key = button.dataset.createTablePath;
@@ -3053,16 +3092,30 @@ function openCapabilitySettingsDialog(capabilityId) {
           let legacyJson = "";
           const legacyKey = button.dataset.legacyKey;
           if (legacyKey === "production") {
-            const itemKey = capability.id === "can_produce_resources" ? "resource_item_id" : "output_item_id";
-            const itemDescriptor = schema.find(item => String(item.setting_key || item.key || "") === itemKey);
-            const amountDescriptor = schema.find(item => String(item.setting_key || item.key || "") === "amount_per_cycle");
-            const itemIndex = schema.findIndex(item => String(item.setting_key || item.key || "") === itemKey);
-            const amountIndex = schema.findIndex(item => String(item.setting_key || item.key || "") === "amount_per_cycle");
-            const itemInput = itemIndex >= 0 ? root.querySelector('[data-dialog-field="mechanic-setting-' + itemIndex + '"]') : null;
-            const amountInput = amountIndex >= 0 ? root.querySelector('[data-dialog-field="mechanic-setting-' + amountIndex + '"]') : null;
-            const itemId = itemInput ? itemInput.value : (itemDescriptor ? valueForSetting(capability.id, itemDescriptor) : "");
-            const amount = amountInput ? amountInput.value : (amountDescriptor ? valueForSetting(capability.id, amountDescriptor) : 1);
-            legacyJson = JSON.stringify([{item_id:String(itemId || "").trim(),amount_per_cycle:Number(amount) || 1}]);
+            const tableIndex = schema.findIndex(item => String(item.setting_key || item.key || "") === "production_table_json");
+            const tableInput = tableIndex >= 0 ? root.querySelector('[data-dialog-field="mechanic-setting-' + tableIndex + '"]') : null;
+            if (tableInput) {
+              try {
+                const entries = JSON.parse(String(tableInput.value || "[]"));
+                if (!Array.isArray(entries)) throw new Error("Таблица производства должна быть списком.");
+                if (entries.length) legacyJson = JSON.stringify(entries);
+              } catch (_error) {
+                toast("Резервная таблица производства содержит некорректные данные.", true);
+                return;
+              }
+            }
+            if (!legacyJson) {
+              const itemKey = capability.id === "can_produce_resources" ? "resource_item_id" : "output_item_id";
+              const itemDescriptor = schema.find(item => String(item.setting_key || item.key || "") === itemKey);
+              const amountDescriptor = schema.find(item => String(item.setting_key || item.key || "") === "amount_per_cycle");
+              const itemIndex = schema.findIndex(item => String(item.setting_key || item.key || "") === itemKey);
+              const amountIndex = schema.findIndex(item => String(item.setting_key || item.key || "") === "amount_per_cycle");
+              const itemInput = itemIndex >= 0 ? root.querySelector('[data-dialog-field="mechanic-setting-' + itemIndex + '"]') : null;
+              const amountInput = amountIndex >= 0 ? root.querySelector('[data-dialog-field="mechanic-setting-' + amountIndex + '"]') : null;
+              const itemId = itemInput ? itemInput.value : (itemDescriptor ? valueForSetting(capability.id, itemDescriptor) : "");
+              const amount = amountInput ? amountInput.value : (amountDescriptor ? valueForSetting(capability.id, amountDescriptor) : 1);
+              legacyJson = JSON.stringify([{item_id:String(itemId || "").trim(),amount_per_cycle:Number(amount) || 1}]);
+            }
           } else {
             const legacyIndex = schema.findIndex(item => String(item.setting_key || item.key || "") === legacyKey);
             const legacyInput = legacyIndex >= 0 ? root.querySelector('[data-dialog-field="mechanic-setting-' + legacyIndex + '"]') : null;
@@ -3110,30 +3163,48 @@ function openCapabilitySettingsDialog(capabilityId) {
           const current = valueForSetting(capability.id, descriptor);
           value = parseColorValue(value, current && typeof current === "object" ? current.a : 1);
         } else if (descriptor.value_type === "String" && descriptor.editor === "structured_list") {
+          const structureType = String(descriptor.editor_config?.structure_type || "");
           let entries;
           try { entries = JSON.parse(String(value ?? "[]")); }
-          catch (_error) { throw new Error("Таблица добычи содержит некорректные данные."); }
-          if (!Array.isArray(entries)) throw new Error("Таблица добычи должна быть списком записей.");
-          value = JSON.stringify(entries.map((entry, rowIndex) => {
-            if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
-              throw new Error("Запись добычи №" + (rowIndex + 1) + " имеет неверный формат.");
-            }
-            const itemId = String(entry.item_id || "").trim();
-            if (entry.chance === null || entry.min === null || entry.max === null) {
-              throw new Error("Заполни шанс и количество в записи №" + (rowIndex + 1) + ".");
-            }
-            const chance = Number(entry.chance);
-            const minimum = Number(entry.min);
-            const maximum = Number(entry.max);
-            if (!itemId) throw new Error("Выбери предмет в записи добычи №" + (rowIndex + 1) + ".");
-            if (!Number.isFinite(chance) || chance < 0 || chance > 1) {
-              throw new Error("Шанс в записи №" + (rowIndex + 1) + " должен быть от 0 до 1.");
-            }
-            if (!Number.isInteger(minimum) || !Number.isInteger(maximum) || minimum < 0 || maximum < minimum) {
-              throw new Error("Количество в записи №" + (rowIndex + 1) + " должно быть целым, неотрицательным и с максимумом не меньше минимума.");
-            }
-            return {...entry, item_id:itemId, chance, min:minimum, max:maximum};
-          }));
+          catch (_error) { throw new Error("Структурированная таблица содержит некорректные данные."); }
+          if (!Array.isArray(entries)) throw new Error("Структурированная таблица должна быть списком записей.");
+          if (structureType === "production_table") {
+            value = JSON.stringify(entries.map((entry, rowIndex) => {
+              if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+                throw new Error("Строка производства №" + (rowIndex + 1) + " имеет неверный формат.");
+              }
+              const itemId = String(entry.item_id || "").trim();
+              const amount = Number(entry.amount_per_cycle);
+              if (!itemId) throw new Error("Выбери предмет в строке производства №" + (rowIndex + 1) + ".");
+              if (!Number.isInteger(amount) || amount <= 0) {
+                throw new Error("Количество в строке производства №" + (rowIndex + 1) + " должно быть целым числом больше нуля.");
+              }
+              return {...entry, item_id:itemId, amount_per_cycle:amount};
+            }));
+          } else if (structureType === "loot_table") {
+            value = JSON.stringify(entries.map((entry, rowIndex) => {
+              if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+                throw new Error("Запись добычи №" + (rowIndex + 1) + " имеет неверный формат.");
+              }
+              const itemId = String(entry.item_id || "").trim();
+              if (entry.chance === null || entry.min === null || entry.max === null) {
+                throw new Error("Заполни шанс и количество в записи №" + (rowIndex + 1) + ".");
+              }
+              const chance = Number(entry.chance);
+              const minimum = Number(entry.min);
+              const maximum = Number(entry.max);
+              if (!itemId) throw new Error("Выбери предмет в записи добычи №" + (rowIndex + 1) + ".");
+              if (!Number.isFinite(chance) || chance < 0 || chance > 1) {
+                throw new Error("Шанс в записи №" + (rowIndex + 1) + " должен быть от 0 до 1.");
+              }
+              if (!Number.isInteger(minimum) || !Number.isInteger(maximum) || minimum < 0 || maximum < minimum) {
+                throw new Error("Количество в записи №" + (rowIndex + 1) + " должно быть целым, неотрицательным и с максимумом не меньше минимума.");
+              }
+              return {...entry, item_id:itemId, chance, min:minimum, max:maximum};
+            }));
+          } else {
+            throw new Error("Неизвестный тип структурированной таблицы: " + structureType);
+          }
         } else if (descriptor.value_type === "String" && descriptor.editor === "structured_object") {
           const recipeRows = parseStructuredObjectValue(String(value ?? "{}"), "recipe_table");
           if (recipeRows === null) throw new Error("Таблица рецептов содержит некорректные данные.");
