@@ -191,6 +191,7 @@ UI продолжает отправлять типизированные изм
 - `ObjectCapabilityCatalog` разрешает overlay менять только presentation metadata. Попытка переопределить тип, default, диапазон, единицы, required, options или другое каноническое поле отклоняется при регистрации.
 - `pickup.item_id` остаётся required только в component descriptor и размечено как `catalog_reference` / `reference_type = item`.
 - `animals.resource_item_id` и `world_time.output_item_id` также используют `catalog_reference` / `reference_type = item`.
+- `drops_loot_on_destroy.loot_table_json` получил первый `StructuredList` editor (`loot_table`): строки предмет/chance/min/max используют item catalog, Add/Remove и сериализацию обратно в прежний JSON-массив. Поле находится в Expert, поскольку основной путь — `loot_table_path` / `.tres`.
 - Backend передаёт options из `ItemCatalogService`; UI показывает название и категорию, поддерживает поиск, а в `ObjectCapabilitySelection` сохраняет стабильный item ID.
 - Основной Web mechanic renderer строит группы по схеме, открывает Basic по умолчанию, сворачивает Advanced и Expert, и использует Switch, Number, Slider/Range, Text, Multiline Text, Enum, Vector2, Color, item catalog select и существующий GameplayTable picker.
 - Строковые legacy JSON/CSV и неразмеченные ID не рендерятся как свободные поля. Для имеющихся GameplayTableDefinition сохранён программный перенос legacy JSON в ресурс без обычной JSON textarea.
@@ -201,7 +202,7 @@ UI продолжает отправлять типизированные изм
 
 - Godot smoke-тесты и GUI-приёмка не запускались: Godot отсутствует в доступной среде. Статическая проверка не считается runtime-проверкой.
 - Typed pickers для tools (пока сервис умеет фильтровать tools, но все поля ещё не размечены), objects, остальных resources и tables требуют подключения и приёмки.
-- `StructuredList` / `StructuredObject` editors для loot, recipes, production, resistances, weak points, routes, schedules и других составных данных не реализованы.
+- Универсальные `StructuredList` / `StructuredObject` editors ещё не завершены: реализован только первый `loot_table` editor; recipes, production, resistances, weak points, routes, schedules, loot conditions и другие составные данные остаются открытыми.
 - Условия `visibility` пока не вычисляются: основной renderer показывает `always`, а условные поля помечает как пока недоступные.
 - Components inspector и некоторые дублирующие пути UI остаются отдельной задачей плана.
 - Полная совместимость старых сохранений, неизвестных полей и сторонних расширений требует отдельной проверки и миграционного этапа.
