@@ -965,7 +965,7 @@ function fieldMarkup(label, key, value, type = "text", extra = "") {
   return '<div class="field"><label>' + esc(label) + '</label><input data-field="' + esc(key) + '" type="' + type + '" value="' + esc(value) + '" ' + extra + '></div>';
 }
 function parseStructuredListValue(value, structureType) {
-  if (!["loot_table", "production_table"].includes(structureType)) return null;
+  if (!["loot_table", "production_table", "daily_routine", "day_phase_schedule"].includes(structureType)) return null;
   let parsed = value;
   if (typeof parsed === "string") {
     try { parsed = JSON.parse(parsed || "[]"); } catch (_error) { return null; }
