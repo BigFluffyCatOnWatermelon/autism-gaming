@@ -147,7 +147,8 @@ func advance_resource_production(delta: float) -> Dictionary:
 	var outputs := GameplayTables.load_production_table(
 		str(_option("can_produce_resources", "production_table_path", "")),
 		_option("can_produce_resources", "resource_item_id", "milk"),
-		maxi(1, int(_option("can_produce_resources", "amount_per_cycle", 1)))
+		maxi(1, int(_option("can_produce_resources", "amount_per_cycle", 1))),
+		_option("can_produce_resources", "production_table_json", "[]")
 	)
 	if outputs.is_empty():
 		return _failed_result("Для производства не задан корректный item_id.")
