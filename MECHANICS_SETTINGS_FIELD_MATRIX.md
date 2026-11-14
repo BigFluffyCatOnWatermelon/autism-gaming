@@ -368,7 +368,7 @@
 | world_time | has_periodic_output | amount_per_cycle | Количество за цикл | Integer | 1 | 1 | 999999 | Производство | — |
 | world_time | has_periodic_output | production_table_json | Таблица результатов (резерв) | String | "[]" | — | — | Производство | — |
 | world_time | supports_signal_triggers | event_rules_json | Правила событий JSON | String | "{}" | — | — | Сигналы | — |
-| world_time | supports_event_schedule | events_json | События JSON | String | "[]" | — | — | Расписание | — |
+| world_time | supports_event_schedule | events_json | Расписание событий | String | "[]" | — | — | Расписание | — |
 | world_time | supports_event_schedule | hour_tolerance | Допуск по времени | Float | 0.25 | 0.0 | 12.0 | Расписание | — |
 
 ## Сверка с runtime-потребителями
