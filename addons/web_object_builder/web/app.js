@@ -1010,6 +1010,112 @@ function structuredLootRowMarkup(field, entry, index) {
     '<button type="button" class="btn small danger structured-loot-remove" data-structured-remove aria-label="Удалить запись">×</button>' +
     '</div>';
 }
+function parseStructuredObjectValue(value, structureType) {
+  if (structureType !== "recipe_table") return null;
+  let parsed = value;
+  if (typeof parsed === "string") {
+    try { parsed = JSON.parse(parsed || "{}"); } catch (_error) { return null; }
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  const rows = [];
+  for (const rawRecipeId of Object.keys(parsed)) {
+    const recipeId = String(rawRecipeId).trim();
+    const recipe = parsed[rawRecipeId];
+    if (!recipeId || !recipe || typeof recipe !== "object" || Array.isArray(recipe)) return null;
+    const sourceIngredients = recipe.ingredients;
+    if (!sourceIngredients || typeof sourceIngredients !== "object" || Array.isArray(sourceIngredients)) return null;
+    const ingredients = [];
+    for (const rawItemId of Object.keys(sourceIngredients)) {
+      const itemId = String(rawItemId).trim();
+      const amount = Number(sourceIngredients[rawItemId]);
+      if (!itemId || !Number.isInteger(amount) || amount <= 0) return null;
+      ingredients.push({item_id:itemId, amount});
+    }
+    const sourceOutput = recipe.output;
+    if (!sourceOutput || typeof sourceOutput !== "object" || Array.isArray(sourceOutput)) return null;
+    const outputItemId = String(sourceOutput.item_id ?? "").trim();
+    const outputAmount = Number(sourceOutput.amount ?? 1);
+    if (!outputItemId || !Number.isInteger(outputAmount) || outputAmount <= 0) return null;
+    rows.push({
+      ...recipe,
+      recipe_id: recipeId,
+      ingredients,
+      output: {...sourceOutput, item_id:outputItemId, amount:outputAmount}
+    });
+  }
+  return rows;
+}
+function structuredRecipeDictionary(rows) {
+  const result = {};
+  for (const entry of rows) {
+    const recipeId = String(entry.recipe_id || "").trim();
+    if (!recipeId) continue;
+    const extras = {...entry};
+    delete extras.recipe_id;
+    delete extras.ingredients;
+    delete extras.output;
+    const ingredients = {};
+    for (const ingredient of (Array.isArray(entry.ingredients) ? entry.ingredients : [])) {
+      const itemId = String(ingredient.item_id || "").trim();
+      const amount = Number(ingredient.amount);
+      if (!itemId || !Number.isInteger(amount) || amount <= 0) continue;
+      ingredients[itemId] = (ingredients[itemId] || 0) + amount;
+    }
+    result[recipeId] = {
+      ...extras,
+      ingredients,
+      output: {...(entry.output && typeof entry.output === "object" ? entry.output : {})}
+    };
+  }
+  return result;
+}
+function structuredRecipeItemSelectMarkup(field, currentValue, dataAttribute, placeholder = "Выбери предмет…") {
+  const options = Array.isArray(field.options) ? field.options : [];
+  const current = String(currentValue || "");
+  const found = options.some(option => String(option.value) === current);
+  let markup = '<option value="" ' + (!current ? "selected" : "") + ' disabled>' + esc(placeholder) + '</option>';
+  if (current && !found) {
+    markup += '<option value="' + esc(current) + '" selected disabled>Недоступен в каталоге: ' + esc(current) + '</option>';
+  }
+  markup += options.map(option => {
+    const optionValue = String(option.value ?? "");
+    const optionLabel = String(option.label ?? optionValue) + (option.category ? " · " + String(option.category) : "");
+    return '<option value="' + esc(optionValue) + '" ' + (optionValue === current ? "selected" : "") + '>' + esc(optionLabel) + '</option>';
+  }).join("");
+  return '<select ' + dataAttribute + '>' + markup + '</select>';
+}
+function structuredRecipeIngredientMarkup(field, ingredient = {}) {
+  return '<div class="structured-recipe-ingredient" data-recipe-ingredient>' +
+    '<label class="structured-recipe-item"><span>Предмет</span>' +
+      structuredRecipeItemSelectMarkup(field, ingredient.item_id, 'data-ingredient-item') + '</label>' +
+    '<label><span>Количество</span><input type="number" data-ingredient-amount min="1" max="999999" step="1" value="' + esc(ingredient.amount ?? 1) + '"></label>' +
+    '<button type="button" class="btn small danger" data-ingredient-remove aria-label="Удалить ингредиент">×</button>' +
+  '</div>';
+}
+function structuredRecipeCardMarkup(field, entry, index) {
+  const extras = {...entry};
+  delete extras.recipe_id;
+  delete extras.ingredients;
+  delete extras.output;
+  const output = entry.output && typeof entry.output === "object" ? entry.output : {};
+  const ingredients = Array.isArray(entry.ingredients) ? entry.ingredients : [];
+  return '<article class="structured-recipe-card" data-structured-recipe data-recipe-original="' + esc(JSON.stringify(extras)) +
+      '" data-recipe-output-original="' + esc(JSON.stringify(output)) + '">' +
+    '<header class="structured-recipe-header"><strong>Рецепт ' + (index + 1) + '</strong>' +
+      '<button type="button" class="btn small danger" data-recipe-remove>Удалить</button></header>' +
+    '<label class="structured-recipe-id"><span>Ключ рецепта</span><input type="text" data-recipe-id value="' + esc(entry.recipe_id || "") +
+      '" placeholder="например, wooden_plank"></label>' +
+    '<section class="structured-recipe-output"><h4>Результат</h4><div class="structured-recipe-output-fields">' +
+      '<label class="structured-recipe-item"><span>Предмет</span>' +
+        structuredRecipeItemSelectMarkup(field, output.item_id, 'data-recipe-output-item') + '</label>' +
+      '<label><span>Количество</span><input type="number" data-recipe-output-amount min="1" max="999999" step="1" value="' + esc(output.amount ?? 1) + '"></label>' +
+    '</div></section>' +
+    '<section class="structured-recipe-ingredients"><div class="structured-recipe-section-header"><h4>Ингредиенты</h4>' +
+      '<button type="button" class="btn small" data-ingredient-add>＋ Добавить</button></div>' +
+      '<div data-recipe-ingredients>' + ingredients.map(ingredient => structuredRecipeIngredientMarkup(field, ingredient)).join("") + '</div>' +
+    '</section></article>';
+}
+
 function dialogFieldMarkup(field) {
   const key = String(field.key || "");
   const disabled = !!field.disabled;
@@ -1066,6 +1172,23 @@ function dialogFieldMarkup(field) {
       '<input type="hidden" data-dialog-field="' + esc(key) + '" value="' + esc(JSON.stringify(rows)) + '">' +
       rows.map((entry, index) => structuredLootRowMarkup(field, entry, index)).join("") +
       '<button type="button" class="btn small structured-loot-add" data-structured-add>＋ Добавить предмет</button>' +
+      '</div>' + help + '</div>';
+  }
+  if (field.type === "structured_object") {
+    const config = field.editorConfig || {};
+    const structureType = String(config.structure_type || "");
+    const rows = parseStructuredObjectValue(value, structureType);
+    if (rows === null) {
+      return '<div class="field setting-unavailable-field"><label>' + label + requiredMark + '</label>' +
+        '<div class="setting-unavailable">Сохранённая таблица рецептов имеет неподдерживаемый формат. Исходное значение не будет перезаписано.</div>' + help + '</div>';
+    }
+    const serialized = structuredRecipeDictionary(rows);
+    return '<div class="field structured-recipe-table-field"><label>' + label + requiredMark + unitMark + '</label>' +
+      '<p class="structured-list-help">Добавляй рецепты, выбирай ингредиенты и результат из каталога предметов. Ключ рецепта используется runtime-вызовом создания предмета.</p>' +
+      '<div class="structured-recipe-table" data-structured-recipe-table="' + esc(key) + '">' +
+        '<input type="hidden" data-dialog-field="' + esc(key) + '" value="' + esc(JSON.stringify(serialized)) + '">' +
+        '<div class="structured-recipe-list" data-recipe-list>' + rows.map((entry, index) => structuredRecipeCardMarkup(field, entry, index)).join("") + '</div>' +
+        '<button type="button" class="btn small structured-recipe-add" data-recipe-add>＋ Добавить рецепт</button>' +
       '</div>' + help + '</div>';
   }
   if (field.type === "color") {
@@ -1211,6 +1334,101 @@ function openForm(options) {
     });
     sync();
   });
+  fieldsHost.querySelectorAll("[data-structured-recipe-table]").forEach(editor => {
+    const key = editor.dataset.structuredRecipeTable;
+    const field = (options.fields || []).find(item => String(item.key || "") === key);
+    const hidden = editor.querySelector('[data-dialog-field="' + key + '"]');
+    if (!field || !hidden) return;
+    const sync = () => {
+      const recipes = {};
+      const errors = [];
+      const usedIds = new Set();
+      const cards = [...editor.querySelectorAll("[data-structured-recipe]")];
+      cards.forEach((card, index) => {
+        const recipeId = String(card.querySelector("[data-recipe-id]")?.value || "").trim();
+        const outputItemId = String(card.querySelector("[data-recipe-output-item]")?.value || "").trim();
+        const outputAmountRaw = String(card.querySelector("[data-recipe-output-amount]")?.value ?? "").trim();
+        const outputAmount = Number(outputAmountRaw);
+        let recipeKey = recipeId || "__draft_recipe_" + (index + 1);
+        if (!recipeId) errors.push("Укажи уникальный ключ рецепта №" + (index + 1) + ".");
+        else if (usedIds.has(recipeId)) {
+          errors.push("Ключ рецепта «" + recipeId + "» повторяется.");
+          recipeKey = "__duplicate_recipe_" + (index + 1);
+        }
+        if (recipeId) usedIds.add(recipeId);
+        if (!outputItemId) errors.push("Выбери предмет-результат в рецепте №" + (index + 1) + ".");
+        if (!outputAmountRaw || !Number.isInteger(outputAmount) || outputAmount <= 0) {
+          errors.push("Количество результата в рецепте №" + (index + 1) + " должно быть целым числом больше нуля.");
+        }
+        const ingredients = {};
+        const ingredientRows = [...card.querySelectorAll("[data-recipe-ingredient]")];
+        if (!ingredientRows.length) errors.push("Добавь хотя бы один ингредиент в рецепт №" + (index + 1) + ".");
+        ingredientRows.forEach((row, ingredientIndex) => {
+          const itemId = String(row.querySelector("[data-ingredient-item]")?.value || "").trim();
+          const amountRaw = String(row.querySelector("[data-ingredient-amount]")?.value ?? "").trim();
+          const amount = Number(amountRaw);
+          if (!itemId) errors.push("Выбери предмет в ингредиенте " + (ingredientIndex + 1) + " рецепта №" + (index + 1) + ".");
+          if (!amountRaw || !Number.isInteger(amount) || amount <= 0) {
+            errors.push("Количество ингредиента " + (ingredientIndex + 1) + " рецепта №" + (index + 1) + " должно быть целым числом больше нуля.");
+          }
+          if (itemId && Number.isInteger(amount) && amount > 0) {
+            ingredients[itemId] = (ingredients[itemId] || 0) + amount;
+          }
+        });
+        let recipeExtras = {};
+        let outputExtras = {};
+        try { recipeExtras = JSON.parse(card.dataset.recipeOriginal || "{}"); } catch (_error) {}
+        try { outputExtras = JSON.parse(card.dataset.recipeOutputOriginal || "{}"); } catch (_error) {}
+        recipes[recipeKey] = {
+          ...recipeExtras,
+          ingredients,
+          output: {...outputExtras, item_id:outputItemId, amount:outputAmount}
+        };
+      });
+      hidden.value = JSON.stringify(recipes);
+      editor.dataset.validationMessage = errors[0] || "";
+    };
+    editor.addEventListener("input", sync);
+    editor.addEventListener("change", sync);
+    editor.addEventListener("click", event => {
+      const removeRecipe = event.target.closest("[data-recipe-remove]");
+      if (removeRecipe) {
+        removeRecipe.closest("[data-structured-recipe]")?.remove();
+        sync();
+        return;
+      }
+      const removeIngredient = event.target.closest("[data-ingredient-remove]");
+      if (removeIngredient) {
+        removeIngredient.closest("[data-recipe-ingredient]")?.remove();
+        sync();
+        return;
+      }
+      const addIngredient = event.target.closest("[data-ingredient-add]");
+      if (addIngredient) {
+        const card = addIngredient.closest("[data-structured-recipe]");
+        const list = card?.querySelector("[data-recipe-ingredients]");
+        if (list) list.insertAdjacentHTML("beforeend", structuredRecipeIngredientMarkup(field, {item_id:"",amount:1}));
+        sync();
+        return;
+      }
+      const addRecipe = event.target.closest("[data-recipe-add]");
+      if (addRecipe) {
+        const list = editor.querySelector("[data-recipe-list]");
+        if (!list) return;
+        const used = new Set([...editor.querySelectorAll("[data-recipe-id]")].map(input => input.value.trim()));
+        let suffix = 1;
+        while (used.has("recipe_" + suffix)) suffix++;
+        const next = {
+          recipe_id: "recipe_" + suffix,
+          ingredients: [{item_id:"",amount:1}],
+          output: {item_id:"",amount:1}
+        };
+        list.insertAdjacentHTML("beforeend", structuredRecipeCardMarkup(field, next, list.children.length));
+        sync();
+      }
+    });
+    sync();
+  });
   fieldsHost.querySelectorAll("[data-dialog-search-for]").forEach(search => {
     search.addEventListener("input", () => {
       const targetKey = search.dataset.dialogSearchFor;
@@ -1238,6 +1456,11 @@ function openForm(options) {
   form.onsubmit = async event => {
     event.preventDefault();
     if (!pendingFormCallback) return;
+    const invalidRecipeEditor = [...fieldsHost.querySelectorAll("[data-structured-recipe-table]")].find(editor => editor.dataset.validationMessage);
+    if (invalidRecipeEditor) {
+      toast(invalidRecipeEditor.dataset.validationMessage, true);
+      return;
+    }
     const values = {};
     for (const field of fieldsHost.querySelectorAll("[data-dialog-field]")) {
       const key = field.dataset.dialogField;
@@ -2726,9 +2949,19 @@ function openCapabilitySettingsDialog(capabilityId) {
           }
           break;
         }
-        case "structured_object":
-          unavailableMessage = "Составная структура будет доступна после подключения специализированного редактора.";
+        case "structured_object": {
+          const structureType = String(editorConfig.structure_type || "");
+          if (structureType === "recipe_table" && structuredOptions.length) {
+            if (parseStructuredObjectValue(raw, structureType) !== null) {
+              type = "structured_object";
+            } else {
+              unavailableMessage = "Сохранённая таблица рецептов не соответствует ожидаемому формату. Исходные данные сохранены без изменений.";
+            }
+          } else {
+            unavailableMessage = "Для этой составной структуры ещё не подключён подходящий каталог или редактор.";
+          }
           break;
+        }
         default:
           unavailableMessage = "Техническое или legacy-поле скрыто до появления подходящего визуального редактора.";
           break;
@@ -2747,7 +2980,7 @@ function openCapabilitySettingsDialog(capabilityId) {
       type,
       editable: type !== "unavailable" && isVisible,
       unavailableMessage,
-      options: editor === "catalog_reference" ? referenceOptions : (editor === "structured_list" ? structuredOptions : (Array.isArray(descriptor.options) ? descriptor.options : [])),
+      options: editor === "catalog_reference" ? referenceOptions : (["structured_list", "structured_object"].includes(editor) ? structuredOptions : (Array.isArray(descriptor.options) ? descriptor.options : [])),
       editorConfig,
       searchable: editor === "catalog_reference",
       placeholder: editor === "catalog_reference" ? "Выбери предмет…" : "",
@@ -2897,6 +3130,10 @@ function openCapabilitySettingsDialog(capabilityId) {
             }
             return {...entry, item_id:itemId, chance, min:minimum, max:maximum};
           }));
+        } else if (descriptor.value_type === "String" && descriptor.editor === "structured_object") {
+          const recipeRows = parseStructuredObjectValue(String(value ?? "{}"), "recipe_table");
+          if (recipeRows === null) throw new Error("Таблица рецептов содержит некорректные данные.");
+          value = JSON.stringify(structuredRecipeDictionary(recipeRows));
         } else if (descriptor.value_type === "String") {
           value = String(value ?? "");
         }
