@@ -401,13 +401,14 @@ static func _normalize_setting_definition(
 	if not result.has("editor_config"):
 		result["editor_config"] = {}
 	if not result.has("editor"):
-		result["editor"] = _default_editor_for_value_type(
-			str(result.get("value_type", ""))
+		result["editor"] = _default_editor_for_setting(
+			str(result.get("value_type", "")),
+			key
 		)
 	return result
 
 
-static func _default_editor_for_value_type(value_type: String) -> String:
+static func _default_editor_for_setting(value_type: String, setting_key: String) -> String:
 	match value_type:
 		"Boolean":
 			return "switch"
@@ -418,8 +419,17 @@ static func _default_editor_for_value_type(value_type: String) -> String:
 		"Color":
 			return "color"
 		"String":
-			# String alone cannot identify text, enum, catalogue ID or a resource path.
-			return "unspecified"
+			var key := setting_key.strip_edges().to_lower()
+			# Structured payloads, IDs and resource paths need an explicit typed editor.
+			if (
+				key.ends_with("_json")
+				or key.ends_with("_csv")
+				or key.ends_with("_id")
+				or key.ends_with("_path")
+				or key in ["combo_multipliers"]
+			):
+				return "unspecified"
+			return "text"
 	return "unspecified"
 
 
