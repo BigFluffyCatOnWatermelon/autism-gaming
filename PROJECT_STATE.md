@@ -1,3 +1,12 @@
+## Рефакторинг настроек Web Object Builder — 2026-11-14
+
+- Этап 2 продвинут: компонентный descriptor нормализуется и валидируется; capability overlay ограничен presentation metadata; значение/default/range/required имеют канонический источник в component definition.
+- Основной Web inspector переведён на metadata-driven renderer с группами и уровнями Basic/Advanced/Expert. Подключены стандартные контроли Switch, Number, Slider/Range, Text, Multiline Text, Enum, Vector2 и Color.
+- Item catalog picker подключён для `pickup.item_id`, `animals.resource_item_id` и `world_time.output_item_id` через `ItemCatalogService`; UI показывает названия, данные сохраняют стабильные IDs.
+- Сырые JSON/CSV и непомеченные ID скрыты из обычного редактора механик; специализированные редакторы составных данных ещё не завершены. Низкоуровневый Components inspector также остаётся отдельным пунктом унификации.
+- Smoke-тесты расширены, но не запускались: Godot отсутствует в доступной рабочей среде. Статический анализ исходников не означает подтверждённую runtime/GUI работу.
+- Следующий технический приоритет: типизированные references для инструментов/объектов/ресурсов/таблиц и визуальные StructuredList/StructuredObject editors; затем ручная приёмка в настольном Godot.
+
 ## Доступность 100 пакетных механик — 2026-11-08
 
 - Проверены все 100 ID десяти новых пакетов: `harvesting`, `items`, `inventory`, `containers`, `construction`, `ai`, `animals`, `audio_effects`, `world_time`, `world_generation`.
