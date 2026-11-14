@@ -53,7 +53,7 @@
 | `visibility` | Условия отображения |
 | `editor` | Явный вид редактора |
 
-Capability overlay не должен независимо менять `value_type`, `default_value`, диапазон и единицы component setting. Если меняется семантика значения, меняется канонический component descriptor и добавляется миграция. Для совместимости временно допускаются старые overlays `required` и `level`; дублирующие источники метаданных нужно убрать при миграции.
+Capability overlay не должен независимо менять `value_type`, `default_value`, диапазон и единицы component setting. Если меняется семантика значения, меняется канонический component descriptor и добавляется миграция. Обязательность `required` принадлежит только component descriptor. Capability overlay может задавать `level` и другое presentation metadata, но не `required`, тип, default или ограничения.
 
 ## 3. Типы и редакторы
 
@@ -123,7 +123,7 @@ JSON допустим только как внутреннее хранение/
 - UI показывает фактически сохранённое значение после нормализации.
 - Неизвестные legacy-поля сохраняются при чтении/повторной записи, даже если редактор их не отображает.
 
-Сейчас `pickup.item_id` явно помечено required в core component descriptor и продублировано в builtin capability overlay. Backend проверяет пустое значение, но Web UI не показывает обязательность.
+`pickup.item_id` помечено required только в core component descriptor. Web UI показывает обязательность и использует поисковый каталог предметов; backend повторно проверяет пустое значение.
 
 ## 7. Defaults
 
@@ -147,9 +147,9 @@ UI продолжает отправлять типизированные изм
 
 ## 10. Текущие проблемы, которые контракт устраняет
 
-1. `fieldType()` в `addons/web_object_builder/web/app.js` поддерживает только String/Integer/Float/Boolean/Vector2.
-2. `openCapabilitySettingsDialog()` строит плоскую форму и не использует group/level/required/options/units.
-3. `*_json` поля отображаются textarea, хотя часть таблиц уже переведена на GameplayTableDefinition и FileDialog.
+1. Низкоуровневый Components inspector всё ещё использует устаревший ограниченный renderer и остаётся вторым путём редактирования.
+2. Основной `openCapabilitySettingsDialog()` теперь группирует поля и читает level/required/options/units/editor metadata.
+3. Сырые `*_json`/`*_csv` и неразмеченные ID больше не отображаются как свободный ввод в основном инспекторе механик; для legacy table data сохранён только программный импорт.
 4. `renderComponentsInspector()` оставляет отдельный низкоуровневый путь редактирования тех же настроек.
 5. `renderInstalled()` и `renderBehaviorInspector()` дублируют список механик.
 6. Статические счётчики каталога 200/160/40 не пересчитывают package-level readiness.
@@ -161,11 +161,11 @@ UI продолжает отправлять типизированные изм
 - [ ] У каждого поля есть label и понятное описание либо задача на описание.
 - [ ] Type/default/range берутся только из component definition.
 - [ ] Нет конфликтующих capability overrides для type/default/range.
-- [ ] Enum содержит value/label пары.
+- [x] Enum содержит value/label пары и проходит schema validation.
 - [ ] Catalog/resource references имеют тип и проверку существования.
 - [ ] Сложные данные не представлены raw JSON/CSV.
-- [ ] Required проверяется backend и визуально обозначается UI.
-- [ ] Level и group отображаются одинаково для всех механик.
+- [x] Required проверяется backend и визуально обозначается UI.
+- [x] Level и group отображаются в общем renderer механик.
 - [ ] Legacy aliases и неизвестные поля сохраняются.
 - [ ] Один параметр имеет один источник истины и один обычный путь редактирования.
 
@@ -181,24 +181,29 @@ UI продолжает отправлять типизированные изм
 8. Добавить миграции для legacy JSON/CSV и объединённых component keys.
 9. Проверить runtime wiring и GUI в Godot; статический анализ не считать GUI-приёмкой.
 
-## 13. Реализация — 2026-11-13
+## 13. Реализация — 2026-11-13 и 2026-11-14
 
-### Выполнено в исходниках (статическая проверка)
+### Реализовано в исходниках (статическая проверка)
 
-- `ObjectComponentDefinition.get_setting_definitions()` возвращает нормализованные копии descriptors: добавляет недостающие group/ordering metadata, Basic/Advanced/Expert, visibility, unit, nullable/required, options и editor metadata.
-- Старые `group_name` и порядок объявления используются как fallback; package-модули пока не требуют массового переписывания.
-- Исходные `setting_definitions`, defaults и сериализованные значения не мутируются.
-- Для строкового типа без явной метаинформации редактора выставляется `editor = unspecified`, потому что `String` не позволяет отличить обычный текст от ID, enum или resource path.
-- `ObjectComponentCatalog` проверяет базовые типы метаданных, уровни, поддерживаемые редакторы, соответствие editor типу значения, структуру options, default enum, reference/resource types, числовые границы, default внутри диапазона и положительный конечный step.
-- Встроенное поле `pickup.item_id` размечено как `catalog_reference` с `reference_type = item`; визуальный picker ещё не подключён.
-- `ObjectCapabilityCatalog` разрешает overlay менять только presentation metadata. Попытка переопределить тип, default, диапазон, единицы, required, options или другое каноническое поле фиксируется и отклоняется при регистрации.
-- Встроенное требование `pickup.item_id` оставлено только в `ObjectComponentDefinition`; дублирующий признак удалён из capability overlay.
-- `tests/object_builder_capability_metadata_smoke.gd` дополнен проверками нормализации, отрицательным тестом canonical default override, неизвестного editor и Enum без options.
+- `ObjectComponentDefinition.get_setting_definitions()` возвращает нормализованные копии descriptors: group/ordering metadata, Basic/Advanced/Expert, visibility, unit, nullable/required, options и editor metadata. Исходные `setting_definitions`, defaults и сохранённые значения не мутируются.
+- Старые `group_name` и порядок объявления используются как fallback. Обычные String поля получают text editor; `*_id`, `*_json`, `*_csv`, `*_path` и другие технические строковые структуры не превращаются в свободный ввод без явного typed editor.
+- `ObjectComponentCatalog` проверяет базовые типы метаданных, уровни, совместимость editor с value type, options, enum default, reference/resource types, числовые границы, default в диапазоне и положительный конечный step. Поддержан Color в setting validation и Variant type.
+- `ObjectCapabilityCatalog` разрешает overlay менять только presentation metadata. Попытка переопределить тип, default, диапазон, единицы, required, options или другое каноническое поле отклоняется при регистрации.
+- `pickup.item_id` остаётся required только в component descriptor и размечено как `catalog_reference` / `reference_type = item`.
+- `animals.resource_item_id` и `world_time.output_item_id` также используют `catalog_reference` / `reference_type = item`.
+- Backend передаёт options из `ItemCatalogService`; UI показывает название и категорию, поддерживает поиск, а в `ObjectCapabilitySelection` сохраняет стабильный item ID.
+- Основной Web mechanic renderer строит группы по схеме, открывает Basic по умолчанию, сворачивает Advanced и Expert, и использует Switch, Number, Slider/Range, Text, Multiline Text, Enum, Vector2, Color, item catalog select и существующий GameplayTable picker.
+- Строковые legacy JSON/CSV и неразмеченные ID не рендерятся как свободные поля. Для имеющихся GameplayTableDefinition сохранён программный перенос legacy JSON в ресурс без обычной JSON textarea.
+- Сохранение остаётся на едином пути `capability_settings_save` → `ObjectCapabilitySelection`; отдельное JS-хранилище значений или defaults не добавлялось.
+- `tests/object_builder_capability_metadata_smoke.gd` расширен проверками нормализации, overlay, editor/options, ranges/defaults, Color и каталожных item options.
 
-### Не выполнено / не подтверждено
+### Осталось выполнить / проверить
 
-- Godot smoke-тесты и GUI-приёмка не запускались. Статическая проверка не считается runtime-проверкой.
-- Общая валидация всех типов метаданных ещё не закончена.
-- Enum options, typed catalog/resource references и структурированные редакторы ещё не подключены.
-- Универсальный Web renderer пока не использует все новые метаданные.
-- Совместимость всех сторонних расширений с новым строгим overlay whitelist ещё требует проверки.
+- Godot smoke-тесты и GUI-приёмка не запускались: Godot отсутствует в доступной среде. Статическая проверка не считается runtime-проверкой.
+- Typed pickers для tools (пока сервис умеет фильтровать tools, но все поля ещё не размечены), objects, остальных resources и tables требуют подключения и приёмки.
+- `StructuredList` / `StructuredObject` editors для loot, recipes, production, resistances, weak points, routes, schedules и других составных данных не реализованы.
+- Условия `visibility` пока не вычисляются: основной renderer показывает `always`, а условные поля помечает как пока недоступные.
+- Components inspector и некоторые дублирующие пути UI остаются отдельной задачей плана.
+- Полная совместимость старых сохранений, неизвестных полей и сторонних расширений требует отдельной проверки и миграционного этапа.
+- Поведение renderer, каталожного picker, сохранения, переключения объектов и Undo должно быть вручную проверено в настольном Godot.
+
