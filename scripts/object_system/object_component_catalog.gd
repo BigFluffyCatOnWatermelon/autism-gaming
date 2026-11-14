@@ -745,6 +745,12 @@ static func _validate_setting_metadata(
 					setting_key,
 					component_id
 				])
+			elif structure_type == "spawn_conditions":
+				if value_type != "String":
+					errors.append("Spawn conditions '%s' компонента '%s' должна сериализоваться как String до миграции." % [
+						setting_key,
+						component_id
+					])
 			else:
 				errors.append("У настройки '%s' компонента '%s' неизвестный StructuredObject type: %s." % [
 					setting_key,
