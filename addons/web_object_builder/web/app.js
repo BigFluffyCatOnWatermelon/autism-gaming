@@ -965,7 +965,7 @@ function fieldMarkup(label, key, value, type = "text", extra = "") {
   return '<div class="field"><label>' + esc(label) + '</label><input data-field="' + esc(key) + '" type="' + type + '" value="' + esc(value) + '" ' + extra + '></div>';
 }
 function parseStructuredListValue(value, structureType) {
-  if (!["loot_table", "production_table", "daily_routine", "day_phase_schedule"].includes(structureType)) return null;
+  if (!["loot_table", "production_table", "daily_routine", "day_phase_schedule", "event_schedule"].includes(structureType)) return null;
   let parsed = value;
   if (typeof parsed === "string") {
     try { parsed = JSON.parse(parsed || "[]"); } catch (_error) { return null; }
@@ -974,6 +974,14 @@ function parseStructuredListValue(value, structureType) {
   const rows = [];
   for (const entry of parsed) {
     if (!entry || typeof entry !== "object" || Array.isArray(entry)) return null;
+    if (structureType === "event_schedule") {
+      const day = Number(entry.day ?? -1);
+      const hour = Number(entry.hour ?? 0);
+      const eventId = String(entry.event_id ?? "").trim();
+      if (!Number.isInteger(day) || day < -1 || !Number.isFinite(hour) || hour < 0 || hour > 24) return null;
+      rows.push({...entry, day, hour, event_id:eventId});
+      continue;
+    }
     if (structureType === "daily_routine" || structureType === "day_phase_schedule") {
       const start = Number(entry.start ?? 0);
       const end = Number(entry.end ?? 24);
@@ -1040,6 +1048,17 @@ function structuredScheduleRowMarkup(field, entry, index, structureType) {
       '<button type="button" class="btn small" data-structured-move-up title="Переместить выше" aria-label="Переместить выше">↑</button>' +
       '<button type="button" class="btn small" data-structured-move-down title="Переместить ниже" aria-label="Переместить ниже">↓</button>' +
       '<button type="button" class="btn small danger" data-structured-remove title="Удалить интервал" aria-label="Удалить интервал">×</button>' +
+    '</div></div>';
+}
+function structuredEventScheduleRowMarkup(field, entry, index) {
+  return '<div class="structured-event-row" data-structured-row data-row-index="' + index + '" data-structured-original="' + esc(JSON.stringify(entry)) + '">' +
+    '<label><span>День (-1 = любой)</span><input type="number" data-structured-key="day" min="-1" step="1" value="' + esc(entry.day ?? -1) + '"></label>' +
+    '<label><span>Время, ч</span><input type="number" data-structured-key="hour" min="0" max="24" step="0.25" value="' + esc(entry.hour ?? 0) + '"></label>' +
+    '<label class="structured-event-id"><span>ID события (необязательно)</span><input type="text" data-structured-key="event_id" value="' + esc(entry.event_id ?? "") + '"></label>' +
+    '<div class="structured-schedule-actions">' +
+      '<button type="button" class="btn small" data-structured-move-up title="Переместить выше" aria-label="Переместить выше">↑</button>' +
+      '<button type="button" class="btn small" data-structured-move-down title="Переместить ниже" aria-label="Переместить ниже">↓</button>' +
+      '<button type="button" class="btn small danger" data-structured-remove title="Удалить событие" aria-label="Удалить событие">×</button>' +
     '</div></div>';
 }
 function parseStructuredObjectValue(value, structureType) {
@@ -1199,19 +1218,22 @@ function dialogFieldMarkup(field) {
         '<div class="setting-unavailable">Сохранённые данные таблицы имеют неподдерживаемый формат. Исходное значение не будет перезаписано.</div>' + help + '</div>';
     }
     const isProduction = structureType === "production_table";
+    const isEventSchedule = structureType === "event_schedule";
     const isSchedule = ["daily_routine", "day_phase_schedule"].includes(structureType);
-    const listClass = isProduction ? "structured-production-list" : (isSchedule ? "structured-schedule-list" : "structured-loot-list");
+    const listClass = isProduction ? "structured-production-list" : ((isSchedule || isEventSchedule) ? "structured-schedule-list" : "structured-loot-list");
     const rowMarkup = isProduction
       ? structuredProductionRowMarkup
-      : (isSchedule ? (entry, index) => structuredScheduleRowMarkup(field, entry, index, structureType) : structuredLootRowMarkup);
+      : (isEventSchedule ? structuredEventScheduleRowMarkup : (isSchedule ? (entry, index) => structuredScheduleRowMarkup(field, entry, index, structureType) : structuredLootRowMarkup));
     const helpText = isProduction
       ? "Укажи все предметы, которые объект выдаёт за один цикл, и количество каждого."
-      : (isSchedule
-        ? "Интервалы используют игровые часы 0–24. Начало позже конца означает переход через полночь. Порядок строк определяет приоритет при пересечении интервалов."
-        : "Каждая запись задаёт предмет, шанс выпадения и диапазон количества.");
+      : (isEventSchedule
+        ? "День -1 означает событие в любой день. Время сравнивается с допуском ниже. Дополнительные поля payload сохраняются, но пока не редактируются здесь."
+        : (isSchedule
+          ? "Интервалы используют игровые часы 0–24. Начало позже конца означает переход через полночь. Порядок строк определяет приоритет при пересечении интервалов."
+          : "Каждая запись задаёт предмет, шанс выпадения и диапазон количества."));
     const addLabel = isProduction
       ? "＋ Добавить результат"
-      : (isSchedule ? "＋ Добавить интервал" : "＋ Добавить предмет");
+      : ((isSchedule || isEventSchedule) ? (isEventSchedule ? "＋ Добавить событие" : "＋ Добавить интервал") : "＋ Добавить предмет");
     return '<div class="field structured-list-field"><label>' + label + requiredMark + unitMark + '</label>' +
       '<p class="structured-list-help">' + helpText + '</p>' +
       '<div class="' + listClass + '" data-structured-list="' + esc(key) + '" data-structure-type="' + esc(structureType) + '">' +
@@ -1357,6 +1379,16 @@ function openForm(options) {
           row.dataset.structuredOriginal = JSON.stringify(entry);
           return entry;
         }
+        if (structureType === "event_schedule") {
+          const day = numeric("day");
+          const hour = numeric("hour");
+          const eventId = String(value("event_id")).trim();
+          if (day === null || !Number.isInteger(day) || day < -1) errors.push("День события в строке №" + (index + 1) + " должен быть целым числом от -1 (любой день).");
+          if (hour === null || !Number.isFinite(hour) || hour < 0 || hour > 24) errors.push("Время события в строке №" + (index + 1) + " должно быть от 0 до 24 часов.");
+          const entry = {...original, day, hour, event_id:eventId};
+          row.dataset.structuredOriginal = JSON.stringify(entry);
+          return entry;
+        }
         if (structureType === "daily_routine" || structureType === "day_phase_schedule") {
           const start = numeric("start");
           const end = numeric("end");
@@ -1429,6 +1461,10 @@ function openForm(options) {
           editor.insertAdjacentHTML("beforeend", structuredScheduleRowMarkup(field, {
             start:6,end:18,phase:"day"
           }, nextIndex, structureType));
+        } else if (structureType === "event_schedule") {
+          editor.insertAdjacentHTML("beforeend", structuredEventScheduleRowMarkup(field, {
+            day:-1,hour:12,event_id:""
+          }, nextIndex));
         } else {
           editor.insertAdjacentHTML("beforeend", structuredLootRowMarkup(field, {
             item_id:firstItem,
@@ -3045,7 +3081,7 @@ function openCapabilitySettingsDialog(capabilityId) {
           break;
         case "structured_list": {
           const structureType = String(editorConfig.structure_type || "");
-          const isSchedule = ["daily_routine", "day_phase_schedule"].includes(structureType);
+          const isSchedule = ["daily_routine", "day_phase_schedule", "event_schedule"].includes(structureType);
           if (isSchedule || (["loot_table", "production_table"].includes(structureType) && Array.isArray(structuredOptions) && structuredOptions.length)) {
             if (parseStructuredListValue(raw, structureType) !== null) {
               type = "structured_list";
@@ -3254,6 +3290,16 @@ function openCapabilitySettingsDialog(capabilityId) {
                 throw new Error("Количество в строке производства №" + (rowIndex + 1) + " должно быть целым числом от 1 до 999999.");
               }
               return {...entry, item_id:itemId, amount_per_cycle:amount};
+            }));
+          } else if (structureType === "event_schedule") {
+            value = JSON.stringify(entries.map((entry, rowIndex) => {
+              if (!entry || typeof entry !== "object" || Array.isArray(entry)) throw new Error("Событие №" + (rowIndex + 1) + " имеет неверный формат.");
+              const day = Number(entry.day);
+              const hour = Number(entry.hour);
+              const eventId = String(entry.event_id ?? "").trim();
+              if (!Number.isInteger(day) || day < -1) throw new Error("День события №" + (rowIndex + 1) + " должен быть целым числом от -1 (любой день).");
+              if (!Number.isFinite(hour) || hour < 0 || hour > 24) throw new Error("Время события №" + (rowIndex + 1) + " должно быть от 0 до 24 часов.");
+              return {...entry, day, hour, event_id:eventId};
             }));
           } else if (structureType === "daily_routine" || structureType === "day_phase_schedule") {
             const valueKey = structureType === "daily_routine" ? "action" : "phase";
