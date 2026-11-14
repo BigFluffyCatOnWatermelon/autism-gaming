@@ -4,6 +4,7 @@ const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic
 const CapabilityDefinitionScript = preload("res://scripts/object_system/object_capability_definition.gd")
 const CapabilitySelectionScript = preload("res://scripts/object_system/object_capability_selection.gd")
 const BackendScript = preload("res://addons/web_object_builder/services/object_builder_backend.gd")
+const GameplayTables = preload("res://scripts/object_system/object_gameplay_table_service.gd")
 
 var failures := PackedStringArray()
 
@@ -335,8 +336,16 @@ func _run_tests() -> void:
 				world_output_descriptor = descriptor
 				break
 	_expect(not world_output_descriptor.is_empty(), "legacy production table descriptor is present for world time")
+	if not world_output_descriptor.is_empty():
+		var world_production_config: Dictionary = world_output_descriptor.get("editor_config", {})
+		_expect(str(world_production_config.get("structure_type", "")) == "production_table", "world time shares the production table editor schema")
+		var world_production_errors := ObjectComponentCatalog._validate_setting_metadata(
+			world_output_descriptor,
+			"production_table_json",
+			"has_periodic_output"
+		)
+		_expect(world_production_errors.is_empty(), "world time production editor metadata passes schema validation")
 
-	var GameplayTables := preload("res://scripts/object_system/object_gameplay_table_service.gd")
 	var normalized_production := GameplayTables.normalize_production_table([
 		{"item_id":"milk","amount_per_cycle":2},
 		{"item_id":"egg","amount":3}
@@ -344,6 +353,13 @@ func _run_tests() -> void:
 	_expect(normalized_production.size() == 2, "production table normalizer supports multiple item outputs")
 	_expect(int(normalized_production[0].get("amount_per_cycle", 0)) == 2, "production table keeps amount_per_cycle")
 	_expect(str(normalized_production[1].get("item_id", "")) == "egg" and int(normalized_production[1].get("amount_per_cycle", 0)) == 3, "production normalizer accepts the legacy amount alias")
+	var legacy_production := GameplayTables.load_production_table(
+		"",
+		"milk",
+		1,
+		JSON.stringify([{"item_id":"milk","amount_per_cycle":2},{"item_id":"egg","amount_per_cycle":3}])
+	)
+	_expect(legacy_production.size() == 2, "runtime loader prefers the multi-output legacy table over the single-output fallback")
 
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
