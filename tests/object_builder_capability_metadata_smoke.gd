@@ -268,6 +268,42 @@ func _run_tests() -> void:
 		var backend_loot_options: Array = backend_loot_config.get("reference_options", [])
 		_expect(not backend_loot_options.is_empty(), "Web loot editor receives item catalog options from backend")
 
+	var crafting_component := ObjectComponentCatalog.create_definition("supports_item_crafting")
+	_expect(crafting_component != null, "inventory crafting component is registered")
+	var recipe_descriptor: Dictionary = {}
+	if crafting_component != null:
+		for descriptor in crafting_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "recipes_json":
+				recipe_descriptor = descriptor
+				break
+	_expect(not recipe_descriptor.is_empty(), "legacy recipe table descriptor is present")
+	if not recipe_descriptor.is_empty():
+		_expect(str(recipe_descriptor.get("editor", "")) == "structured_object", "legacy recipe table uses a specialized structured object editor")
+		_expect(str(recipe_descriptor.get("level", "")) == "Expert", "legacy recipe fallback stays in Expert settings")
+		var recipe_editor_config: Dictionary = recipe_descriptor.get("editor_config", {})
+		_expect(str(recipe_editor_config.get("structure_type", "")) == "recipe_table", "recipe editor declares its structured data type")
+		_expect(str(recipe_editor_config.get("reference_type", "")) == "item", "recipe editor references the item catalog")
+		var recipe_metadata_errors := ObjectComponentCatalog._validate_setting_metadata(
+			recipe_descriptor,
+			"recipes_json",
+			"supports_item_crafting"
+		)
+		_expect(recipe_metadata_errors.is_empty(), "structured recipe editor metadata passes schema validation")
+
+	var backend_recipe_descriptor: Dictionary = {}
+	for capability_data in backend_capabilities.get("items", []):
+		for descriptor in capability_data.get("settingsSchema", []):
+			if str(descriptor.get("setting_key", "")) == "recipes_json":
+				backend_recipe_descriptor = descriptor
+				break
+		if not backend_recipe_descriptor.is_empty():
+			break
+	_expect(not backend_recipe_descriptor.is_empty(), "merged crafting capability exposes its recipe setting to Web")
+	if not backend_recipe_descriptor.is_empty():
+		var backend_recipe_config: Dictionary = backend_recipe_descriptor.get("editor_config", {})
+		var backend_recipe_options: Array = backend_recipe_config.get("reference_options", [])
+		_expect(not backend_recipe_options.is_empty(), "Web recipe editor receives item catalog options from backend")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
