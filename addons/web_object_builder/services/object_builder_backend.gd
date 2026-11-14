@@ -3528,7 +3528,7 @@ func _get_capabilities() -> Dictionary:
 			var reference_type := ""
 			if str(setting.get("editor", "")) == "catalog_reference":
 				reference_type = str(setting.get("reference_type", "")).strip_edges().to_lower()
-			elif str(setting.get("editor", "")) == "structured_list":
+			elif str(setting.get("editor", "")) in ["structured_list", "structured_object"]:
 				var editor_config_value: Variant = setting.get("editor_config", {})
 				if editor_config_value is Dictionary:
 					reference_type = str(editor_config_value.get("reference_type", "")).strip_edges().to_lower()
@@ -3537,7 +3537,7 @@ func _get_capabilities() -> Dictionary:
 					reference_options_by_type[reference_type] = _get_setting_reference_options(reference_type)
 				if str(setting.get("editor", "")) == "catalog_reference":
 					serialized_setting["reference_options"] = reference_options_by_type[reference_type]
-				elif str(setting.get("editor", "")) == "structured_list":
+				elif str(setting.get("editor", "")) in ["structured_list", "structured_object"]:
 					var editor_config: Dictionary = serialized_setting.get("editor_config", {})
 					editor_config["reference_options"] = reference_options_by_type[reference_type]
 					serialized_setting["editor_config"] = editor_config
