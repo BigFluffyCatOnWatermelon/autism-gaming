@@ -441,6 +441,23 @@ func _run_tests() -> void:
 	_expect(int(normalized_event_schedule[0].get("day", 0)) == -1 and float(normalized_event_schedule[0].get("hour", 0.0)) == 9.5, "event schedule keeps day and hour")
 	_expect(normalized_event_schedule[0].get("payload", {}).get("stall_count", 0) == 4, "event schedule preserves arbitrary event payload fields")
 
+	var spawn_conditions_component := ObjectComponentCatalog.create_definition("has_spawn_conditions")
+	_expect(spawn_conditions_component != null, "spawn conditions component is registered")
+	var spawn_conditions_descriptor: Dictionary = {}
+	if spawn_conditions_component != null:
+		for descriptor in spawn_conditions_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "conditions_json":
+				spawn_conditions_descriptor = descriptor
+				break
+	_expect(not spawn_conditions_descriptor.is_empty(), "spawn conditions descriptor is present")
+	if not spawn_conditions_descriptor.is_empty():
+		_expect(str(spawn_conditions_descriptor.get("editor", "")) == "structured_object", "spawn conditions use a visual StructuredObject editor")
+		_expect(str(spawn_conditions_descriptor.get("level", "")) == "Expert", "spawn conditions fallback stays in Expert settings")
+		var spawn_conditions_config: Dictionary = spawn_conditions_descriptor.get("editor_config", {})
+		_expect(str(spawn_conditions_config.get("structure_type", "")) == "spawn_conditions", "spawn conditions declare their schema type")
+		var spawn_conditions_errors := ObjectComponentCatalog._validate_setting_metadata(spawn_conditions_descriptor, "conditions_json", "has_spawn_conditions")
+		_expect(spawn_conditions_errors.is_empty(), "spawn conditions editor metadata passes validation")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
