@@ -493,6 +493,9 @@ func set_setting(key: String, value: Variant) -> bool:
 		"Vector2":
 			if typeof(value) != TYPE_VECTOR2:
 				return false
+		"Color":
+			if typeof(value) != TYPE_COLOR:
+				return false
 		_:
 			return false
 
@@ -617,5 +620,7 @@ func _variant_type_for_setting(value_type: String) -> int:
 			return TYPE_BOOL
 		"Vector2":
 			return TYPE_VECTOR2
+		"Color":
+			return TYPE_COLOR
 		_:
 			return TYPE_NIL
