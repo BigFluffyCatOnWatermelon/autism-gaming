@@ -1362,7 +1362,6 @@ function openForm(options) {
         }
         const ingredients = {};
         const ingredientRows = [...card.querySelectorAll("[data-recipe-ingredient]")];
-        if (!ingredientRows.length) errors.push("Добавь хотя бы один ингредиент в рецепт №" + (index + 1) + ".");
         ingredientRows.forEach((row, ingredientIndex) => {
           const itemId = String(row.querySelector("[data-ingredient-item]")?.value || "").trim();
           const amountRaw = String(row.querySelector("[data-ingredient-amount]")?.value ?? "").trim();
@@ -3040,6 +3039,11 @@ function openCapabilitySettingsDialog(capabilityId) {
       });
       root.querySelectorAll("[data-create-table-path]").forEach(button => {
         button.onclick = async () => {
+          const structuredRecipeEditor = root.querySelector("[data-structured-recipe-table]");
+          if (structuredRecipeEditor?.dataset.validationMessage) {
+            toast(structuredRecipeEditor.dataset.validationMessage, true);
+            return;
+          }
           const key = button.dataset.createTablePath;
           const input = root.querySelector('[data-dialog-field="' + key + '"]');
           if (!input || !window.ObjectBuilderHost?.isEmbedded) {
