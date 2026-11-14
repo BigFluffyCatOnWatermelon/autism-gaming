@@ -52,7 +52,7 @@
 | animals | has_happiness | starting_happiness | Начальное настроение | Float | 50.0 | 0.0 | 100.0 | Настроение | — |
 | animals | has_happiness | feed_bonus | Бонус за кормление | Float | 5.0 | 0.0 | 100.0 | Настроение | — |
 | animals | has_happiness | pet_bonus | Бонус за поглаживание | Float | 10.0 | 0.0 | 100.0 | Настроение | — |
-| animals | has_daily_routine | schedule_json | Расписание JSON | String | "[{\"start\":6,\"end\":12,\"action\":\"graze\"}]" | — | — | Распорядок | — |
+| animals | has_daily_routine | schedule_json | Расписание действий | String | "[{\"start\":6,\"end\":12,\"action\":\"graze\"}]" | — | — | Распорядок | — |
 | animals | has_daily_routine | default_action | Действие по умолчанию | String | "idle" | — | — | Распорядок | — |
 | animals | can_be_mounted | mount_speed | Скорость верхом | Float | 120.0 | 0.0 | 10000.0 | Верховая езда | — |
 | animals | can_migrate | migration_by_season_json | Маршруты миграции JSON | String | "{}" | — | — | Миграция | — |
@@ -353,7 +353,7 @@
 | world_generation | supports_region_rules | allowed_regions_csv | Разрешённые регионы | String | "" | — | — | Регионы | — |
 | world_generation | supports_region_rules | blocked_regions_csv | Запрещённые регионы | String | "" | — | — | Регионы | — |
 | world_generation | supports_region_rules | region_rules_json | Правила регионов JSON | String | "{}" | — | — | Регионы | — |
-| world_time | has_day_night_schedule | schedule_json | Фазы суток JSON | String | "[{\"start\":6,\"end\":18,\"phase\":\"day\"},{\"start\":18,\"end\":6,\"phase\":\"night\"}]" | — | — | Сутки | — |
+| world_time | has_day_night_schedule | schedule_json | Фазы суток | String | "[{\"start\":6,\"end\":18,\"phase\":\"day\"},{\"start\":18,\"end\":6,\"phase\":\"night\"}]" | — | — | Сутки | — |
 | world_time | has_day_night_schedule | default_phase | Фаза по умолчанию | String | "day" | — | — | Сутки | — |
 | world_time | changes_by_season | seasonal_values_json | Значения сезонов JSON | String | "{}" | — | — | Сезоны | — |
 | world_time | has_timed_activation | delay_seconds | Задержка активации | Float | 2.0 | 0.0 | 31536000.0 | Таймер | — |
