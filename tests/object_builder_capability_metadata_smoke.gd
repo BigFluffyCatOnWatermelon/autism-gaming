@@ -242,6 +242,7 @@ func _run_tests() -> void:
 	_expect(not loot_descriptor.is_empty(), "legacy loot table descriptor is present")
 	if not loot_descriptor.is_empty():
 		_expect(str(loot_descriptor.get("editor", "")) == "structured_list", "legacy loot table uses a structured visual editor")
+		_expect(str(loot_descriptor.get("level", "")) == "Expert", "legacy loot table editor stays in Expert settings")
 		var loot_editor_config: Dictionary = loot_descriptor.get("editor_config", {})
 		_expect(str(loot_editor_config.get("structure_type", "")) == "loot_table", "loot editor declares its structured data type")
 		_expect(str(loot_editor_config.get("reference_type", "")) == "item", "loot editor references the item catalog")
