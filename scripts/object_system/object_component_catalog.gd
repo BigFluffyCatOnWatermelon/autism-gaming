@@ -715,7 +715,7 @@ static func _validate_setting_metadata(
 						setting_key,
 						component_id
 					])
-			elif structure_type in ["daily_routine", "day_phase_schedule"]:
+			elif structure_type in ["daily_routine", "day_phase_schedule", "event_schedule"]:
 				if value_type != "String":
 					errors.append("Legacy schedule '%s' компонента '%s' должна сериализоваться как String до миграции." % [
 						setting_key,
