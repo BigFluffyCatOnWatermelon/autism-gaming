@@ -711,10 +711,28 @@ static func _validate_setting_metadata(
 					structure_type
 				])
 		elif editor == "structured_object":
-			if str(editor_config.get("structure_type", "")).strip_edges().is_empty():
+			var structure_type := str(editor_config.get("structure_type", "")).strip_edges().to_lower()
+			if structure_type.is_empty():
 				errors.append("StructuredObject настройки '%s' компонента '%s' должна объявлять structure_type." % [
 					setting_key,
 					component_id
+				])
+			elif structure_type == "recipe_table":
+				if value_type != "String":
+					errors.append("Legacy recipe table '%s' компонента '%s' должна сериализоваться как String до миграции." % [
+					setting_key,
+					component_id
+				])
+				if str(editor_config.get("reference_type", "")).strip_edges().to_lower() != "item":
+					errors.append("Recipe table '%s' компонента '%s' должна ссылаться на каталог предметов." % [
+					setting_key,
+					component_id
+				])
+			else:
+				errors.append("У настройки '%s' компонента '%s' неизвестный StructuredObject type: %s." % [
+					setting_key,
+					component_id,
+					structure_type
 				])
 
 	var options_value: Variant = descriptor.get("options", [])
