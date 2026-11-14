@@ -231,6 +231,42 @@ func _run_tests() -> void:
 	var tool_reference_options := backend._get_setting_reference_options("tool")
 	_expect(not tool_reference_options.is_empty(), "tool references are filtered from the tools item category")
 
+	var loot_component := ObjectComponentCatalog.create_definition("drops_loot_on_destroy")
+	_expect(loot_component != null, "destruction loot component is registered")
+	var loot_descriptor: Dictionary = {}
+	if loot_component != null:
+		for descriptor in loot_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "loot_table_json":
+				loot_descriptor = descriptor
+				break
+	_expect(not loot_descriptor.is_empty(), "legacy loot table descriptor is present")
+	if not loot_descriptor.is_empty():
+		_expect(str(loot_descriptor.get("editor", "")) == "structured_list", "legacy loot table uses a structured visual editor")
+		var loot_editor_config: Dictionary = loot_descriptor.get("editor_config", {})
+		_expect(str(loot_editor_config.get("structure_type", "")) == "loot_table", "loot editor declares its structured data type")
+		_expect(str(loot_editor_config.get("reference_type", "")) == "item", "loot editor references the item catalog")
+		var loot_metadata_errors := ObjectComponentCatalog._validate_setting_metadata(
+			loot_descriptor,
+			"loot_table_json",
+			"drops_loot_on_destroy"
+		)
+		_expect(loot_metadata_errors.is_empty(), "structured loot editor metadata passes schema validation")
+
+	var backend_capabilities := backend._get_capabilities()
+	var backend_loot_descriptor: Dictionary = {}
+	for capability_data in backend_capabilities.get("items", []):
+		for descriptor in capability_data.get("settingsSchema", []):
+			if str(descriptor.get("setting_key", "")) == "loot_table_json":
+				backend_loot_descriptor = descriptor
+				break
+		if not backend_loot_descriptor.is_empty():
+			break
+	_expect(not backend_loot_descriptor.is_empty(), "merged destruction capability exposes its loot setting to Web")
+	if not backend_loot_descriptor.is_empty():
+		var backend_loot_config: Dictionary = backend_loot_descriptor.get("editor_config", {})
+		var backend_loot_options: Array = backend_loot_config.get("reference_options", [])
+		_expect(not backend_loot_options.is_empty(), "Web loot editor receives item catalog options from backend")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
