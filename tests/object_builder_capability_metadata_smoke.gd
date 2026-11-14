@@ -417,6 +417,30 @@ func _run_tests() -> void:
 	_expect(float(midnight_schedule[0].get("start", -1)) == 18.0 and float(midnight_schedule[0].get("end", -1)) == 6.0, "schedule normalizer keeps interval boundaries")
 	_expect(bool(midnight_schedule[0].get("custom_flag", false)), "schedule normalizer preserves custom event fields")
 
+	var event_schedule_component := ObjectComponentCatalog.create_definition("supports_event_schedule")
+	_expect(event_schedule_component != null, "event schedule component is registered")
+	var event_schedule_descriptor: Dictionary = {}
+	if event_schedule_component != null:
+		for descriptor in event_schedule_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "events_json":
+				event_schedule_descriptor = descriptor
+				break
+	_expect(not event_schedule_descriptor.is_empty(), "event schedule descriptor is present")
+	if not event_schedule_descriptor.is_empty():
+		_expect(str(event_schedule_descriptor.get("editor", "")) == "structured_list", "event schedule uses a visual StructuredList editor")
+		_expect(str(event_schedule_descriptor.get("level", "")) == "Expert", "event schedule table stays in Expert settings")
+		var event_schedule_config: Dictionary = event_schedule_descriptor.get("editor_config", {})
+		_expect(str(event_schedule_config.get("structure_type", "")) == "event_schedule", "event schedule declares its data shape")
+		var event_schedule_errors := ObjectComponentCatalog._validate_setting_metadata(event_schedule_descriptor, "events_json", "supports_event_schedule")
+		_expect(event_schedule_errors.is_empty(), "event schedule editor metadata passes validation")
+
+	var normalized_event_schedule := GameplayTables.normalize_schedule([
+		{"day":-1,"hour":9.5,"event_id":"market_open","payload":{"stall_count":4}}
+	])
+	_expect(normalized_event_schedule.size() == 1, "event schedule normalizer accepts an any-day event")
+	_expect(int(normalized_event_schedule[0].get("day", 0)) == -1 and float(normalized_event_schedule[0].get("hour", 0.0)) == 9.5, "event schedule keeps day and hour")
+	_expect(normalized_event_schedule[0].get("payload", {}).get("stall_count", 0) == 4, "event schedule preserves arbitrary event payload fields")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
