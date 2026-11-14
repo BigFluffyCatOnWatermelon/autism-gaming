@@ -3,9 +3,9 @@
 - Этап 2 продвинут: компонентный descriptor нормализуется и валидируется; capability overlay ограничен presentation metadata; значение/default/range/required имеют канонический источник в component definition.
 - Основной Web inspector переведён на metadata-driven renderer с группами и уровнями Basic/Advanced/Expert. Подключены стандартные контроли Switch, Number, Slider/Range, Text, Multiline Text, Enum, Vector2 и Color.
 - Item catalog picker подключён для `pickup.item_id`, `animals.resource_item_id` и `world_time.output_item_id` через `ItemCatalogService`; UI показывает названия, данные сохраняют стабильные IDs.
-- Сырые JSON/CSV и непомеченные ID скрыты из обычного редактора механик. Реализованы визуальные редакторы legacy loot table, recipe table, multi-output production и расписаний daily routine/day-night (часы, текстовое действие/фаза, переход через полночь и перестановка строк). Runtime-форматы и дополнительные ключи строк сохраняются. Event schedules и другие составные редакторы ещё не завершены. Низкоуровневый Components inspector также остаётся отдельным пунктом унификации.
+- Сырые JSON/CSV и непомеченные ID скрыты из обычного редактора механик. Реализованы визуальные редакторы legacy loot table, recipe table, multi-output production, daily routine/day-night и event schedule. В событиях редактируются день/час/необязательный ID; произвольный payload сохраняется, но пока не имеет отдельных UI-контролов. Другие составные редакторы ещё не завершены. Низкоуровневый Components inspector также остаётся отдельным пунктом унификации.
 - Smoke-тесты расширены, но не запускались: Godot отсутствует в доступной рабочей среде. Статический анализ исходников не означает подтверждённую runtime/GUI работу.
-- Следующий технический приоритет: визуальные редакторы event schedules/conditions/routes и других структур, typed references для инструментов/объектов/ресурсов/таблиц, унификация Components inspector; затем ручная приёмка в настольном Godot.
+- Следующий технический приоритет: визуальные редакторы conditions/routes и других структур, typed references для инструментов/объектов/ресурсов/таблиц, унификация Components inspector; затем ручная приёмка в настольном Godot.
 
 ## Доступность 100 пакетных механик — 2026-11-08
 
