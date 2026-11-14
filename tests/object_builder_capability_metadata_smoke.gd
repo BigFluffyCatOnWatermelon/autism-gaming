@@ -192,6 +192,19 @@ func _run_tests() -> void:
 			break
 	_expect(invalid_default_range_rejected, "numeric default must stay inside its declared range")
 
+	_expect(
+		ComponentDefinitionScript._default_editor_for_setting("String", "prompt_text") == "text",
+		"plain human-readable string settings use a text editor"
+	)
+	_expect(
+		ComponentDefinitionScript._default_editor_for_setting("String", "required_tool_id") == "unspecified",
+		"identifier strings are not exposed as unrestricted text inputs"
+	)
+	_expect(
+		ComponentDefinitionScript._default_editor_for_setting("String", "loot_table_json") == "unspecified",
+		"structured JSON strings are not exposed as textareas"
+	)
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
