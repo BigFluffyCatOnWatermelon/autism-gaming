@@ -1061,13 +1061,63 @@ function structuredEventScheduleRowMarkup(field, entry, index) {
       '<button type="button" class="btn small danger" data-structured-remove title="Удалить событие" aria-label="Удалить событие">×</button>' +
     '</div></div>';
 }
+function structuredConditionValueRowMarkup(value) {
+  return '<div class="structured-condition-value-row" data-condition-value-row>' +
+    '<input type="text" data-condition-value value="' + esc(value ?? "") + '" placeholder="ID">' +
+    '<button type="button" class="btn small danger" data-condition-remove aria-label="Удалить значение">×</button>' +
+  '</div>';
+}
+function structuredConditionListMarkup(key, label, values) {
+  return '<section class="structured-condition-list"><header><strong>' + label + '</strong>' +
+    '<button type="button" class="btn small" data-condition-add="' + key + '">＋ Добавить</button></header>' +
+    '<div data-condition-values="' + key + '">' +
+      (Array.isArray(values) ? values : []).map(structuredConditionValueRowMarkup).join("") +
+    '</div></section>';
+}
+function structuredSpawnConditionsMarkup(key, label, requiredMark, unitMark, help, conditions) {
+  const numericFields = [
+    ["min_temperature","Мин. температура"],
+    ["max_temperature","Макс. температура"],
+    ["min_elevation","Мин. высота"],
+    ["max_elevation","Макс. высота"]
+  ];
+  return '<div class="field structured-spawn-conditions-field"><label>' + label + requiredMark + unitMark + '</label>' +
+    '<p class="structured-list-help">Пустое числовое поле означает стандартную границу runtime. Минимум не может превышать максимум.</p>' +
+    '<div class="structured-spawn-conditions" data-structured-spawn-conditions="' + esc(key) + '" data-conditions-original="' + esc(JSON.stringify(conditions)) + '">' +
+      '<input type="hidden" data-dialog-field="' + esc(key) + '" value="' + esc(JSON.stringify(conditions)) + '">' +
+      '<div class="structured-condition-ranges">' +
+        numericFields.map(([fieldKey, fieldLabel]) =>
+          '<label><span>' + fieldLabel + '</span><input type="number" step="0.1" data-condition-number="' + fieldKey + '" value="' + esc(conditions[fieldKey] ?? "") + '" placeholder="Без ограничения"></label>'
+        ).join("") +
+      '</div>' +
+      structuredConditionListMarkup("seasons","Допустимые сезоны",conditions.seasons) +
+      structuredConditionListMarkup("required_tags","Обязательные теги",conditions.required_tags) +
+    '</div>' + help + '</div>';
+}
 function parseStructuredObjectValue(value, structureType) {
-  if (structureType !== "recipe_table") return null;
+  if (!["recipe_table", "spawn_conditions"].includes(structureType)) return null;
   let parsed = value;
   if (typeof parsed === "string") {
     try { parsed = JSON.parse(parsed || "{}"); } catch (_error) { return null; }
   }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  if (structureType === "spawn_conditions") {
+    const numericKeys = ["min_temperature","max_temperature","min_elevation","max_elevation"];
+    const result = {...parsed};
+    for (const key of numericKeys) {
+      if (!Object.prototype.hasOwnProperty.call(result, key)) continue;
+      const number = Number(result[key]);
+      if (!Number.isFinite(number)) return null;
+      result[key] = number;
+    }
+    if (result.min_temperature !== undefined && result.max_temperature !== undefined && result.min_temperature > result.max_temperature) return null;
+    if (result.min_elevation !== undefined && result.max_elevation !== undefined && result.min_elevation > result.max_elevation) return null;
+    for (const key of ["seasons","required_tags"]) {
+      if (result[key] !== undefined && (!Array.isArray(result[key]) || result[key].some(value => typeof value !== "string"))) return null;
+      if (Array.isArray(result[key])) result[key] = [...result[key]];
+    }
+    return result;
+  }
   const rows = [];
   for (const rawRecipeId of Object.keys(parsed)) {
     const recipeId = String(rawRecipeId).trim();
@@ -1246,6 +1296,9 @@ function dialogFieldMarkup(field) {
     const config = field.editorConfig || {};
     const structureType = String(config.structure_type || "");
     const rows = parseStructuredObjectValue(value, structureType);
+    if (structureType === "spawn_conditions" && rows !== null) {
+      return structuredSpawnConditionsMarkup(key, label, requiredMark, unitMark, help, rows);
+    }
     if (rows === null) {
       return '<div class="field setting-unavailable-field"><label>' + label + requiredMark + '</label>' +
         '<div class="setting-unavailable">Сохранённая таблица рецептов имеет неподдерживаемый формат. Исходное значение не будет перезаписано.</div>' + help + '</div>';
@@ -1478,6 +1531,62 @@ function openForm(options) {
     });
     sync();
   });
+  fieldsHost.querySelectorAll("[data-structured-spawn-conditions]").forEach(editor => {
+    const key = editor.dataset.structuredSpawnConditions;
+    const hidden = editor.querySelector('[data-dialog-field="' + key + '"]');
+    if (!hidden) return;
+    const sync = () => {
+      let original = {};
+      try { original = JSON.parse(editor.dataset.conditionsOriginal || "{}"); } catch (_error) {}
+      const conditions = {...original};
+      const errors = [];
+      const numericKeys = ["min_temperature","max_temperature","min_elevation","max_elevation"];
+      for (const fieldKey of numericKeys) {
+        const input = editor.querySelector('[data-condition-number="' + fieldKey + '"]');
+        const raw = String(input?.value ?? "").trim();
+        if (!raw) {
+          delete conditions[fieldKey];
+          continue;
+        }
+        const number = Number(raw);
+        if (!Number.isFinite(number)) errors.push("Поле «" + fieldKey + "» должно быть конечным числом.");
+        else conditions[fieldKey] = number;
+      }
+      if (conditions.min_temperature !== undefined && conditions.max_temperature !== undefined && conditions.min_temperature > conditions.max_temperature) {
+        errors.push("Минимальная температура не может превышать максимальную.");
+      }
+      if (conditions.min_elevation !== undefined && conditions.max_elevation !== undefined && conditions.min_elevation > conditions.max_elevation) {
+        errors.push("Минимальная высота не может превышать максимальную.");
+      }
+      for (const listKey of ["seasons","required_tags"]) {
+        const list = editor.querySelector('[data-condition-values="' + listKey + '"]');
+        const values = [...(list?.querySelectorAll("[data-condition-value]") || [])]
+          .map(input => String(input.value || "").trim())
+          .filter(Boolean);
+        conditions[listKey] = [...new Set(values)];
+      }
+      hidden.value = JSON.stringify(conditions);
+      editor.dataset.validationMessage = errors[0] || "";
+    };
+    editor.addEventListener("input", sync);
+    editor.addEventListener("change", sync);
+    editor.addEventListener("click", event => {
+      const remove = event.target.closest("[data-condition-remove]");
+      if (remove) {
+        remove.closest("[data-condition-value-row]")?.remove();
+        sync();
+        return;
+      }
+      const add = event.target.closest("[data-condition-add]");
+      if (add) {
+        const listKey = add.dataset.conditionAdd;
+        const list = editor.querySelector('[data-condition-values="' + listKey + '"]');
+        list?.insertAdjacentHTML("beforeend", structuredConditionValueRowMarkup(""));
+        sync();
+      }
+    });
+    sync();
+  });
   fieldsHost.querySelectorAll("[data-structured-recipe-table]").forEach(editor => {
     const key = editor.dataset.structuredRecipeTable;
     const field = (options.fields || []).find(item => String(item.key || "") === key);
@@ -1599,7 +1708,7 @@ function openForm(options) {
   form.onsubmit = async event => {
     event.preventDefault();
     if (!pendingFormCallback) return;
-    const invalidStructuredEditor = [...fieldsHost.querySelectorAll("[data-structured-recipe-table], [data-structured-list]")].find(editor => editor.dataset.validationMessage);
+    const invalidStructuredEditor = [...fieldsHost.querySelectorAll("[data-structured-spawn-conditions], [data-structured-recipe-table], [data-structured-list]")].find(editor => editor.dataset.validationMessage);
     if (invalidStructuredEditor) {
       toast(invalidStructuredEditor.dataset.validationMessage, true);
       return;
@@ -3099,11 +3208,13 @@ function openCapabilitySettingsDialog(capabilityId) {
         }
         case "structured_object": {
           const structureType = String(editorConfig.structure_type || "");
-          if (structureType === "recipe_table" && structuredOptions.length) {
+          if (["recipe_table", "spawn_conditions"].includes(structureType) && (structureType === "spawn_conditions" || structuredOptions.length)) {
             if (parseStructuredObjectValue(raw, structureType) !== null) {
               type = "structured_object";
             } else {
-              unavailableMessage = "Сохранённая таблица рецептов не соответствует ожидаемому формату. Исходные данные сохранены без изменений.";
+              unavailableMessage = structureType === "spawn_conditions"
+                ? "Сохранённые условия появления имеют некорректный формат. Исходные данные сохранены без изменений."
+                : "Сохранённая таблица рецептов не соответствует ожидаемому формату. Исходные данные сохранены без изменений.";
             }
           } else {
             unavailableMessage = "Для этой составной структуры ещё не подключён подходящий каталог или редактор.";
@@ -3343,9 +3454,18 @@ function openCapabilitySettingsDialog(capabilityId) {
             throw new Error("Неизвестный тип структурированной таблицы: " + structureType);
           }
         } else if (descriptor.value_type === "String" && descriptor.editor === "structured_object") {
-          const recipeRows = parseStructuredObjectValue(String(value ?? "{}"), "recipe_table");
-          if (recipeRows === null) throw new Error("Таблица рецептов содержит некорректные данные.");
-          value = JSON.stringify(structuredRecipeDictionary(recipeRows));
+          const structureType = String(descriptor.editor_config?.structure_type || "");
+          if (structureType === "recipe_table") {
+            const recipeRows = parseStructuredObjectValue(String(value ?? "{}"), "recipe_table");
+            if (recipeRows === null) throw new Error("Таблица рецептов содержит некорректные данные.");
+            value = JSON.stringify(structuredRecipeDictionary(recipeRows));
+          } else if (structureType === "spawn_conditions") {
+            const conditions = parseStructuredObjectValue(String(value ?? "{}"), "spawn_conditions");
+            if (conditions === null) throw new Error("Условия появления содержат некорректные данные.");
+            value = JSON.stringify(conditions);
+          } else {
+            throw new Error("Неизвестный тип составной структуры: " + structureType);
+          }
         } else if (descriptor.value_type === "String") {
           value = String(value ?? "");
         }
