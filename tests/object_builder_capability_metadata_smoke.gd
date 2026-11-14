@@ -353,6 +353,9 @@ func _run_tests() -> void:
 	_expect(normalized_production.size() == 2, "production table normalizer supports multiple item outputs")
 	_expect(int(normalized_production[0].get("amount_per_cycle", 0)) == 2, "production table keeps amount_per_cycle")
 	_expect(str(normalized_production[1].get("item_id", "")) == "egg" and int(normalized_production[1].get("amount_per_cycle", 0)) == 3, "production normalizer accepts the legacy amount alias")
+	var runtime_legacy_table := JSON.stringify([{"item_id":"milk","amount_per_cycle":2},{"item_id":"egg","amount_per_cycle":3}])
+	var legacy_production := GameplayTables.load_production_table("", "milk", 1, runtime_legacy_table)
+	_expect(legacy_production.size() == 2, "runtime loader prefers multi-output legacy table over single-output fallback")
 	var legacy_production := GameplayTables.load_production_table(
 		"",
 		"milk",
@@ -360,6 +363,20 @@ func _run_tests() -> void:
 		JSON.stringify([{"item_id":"milk","amount_per_cycle":2},{"item_id":"egg","amount_per_cycle":3}])
 	)
 	_expect(legacy_production.size() == 2, "runtime loader prefers the multi-output legacy table over the single-output fallback")
+
+	var backend_production_descriptor: Dictionary = {}
+	for capability_data in backend_capabilities.get("items", []):
+		for descriptor in capability_data.get("settingsSchema", []):
+			if str(descriptor.get("setting_key", "")) == "production_table_json":
+				backend_production_descriptor = descriptor
+				break
+		if not backend_production_descriptor.is_empty():
+			break
+	_expect(not backend_production_descriptor.is_empty(), "backend exposes structured production table settings to Web")
+	if not backend_production_descriptor.is_empty():
+		var backend_production_config: Dictionary = backend_production_descriptor.get("editor_config", {})
+		var backend_production_options: Array = backend_production_config.get("reference_options", [])
+		_expect(not backend_production_options.is_empty(), "Web production editor receives item catalog options from backend")
 
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
