@@ -964,6 +964,49 @@ function fieldMarkup(label, key, value, type = "text", extra = "") {
   }
   return '<div class="field"><label>' + esc(label) + '</label><input data-field="' + esc(key) + '" type="' + type + '" value="' + esc(value) + '" ' + extra + '></div>';
 }
+function parseStructuredListValue(value, structureType) {
+  if (structureType !== "loot_table") return null;
+  let parsed = value;
+  if (typeof parsed === "string") {
+    try { parsed = JSON.parse(parsed || "[]"); } catch (_error) { return null; }
+  }
+  if (!Array.isArray(parsed)) return null;
+  const rows = [];
+  for (const entry of parsed) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return null;
+    const minimum = Number(entry.min ?? entry.minimum ?? 1);
+    const maximum = Number(entry.max ?? entry.maximum ?? minimum);
+    const chance = Number(entry.chance ?? 1);
+    rows.push({
+      item_id: String(entry.item_id ?? "").trim(),
+      chance,
+      min: minimum,
+      max: maximum
+    });
+  }
+  return rows;
+}
+function structuredLootRowMarkup(field, entry, index) {
+  const options = Array.isArray(field.options) ? field.options : [];
+  const currentValue = String(entry.item_id || "");
+  const found = options.some(option => String(option.value) === currentValue);
+  let itemOptions = '<option value="" ' + (!currentValue ? "selected" : "") + ' disabled>Выбери предмет…</option>';
+  if (currentValue && !found) {
+    itemOptions += '<option value="' + esc(currentValue) + '" selected disabled>Не найдено в каталоге: ' + esc(currentValue) + '</option>';
+  }
+  itemOptions += options.map(option => {
+    const optionValue = String(option.value ?? "");
+    const optionLabel = String(option.label ?? optionValue) + (option.category ? " · " + String(option.category) : "");
+    return '<option value="' + esc(optionValue) + '" ' + (optionValue === currentValue ? "selected" : "") + '>' + esc(optionLabel) + '</option>';
+  }).join("");
+  return '<div class="structured-loot-row" data-structured-row data-row-index="' + index + '">' +
+    '<label class="structured-loot-item"><span>Предмет</span><select data-structured-key="item_id">' + itemOptions + '</select></label>' +
+    '<label><span>Шанс</span><input type="number" data-structured-key="chance" min="0" max="1" step="0.01" value="' + esc(entry.chance ?? 1) + '"></label>' +
+    '<label><span>Мин.</span><input type="number" data-structured-key="min" min="0" max="999999" step="1" value="' + esc(entry.min ?? 1) + '"></label>' +
+    '<label><span>Макс.</span><input type="number" data-structured-key="max" min="0" max="999999" step="1" value="' + esc(entry.max ?? entry.min ?? 1) + '"></label>' +
+    '<button type="button" class="btn small danger structured-loot-remove" data-structured-remove aria-label="Удалить запись">×</button>' +
+    '</div>';
+}
 function dialogFieldMarkup(field) {
   const key = String(field.key || "");
   const disabled = !!field.disabled;
@@ -1005,6 +1048,22 @@ function dialogFieldMarkup(field) {
       : "";
     return '<div class="field setting-select-field"><label>' + label + requiredMark + unitMark + '</label>' + search +
       '<select data-dialog-field="' + esc(key) + '" ' + disabledAttr + ' ' + requiredAttr + '>' + optionMarkup + '</select>' + help + '</div>';
+  }
+  if (field.type === "structured_list") {
+    const config = field.editorConfig || {};
+    const structureType = String(config.structure_type || "");
+    const rows = parseStructuredListValue(value, structureType);
+    if (rows === null) {
+      return '<div class="field setting-unavailable-field"><label>' + label + requiredMark + '</label>' +
+        '<div class="setting-unavailable">Сохранённые данные таблицы имеют неподдерживаемый формат. Исходное значение не будет перезаписано.</div>' + help + '</div>';
+    }
+    return '<div class="field structured-list-field"><label>' + label + requiredMark + unitMark + '</label>' +
+      '<p class="structured-list-help">Каждая запись задаёт предмет, шанс выпадения и диапазон количества.</p>' +
+      '<div class="structured-loot-list" data-structured-list="' + esc(key) + '" data-structure-type="' + esc(structureType) + '">' +
+      '<input type="hidden" data-dialog-field="' + esc(key) + '" value="' + esc(JSON.stringify(rows)) + '">' +
+      rows.map((entry, index) => structuredLootRowMarkup(field, entry, index)).join("") +
+      '<button type="button" class="btn small structured-loot-add" data-structured-add>＋ Добавить предмет</button>' +
+      '</div>' + help + '</div>';
   }
   if (field.type === "color") {
     return '<div class="field"><label>' + label + requiredMark + unitMark + '</label>' +
@@ -1101,6 +1160,48 @@ function openForm(options) {
     const output = input.parentElement?.querySelector("span");
     if (!output) return;
     input.addEventListener("input", () => { output.textContent = input.value.toUpperCase(); });
+  });
+  fieldsHost.querySelectorAll("[data-structured-list]").forEach(editor => {
+    const key = editor.dataset.structuredList;
+    const field = (options.fields || []).find(item => String(item.key || "") === key);
+    const hidden = editor.querySelector('[data-dialog-field="' + key + '"]');
+    if (!field || !hidden) return;
+    const sync = () => {
+      const entries = [...editor.querySelectorAll("[data-structured-row]")].map(row => {
+        const value = name => row.querySelector('[data-structured-key="' + name + '"]')?.value ?? "";
+        const numeric = name => String(value(name)).trim() === "" ? null : Number(value(name));
+        return {
+          item_id: String(value("item_id")).trim(),
+          chance: numeric("chance"),
+          min: numeric("min"),
+          max: numeric("max")
+        };
+      });
+      hidden.value = JSON.stringify(entries);
+    };
+    editor.addEventListener("input", sync);
+    editor.addEventListener("change", sync);
+    editor.addEventListener("click", event => {
+      const remove = event.target.closest("[data-structured-remove]");
+      if (remove) {
+        remove.closest("[data-structured-row]")?.remove();
+        sync();
+        return;
+      }
+      const add = event.target.closest("[data-structured-add]");
+      if (add) {
+        const firstItem = Array.isArray(field.options) && field.options.length ? String(field.options[0].value) : "";
+        const nextIndex = editor.querySelectorAll("[data-structured-row]").length;
+        editor.insertAdjacentHTML("beforeend", structuredLootRowMarkup(field, {
+          item_id: firstItem,
+          chance: 1,
+          min: 1,
+          max: 1
+        }, nextIndex));
+        sync();
+      }
+    });
+    sync();
   });
   fieldsHost.querySelectorAll("[data-dialog-search-for]").forEach(search => {
     search.addEventListener("input", () => {
@@ -2578,6 +2679,9 @@ function openCapabilitySettingsDialog(capabilityId) {
     const key = String(descriptor.setting_key || descriptor.key || "");
     const editor = String(descriptor.editor || "").toLowerCase();
     const referenceOptions = Array.isArray(descriptor.reference_options) ? descriptor.reference_options : [];
+    const editorConfig = descriptor.editor_config && typeof descriptor.editor_config === "object" ? descriptor.editor_config : {};
+    const structuredOptions = Array.isArray(editorConfig.reference_options) ? editorConfig.reference_options : [];
+    const raw = valueForSetting(capability.id, descriptor);
     let type = "unavailable";
     let unavailableMessage = "Для этого параметра ещё не подключён подходящий визуальный редактор.";
     if (tableTypes[key]) {
@@ -2601,7 +2705,15 @@ function openCapabilitySettingsDialog(capabilityId) {
         case "gameplay_table":
           unavailableMessage = "Для этого типа ресурса ещё не подключён визуальный выбор.";
           break;
-        case "structured_list":
+        case "structured_list": {
+          const editorConfig = descriptor.editor_config && typeof descriptor.editor_config === "object" ? descriptor.editor_config : {};
+          if (String(editorConfig.structure_type || "") === "loot_table" && Array.isArray(editorConfig.reference_options) && editorConfig.reference_options.length) {
+            type = "structured_list";
+          } else {
+            unavailableMessage = "Для этой составной структуры ещё не подключён подходящий каталог или редактор.";
+          }
+          break;
+        }
         case "structured_object":
           unavailableMessage = "Составная структура будет доступна после подключения специализированного редактора.";
           break;
@@ -2616,7 +2728,6 @@ function openCapabilitySettingsDialog(capabilityId) {
       type = "unavailable";
       unavailableMessage = "Поле зависит от условия отображения, которое ещё не подключено в редакторе.";
     }
-    const raw = valueForSetting(capability.id, descriptor);
     return {
       key: "mechanic-setting-" + index,
       label: descriptor.display_name || descriptor.label || key,
@@ -2624,7 +2735,8 @@ function openCapabilitySettingsDialog(capabilityId) {
       type,
       editable: type !== "unavailable" && isVisible,
       unavailableMessage,
-      options: editor === "catalog_reference" ? referenceOptions : (Array.isArray(descriptor.options) ? descriptor.options : []),
+      options: editor === "catalog_reference" ? referenceOptions : (editor === "structured_list" ? structuredOptions : (Array.isArray(descriptor.options) ? descriptor.options : [])),
+      editorConfig,
       searchable: editor === "catalog_reference",
       placeholder: editor === "catalog_reference" ? "Выбери предмет…" : "",
       tableType: tableTypes[key] || "",
@@ -2748,6 +2860,28 @@ function openCapabilitySettingsDialog(capabilityId) {
         } else if (descriptor.value_type === "Color") {
           const current = valueForSetting(capability.id, descriptor);
           value = parseColorValue(value, current && typeof current === "object" ? current.a : 1);
+        } else if (descriptor.value_type === "String" && descriptor.editor === "structured_list") {
+          let entries;
+          try { entries = JSON.parse(String(value ?? "[]")); }
+          catch (_error) { throw new Error("Таблица добычи содержит некорректные данные."); }
+          if (!Array.isArray(entries)) throw new Error("Таблица добычи должна быть списком записей.");
+          value = JSON.stringify(entries.map((entry, rowIndex) => {
+            if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+              throw new Error("Запись добычи №" + (rowIndex + 1) + " имеет неверный формат.");
+            }
+            const itemId = String(entry.item_id || "").trim();
+            const chance = Number(entry.chance);
+            const minimum = Number(entry.min);
+            const maximum = Number(entry.max);
+            if (!itemId) throw new Error("Выбери предмет в записи добычи №" + (rowIndex + 1) + ".");
+            if (!Number.isFinite(chance) || chance < 0 || chance > 1) {
+              throw new Error("Шанс в записи №" + (rowIndex + 1) + " должен быть от 0 до 1.");
+            }
+            if (!Number.isInteger(minimum) || !Number.isInteger(maximum) || minimum < 0 || maximum < minimum) {
+              throw new Error("Количество в записи №" + (rowIndex + 1) + " должно быть целым, неотрицательным и с максимумом не меньше минимума.");
+            }
+            return {item_id:itemId, chance, min:minimum, max:maximum};
+          }));
         } else if (descriptor.value_type === "String") {
           value = String(value ?? "");
         }
