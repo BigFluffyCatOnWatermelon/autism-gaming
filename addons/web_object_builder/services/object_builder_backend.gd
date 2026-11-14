@@ -3525,11 +3525,22 @@ func _get_capabilities() -> Dictionary:
 		var schema: Array[Dictionary] = []
 		for setting in ObjectCapabilityCatalog.get_settings_schema(capability_id):
 			var serialized_setting: Dictionary = _to_json(setting)
+			var reference_type := ""
 			if str(setting.get("editor", "")) == "catalog_reference":
-				var reference_type := str(setting.get("reference_type", "")).strip_edges().to_lower()
+				reference_type = str(setting.get("reference_type", "")).strip_edges().to_lower()
+			elif str(setting.get("editor", "")) == "structured_list":
+				var editor_config_value: Variant = setting.get("editor_config", {})
+				if editor_config_value is Dictionary:
+					reference_type = str(editor_config_value.get("reference_type", "")).strip_edges().to_lower()
+			if not reference_type.is_empty():
 				if not reference_options_by_type.has(reference_type):
 					reference_options_by_type[reference_type] = _get_setting_reference_options(reference_type)
-				serialized_setting["reference_options"] = reference_options_by_type[reference_type]
+				if str(setting.get("editor", "")) == "catalog_reference":
+					serialized_setting["reference_options"] = reference_options_by_type[reference_type]
+				elif str(setting.get("editor", "")) == "structured_list":
+					var editor_config: Dictionary = serialized_setting.get("editor_config", {})
+					editor_config["reference_options"] = reference_options_by_type[reference_type]
+					serialized_setting["editor_config"] = editor_config
 			schema.append(serialized_setting)
 		items.append({
 			"id": capability_id,
