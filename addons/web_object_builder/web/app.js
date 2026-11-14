@@ -944,6 +944,121 @@ function fieldMarkup(label, key, value, type = "text", extra = "") {
   }
   return '<div class="field"><label>' + esc(label) + '</label><input data-field="' + esc(key) + '" type="' + type + '" value="' + esc(value) + '" ' + extra + '></div>';
 }
+function dialogFieldMarkup(field) {
+  const key = String(field.key || "");
+  const disabled = !!field.disabled;
+  const required = !!field.required;
+  const value = field.value ?? "";
+  const label = esc(field.label || "");
+  const requiredMark = required ? '<span class="field-required" aria-label="Обязательное поле"> *</span>' : "";
+  const unitMark = field.unit ? '<small class="setting-unit">' + esc(field.unit) + '</small>' : "";
+  const help = field.description ? '<small class="field-help">' + esc(field.description) + '</small>' : "";
+  const disabledAttr = disabled ? "disabled" : "";
+  const requiredAttr = required ? "required" : "";
+  if (field.type === "unavailable") {
+    return '<div class="field setting-unavailable-field"><label>' + label + requiredMark + unitMark + '</label>' +
+      '<div class="setting-unavailable">' + esc(field.unavailableMessage || "Для этого параметра ещё не подключён подходящий визуальный редактор.") + '</div>' +
+      help + '</div>';
+  }
+  if (field.type === "checkbox") {
+    return '<div class="field dialog-checkbox-field"><label><input data-dialog-field="' + esc(key) + '" type="checkbox" ' +
+      (value ? "checked" : "") + ' ' + disabledAttr + ' ' + requiredAttr + '> ' + label + requiredMark + unitMark + '</label>' + help + '</div>';
+  }
+  if (field.type === "select" || field.type === "catalog_reference") {
+    const options = Array.isArray(field.options) ? field.options : [];
+    const currentValue = String(value ?? "");
+    const currentExists = options.some(option => String(option.value) === currentValue);
+    let optionMarkup = '<option value="" ' + (!currentValue ? "selected" : "") + ' disabled>' +
+      esc(field.placeholder || (field.type === "catalog_reference" ? "Выбери предмет…" : "Выбери значение…")) + '</option>';
+    if (currentValue && !currentExists) {
+      optionMarkup += '<option value="' + esc(currentValue) + '" selected disabled>Не найдено в каталоге: ' + esc(currentValue) + '</option>';
+    }
+    optionMarkup += options.map(option => {
+      const optionValue = String(option.value ?? "");
+      const optionLabel = String(option.label ?? optionValue);
+      const fullLabel = option.category ? optionLabel + " · " + String(option.category) : optionLabel;
+      return '<option value="' + esc(optionValue) + '" ' +
+        (optionValue === currentValue ? "selected" : "") + '>' + esc(fullLabel) + '</option>';
+    }).join("");
+    const search = field.searchable
+      ? '<input class="catalog-option-search" type="search" data-dialog-search-for="' + esc(key) + '" placeholder="Поиск по каталогу…" ' + disabledAttr + '>'
+      : "";
+    return '<div class="field setting-select-field"><label>' + label + requiredMark + unitMark + '</label>' + search +
+      '<select data-dialog-field="' + esc(key) + '" ' + disabledAttr + ' ' + requiredAttr + '>' + optionMarkup + '</select>' + help + '</div>';
+  }
+  if (field.type === "vector2") {
+    const x = value && typeof value === "object" ? Number(value.x) || 0 : 0;
+    const y = value && typeof value === "object" ? Number(value.y) || 0 : 0;
+    return '<div class="field"><label>' + label + requiredMark + unitMark + '</label>' +
+      '<div class="setting-vector2"><label>X<input type="number" data-dialog-vector-x="' + esc(key) + '" value="' + esc(x) + '" step="' + esc(field.step ?? 0.1) + '" ' + disabledAttr + ' ' + requiredAttr + '></label>' +
+      '<label>Y<input type="number" data-dialog-vector-y="' + esc(key) + '" value="' + esc(y) + '" step="' + esc(field.step ?? 0.1) + '" ' + disabledAttr + ' ' + requiredAttr + '></label></div>' + help + '</div>';
+  }
+  if (field.type === "slider") {
+    return '<div class="field setting-slider-field"><label>' + label + requiredMark + unitMark + '</label>' +
+      '<div class="setting-slider-row"><input data-dialog-field="' + esc(key) + '" type="range" value="' + esc(value) + '" ' +
+      (field.min !== undefined ? 'min="' + esc(field.min) + '"' : "") + ' ' +
+      (field.max !== undefined ? 'max="' + esc(field.max) + '"' : "") + ' ' +
+      (field.step !== undefined ? 'step="' + esc(field.step) + '"' : "") + ' ' + disabledAttr + ' ' + requiredAttr + '>' +
+      '<output data-dialog-range-output="' + esc(key) + '">' + esc(value) + (field.unit ? " " + esc(field.unit) : "") + '</output></div>' + help + '</div>';
+  }
+  if (field.type === "textarea") {
+    return '<div class="field"><label>' + label + requiredMark + unitMark + '</label><textarea data-dialog-field="' + esc(key) + '" ' +
+      disabledAttr + ' ' + requiredAttr + '>' + esc(value) + '</textarea>' + help + '</div>';
+  }
+  if (field.type === "resource_path") {
+    return '<div class="field"><label>' + label + requiredMark + unitMark + '</label><div class="setting-resource-row">' +
+      '<input data-dialog-field="' + esc(key) + '" type="text" value="' + esc(value) + '" ' + disabledAttr + ' ' + requiredAttr + '>' +
+      '<button class="btn small" type="button" data-pick-table-path="' + esc(key) + '" data-table-type="' + esc(field.tableType || "") + '" ' + disabledAttr + '>Выбрать .tres</button>' +
+      (field.legacyKey ? '<button class="btn small" type="button" data-create-table-path="' + esc(key) + '" data-table-type="' + esc(field.tableType || "") + '" data-legacy-key="' + esc(field.legacyKey) + '" ' + disabledAttr + '>Импортировать старые данные</button>' : '') +
+      '</div>' + help + '</div>';
+  }
+  const inputType = field.type === "number" ? "number" : "text";
+  return '<div class="field"><label>' + label + requiredMark + unitMark + '</label><input data-dialog-field="' + esc(key) + '" type="' + inputType +
+    '" value="' + esc(value) + '" ' + (field.min !== undefined ? 'min="' + esc(field.min) + '"' : "") + ' ' +
+    (field.max !== undefined ? 'max="' + esc(field.max) + '"' : "") + ' ' +
+    (field.step !== undefined ? 'step="' + esc(field.step) + '"' : "") + ' ' +
+    (field.placeholder ? 'placeholder="' + esc(field.placeholder) + '"' : "") + ' ' + disabledAttr + ' ' + requiredAttr + '>' + help + '</div>';
+}
+function renderSettingGroups(fields) {
+  const groups = new Map();
+  for (const field of fields) {
+    const id = String(field.groupId || field.groupName || "settings");
+    if (!groups.has(id)) groups.set(id, {
+      id,
+      name: String(field.groupName || "Основные настройки"),
+      order: Number.isFinite(Number(field.groupOrder)) ? Number(field.groupOrder) : 0,
+      fields: []
+    });
+    groups.get(id).fields.push(field);
+  }
+  return [...groups.values()].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, "ru")).map(group => {
+    group.fields.sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
+    return '<section class="setting-group" data-setting-group="' + esc(group.id) + '">' +
+      '<h3>' + esc(group.name) + '</h3><div class="setting-group-fields">' +
+      group.fields.map(dialogFieldMarkup).join("") + '</div></section>';
+  }).join("");
+}
+function renderGroupedMechanicFields(fields) {
+  const basic = [];
+  const advanced = [];
+  const expert = [];
+  for (const field of fields) {
+    const level = String(field.level || "Basic").toLowerCase();
+    if (level === "expert") expert.push(field);
+    else if (level === "advanced") advanced.push(field);
+    else basic.push(field);
+  }
+  let markup = renderSettingGroups(basic);
+  if (advanced.length) {
+    markup += '<details class="setting-level-details"><summary>Расширенные настройки <span>' + advanced.length + '</span></summary>' +
+      renderSettingGroups(advanced) + '</details>';
+  }
+  if (expert.length) {
+    markup += '<details class="setting-level-details setting-expert-details"><summary>Экспертные настройки <span>' + expert.length + '</span></summary>' +
+      renderSettingGroups(expert) + '</details>';
+  }
+  return markup;
+}
 function openForm(options) {
   const modal = $("editorDialogModal");
   const form = $("editorDialogForm");
@@ -953,30 +1068,33 @@ function openForm(options) {
   $("editorDialogDescription").textContent = options.description || "";
   $("editorDialogSubmit").textContent = options.submitLabel || "Сохранить";
   const fieldsHost = $("editorDialogFields");
-  fieldsHost.innerHTML = (options.fields || []).map(field => {
-    const key = String(field.key || "");
-    let markup = "";
-    if (field.type === "select") {
-      markup = '<div class="field"><label>' + esc(field.label) + '</label><select data-dialog-field="' + esc(key) + '" ' + (field.disabled ? "disabled" : "") + '>' +
-        (field.options || []).map(opt => '<option value="' + esc(opt.value) + '" ' + (String(opt.value) === String(field.value) ? "selected" : "") + '>' + esc(opt.label) + '</option>').join("") + '</select>' +
-        (field.description ? '<small class="field-help">' + esc(field.description) + '</small>' : '') + '</div>';
-    } else if (field.type === "textarea") {
-      markup = '<div class="field"><label>' + esc(field.label) + '</label><textarea data-dialog-field="' + esc(key) + '" ' + (field.disabled ? "disabled" : "") + '>' + esc(field.value ?? "") + '</textarea>' +
-        (field.description ? '<small class="field-help">' + esc(field.description) + '</small>' : '') + '</div>';
-    } else if (field.type === "checkbox") {
-      markup = '<div class="field dialog-checkbox-field"><label><input data-dialog-field="' + esc(key) + '" type="checkbox" ' + (field.value ? "checked" : "") + ' ' + (field.disabled ? "disabled" : "") + '> ' + esc(field.label) + '</label>' +
-        (field.description ? '<small class="field-help">' + esc(field.description) + '</small>' : '') + '</div>';
-    } else if (field.type === "resource_path") {
-      markup = '<div class="field"><label>' + esc(field.label) + '</label><div style="display:flex;gap:8px;align-items:center"><input style="flex:1;min-width:0" data-dialog-field="' + esc(key) + '" type="text" value="' + esc(field.value ?? "") + '" ' + (field.disabled ? "disabled" : "") + '><button class="btn small" type="button" data-pick-table-path="' + esc(key) + '" data-table-type="' + esc(field.tableType || "") + '" ' + (field.disabled ? "disabled" : "") + '>Выбрать .tres</button>' +
-        (field.legacyKey ? '<button class="btn small" type="button" data-create-table-path="' + esc(key) + '" data-table-type="' + esc(field.tableType || "") + '" data-legacy-key="' + esc(field.legacyKey) + '" ' + (field.disabled ? "disabled" : "") + '>Создать из JSON</button>' : '') + '</div>' +
-        (field.description ? '<small class="field-help">' + esc(field.description) + '</small>' : '') + '</div>';
-    } else {
-      markup = '<div class="field"><label>' + esc(field.label) + '</label><input data-dialog-field="' + esc(key) + '" type="' + esc(field.type || "text") + '" value="' + esc(field.value ?? "") + '" ' + (field.min !== undefined ? 'min="' + esc(field.min) + '"' : "") + ' ' + (field.max !== undefined ? 'max="' + esc(field.max) + '"' : "") + ' ' + (field.step !== undefined ? 'step="' + esc(field.step) + '"' : "") + ' ' + (field.disabled ? "disabled" : "") + '>' +
-        (field.description ? '<small class="field-help">' + esc(field.description) + '</small>' : '') + '</div>';
-    }
-    return markup;
-  }).join("") + (options.extraMarkup || "");
+  fieldsHost.innerHTML = (options.groupedSettings
+    ? renderGroupedMechanicFields(options.fields || [])
+    : (options.fields || []).map(dialogFieldMarkup).join("")) + (options.extraMarkup || "");
   if (typeof options.onOpen === "function") options.onOpen(fieldsHost);
+  fieldsHost.querySelectorAll("[data-dialog-search-for]").forEach(search => {
+    search.addEventListener("input", () => {
+      const targetKey = search.dataset.dialogSearchFor;
+      const select = [...fieldsHost.querySelectorAll("[data-dialog-field]")].find(input => input.dataset.dialogField === targetKey);
+      if (!select) return;
+      const query = search.value.trim().toLocaleLowerCase();
+      [...select.options].forEach(option => {
+        if (!option.value) return;
+        option.hidden = !!query && !option.textContent.toLocaleLowerCase().includes(query);
+      });
+    });
+  });
+  fieldsHost.querySelectorAll("[data-dialog-range-output]").forEach(output => {
+    const targetKey = output.dataset.dialogRangeOutput;
+    const input = [...fieldsHost.querySelectorAll("[data-dialog-field]")].find(control => control.dataset.dialogField === targetKey);
+    if (!input) return;
+    const updateOutput = () => {
+      const field = (options.fields || []).find(item => String(item.key || "") === targetKey);
+      output.textContent = input.value + (field?.unit ? " " + field.unit : "");
+    };
+    input.addEventListener("input", updateOutput);
+    updateOutput();
+  });
   pendingFormCallback = options.onSubmit || null;
   form.onsubmit = async event => {
     event.preventDefault();
@@ -985,6 +1103,15 @@ function openForm(options) {
     for (const field of fieldsHost.querySelectorAll("[data-dialog-field]")) {
       const key = field.dataset.dialogField;
       values[key] = field.type === "checkbox" ? field.checked : field.value;
+    }
+    for (const xInput of fieldsHost.querySelectorAll("[data-dialog-vector-x]")) {
+      const key = xInput.dataset.dialogVectorX;
+      const yInput = [...fieldsHost.querySelectorAll("[data-dialog-vector-y]")].find(input => input.dataset.dialogVectorY === key);
+      values[key] = {
+        __type: "Vector2",
+        x: Number(xInput.value),
+        y: Number(yInput?.value ?? 0)
+      };
     }
     try {
       const accepted = await pendingFormCallback(values);
