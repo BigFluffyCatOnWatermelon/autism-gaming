@@ -3,6 +3,7 @@ extends SceneTree
 const MechanicModuleLoaderScript = preload("res://scripts/object_system/mechanic_module_loader.gd")
 const CapabilityDefinitionScript = preload("res://scripts/object_system/object_capability_definition.gd")
 const CapabilitySelectionScript = preload("res://scripts/object_system/object_capability_selection.gd")
+const BackendScript = preload("res://addons/web_object_builder/services/object_builder_backend.gd")
 
 var failures := PackedStringArray()
 
@@ -204,6 +205,31 @@ func _run_tests() -> void:
 		ComponentDefinitionScript._default_editor_for_setting("String", "loot_table_json") == "unspecified",
 		"structured JSON strings are not exposed as textareas"
 	)
+
+	var color_component := ComponentDefinitionScript.new()
+	color_component.component_id = "smoke_color"
+	color_component.setting_definitions = [{
+		"key": "tint",
+		"display_name": "Оттенок",
+		"value_type": "Color",
+		"default_value": Color.WHITE,
+		"group_name": "Внешний вид"
+	}]
+	_expect(color_component.set_setting("tint", Color(0.25, 0.5, 0.75, 1.0)), "Color setting values are accepted by component definitions")
+	_expect(color_component.get_setting("tint") == Color(0.25, 0.5, 0.75, 1.0), "Color setting values round-trip inside the component definition")
+	_expect(color_component._variant_type_for_setting("Color") == TYPE_COLOR, "Color settings expose the correct Godot Variant type")
+
+	var backend := BackendScript.new()
+	var item_reference_options := backend._get_setting_reference_options("item")
+	_expect(not item_reference_options.is_empty(), "typed item references are populated from the project item catalog")
+	var valid_reference_option := false
+	for option in item_reference_options:
+		if not str(option.get("value", "")).is_empty() and not str(option.get("label", "")).is_empty():
+			valid_reference_option = true
+			break
+	_expect(valid_reference_option, "item reference options include stable IDs and human-readable labels")
+	var tool_reference_options := backend._get_setting_reference_options("tool")
+	_expect(not tool_reference_options.is_empty(), "tool references are filtered from the tools item category")
 
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
