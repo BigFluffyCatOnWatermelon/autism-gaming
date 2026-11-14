@@ -1003,3 +1003,14 @@ button:disabled,.btn:disabled,.toolbtn:disabled{cursor:not-allowed!important;opa
   .structured-schedule-row .structured-schedule-value{grid-column:1/-1}
   .structured-schedule-actions{grid-column:1/-1;justify-content:flex-end}
 }
+
+
+/* Structured event schedule editor */
+.structured-event-row{display:grid;grid-template-columns:minmax(90px,.7fr) minmax(80px,.6fr) minmax(130px,1.3fr) auto;gap:7px;align-items:end;padding:8px;border:1px solid var(--line);border-radius:8px;background:#0d141b}
+.structured-event-row label{display:flex;flex-direction:column;gap:5px;min-width:0;color:var(--muted);font-size:9px}
+.structured-event-row input{width:100%;min-width:0;padding:7px 6px;border:1px solid var(--line2);border-radius:6px;background:#111923;color:var(--text);font-size:10px}
+@media(max-width:620px){
+  .structured-event-row{grid-template-columns:1fr 1fr}
+  .structured-event-row .structured-event-id{grid-column:1/-1}
+  .structured-event-row .structured-schedule-actions{grid-column:1/-1;justify-content:flex-end}
+}
