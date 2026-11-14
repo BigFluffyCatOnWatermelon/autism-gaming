@@ -8,7 +8,7 @@
 - Сокращённые записи `fields` разворачиваются так же, как это делает `_settings_for()` в пакетах `defense` и `destruction`.
 - Параметры, добавляемые программно при сборке компонента (например, `enabled`), не являются исходными объявлениями `settings` и должны учитываться отдельной колонкой в полном реестре.
 - В `characteristics` схема формируется динамически из defaults конкретной характеристики; значения current/min/max нельзя считать общими константами.
-- Эта часть содержит 171 исходных объявлений полей в 10 пакетах.
+- Эта часть содержит 173 исходных объявлений полей в 10 пакетах после добавления двух резервных production-table descriptors.
 
 ## Реестр полей
 
@@ -45,6 +45,7 @@
 | animals | can_produce_resources | resource_item_id | Предмет | String | "milk" | — | — | Производство | — |
 | animals | can_produce_resources | production_interval | Интервал производства | Float | 3600.0 | 0.1 | 31536000.0 | Производство | — |
 | animals | can_produce_resources | amount_per_cycle | Количество за цикл | Integer | 1 | 1 | 999999 | Производство | — |
+| animals | can_produce_resources | production_table_json | Таблица результатов (резерв) | String | "[]" | — | — | Производство | — |
 | animals | has_habitat | allowed_biomes_csv | Допустимые биомы | String | "plains,forest" | — | — | Среда | — |
 | animals | has_habitat | minimum_temperature | Минимальная температура | Float | -10.0 | -100.0 | 100.0 | Среда | — |
 | animals | has_habitat | maximum_temperature | Максимальная температура | Float | 35.0 | -100.0 | 100.0 | Среда | — |
@@ -365,6 +366,7 @@
 | world_time | has_periodic_output | output_item_id | Предмет | String | "resource" | — | — | Производство | — |
 | world_time | has_periodic_output | output_interval | Интервал | Float | 60.0 | 0.1 | 31536000.0 | Производство | — |
 | world_time | has_periodic_output | amount_per_cycle | Количество за цикл | Integer | 1 | 1 | 999999 | Производство | — |
+| world_time | has_periodic_output | production_table_json | Таблица результатов (резерв) | String | "[]" | — | — | Производство | — |
 | world_time | supports_signal_triggers | event_rules_json | Правила событий JSON | String | "{}" | — | — | Сигналы | — |
 | world_time | supports_event_schedule | events_json | События JSON | String | "[]" | — | — | Расписание | — |
 | world_time | supports_event_schedule | hour_tolerance | Допуск по времени | Float | 0.25 | 0.0 | 12.0 | Расписание | — |
