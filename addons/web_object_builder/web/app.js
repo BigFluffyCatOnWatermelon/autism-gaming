@@ -980,6 +980,7 @@ function parseStructuredListValue(value, structureType) {
     if (!String(entry.item_id ?? "").trim() || !Number.isFinite(chance) ||
         !Number.isFinite(minimum) || !Number.isFinite(maximum)) return null;
     rows.push({
+      ...entry,
       item_id: String(entry.item_id).trim(),
       chance,
       min: minimum,
@@ -1001,7 +1002,7 @@ function structuredLootRowMarkup(field, entry, index) {
     const optionLabel = String(option.label ?? optionValue) + (option.category ? " · " + String(option.category) : "");
     return '<option value="' + esc(optionValue) + '" ' + (optionValue === currentValue ? "selected" : "") + '>' + esc(optionLabel) + '</option>';
   }).join("");
-  return '<div class="structured-loot-row" data-structured-row data-row-index="' + index + '">' +
+  return '<div class="structured-loot-row" data-structured-row data-row-index="' + index + '" data-structured-original="' + esc(JSON.stringify(entry)) + '">' +
     '<label class="structured-loot-item"><span>Предмет</span><select data-structured-key="item_id">' + itemOptions + '</select></label>' +
     '<label><span>Шанс</span><input type="number" data-structured-key="chance" min="0" max="1" step="0.01" value="' + esc(entry.chance ?? 1) + '"></label>' +
     '<label><span>Мин.</span><input type="number" data-structured-key="min" min="0" max="999999" step="1" value="' + esc(entry.min ?? 1) + '"></label>' +
@@ -1172,12 +1173,17 @@ function openForm(options) {
       const entries = [...editor.querySelectorAll("[data-structured-row]")].map(row => {
         const value = name => row.querySelector('[data-structured-key="' + name + '"]')?.value ?? "";
         const numeric = name => String(value(name)).trim() === "" ? null : Number(value(name));
-        return {
+        let original = {};
+        try { original = JSON.parse(row.dataset.structuredOriginal || "{}"); } catch (_error) {}
+        const entry = {
+          ...original,
           item_id: String(value("item_id")).trim(),
           chance: numeric("chance"),
           min: numeric("min"),
           max: numeric("max")
         };
+        row.dataset.structuredOriginal = JSON.stringify(entry);
+        return entry;
       });
       hidden.value = JSON.stringify(entries);
     };
@@ -2889,7 +2895,7 @@ function openCapabilitySettingsDialog(capabilityId) {
             if (!Number.isInteger(minimum) || !Number.isInteger(maximum) || minimum < 0 || maximum < minimum) {
               throw new Error("Количество в записи №" + (rowIndex + 1) + " должно быть целым, неотрицательным и с максимумом не меньше минимума.");
             }
-            return {item_id:itemId, chance, min:minimum, max:maximum};
+            return {...entry, item_id:itemId, chance, min:minimum, max:maximum};
           }));
         } else if (descriptor.value_type === "String") {
           value = String(value ?? "");
