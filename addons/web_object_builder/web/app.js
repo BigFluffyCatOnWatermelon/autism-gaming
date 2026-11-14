@@ -935,6 +935,26 @@ function parseVector2Value(value) {
   }
   return {__type:"Vector2",x:parts[0],y:parts[1]};
 }
+function colorToHex(value) {
+  if (typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value)) return value;
+  if (value && typeof value === "object") {
+    const channel = number => Math.max(0, Math.min(255, Math.round((Number(number) || 0) * 255)));
+    return "#" + [channel(value.r), channel(value.g), channel(value.b)].map(x => x.toString(16).padStart(2, "0")).join("");
+  }
+  return "#ffffff";
+}
+function parseColorValue(value, alpha = 1) {
+  const match = /^#?([0-9a-f]{6})$/i.exec(String(value || ""));
+  if (!match) throw new Error("Выбери корректный цвет.");
+  const hex = match[1];
+  return {
+    __type: "Color",
+    r: parseInt(hex.slice(0, 2), 16) / 255,
+    g: parseInt(hex.slice(2, 4), 16) / 255,
+    b: parseInt(hex.slice(4, 6), 16) / 255,
+    a: Number.isFinite(Number(alpha)) ? Number(alpha) : 1
+  };
+}
 function fieldMarkup(label, key, value, type = "text", extra = "") {
   if (type === "textarea") {
     return '<div class="field"><label>' + esc(label) + '</label><textarea data-field="' + esc(key) + '" ' + extra + '>' + esc(value) + '</textarea></div>';
@@ -962,7 +982,7 @@ function dialogFieldMarkup(field) {
   }
   if (field.type === "checkbox") {
     return '<div class="field dialog-checkbox-field"><label><input data-dialog-field="' + esc(key) + '" type="checkbox" ' +
-      (value ? "checked" : "") + ' ' + disabledAttr + ' ' + requiredAttr + '> ' + label + requiredMark + unitMark + '</label>' + help + '</div>';
+      (value ? "checked" : "") + ' ' + disabledAttr + '> ' + label + requiredMark + unitMark + '</label>' + help + '</div>';
   }
   if (field.type === "select" || field.type === "catalog_reference") {
     const options = Array.isArray(field.options) ? field.options : [];
@@ -985,6 +1005,11 @@ function dialogFieldMarkup(field) {
       : "";
     return '<div class="field setting-select-field"><label>' + label + requiredMark + unitMark + '</label>' + search +
       '<select data-dialog-field="' + esc(key) + '" ' + disabledAttr + ' ' + requiredAttr + '>' + optionMarkup + '</select>' + help + '</div>';
+  }
+  if (field.type === "color") {
+    return '<div class="field"><label>' + label + requiredMark + unitMark + '</label>' +
+      '<div class="setting-color-row"><input type="color" data-dialog-field="' + esc(key) + '" value="' + esc(colorToHex(value)) + '" ' + disabledAttr + ' ' + requiredAttr + '>' +
+      '<span>' + esc(colorToHex(value).toUpperCase()) + '</span></div>' + help + '</div>';
   }
   if (field.type === "vector2") {
     const x = value && typeof value === "object" ? Number(value.x) || 0 : 0;
@@ -2561,6 +2586,7 @@ function openCapabilitySettingsDialog(capabilityId) {
         case "text": type = "text"; break;
         case "multiline_text": type = "textarea"; break;
         case "vector2": type = "vector2"; break;
+        case "color": type = "color"; break;
         case "enum": type = "select"; break;
         case "catalog_reference":
           if (referenceOptions.length) type = "catalog_reference";
@@ -2714,6 +2740,9 @@ function openCapabilitySettingsDialog(capabilityId) {
           if (!Number.isFinite(value)) throw new Error("Проверь числовое значение: " + (descriptor.display_name || descriptor.key));
         } else if (descriptor.value_type === "Vector2") {
           value = parseVector2Value(value);
+        } else if (descriptor.value_type === "Color") {
+          const current = valueForSetting(capability.id, descriptor);
+          value = parseColorValue(value, current && typeof current === "object" ? current.a : 1);
         } else if (descriptor.value_type === "String") {
           value = String(value ?? "");
         }
