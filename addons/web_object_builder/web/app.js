@@ -1320,8 +1320,8 @@ function openForm(options) {
           const itemId = String(value("item_id")).trim();
           const amount = numeric("amount_per_cycle");
           if (!itemId) errors.push("Выбери предмет-результат в строке №" + (index + 1) + ".");
-          if (amount === null || !Number.isInteger(amount) || amount <= 0) {
-            errors.push("Количество за цикл в строке №" + (index + 1) + " должно быть целым числом больше нуля.");
+          if (amount === null || !Number.isInteger(amount) || amount <= 0 || amount > 999999) {
+            errors.push("Количество за цикл в строке №" + (index + 1) + " должно быть целым числом от 1 до 999999.");
           }
           const entry = {...original, item_id:itemId, amount_per_cycle:amount};
           row.dataset.structuredOriginal = JSON.stringify(entry);
@@ -3176,8 +3176,8 @@ function openCapabilitySettingsDialog(capabilityId) {
               const itemId = String(entry.item_id || "").trim();
               const amount = Number(entry.amount_per_cycle);
               if (!itemId) throw new Error("Выбери предмет в строке производства №" + (rowIndex + 1) + ".");
-              if (!Number.isInteger(amount) || amount <= 0) {
-                throw new Error("Количество в строке производства №" + (rowIndex + 1) + " должно быть целым числом больше нуля.");
+              if (!Number.isInteger(amount) || amount <= 0 || amount > 999999) {
+                throw new Error("Количество в строке производства №" + (rowIndex + 1) + " должно быть целым числом от 1 до 999999.");
               }
               return {...entry, item_id:itemId, amount_per_cycle:amount};
             }));
