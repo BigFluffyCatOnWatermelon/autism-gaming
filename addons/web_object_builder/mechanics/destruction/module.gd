@@ -36,6 +36,7 @@ func _settings_for(item: Dictionary) -> Array[Dictionary]:
 			descriptor["maximum"] = float(field[6])
 		if str(field[0]) == "loot_table_json":
 			descriptor["display_name"] = "Резервная таблица добычи"
+			descriptor["level"] = "Expert"
 			descriptor["editor"] = "structured_list"
 			descriptor["editor_config"] = {
 				"structure_type": "loot_table",
