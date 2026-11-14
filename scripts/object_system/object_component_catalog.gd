@@ -704,7 +704,18 @@ static func _validate_setting_metadata(
 						setting_key,
 						component_id
 					])
-			elif structure_type not in ["loot_table"]:
+			elif structure_type == "production_table":
+				if value_type != "String":
+					errors.append("Legacy production table '%s' компонента '%s' должна сериализоваться как String до миграции." % [
+						setting_key,
+						component_id
+					])
+				if str(editor_config.get("reference_type", "")).strip_edges().to_lower() != "item":
+					errors.append("Production table '%s' компонента '%s' должна ссылаться на каталог предметов." % [
+						setting_key,
+						component_id
+					])
+			elif structure_type not in ["loot_table", "production_table"]:
 				errors.append("У настройки '%s' компонента '%s' неизвестный StructuredList type: %s." % [
 					setting_key,
 					component_id,
