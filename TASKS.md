@@ -6,6 +6,8 @@
 - [x] Добавить базовый metadata-driven Web renderer с группировкой и свёрнутыми Advanced/Expert.
 - [x] Подключить стандартные контролы Switch, Number, Slider/Range, Text, Multiline Text, Enum, Vector2 и Color.
 - [x] Подключить item picker по общему каталогу предметов для `pickup.item_id`, `resource_item_id` и `output_item_id`.
+- [x] Сделать визуальный StructuredList editor для legacy loot table: item catalog, chance, min/max и сериализация в старый JSON формат.
+- [ ] Добавить условия loot drops и проверку неизвестных item IDs в legacy rows.
 - [ ] Разметить остальные поля ссылок на инструменты, объекты, ресурсы и таблицы; подключить соответствующие picker controls.
 - [ ] Реализовать визуальные редакторы структурированных данных: добыча/loot, рецепты, производство, сопротивления, слабые места, маршруты, расписания и условия.
 - [ ] Объединить/убрать дублирующий путь редактирования во вкладке Components после переноса всех функций.
