@@ -3887,6 +3887,8 @@ func _string_array(value: Variant) -> PackedStringArray:
 
 func _to_json(value: Variant) -> Variant:
 	match typeof(value):
+		TYPE_COLOR:
+			return {"__type": "Color", "r": value.r, "g": value.g, "b": value.b, "a": value.a}
 		TYPE_VECTOR2:
 			return {"__type": "Vector2", "x": value.x, "y": value.y}
 		TYPE_NODE_PATH, TYPE_STRING_NAME:
@@ -3911,6 +3913,13 @@ func _to_json(value: Variant) -> Variant:
 
 func _from_json(value: Variant) -> Variant:
 	if value is Dictionary:
+		if str(value.get("__type", "")) == "Color":
+			return Color(
+				float(value.get("r", 1.0)),
+				float(value.get("g", 1.0)),
+				float(value.get("b", 1.0)),
+				float(value.get("a", 1.0))
+			)
 		if str(value.get("__type", "")) == "Vector2":
 			return Vector2(float(value.get("x", 0.0)), float(value.get("y", 0.0)))
 		var result: Dictionary = {}
