@@ -1014,3 +1014,17 @@ button:disabled,.btn:disabled,.toolbtn:disabled{cursor:not-allowed!important;opa
   .structured-event-row .structured-event-id{grid-column:1/-1}
   .structured-event-row .structured-schedule-actions{grid-column:1/-1;justify-content:flex-end}
 }
+
+
+/* Structured spawn-condition editor */
+.structured-spawn-conditions{display:flex;flex-direction:column;gap:12px}
+.structured-condition-ranges{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.structured-condition-ranges label{display:flex;flex-direction:column;gap:5px;min-width:0;color:var(--muted);font-size:9px}
+.structured-condition-ranges input,.structured-condition-value-row input{width:100%;min-width:0;padding:7px 8px;border:1px solid var(--line2);border-radius:6px;background:#111923;color:var(--text);font-size:10px}
+.structured-condition-list{display:flex;flex-direction:column;gap:7px;padding-top:9px;border-top:1px solid var(--line)}
+.structured-condition-list header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.structured-condition-list header strong{color:var(--text);font-size:10px}
+.structured-condition-list [data-condition-values]{display:flex;flex-direction:column;gap:6px}
+.structured-condition-value-row{display:grid;grid-template-columns:minmax(0,1fr) 30px;gap:6px;align-items:center}
+.structured-condition-value-row button{height:31px;padding:0;font-size:15px}
+@media(max-width:620px){.structured-condition-ranges{grid-template-columns:1fr 1fr}}
