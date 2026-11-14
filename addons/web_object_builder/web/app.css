@@ -956,3 +956,25 @@ button:disabled,.btn:disabled,.toolbtn:disabled{cursor:not-allowed!important;opa
   .structured-loot-item{grid-column:1/-1}
   .structured-loot-row .structured-loot-remove{grid-column:3;justify-self:end;width:32px}
 }
+
+/* Structured recipe editor */
+.structured-recipe-table-field{min-width:0}
+.structured-recipe-table{display:flex;flex-direction:column;gap:10px}
+.structured-recipe-list{display:flex;flex-direction:column;gap:10px}
+.structured-recipe-card{min-width:0;padding:10px;border:1px solid var(--line);border-radius:9px;background:#0d141b}
+.structured-recipe-header,.structured-recipe-section-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.structured-recipe-header strong{color:var(--text);font-size:11px}
+.structured-recipe-card label{display:flex;flex-direction:column;gap:5px;min-width:0;color:var(--muted);font-size:9px}
+.structured-recipe-card input,.structured-recipe-card select{width:100%;min-width:0;padding:7px 8px;border:1px solid var(--line2);border-radius:6px;background:#111923;color:var(--text);font-size:10px}
+.structured-recipe-id{margin:9px 0}
+.structured-recipe-output,.structured-recipe-ingredients{margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.structured-recipe-output h4,.structured-recipe-section-header h4{margin:0;color:var(--text);font-size:10px;font-weight:700}
+.structured-recipe-output-fields{display:grid;grid-template-columns:minmax(0,2fr) minmax(72px,.8fr);gap:8px;margin-top:8px}
+.structured-recipe-ingredients [data-recipe-ingredients]{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.structured-recipe-ingredient{display:grid;grid-template-columns:minmax(0,2fr) minmax(72px,.8fr) 30px;gap:6px;align-items:end}
+.structured-recipe-ingredient button{height:31px;padding:0;font-size:15px}
+.structured-recipe-add{align-self:flex-start}
+@media(max-width:620px){
+  .structured-recipe-output-fields{grid-template-columns:minmax(0,1fr) 78px}
+  .structured-recipe-ingredient{grid-template-columns:minmax(0,1fr) 78px 30px}
+}
