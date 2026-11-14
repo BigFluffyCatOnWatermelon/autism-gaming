@@ -304,6 +304,47 @@ func _run_tests() -> void:
 		var backend_recipe_options: Array = backend_recipe_config.get("reference_options", [])
 		_expect(not backend_recipe_options.is_empty(), "Web recipe editor receives item catalog options from backend")
 
+	var animals_production_component := ObjectComponentCatalog.create_definition("can_produce_resources")
+	_expect(animals_production_component != null, "animal production component is registered")
+	var production_descriptor: Dictionary = {}
+	if animals_production_component != null:
+		for descriptor in animals_production_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "production_table_json":
+				production_descriptor = descriptor
+				break
+	_expect(not production_descriptor.is_empty(), "legacy production table descriptor is present for animals")
+	if not production_descriptor.is_empty():
+		_expect(str(production_descriptor.get("editor", "")) == "structured_list", "production outputs use the StructuredList editor")
+		_expect(str(production_descriptor.get("level", "")) == "Expert", "production fallback table stays in Expert settings")
+		var production_editor_config: Dictionary = production_descriptor.get("editor_config", {})
+		_expect(str(production_editor_config.get("structure_type", "")) == "production_table", "production editor declares its structured data type")
+		_expect(str(production_editor_config.get("reference_type", "")) == "item", "production editor references the item catalog")
+		var production_metadata_errors := ObjectComponentCatalog._validate_setting_metadata(
+			production_descriptor,
+			"production_table_json",
+			"can_produce_resources"
+		)
+		_expect(production_metadata_errors.is_empty(), "structured production editor metadata passes schema validation")
+
+	var world_output_component := ObjectComponentCatalog.create_definition("has_periodic_output")
+	_expect(world_output_component != null, "world time periodic output component is registered")
+	var world_output_descriptor: Dictionary = {}
+	if world_output_component != null:
+		for descriptor in world_output_component.get_setting_definitions():
+			if str(descriptor.get("key", "")) == "production_table_json":
+				world_output_descriptor = descriptor
+				break
+	_expect(not world_output_descriptor.is_empty(), "legacy production table descriptor is present for world time")
+
+	var GameplayTables := preload("res://scripts/object_system/object_gameplay_table_service.gd")
+	var normalized_production := GameplayTables.normalize_production_table([
+		{"item_id":"milk","amount_per_cycle":2},
+		{"item_id":"egg","amount":3}
+	])
+	_expect(normalized_production.size() == 2, "production table normalizer supports multiple item outputs")
+	_expect(int(normalized_production[0].get("amount_per_cycle", 0)) == 2, "production table keeps amount_per_cycle")
+	_expect(str(normalized_production[1].get("item_id", "")) == "egg" and int(normalized_production[1].get("amount_per_cycle", 0)) == 3, "production normalizer accepts the legacy amount alias")
+
 	var planned_selection := CapabilitySelectionScript.new()
 	planned_selection.capability_id = "has_sprite"
 	var planned_errors := ObjectCapabilityService.validate_selections([planned_selection])
