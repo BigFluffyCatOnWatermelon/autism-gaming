@@ -160,13 +160,18 @@ static func load_recipe_table(resource_path: String, legacy_value: Variant) -> D
 static func load_production_table(
 	resource_path: String,
 	legacy_item_id: Variant,
-	legacy_amount: Variant
+	legacy_amount: Variant,
+	legacy_table_value: Variant = null
 ) -> Array[Dictionary]:
 	var table := _load_table_resource(resource_path, "production")
 	if table != null:
 		var normalized := normalize_production_table(table.entries)
 		_warn_unknown_item_ids(_collect_item_ids_from_entries(normalized), resource_path)
 		return normalized
+	var legacy_entries := normalize_production_table(legacy_table_value)
+	if not legacy_entries.is_empty():
+		_warn_unknown_item_ids(_collect_item_ids_from_entries(legacy_entries), "legacy production settings")
+		return legacy_entries
 	var legacy_output := normalize_item_output(legacy_item_id, legacy_amount)
 	if legacy_output.is_empty():
 		return []
